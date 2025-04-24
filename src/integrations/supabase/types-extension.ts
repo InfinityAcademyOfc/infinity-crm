@@ -68,7 +68,9 @@ export interface Meeting {
 }
 
 // Define tipos para as tabelas que serão criadas posteriormente
-export type ExtendedTables = Tables & {
+export type ExtendedTables = {
+  companies: Tables<"companies">;
+  profiles: Tables<"profiles">;
   tasks: Task;
   leads: Lead;
   clients: Client;
