@@ -1,0 +1,59 @@
+
+@tailwind components;
+
+@layer components {
+  .sidebar-link {
+    @apply flex items-center gap-2 px-3 py-2 rounded-md transition-colors;
+  }
+
+  /* Light Theme */
+  :root .sidebar-link {
+    @apply text-gray-700 hover:bg-gray-100;
+  }
+
+  :root .sidebar-link.active {
+    @apply bg-primary text-white hover:bg-primary/90;
+  }
+
+  /* Dark Theme */
+  .dark .sidebar-link {
+    @apply text-gray-200 hover:bg-gray-800/60;
+  }
+
+  .dark .sidebar-link.active {
+    @apply bg-primary dark:text-white dark:hover:bg-primary/90;
+  }
+
+  /* Sidebar styles - Restored previous style */
+  .sidebar {
+    @apply bg-white dark:bg-gray-900 shadow-md;
+  }
+
+  /* Metallic styling - Updated for cleaner look */
+  .metallic-item {
+    @apply relative overflow-hidden;
+  }
+  
+  /* Light theme metallic - simplified */
+  :root .metallic-item {
+    background-image: linear-gradient(to bottom, 
+      rgba(250, 250, 255, 0.9) 0%, 
+      rgba(245, 245, 250, 0.8) 100%);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 
+                inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  }
+
+  /* Dark theme metallic - simplified */
+  .dark .metallic-item {
+    background-image: linear-gradient(to bottom, 
+      rgba(50, 50, 60, 0.5) 0%, 
+      rgba(45, 45, 55, 0.5) 100%);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+
+  /* Card styling */
+  .interactive-card {
+    @apply transition-all duration-200 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-md hover:shadow-lg hover:-translate-y-1;
+  }
+}

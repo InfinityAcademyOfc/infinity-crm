@@ -1,42 +1,318 @@
+/* Base reset and common styles */
+@import './styles/base.css';
+
+/* Animations */
+@import './styles/animations.css';
+
+/* Component styles */
+@import './styles/scrollbars.css';
+@import './styles/navigation.css';
+@import './styles/cards.css';
+@import './styles/tags.css';
+@import './styles/kanban.css';
+@import './styles/radix-overrides.css';
+@import './styles/responsive.css';
+@import './styles/whatsapp.css';
+
+/* Global dark mode enhancements */
+.dark body {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+/* Main background with gradient effect */
+body {
+  background-image: linear-gradient(135deg, rgba(240, 240, 250, 0.4) 0%, rgba(250, 250, 255, 0.4) 100%);
+  background-attachment: fixed;
+}
+
+.dark body {
+  background-image: linear-gradient(135deg, rgba(20, 30, 48, 0.15) 0%, rgba(36, 59, 85, 0.15) 100%);
+  background-attachment: fixed;
+}
+
+/* Add texture patterns */
+body:before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: -1;
+  opacity: 0.4;
+}
+
+.dark body:before {
+  opacity: 0.1;
+}
+
+/* Enhanced light theme glow effects based on the current accent color */
+.light-glow::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 10% 10%, hsla(var(--theme-gradient-color, 273, 80%, 60%), 0.08), transparent 25%),
+    radial-gradient(circle at 90% 20%, hsla(var(--theme-gradient-color, 273, 80%, 60%), 0.06), transparent 30%),
+    radial-gradient(circle at 40% 90%, hsla(var(--theme-gradient-color, 273, 80%, 60%), 0.07), transparent 30%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.dark .light-glow::before {
+  background: 
+    radial-gradient(circle at 10% 10%, hsla(var(--theme-gradient-color, 273, 80%, 60%), 0.15), transparent 25%),
+    radial-gradient(circle at 90% 20%, hsla(var(--theme-gradient-color, 273, 80%, 60%), 0.12), transparent 30%),
+    radial-gradient(circle at 40% 90%, hsla(var(--theme-gradient-color, 273, 80%, 60%), 0.1), transparent 30%);
+}
+
+/* Glow effects for dark mode - stronger, more visible effects */
+.dark .glow-effect {
+  position: relative;
+}
+
+.dark .glow-effect::before {
+  content: '';
+  position: absolute;
+  top: -15px;
+  left: -15px;
+  right: -15px;
+  bottom: -15px;
+  background: radial-gradient(circle at center, hsla(var(--theme-gradient-color, 273, 80%, 60%), 0.2), transparent 70%);
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.dark .glow-effect:hover::before {
+  opacity: 1;
+}
+
+/* Enhanced shadows for light theme */
+:root .shadow-card {
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1), 
+              0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+:root .shadow-card:hover {
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.12), 
+              0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+/* Mobile sidebar with increased transparency */
+@media (max-width: 768px) {
+  .dark [data-sidebar="sidebar"][data-mobile="true"] {
+    background-color: rgba(17, 17, 27, 0.7) !important;
+    backdrop-filter: blur(16px) !important;
+  }
+  
+  [data-sidebar="sidebar"][data-mobile="true"] {
+    background-color: rgba(255, 255, 255, 0.7) !important;
+    backdrop-filter: blur(16px) !important;
+  }
+}
+
+/* Dashboard cards with glass effect */
+.dashboard-card {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08), 
+              0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.dark .dashboard-card {
+  background: rgba(30, 30, 40, 0.6);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15), 
+              0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Modern page layouts */
+.page-container {
+  @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6;
+}
+
+/* Metallic effect for buttons and panels */
+.metallic {
+  background-image: linear-gradient(180deg, rgba(255,255,255,0.15) 0%, rgba(0,0,0,0.15) 100%);
+  border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.dark .metallic {
+  background-image: linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(0,0,0,0.08) 100%);
+  border: 1px solid rgba(255,255,255,0.05);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+/* Fix for light theme sidebar */
+:root [data-sidebar="sidebar"] {
+  background-color: rgb(249, 250, 251);
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
+}
+
+.dark [data-sidebar="sidebar"] {
+  background-color: rgb(15, 23, 42);
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Apply the light glow effect to the root div */
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  position: relative;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+#root::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: -1;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+/* Backdrop blur for glass surfaces */
+.glass-surface {
+  background-color: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+.dark .glass-surface {
+  background-color: rgba(17, 24, 39, 0.5);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
 }
 
-.card {
-  padding: 2em;
+/* Header and card with enhanced shadows for light theme */
+:root .card,
+:root .custom-card {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08),
+              0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-.read-the-docs {
-  color: #888;
+:root header {
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.05);
+}
+
+/* Global hover effects */
+.hover-scale {
+  transition: transform 0.2s ease;
+}
+
+.hover-scale:hover {
+  transform: scale(1.03);
+}
+
+/* Animated background for special sections */
+.animated-bg {
+  background: linear-gradient(-45deg, 
+    rgba(var(--animated-bg-1, 76, 29, 149), 0.15),
+    rgba(var(--animated-bg-2, 124, 58, 237), 0.15),
+    rgba(var(--animated-bg-3, 55, 48, 163), 0.15),
+    rgba(var(--animated-bg-4, 30, 58, 138), 0.15)
+  );
+  background-size: 400% 400%;
+  animation: gradientBG 15s ease infinite;
+}
+
+@keyframes gradientBG {
+  0% { background-position: 0% 50% }
+  50% { background-position: 100% 50% }
+  100% { background-position: 0% 50% }
+}
+
+/* Custom sidebar styles - metallic look */
+.dark .sidebar-bg {
+  background-color: rgba(17, 17, 27, 0.85);
+  backdrop-filter: blur(20px);
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Enhanced button effects */
+.dark .button-glow {
+  box-shadow: 0 0 0 0 rgba(var(--glow-color, 147, 51, 234), 0);
+  transition: box-shadow 0.3s ease;
+}
+
+.dark .button-glow:hover {
+  box-shadow: 0 0 15px 2px rgba(var(--glow-color, 147, 51, 234), 0.4);
+}
+
+/* Glass backgrounds for cards */
+.card, 
+.custom-card {
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover, 
+.custom-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+
+/* Add shadow on light theme */
+:root .card,
+:root .custom-card,
+:root .shadow-card {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  border: 1px solid rgba(0,0,0,0.06);
+}
+
+/* Special effects for cards in dark mode */
+.dark .card,
+.dark .custom-card,
+.dark .shadow-card {
+  background: rgba(30, 30, 35, 0.6);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.dark .card:hover,
+.dark .custom-card:hover,
+.dark .shadow-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+}
+
+/* Apply the light glow effect to the root div */
+#root {
+  position: relative;
+}
+
+#root::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Backdrop blur for glass surfaces */
+.glass-surface {
+  background-color: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dark .glass-surface {
+  background-color: rgba(17, 24, 39, 0.3);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
