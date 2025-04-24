@@ -12,7 +12,6 @@ import {
   syncAllModulesAction
 } from './moduleActions';
 import { supabase } from "@/integrations/supabase/client";
-import { Tables } from "@/integrations/supabase/types";
 
 // Create the store
 export const useModuleSync = create<ModuleSyncState>((set, get) => ({
@@ -36,19 +35,16 @@ export const useModuleSync = create<ModuleSyncState>((set, get) => ({
   assignClientToTask: (taskId, clientId) => assignClientToTaskAction(set, taskId, clientId),
   syncAllModules: () => syncAllModulesAction(set),
   fetchLeads: async () => {
-    const { data, error } = await supabase.from("leads").select("*");
-    if (error) return [];
-    return data;
+    // Retornando lista vazia temporariamente até criar a tabela de leads
+    return [];
   },
   fetchClients: async () => {
-    const { data, error } = await supabase.from("clients").select("*");
-    if (error) return [];
-    return data;
+    // Retornando lista vazia temporariamente até criar a tabela de clients
+    return [];
   },
   fetchTasks: async () => {
-    const { data, error } = await supabase.from("tasks").select("*");
-    if (error) return [];
-    return data;
+    // Retornando lista vazia temporariamente até criar a tabela de tasks
+    return [];
   },
 }));
 

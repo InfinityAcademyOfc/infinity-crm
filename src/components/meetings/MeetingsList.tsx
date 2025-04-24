@@ -5,22 +5,45 @@ import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
 import MeetingItem from "./MeetingItem";
 
-// Import table row type for tasks
-import type { Tables } from "@/integrations/supabase/types";
+// Definindo uma interface para os dados de reuniões
+interface Meeting {
+  id: string;
+  name: string;
+  description?: string;
+  status: string;
+}
 
 const MeetingsList = () => {
-  const [meetings, setMeetings] = useState<Tables<"tasks">[]>([]);
+  const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchMeetings() {
       setLoading(true);
-      // Fetch "meeting" tasks from tasks table
-      const { data } = await supabase
-        .from("tasks")
-        .select("*")
-        .eq("status", "meeting");
-      setMeetings(data || []);
+      
+      // Usando dados mockados temporariamente até criar a tabela de tasks/meetings
+      const mockMeetings = [
+        {
+          id: "1",
+          name: "Reunião de Planejamento Semanal",
+          description: "Discutir metas e objetivos da semana",
+          status: "meeting"
+        },
+        {
+          id: "2",
+          name: "Apresentação para Clientes",
+          description: "Apresentar novos recursos do produto",
+          status: "meeting"
+        },
+        {
+          id: "3",
+          name: "Review de Sprint",
+          description: "Revisar tarefas completadas no sprint",
+          status: "meeting"
+        }
+      ];
+      
+      setMeetings(mockMeetings);
       setLoading(false);
     }
     fetchMeetings();
