@@ -9,170 +9,72 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      clients: {
-        Row: {
-          company: string | null
-          created_at: string
-          email: string | null
-          id: string
-          name: string
-          phone: string | null
-          source: string | null
-          status: string | null
-          updated_at: string
-        }
-        Insert: {
-          company?: string | null
-          created_at?: string
-          email?: string | null
-          id?: string
-          name: string
-          phone?: string | null
-          source?: string | null
-          status?: string | null
-          updated_at?: string
-        }
-        Update: {
-          company?: string | null
-          created_at?: string
-          email?: string | null
-          id?: string
-          name?: string
-          phone?: string | null
-          source?: string | null
-          status?: string | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
       companies: {
         Row: {
-          created_at: string
-          email: string | null
+          created_at: string | null
+          email: string
           id: string
           name: string
-          owner_id: string | null
-          updated_at: string
+          owner_id: string
+          updated_at: string | null
         }
         Insert: {
-          created_at?: string
-          email?: string | null
+          created_at?: string | null
+          email: string
           id?: string
           name: string
-          owner_id?: string | null
-          updated_at?: string
+          owner_id: string
+          updated_at?: string | null
         }
         Update: {
-          created_at?: string
-          email?: string | null
+          created_at?: string | null
+          email?: string
           id?: string
           name?: string
-          owner_id?: string | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "companies_owner_id_fkey"
-            columns: ["owner_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      leads: {
-        Row: {
-          company: string | null
-          created_at: string
-          email: string | null
-          id: string
-          name: string
-          phone: string | null
-          source: string | null
-          status: string | null
-          updated_at: string
-        }
-        Insert: {
-          company?: string | null
-          created_at?: string
-          email?: string | null
-          id?: string
-          name: string
-          phone?: string | null
-          source?: string | null
-          status?: string | null
-          updated_at?: string
-        }
-        Update: {
-          company?: string | null
-          created_at?: string
-          email?: string | null
-          id?: string
-          name?: string
-          phone?: string | null
-          source?: string | null
-          status?: string | null
-          updated_at?: string
+          owner_id?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
       profiles: {
         Row: {
+          avatar: string | null
           company_id: string | null
-          created_at: string
-          email: string | null
+          created_at: string | null
+          department: string | null
+          email: string
           id: string
           name: string | null
-          role: string | null
-          updated_at: string
-        }
-        Insert: {
-          company_id?: string | null
-          created_at?: string
-          email?: string | null
-          id: string
-          name?: string | null
-          role?: string | null
-          updated_at?: string
-        }
-        Update: {
-          company_id?: string | null
-          created_at?: string
-          email?: string | null
-          id?: string
-          name?: string | null
-          role?: string | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      tasks: {
-        Row: {
-          client: string | null
-          created_at: string
-          description: string | null
-          id: string
-          name: string
+          phone: string | null
+          role: string
           status: string | null
-          updated_at: string
+          updated_at: string | null
         }
         Insert: {
-          client?: string | null
-          created_at?: string
-          description?: string | null
-          id?: string
-          name: string
+          avatar?: string | null
+          company_id?: string | null
+          created_at?: string | null
+          department?: string | null
+          email: string
+          id: string
+          name?: string | null
+          phone?: string | null
+          role?: string
           status?: string | null
-          updated_at?: string
+          updated_at?: string | null
         }
         Update: {
-          client?: string | null
-          created_at?: string
-          description?: string | null
+          avatar?: string | null
+          company_id?: string | null
+          created_at?: string | null
+          department?: string | null
+          email?: string
           id?: string
-          name?: string
+          name?: string | null
+          phone?: string | null
+          role?: string
           status?: string | null
-          updated_at?: string
+          updated_at?: string | null
         }
         Relationships: []
       }

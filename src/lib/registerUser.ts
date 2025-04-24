@@ -1,7 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Tables } from "@/integrations/supabase/types";
 
 export interface RegisterUserPayload {
   name: string;
@@ -43,7 +42,7 @@ export async function registerUser({ name, email, password, isCompany }: Registe
     const userId = signUpData.user.id;
     console.log("Usuário criado com ID:", userId);
 
-    // Etapa 2: login automático (para obter token válido do supabase client)
+    // Etapa 2: login automático
     console.log("Realizando login automático após registro...");
     const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
       email,

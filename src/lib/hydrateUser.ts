@@ -2,7 +2,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { UserProfile } from "@/types/user";
 import { Company } from "@/types/company";
-import { Tables } from "@/integrations/supabase/types";
 
 export async function hydrateUser() {
   console.log("Iniciando hidratação dos dados do usuário...");
@@ -23,7 +22,6 @@ export async function hydrateUser() {
 
   console.log("Buscando perfil para o usuário:", userId);
 
-  // Get profile row directly from supabase types (no need to type alias)
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("*")

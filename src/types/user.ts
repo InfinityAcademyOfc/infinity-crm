@@ -8,7 +8,9 @@ export interface UserProfile {
   department?: string;
   avatar?: string;
   status: string;
-  company_id: string;
+  company_id?: string;
   created_at?: string;
   updated_at?: string;
 }
+
+export type UserRole = 'admin' | 'user';
