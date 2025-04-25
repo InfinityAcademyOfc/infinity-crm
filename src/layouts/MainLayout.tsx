@@ -41,7 +41,7 @@ const MainLayout = () => {
           className={cn(
             "flex-shrink-0 transition-all duration-300 ease-in-out",
             isMobileView ? "fixed z-40 h-full" : "relative",
-            sidebarOpen ? "w-64" : "w-16",
+            sidebarOpen ? "w-64" : "w-0",
           )}
         >
           <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} />
