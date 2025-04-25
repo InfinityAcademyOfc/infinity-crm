@@ -21,54 +21,30 @@ const MainLayout = () => {
   const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
   const [isLoadingPage, setIsLoadingPage] = useState(true);
 
-  // Safely handle window resize with proper cleanup
+  // Handle window resize
   useEffect(() => {
-    function handleResize() {
+    const handleResize = () => {
       const mobile = window.innerWidth < 768;
       setIsMobileView(mobile);
       if (mobile && sidebarOpen) {
         setSidebarOpen(false);
       }
-    }
-    
-    // Set initial state
-    handleResize();
-    
-    // Add event listener with proper cleanup
-    window.addEventListener("resize", handleResize);
-    return () => {
-      window.removeEventListener("resize", handleResize);
     };
+    
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, [sidebarOpen]);
 
-  // Collapse sidebar on mobile when changing pages
+  // Handle route changes
   useEffect(() => {
     if (isMobileView) {
       setSidebarOpen(false);
     }
-    
-    // Reset loading state on route change
     setIsLoadingPage(true);
-    const timer = setTimeout(() => {
-      setIsLoadingPage(false);
-    }, 300);
-    
+    const timer = setTimeout(() => setIsLoadingPage(false), 300);
     return () => clearTimeout(timer);
   }, [location.pathname, isMobileView]);
-
-  // Error handling for route changes
-  useEffect(() => {
-    const handleRouteError = () => {
-      if (location.pathname !== '/app' && !location.pathname.startsWith('/app/')) {
-        toast.warning("Rota não encontrada", {
-          description: "Redirecionando para o dashboard"
-        });
-        navigate('/app');
-      }
-    };
-    
-    handleRouteError();
-  }, [location.pathname, navigate]);
 
   if (loading) {
     return <LoadingScreen />;
@@ -77,23 +53,27 @@ const MainLayout = () => {
   return (
     <SidebarProvider>
       <div className="flex h-screen w-full overflow-hidden bg-background">
-        {/* Sidebar component - now positioned absolutely */}
-        <div className={cn(
-          "fixed top-0 left-0 z-30 h-screen transition-all duration-300 ease-in-out",
-          sidebarOpen ? "w-64" : "w-0"
-        )}>
+        {/* Sidebar - Fixed position with transition */}
+        <div 
+          className={cn(
+            "fixed top-0 left-0 z-30 h-screen transition-all duration-300 ease-in-out",
+            sidebarOpen ? "w-64" : "w-0"
+          )}
+        >
           <Sidebar 
             open={sidebarOpen} 
             setOpen={setSidebarOpen}
           />
         </div>
 
-        {/* Main content area that shifts with sidebar on desktop */}
-        <div className={cn(
-          "flex-1 flex flex-col min-w-0 h-screen transition-all duration-300 ease-in-out",
-          sidebarOpen && !isMobileView ? "ml-64" : "ml-0"
-        )}>
-          {/* TopNav that shifts with sidebar on desktop */}
+        {/* Main content wrapper - Shifts with sidebar */}
+        <div 
+          className={cn(
+            "flex flex-col flex-1 min-w-0 h-screen transition-all duration-300 ease-in-out",
+            sidebarOpen && !isMobileView ? "ml-64" : "ml-0"
+          )}
+        >
+          {/* TopNav - Shifts with content */}
           <TopNav />
           
           {/* Main scrollable content */}
@@ -146,11 +126,10 @@ const MainLayout = () => {
             </ErrorBoundary>
           </main>
         </div>
-        
-        {/* Chat button positioned at the bottom right */}
+
         <UnifiedChatButton />
 
-        {/* Mobile toggle button that's visible even when sidebar is closed */}
+        {/* Mobile toggle button */}
         {isMobileView && (
           <div 
             className={cn(
