@@ -80,15 +80,19 @@ const EdgeDialog = ({ isOpen, edge, onClose, onUpdate, onDelete }: EdgeDialogPro
     onUpdate(source, target, style, markerStartObj, markerEndObj);
   };
 
+  // Fixed handleMarkerChange function to properly handle type conversions
   const handleMarkerChange = (value: string, setter: React.Dispatch<React.SetStateAction<MarkerType | null>>) => {
     if (value === "") {
-      setter(() => null);
-    } else if (Object.values(MarkerType).includes(value as MarkerType)) {
-      setter(() => value as MarkerType);
+      setter(null);
+    } else if (Object.values(MarkerType).includes(value as any)) {
+      // Using type assertion with 'any' as an intermediate step
+      const markerType = value as unknown as MarkerType;
+      setter(markerType);
     } else if (value === "circle") {
-      setter(() => "circle" as unknown as MarkerType);
+      // Handle the custom "circle" case
+      setter("circle" as unknown as MarkerType);
     } else {
-      setter(() => null);
+      setter(null);
     }
   };
 
