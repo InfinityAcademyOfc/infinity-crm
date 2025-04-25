@@ -23,10 +23,8 @@ const SpreadsheetExplorer: React.FC<SpreadsheetExplorerProps> = ({
   return <DocumentProvider>
       <div className="h-full border-r flex flex-col transition-all">
         <div className="flex items-center p-2 pb-0 pt-2">
-          <span className="text-xs font-bold uppercase mr-2">ARQUIVOS</span>
-          <Button size="icon" variant="ghost" className="ml-auto" title="Recolher barra" onClick={() => setSidebarCollapsed(true)}>
-            <ChevronLeft />
-          </Button>
+          
+          
         </div>
         {/* Reuso do DocumentExplorer apenas para a árvore */}
         <DocumentExplorer onSelectFile={onSelectFile} selectedFile={selectedFile} />

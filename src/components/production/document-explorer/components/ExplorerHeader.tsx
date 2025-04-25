@@ -15,8 +15,8 @@ const ExplorerHeader: React.FC<ExplorerHeaderProps> = ({
     setSearchQuery
   } = useDocumentContext();
   return <div className="p-4 border-b">
-      <div className="flex items-center justify-between mb-2">
-        <h3 className="font-semibold">PLANILHAS</h3>
+      <div className="flex items-center justify-between mb-2 py-0 px-[30px]">
+        <h3 className="font-semibold">Adicionar</h3>
         <Button variant="ghost" size="sm" onClick={() => onAddItem(selectedFolder)}>
           <Plus className="h-4 w-4" />
         </Button>
