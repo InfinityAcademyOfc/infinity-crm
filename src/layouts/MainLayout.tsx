@@ -17,21 +17,18 @@ const MainLayout = () => {
     const handleResize = () => {
       const mobile = window.innerWidth < 768;
       setIsMobileView(mobile);
-      if (mobile && sidebarOpen) {
-        setSidebarOpen(false);
-      }
     };
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, [sidebarOpen]);
+  }, []);
 
   return (
     <SidebarProvider>
       <div className="flex h-screen overflow-hidden bg-background">
-        {/* Mobile overlay when sidebar is open */}
+        {/* Mobile overlay */}
         {isMobileView && sidebarOpen && (
           <div 
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-30"
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
             onClick={() => setSidebarOpen(false)}
           />
         )}
@@ -39,16 +36,25 @@ const MainLayout = () => {
         {/* Sidebar container */}
         <div 
           className={cn(
-            "flex-shrink-0 transition-all duration-300 ease-in-out",
-            isMobileView ? "fixed z-40 h-full" : "relative",
-            sidebarOpen ? "w-64" : "w-0",
+            "transition-all duration-300 ease-in-out",
+            isMobileView 
+              ? "fixed top-0 bottom-0 z-50" // Mobile: fixed position, high z-index
+              : "relative flex-shrink-0", // Desktop: always visible
+            sidebarOpen 
+              ? "w-64" 
+              : isMobileView 
+                ? "w-0" // Mobile: completely hidden when closed
+                : "w-16" // Desktop: minimalist view when closed
           )}
         >
           <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} />
         </div>
 
         {/* Main content area */}
-        <div className="flex flex-col flex-1 w-full overflow-hidden">
+        <div className={cn(
+          "flex flex-col flex-1 w-full overflow-hidden",
+          !isMobileView && "ml-0" // Remove margin on mobile
+        )}>
           <TopNav />
           
           <main className="flex-1 overflow-auto">
@@ -60,11 +66,17 @@ const MainLayout = () => {
           </main>
         </div>
 
-        {/* Floating collapse button */}
+        {/* Floating collapse button - moves with sidebar in mobile */}
         <div 
           className={cn(
-            "fixed bottom-28 z-50 transition-all duration-300",
-            isMobileView ? "left-4" : sidebarOpen ? "left-60" : "left-12"
+            "fixed bottom-28 z-[51] transition-all duration-300", // z-index higher than sidebar
+            isMobileView
+              ? sidebarOpen 
+                ? "left-[15.5rem]" // Position when sidebar is open on mobile
+                : "left-4" // Position when sidebar is closed on mobile
+              : sidebarOpen 
+                ? "left-60" // Position when sidebar is open on desktop
+                : "left-12" // Position when sidebar is minimized on desktop
           )}
         >
           <CollapseButton 

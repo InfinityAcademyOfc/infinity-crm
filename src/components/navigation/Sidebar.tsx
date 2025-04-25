@@ -64,7 +64,13 @@ const Sidebar = ({ open, setOpen }: SidebarProps) => {
       className={cn(
         "h-full bg-background/95 backdrop-blur-md border-r shadow-lg",
         "flex flex-col overflow-hidden transition-all duration-300 ease-in-out",
-        !open && "w-0",
+        isMobile 
+          ? open 
+            ? "w-64 translate-x-0" // Full width when open on mobile
+            : "w-0 -translate-x-full" // Hidden when closed on mobile
+          : open 
+            ? "w-64" // Full width when open on desktop
+            : "w-16", // Minimalist width when closed on desktop
         "dark:bg-gray-900/90 dark:border-gray-800",
         "bg-gradient-to-b from-background/95 to-background/98"
       )}
