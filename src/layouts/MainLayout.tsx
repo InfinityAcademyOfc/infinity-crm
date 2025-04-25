@@ -25,67 +25,68 @@ const MainLayout = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, [sidebarOpen]);
 
-return (
-  <SidebarProvider>
-    <div className="flex h-screen overflow-hidden bg-background">
-      
-      {/* Mobile overlay when sidebar is open */}
-      {isMobileView && sidebarOpen && (
+  return (
+    <SidebarProvider>
+      <div className="flex h-screen overflow-hidden bg-background">
+        
+        {/* Mobile overlay when sidebar is open */}
+        {isMobileView && sidebarOpen && (
+          <div 
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-30"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
+        {/* Sidebar container */}
         <div 
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-30"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+          className={cn(
+            "flex-shrink-0 transition-all duration-300 ease-in-out overflow-visible",
+            isMobileView ? "fixed z-40 h-full" : "relative",
+            sidebarOpen ? "w-64" : "w-16"
+          )}
+        >
+          {/* Mantém o conteúdo visível, mesmo recolhida */}
+          <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} />
+        </div>
 
-      {/* Sidebar container */}
-      <div 
-        className={cn(
-          "flex-shrink-0 transition-all duration-300 ease-in-out overflow-visible",
-          isMobileView ? "fixed z-40 h-full" : "relative",
-          sidebarOpen ? "w-64" : "w-16"
-        )}
-      >
-        {/* Mantém o conteúdo visível, mesmo recolhida */}
-        <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} />
+        {/* Main content area */}
+        <div className="flex flex-col flex-1 w-full overflow-hidden">
+          <TopNav />
+
+          <main className="flex-1 overflow-auto">
+            <div className="container p-4 md:p-6">
+              <ErrorBoundary>
+                <Outlet />
+              </ErrorBoundary>
+            </div>
+          </main>
+        </div>
+
+        {/* Floating collapse button */}
+        <div 
+          className={cn(
+            "fixed bottom-28 z-50 transition-all duration-300",
+            isMobileView 
+              ? sidebarOpen 
+                ? "left-64"  // botão acompanha sidebar aberta
+                : "left-16"  // botão acompanha sidebar colapsada
+              : sidebarOpen 
+                ? "left-60"
+                : "left-12"
+          )}
+        >
+          <CollapseButton 
+            isCollapsed={!sidebarOpen} 
+            onClick={() => setSidebarOpen(!sidebarOpen)} 
+            className="shadow-lg bg-primary hover:bg-primary/90 text-primary-foreground"
+            position="left"
+          />
+        </div>
+
+        <UnifiedChatButton />
       </div>
-
-      {/* Main content area */}
-      <div className="flex flex-col flex-1 w-full overflow-hidden">
-        <TopNav />
-
-        <main className="flex-1 overflow-auto">
-          <div className="container p-4 md:p-6">
-            <ErrorBoundary>
-              <Outlet />
-            </ErrorBoundary>
-          </div>
-        </main>
-      </div>
-
-      {/* Floating collapse button */}
-      <div 
-        className={cn(
-          "fixed bottom-28 z-50 transition-all duration-300",
-          isMobileView 
-            ? sidebarOpen 
-              ? "left-64"  // botão acompanha sidebar aberta
-              : "left-16"  // botão acompanha sidebar colapsada
-            : sidebarOpen 
-              ? "left-60"
-              : "left-12"
-        )}
-      >
-        <CollapseButton 
-          isCollapsed={!sidebarOpen} 
-          onClick={() => setSidebarOpen(!sidebarOpen)} 
-          className="shadow-lg bg-primary hover:bg-primary/90 text-primary-foreground"
-          position="left"
-        />
-      </div>
-
-      <UnifiedChatButton />
-    </div>
-  </SidebarProvider>
-);
+    </SidebarProvider>
+  );
+};
 
 export default MainLayout;
