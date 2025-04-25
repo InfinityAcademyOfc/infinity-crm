@@ -121,7 +121,7 @@ const ClientManagement = () => {
         
         <div className="flex items-center gap-2 self-end sm:self-auto">
           <Tabs value={viewType} onValueChange={setViewType} className="w-auto">
-            <TabsList className="grid grid-cols-3 h-8 w-[240px] py-0 my-[4px] mx-[4px] px-[5px]">
+            <TabsList className="grid grid-cols-3 h-8 w-[240px] px-[5px] my-0 py-0 mx-px">
               <TabsTrigger value="list" className="text-xs">Lista</TabsTrigger>
               <TabsTrigger value="cards" className="text-xs">Cards</TabsTrigger>
               <TabsTrigger value="ltv-kanban" className="text-xs">Kanban LTV</TabsTrigger>
