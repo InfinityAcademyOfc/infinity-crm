@@ -1,0 +1,38 @@
+
+import React from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+
+interface CollapseButtonProps {
+  isCollapsed: boolean;
+  onClick: () => void;
+  className?: string;
+  position?: "left" | "right";
+  title?: string;
+}
+
+const CollapseButton: React.FC<CollapseButtonProps> = ({
+  isCollapsed,
+  onClick,
+  className,
+  position = "right",
+  title,
+}) => {
+  return (
+    <Button
+      size="icon"
+      variant="ghost"
+      className={cn("", className)}
+      title={title || (isCollapsed ? "Expandir" : "Recolher")}
+      onClick={onClick}
+    >
+      {isCollapsed ? 
+        (position === "right" ? <ChevronRight size={16} /> : <ChevronLeft size={16} />) : 
+        (position === "right" ? <ChevronLeft size={16} /> : <ChevronRight size={16} />)
+      }
+    </Button>
+  );
+};
+
+export default CollapseButton;

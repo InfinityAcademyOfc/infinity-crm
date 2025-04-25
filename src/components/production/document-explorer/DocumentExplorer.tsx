@@ -3,12 +3,13 @@ import { Tree } from "@/components/ui/tree";
 import { DocumentProvider } from "./contexts/DocumentContext";
 import { useDocumentContext } from "./contexts/DocumentContext";
 import { useDocumentOperations } from "./hooks/useDocumentOperations";
-import ExplorerHeader from "./components/ExplorerHeader";
+import ExplorerHeader from "@/components/common/explorer/ExplorerHeader";
 import DocumentTreeItem from "./components/DocumentTreeItem";
 import NewItemDialog from "./NewItemDialog";
 import { DocumentItem } from "./types";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+
 const initialDocuments: DocumentItem[] = [{
   id: "folder-1",
   name: "Projetos",
@@ -48,10 +49,12 @@ const initialDocuments: DocumentItem[] = [{
     content: "# Processo de Onboarding\n\n1. Reunião inicial\n2. Levantamento de requisitos\n3. Definição de escopo"
   }]
 }];
+
 interface DocumentExplorerProps {
   onSelectFile: (file: DocumentItem) => void;
   selectedFile: DocumentItem | null;
 }
+
 const DocumentExplorerContent: React.FC<DocumentExplorerProps> = ({
   onSelectFile,
   selectedFile
@@ -74,24 +77,26 @@ const DocumentExplorerContent: React.FC<DocumentExplorerProps> = ({
     handleExportDocument,
     toggleFolderExpanded
   } = useDocumentOperations(onSelectFile);
+  
   const renderItems = (items: DocumentItem[]) => {
     if (!items || items.length === 0) return null;
     const filteredItems = searchQuery ? items.filter(item => item.name.toLowerCase().includes(searchQuery.toLowerCase()) || item.children && item.children.some(child => child.name.toLowerCase().includes(searchQuery.toLowerCase()))) : items;
     return filteredItems.map(item => <DocumentTreeItem key={item.id} item={item} onSelect={onSelectFile} onDelete={handleDeleteItem} onRename={handleRename} onExport={handleExportDocument} onToggleExpanded={toggleFolderExpanded} selectedFile={selectedFile} />);
   };
+
   if (sidebarCollapsed) {
-    // Barra recolhida totalmente: só botão de expandir
     return <div className="h-full min-h-[300px] flex flex-col items-start justify-start">
         <Button size="icon" variant="ghost" className="m-2" title="Expandir barra" onClick={() => setSidebarCollapsed(false)}>
           <ChevronRight />
         </Button>
       </div>;
   }
+
   return <div className="h-full border-r flex flex-col transition-all">
       <div className="flex items-center p-2 pb-0 pt-2">
-        {/* Título removido o botão de recolher lateral antigo */}
         
-        {/* Botão para recolher toda barra */}
+        
+        
         
       </div>
       <ExplorerHeader onAddItem={handleAddItem} />
@@ -101,10 +106,12 @@ const DocumentExplorerContent: React.FC<DocumentExplorerProps> = ({
       <NewItemDialog open={newItemDialogOpen} onOpenChange={setNewItemDialogOpen} onCreateItem={handleCreateItem} />
     </div>;
 };
+
 const DocumentExplorer: React.FC<DocumentExplorerProps> = props => {
   const [documents, setDocuments] = useState<DocumentItem[]>(initialDocuments);
   return <DocumentProvider>
       <DocumentExplorerContent {...props} />
     </DocumentProvider>;
 };
+
 export default DocumentExplorer;
