@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Filter, Users, CheckCircle2, Activity, TrendingUp, AlertTriangle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -9,15 +8,18 @@ import FunnelChart from './funnel/FunnelChart';
 import ConversionChart from './funnel/ConversionChart';
 import LeakageChart from './funnel/LeakageChart';
 import FunnelSummary from './funnel/FunnelSummary';
-
 const IntegratedFunnel = () => {
-  const { activeTab, setActiveTab, funnelData, isDark } = useFunnelData();
-  
+  const {
+    activeTab,
+    setActiveTab,
+    funnelData,
+    isDark
+  } = useFunnelData();
+
   // Verificação de segurança para garantir que funnelData e suas propriedades existam
   if (!funnelData || !funnelData[activeTab]) {
     // Renderização de fallback quando os dados não estiverem disponíveis
-    return (
-      <Card className="shadow-md border border-border/60 bg-card/90 dark:bg-gray-800/90 backdrop-blur-sm">
+    return <Card className="shadow-md border border-border/60 bg-card/90 dark:bg-gray-800/90 backdrop-blur-sm">
         <CardHeader>
           <CardTitle>Funis Integrados</CardTitle>
           <CardDescription>Carregando dados dos funis...</CardDescription>
@@ -25,29 +27,27 @@ const IntegratedFunnel = () => {
         <CardContent className="h-60 flex items-center justify-center">
           <div className="text-muted-foreground">Carregando informações...</div>
         </CardContent>
-      </Card>
-    );
+      </Card>;
   }
-  
   const getFunnelIcon = (type: FunnelType) => {
     const colors = {
       sales: "text-blue-500",
       ltv: "text-purple-500",
       production: "text-cyan-500"
     };
-    
     switch (type) {
-      case 'sales': return <Filter className={`h-4 w-4 ${colors.sales}`} />;
-      case 'ltv': return <Users className={`h-4 w-4 ${colors.ltv}`} />;
-      case 'production': return <CheckCircle2 className={`h-4 w-4 ${colors.production}`} />;
+      case 'sales':
+        return <Filter className={`h-4 w-4 ${colors.sales}`} />;
+      case 'ltv':
+        return <Users className={`h-4 w-4 ${colors.ltv}`} />;
+      case 'production':
+        return <CheckCircle2 className={`h-4 w-4 ${colors.production}`} />;
     }
   };
 
   // Verificação adicional para garantir que a taxa de conversão existe
   const conversionRate = funnelData[activeTab]?.conversionRate || 0;
-  
-  return (
-    <Card className="shadow-md border border-border/60 bg-card/90 dark:bg-gray-800/90 backdrop-blur-sm overflow-hidden transition-all duration-300 hover:shadow-lg">
+  return <Card className="shadow-md border border-border/60 backdrop-blur-sm overflow-hidden transition-all duration-300 hover:shadow-lg bg-transparent">
       <CardHeader className="pb-2">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2">
@@ -67,8 +67,8 @@ const IntegratedFunnel = () => {
         </CardDescription>
       </CardHeader>
       
-      <CardContent className="space-y-4">
-        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as FunnelType)} className="space-y-4">
+      <CardContent className="space-y-4 bg-transparent">
+        <Tabs value={activeTab} onValueChange={value => setActiveTab(value as FunnelType)} className="space-y-4">
           <TabsList className="grid grid-cols-3 gap-2">
             <TabsTrigger value="sales" className="flex items-center justify-center">
               <Filter className="mr-2 h-4 w-4" /> Vendas
@@ -82,14 +82,12 @@ const IntegratedFunnel = () => {
           </TabsList>
           
           {/* Renderizar o conteúdo das abas somente se tivermos dados disponíveis */}
-          {Object.keys(funnelData).map((type) => {
-            // Verificar se os dados do tipo específico existem
-            if (!funnelData[type as FunnelType] || !funnelData[type as FunnelType].stages) {
-              return null;
-            }
-            
-            return (
-              <TabsContent key={type} value={type} className="space-y-4 animation-fade-in">
+          {Object.keys(funnelData).map(type => {
+          // Verificar se os dados do tipo específico existem
+          if (!funnelData[type as FunnelType] || !funnelData[type as FunnelType].stages) {
+            return null;
+          }
+          return <TabsContent key={type} value={type} className="space-y-4 animation-fade-in">
                 <div className="grid grid-cols-1 gap-4 transition-all duration-300">
                   {/* Visual Funnel Chart */}
                   <Card className="p-4 shadow-sm hover:shadow-md transition-all duration-300 bg-card/50 overflow-hidden">
@@ -97,10 +95,7 @@ const IntegratedFunnel = () => {
                       {getFunnelIcon(type as FunnelType)}
                       <h3 className="text-sm font-medium">Funil Visual</h3>
                     </div>
-                    <FunnelChart 
-                      data={funnelData[type as FunnelType].stages}
-                      isDark={isDark}
-                    />
+                    <FunnelChart data={funnelData[type as FunnelType].stages} isDark={isDark} />
                   </Card>
                   
                   {/* Three funnel metrics cards in a responsive grid */}
@@ -111,11 +106,7 @@ const IntegratedFunnel = () => {
                         <TrendingUp className="h-4 w-4 text-green-500" />
                         <h3 className="text-sm font-medium">Conversão por Etapa</h3>
                       </div>
-                      <ConversionChart 
-                        data={funnelData[type as FunnelType].stages}
-                        isDark={isDark}
-                        color={getColorsByType(type as FunnelType, isDark)[type as FunnelType]?.efficiency || '#22c55e'}
-                      />
+                      <ConversionChart data={funnelData[type as FunnelType].stages} isDark={isDark} color={getColorsByType(type as FunnelType, isDark)[type as FunnelType]?.efficiency || '#22c55e'} />
                     </Card>
                     
                     {/* Leakage Funnel */}
@@ -124,11 +115,7 @@ const IntegratedFunnel = () => {
                         <TrendingUp className="h-4 w-4 text-red-500" />
                         <h3 className="text-sm font-medium">Fugas por Etapa</h3>
                       </div>
-                      <LeakageChart 
-                        data={funnelData[type as FunnelType].stages}
-                        isDark={isDark}
-                        color={getColorsByType(type as FunnelType, isDark)[type as FunnelType]?.leakage || '#ef4444'}
-                      />
+                      <LeakageChart data={funnelData[type as FunnelType].stages} isDark={isDark} color={getColorsByType(type as FunnelType, isDark)[type as FunnelType]?.leakage || '#ef4444'} />
                     </Card>
                     
                     {/* Overall Summary */}
@@ -160,29 +147,21 @@ const IntegratedFunnel = () => {
                         </div>
                         
                         <div className="mt-4">
-                          <FunnelSummary 
-                            type={type as FunnelType}
-                            data={funnelData[type as FunnelType]}
-                          />
+                          <FunnelSummary type={type as FunnelType} data={funnelData[type as FunnelType]} />
                         </div>
                       </div>
                     </Card>
                   </div>
                 </div>
                 
-                {funnelData[type as FunnelType].stages.some(stage => (stage.leakage || 0) > 30) && (
-                  <div className="flex items-center p-2 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 text-sm animate-pulse-subtle">
+                {funnelData[type as FunnelType].stages.some(stage => (stage.leakage || 0) > 30) && <div className="flex items-center p-2 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 text-sm animate-pulse-subtle">
                     <AlertTriangle className="h-4 w-4 text-yellow-600 dark:text-yellow-400 mr-2" />
                     <span>Atenção: Algumas etapas possuem fugas acima de 30%</span>
-                  </div>
-                )}
-              </TabsContent>
-            );
-          })}
+                  </div>}
+              </TabsContent>;
+        })}
         </Tabs>
       </CardContent>
-    </Card>
-  );
+    </Card>;
 };
-
 export default IntegratedFunnel;
