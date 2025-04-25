@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, Suspense } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
@@ -54,30 +55,36 @@ const MainLayout = () => {
     <SidebarProvider>
       <div className="flex h-screen w-full overflow-hidden bg-background">
         {/* Sidebar - Fixed position with transition */}
-        <div 
+        <aside 
           className={cn(
             "fixed top-0 left-0 z-30 h-screen transition-all duration-300 ease-in-out",
-            sidebarOpen ? "w-64" : "w-0"
+            "bg-background border-r border-border/40",
+            sidebarOpen ? "w-64" : "w-16",
+            isMobileView && !sidebarOpen && "w-0"
           )}
         >
           <Sidebar 
             open={sidebarOpen} 
             setOpen={setSidebarOpen}
           />
-        </div>
+        </aside>
 
         {/* Main content wrapper - Shifts with sidebar */}
-        <div 
+        <main 
           className={cn(
             "flex flex-col flex-1 min-w-0 h-screen transition-all duration-300 ease-in-out",
-            sidebarOpen && !isMobileView ? "ml-64" : "ml-0"
+            "relative",
+            sidebarOpen ? "ml-64" : "ml-16",
+            isMobileView && !sidebarOpen && "ml-0"
           )}
         >
-          {/* TopNav - Shifts with content */}
-          <TopNav />
+          {/* TopNav - Fixed at top */}
+          <div className="sticky top-0 z-20 w-full">
+            <TopNav />
+          </div>
           
-          {/* Main scrollable content */}
-          <main className="flex-1 overflow-y-auto bg-background p-4 md:p-6">
+          {/* Scrollable content area */}
+          <div className="flex-1 overflow-y-auto bg-background p-4 md:p-6">
             <ErrorBoundary
               fallback={
                 <div className="p-6 bg-destructive/10 rounded-lg">
@@ -124,29 +131,31 @@ const MainLayout = () => {
                 </Suspense>
               </PageTransition>
             </ErrorBoundary>
-          </main>
-        </div>
+          </div>
+        </main>
 
         <UnifiedChatButton />
 
         {/* Mobile toggle button */}
         {isMobileView && (
-          <div 
+          <Button 
+            variant="default" 
+            size="icon" 
             className={cn(
-              "fixed z-40 transition-all duration-300",
-              "bottom-16 left-4"
+              "fixed z-40 bottom-16 transition-all duration-300",
+              "rounded-full h-9 w-9 shadow-md",
+              "bg-primary text-primary-foreground hover:bg-primary/90",
+              "shadow-[0_0_15px_rgba(130,80,223,0.4)]",
+              sidebarOpen ? "left-[16.5rem]" : "left-4"
             )}
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            aria-label={sidebarOpen ? "Fechar Menu" : "Abrir Menu"}
           >
-            <Button 
-              variant="default" 
-              size="icon" 
-              className="rounded-full h-9 w-9 shadow-md bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_0_15px_rgba(130,80,223,0.4)]"
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              aria-label={sidebarOpen ? "Fechar Menu" : "Abrir Menu"}
-            >
-              <ChevronLeft className={cn("h-4 w-4 transition-transform", !sidebarOpen && "rotate-180")} />
-            </Button>
-          </div>
+            <ChevronLeft className={cn(
+              "h-4 w-4 transition-transform duration-300",
+              !sidebarOpen && "rotate-180"
+            )} />
+          </Button>
         )}
       </div>
     </SidebarProvider>
