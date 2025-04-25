@@ -86,7 +86,7 @@ const EdgeDialog = ({ isOpen, edge, onClose, onUpdate, onDelete }: EdgeDialogPro
     { label: "Nenhum", value: "" },
     { label: "Ponta de Seta", value: MarkerType.ArrowClosed },
     { label: "Seta", value: MarkerType.Arrow },
-    { label: "Círculo", value: MarkerType.Circle }
+    { label: "Círculo", value: "circle" }
   ];
 
   return (

@@ -13,7 +13,9 @@ import ReactFlow, {
   MarkerType,
   useReactFlow,
   Panel,
+  ConnectionLineType,
 } from "reactflow";
+import { Button } from "@/components/ui/button";
 import CustomNode from "./CustomNode";
 import MindMapControls from "./MindMapControls";
 import NodeTemplates, { nodeTemplates } from "./NodeTemplates";
@@ -74,7 +76,7 @@ const MindMapFlow = () => {
     // Create a new edge with default styling
     const newEdge = {
       ...params,
-      type: 'smoothstep',
+      type: 'default',
       animated: false,
       style: { stroke: '#555', strokeWidth: 2 },
       markerEnd: { type: MarkerType.ArrowClosed, color: '#555' },
@@ -203,7 +205,7 @@ const MindMapFlow = () => {
           snapGrid={[15, 15]}
           defaultViewport={{ x: 0, y: 0, zoom: 0.8 }}
           connectionLineStyle={{ stroke: '#555', strokeWidth: 2 }}
-          connectionLineType="smoothstep"
+          connectionLineType={ConnectionLineType.SmoothStep}
         >
           <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
           <Controls />
