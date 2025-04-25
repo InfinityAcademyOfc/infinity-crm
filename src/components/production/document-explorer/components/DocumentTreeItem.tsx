@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { File, Folder, FolderOpen, MoreHorizontal, Pencil, Download, Trash, ChevronRight, ChevronDown, GripVertical } from 'lucide-react';
 import { TreeItem } from '@/components/ui/tree';
@@ -20,7 +19,7 @@ import { DocumentItem } from '../types';
 import { useDocumentContext } from '../contexts/DocumentContext';
 import { cn } from '@/lib/utils';
 import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+import { CSS as DndKitCSS } from '@dnd-kit/utilities';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 // Enhanced color palette with more variety
@@ -82,7 +81,7 @@ const DocumentTreeItem: React.FC<DocumentTreeItemProps> = ({
   });
 
   const style = {
-    transform: CSS.Transform.toString(transform),
+    transform: DndKitCSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
     position: 'relative' as const,
@@ -103,8 +102,8 @@ const DocumentTreeItem: React.FC<DocumentTreeItemProps> = ({
 
   const handleColorChange = (color: string) => {
     try {
-      // Validate the color before applying it
-      if (CSS.supports('color', color)) {
+      // Use window.CSS instead of the CSS from @dnd-kit/utilities
+      if (window.CSS && window.CSS.supports('color', color)) {
         setFolderColor(color);
         (item as any).folderColor = color;
         
@@ -123,8 +122,8 @@ const DocumentTreeItem: React.FC<DocumentTreeItemProps> = ({
 
   const handleApplyCustomColor = () => {
     try {
-      // Validate custom color before applying
-      if (CSS.supports('color', customColor)) {
+      // Use window.CSS instead of the CSS from @dnd-kit/utilities
+      if (window.CSS && window.CSS.supports('color', customColor)) {
         handleColorChange(customColor);
         setIsColorDialogOpen(false);
       } else {

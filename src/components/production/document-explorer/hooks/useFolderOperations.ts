@@ -16,7 +16,8 @@ export const useFolderOperations = () => {
   const addCustomColor = (color: string) => {
     // Validate color format before adding to prevent UI freeze
     try {
-      if (color && CSS.supports('color', color) && !recentColors.includes(color)) {
+      // Use native window.CSS instead of the CSS from @dnd-kit/utilities
+      if (color && window.CSS && window.CSS.supports('color', color) && !recentColors.includes(color)) {
         const newRecentColors = [color, ...recentColors].slice(0, 10);
         setRecentColors(newRecentColors);
         return true;
