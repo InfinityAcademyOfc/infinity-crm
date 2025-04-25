@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { 
   X,
@@ -87,66 +86,88 @@ const Sidebar = ({ open, setOpen }: SidebarProps) => {
     }
   };
 
-  if (!open && isMobile) return null;
+  if (!open) return null;
 
   return (
-    <div className="h-full w-full flex flex-col" ref={sidebarRef}>
+    <>
       {isMobile && (
-        <div className="flex justify-end p-2">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={() => setOpen(false)}
-          >
-            <X size={18} />
-            <span className="sr-only">Close</span>
-          </Button>
-        </div>
+        <div 
+          className="fixed inset-0 bg-black/30 z-20 backdrop-blur-sm"
+          onClick={() => setOpen(false)}
+        />
       )}
       
-      <div className="flex-grow overflow-y-auto px-4 py-2">
-        <NavSection 
-          title="Menu Principal" 
-          items={mainMenuItems} 
-          isCollapsed={isCollapsed}
-          onItemClick={() => isMobile && setOpen(false)}
-        />
-        <NavSection 
-          title="Integrações" 
-          items={integrationItems} 
-          isCollapsed={isCollapsed}
-          onItemClick={() => isMobile && setOpen(false)}
-          className="mt-6"
-        />
-        <NavSection 
-          title="Gestão" 
-          items={managementItems} 
-          isCollapsed={isCollapsed}
-          onItemClick={() => isMobile && setOpen(false)}
-          className="mt-6"
-        />
-        <NavSection 
-          title="Sistema" 
-          items={systemItems} 
-          isCollapsed={isCollapsed}
-          onItemClick={() => isMobile && setOpen(false)}
-          className="mt-6 mb-4"
-        />
+      <div className={cn("h-screen fixed top-0 left-0 z-30", isMobile ? "overflow-hidden" : "")} ref={sidebarRef}>
+        <aside
+          className={cn(
+            "sidebar border-r border-gray-200 dark:border-gray-800 h-full transition-all duration-300 relative flex flex-col",
+            isCollapsed ? "min-w-16 w-16" : "min-w-64 w-64",
+            isMobile ? "fixed inset-y-0 left-0 z-20 shadow-lg" : "relative"
+          )}
+        >
+          {isMobile && (
+            <div className="flex justify-end p-2">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => setOpen(false)}
+              >
+                <X size={18} />
+              </Button>
+            </div>
+          )}
+
+          <div className="flex-grow overflow-y-auto px-4 py-2">
+            <NavSection 
+              title="Menu Principal" 
+              items={mainMenuItems} 
+              isCollapsed={isCollapsed}
+              onItemClick={() => isMobile && setOpen(false)}
+            />
+            <NavSection 
+              title="Integrações" 
+              items={integrationItems} 
+              isCollapsed={isCollapsed}
+              onItemClick={() => isMobile && setOpen(false)}
+              className="mt-6"
+            />
+            <NavSection 
+              title="Gestão" 
+              items={managementItems} 
+              isCollapsed={isCollapsed}
+              onItemClick={() => isMobile && setOpen(false)}
+              className="mt-6"
+            />
+            <NavSection 
+              title="Sistema" 
+              items={systemItems} 
+              isCollapsed={isCollapsed}
+              onItemClick={() => isMobile && setOpen(false)}
+              className="mt-6 mb-4"
+            />
+          </div>
+        </aside>
       </div>
       
-      {!isMobile && open && (
-        <div className="flex items-center justify-center py-4">
+      {!isMobile && (
+        <div 
+          className={cn(
+            "fixed z-40 transition-all duration-300",
+            open ? (isCollapsed ? "left-[4.5rem]" : "left-[16.5rem]") : "left-4",
+            "top-[calc(100vh-7rem)]"
+          )}
+        >
           <Button 
-            variant="ghost" 
+            variant="default" 
             size="icon" 
-            onClick={() => setCollapsed(!collapsed)}
-            className="rounded-full h-8 w-8"
+            className="rounded-full h-9 w-9 shadow-md bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_0_15px_rgba(130,80,223,0.4)]"
+            onClick={toggleCollapse}
           >
-            {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+            {open ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
           </Button>
         </div>
       )}
-    </div>
+    </>
   );
 };
 

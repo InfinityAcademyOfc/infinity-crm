@@ -54,8 +54,8 @@ const MainLayout = () => {
   return (
     <SidebarProvider>
       <div className="flex h-screen w-full overflow-hidden bg-background">
-        {/* Sidebar - Fixed position */}
-        <div 
+        {/* Sidebar - Fixed position with transition */}
+        <aside 
           className={cn(
             "fixed top-0 left-0 z-30 h-screen transition-all duration-300 ease-in-out",
             "bg-background border-r border-border/40",
@@ -67,13 +67,13 @@ const MainLayout = () => {
             open={sidebarOpen} 
             setOpen={setSidebarOpen}
           />
-        </div>
+        </aside>
 
         {/* Main content wrapper - Shifts with sidebar */}
-        <div 
+        <main 
           className={cn(
-            "flex flex-col flex-1 h-screen transition-all duration-300 ease-in-out",
-            "min-w-0 relative",
+            "flex flex-col flex-1 min-w-0 h-screen transition-all duration-300 ease-in-out",
+            "relative",
             sidebarOpen ? "ml-64" : "ml-16",
             isMobileView && !sidebarOpen && "ml-0"
           )}
@@ -84,7 +84,7 @@ const MainLayout = () => {
           </div>
           
           {/* Scrollable content area */}
-          <main className="flex-1 overflow-y-auto bg-background p-4 md:p-6">
+          <div className="flex-1 overflow-y-auto bg-background p-4 md:p-6">
             <ErrorBoundary
               fallback={
                 <div className="p-6 bg-destructive/10 rounded-lg">
@@ -131,8 +131,8 @@ const MainLayout = () => {
                 </Suspense>
               </PageTransition>
             </ErrorBoundary>
-          </main>
-        </div>
+          </div>
+        </main>
 
         <UnifiedChatButton />
 
