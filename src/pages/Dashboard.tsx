@@ -1,5 +1,4 @@
-
-import React, { Suspense, lazy, useState, useEffect } from "react";
+import React, { Suspense, lazy } from "react";
 import { ArrowRight, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -76,33 +75,25 @@ const Dashboard = () => {
         </CardContent>
       </Card>
       
-      <Suspense fallback={<StatsSkeleton />}>
-        <StatsSection />
-      </Suspense>
-      
-      {/* First row - Sales Chart 60% + Integrated Funnel 40% */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        <div className="lg:col-span-3">
-          <Suspense fallback={<ChartSkeleton />}>
-            <SalesChart data={isLoaded ? mockSalesData : []} />
-          </Suspense>
-        </div>
-        <div className="lg:col-span-2">
-          <Suspense fallback={<ChartSkeleton />}>
-            <IntegratedFunnel />
-          </Suspense>
-        </div>
-      </div>
-      
-      {/* Second row - Funnel Chart (Conversão de Funil) 100% width */}
+      {/* First row - Funnel Chart 100% width */}
       <div className="grid grid-cols-1 gap-6">
         <Suspense fallback={<ChartSkeleton />}>
           <FunnelChart data={isLoaded ? mockFunnelData : []} />
         </Suspense>
       </div>
-      
-      {/* Third row - Finance Chart (DRE Simplificado) 100% */}
+
+      {/* Second row - Integrated Funnel 100% */}
       <div className="grid grid-cols-1 gap-6">
+        <Suspense fallback={<ChartSkeleton />}>
+          <IntegratedFunnel />
+        </Suspense>
+      </div>
+      
+      {/* Third row - Sales Chart 50% + Finance Chart 50% */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Suspense fallback={<ChartSkeleton />}>
+          <SalesChart data={isLoaded ? mockSalesData : []} />
+        </Suspense>
         <Suspense fallback={<ChartSkeleton />}>
           <FinanceChart />
         </Suspense>
