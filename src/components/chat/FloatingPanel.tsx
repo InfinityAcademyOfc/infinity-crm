@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { Maximize2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,6 +37,7 @@ const FloatingPanel = ({
   onFullScreen,
 }: FloatingPanelProps) => {
   const isMobile = useIsMobile();
+  const panelRef = useRef<HTMLDivElement>(null);
   
   if (!isOpen) return null;
 
@@ -44,8 +45,23 @@ const FloatingPanel = ({
   const adjustedWidth = Math.round(chatWidth * sizeMultiplier);
   const adjustedHeight = Math.round(chatHeight * sizeMultiplier);
 
+  // This handles clicking outside to close on mobile
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (isMobile && panelRef.current && !panelRef.current.contains(event.target as Node)) {
+        onClose();
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isMobile, onClose]);
+
   return (
     <ResizablePanelGroup
+      ref={panelRef}
       className="mb-4 bg-background border rounded-lg shadow-lg overflow-hidden"
       style={{ width: adjustedWidth, height: adjustedHeight }}
       onResize={onResize}

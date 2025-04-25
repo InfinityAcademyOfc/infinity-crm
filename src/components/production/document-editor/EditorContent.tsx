@@ -1,4 +1,5 @@
-import React, { useEffect, forwardRef, useRef, useState } from "react";
+
+import React, { useEffect, forwardRef, useRef, useState, useCallback } from "react";
 import FloatingFormatToolbar from "./toolbar/FloatingFormatToolbar";
 
 interface EditorContentProps {
@@ -28,47 +29,53 @@ const EditorContent = forwardRef<HTMLDivElement, EditorContentProps>(({
     { id: 'user2', name: 'Carlos Mendes', color: '#33FF57', position: { x: 300, y: 120 } }
   ]);
 
+  // Safely initialize content - only run once when component mounts
   useEffect(() => {
     if (editorRef.current) {
       editorRef.current.innerHTML = content.replace(/\n/g, "<br/>");
-      
-      const selection = window.getSelection();
-      if (selection) {
-        const range = document.createRange();
-        range.selectNodeContents(editorRef.current);
-        range.collapse(false);
-        selection.removeAllRanges();
-        selection.addRange(range);
-      }
     }
   }, []);
 
-  const handleSelectionChange = () => {
+  // Safe selection handler that checks for editor existence before manipulating
+  const handleSelectionChange = useCallback(() => {
     const selection = window.getSelection();
-    if (selection && selection.toString() && isFocused && editorRef.current && selection.rangeCount) {
-      const range = selection.getRangeAt(0);
-      const rect = range.getBoundingClientRect();
-      const editorRect = editorRef.current.getBoundingClientRect();
+    if (!selection || !editorRef.current || !isFocused) {
+      setShowFormatToolbar(false);
+      return;
+    }
 
-      setFormatToolbarPosition({
-        top: rect.top + window.scrollY - editorRect.top + 36,
-        left: rect.left + window.scrollX - editorRect.left + (rect.width / 2)
-      });
-      setSelectedText(selection.toString());
-      setShowFormatToolbar(true);
+    const selectionText = selection.toString();
+    setSelectedText(selectionText);
+
+    if (selectionText && selection.rangeCount > 0) {
+      try {
+        const range = selection.getRangeAt(0);
+        const rect = range.getBoundingClientRect();
+        const editorRect = editorRef.current.getBoundingClientRect();
+
+        setFormatToolbarPosition({
+          top: rect.top + window.scrollY - editorRect.top + 36,
+          left: rect.left + window.scrollX - editorRect.left + (rect.width / 2)
+        });
+        setShowFormatToolbar(true);
+      } catch (error) {
+        console.error("Error handling selection change:", error);
+        setShowFormatToolbar(false);
+      }
     } else {
-      setSelectedText("");
       setShowFormatToolbar(false);
     }
-  };
+  }, [isFocused]);
 
+  // Add selection change listener with proper cleanup
   useEffect(() => {
     document.addEventListener("selectionchange", handleSelectionChange);
     return () => {
       document.removeEventListener("selectionchange", handleSelectionChange);
     };
-  }, [isFocused]);
+  }, [handleSelectionChange]);
 
+  // Handle collaborator animation with proper interval cleanup
   useEffect(() => {
     const interval = setInterval(() => {
       setCollaborators(prev => prev.map(user => ({
@@ -85,29 +92,41 @@ const EditorContent = forwardRef<HTMLDivElement, EditorContentProps>(({
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (editorRef.current && e.currentTarget === e.target) {
-      const selection = window.getSelection();
-      if (selection) {
-        const range = document.createRange();
-        range.selectNodeContents(editorRef.current);
-        range.collapse(false);
-        selection.removeAllRanges();
-        selection.addRange(range);
+      try {
+        const selection = window.getSelection();
+        if (selection) {
+          const range = document.createRange();
+          range.selectNodeContents(editorRef.current);
+          range.collapse(false);
+          selection.removeAllRanges();
+          selection.addRange(range);
+        }
+        editorRef.current.focus();
+      } catch (error) {
+        console.error("Error handling mouse down:", error);
       }
-      editorRef.current.focus();
     }
   };
 
   const handleInput = () => {
     if (editorRef.current) {
-      const newContent = editorRef.current.innerHTML.replace(/<br>/g, "\n");
-      onUpdateContent(newContent);
+      try {
+        const newContent = editorRef.current.innerHTML.replace(/<br>/g, "\n");
+        onUpdateContent(newContent);
+      } catch (error) {
+        console.error("Error handling input:", error);
+      }
     }
   };
 
   const handlePaste = (e: React.ClipboardEvent) => {
     e.preventDefault();
-    const text = e.clipboardData.getData("text/plain");
-    document.execCommand("insertText", false, text);
+    try {
+      const text = e.clipboardData.getData("text/plain");
+      document.execCommand("insertText", false, text);
+    } catch (error) {
+      console.error("Error handling paste:", error);
+    }
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -123,17 +142,20 @@ const EditorContent = forwardRef<HTMLDivElement, EditorContentProps>(({
   };
 
   const handleFormatAction = (action: string, value?: string) => {
-    if (action === "fontSize") {
-      document.execCommand("fontSize", false, "7");
-      document.queryCommandValue("fontSize");
-      const sel = window.getSelection();
-      if (sel && sel.anchorNode?.parentElement && value) {
-        sel.anchorNode.parentElement.style.fontSize = value;
+    try {
+      if (action === "fontSize") {
+        document.execCommand("fontSize", false, "7");
+        const sel = window.getSelection();
+        if (sel && sel.anchorNode?.parentElement && value) {
+          sel.anchorNode.parentElement.style.fontSize = value;
+        }
+      } else if (["fontName", "foreColor", "backColor"].includes(action)) {
+        document.execCommand(action, false, value);
+      } else {
+        document.execCommand(action, false, value);
       }
-    } else if (["fontName", "foreColor", "backColor"].includes(action)) {
-      document.execCommand(action, false, value);
-    } else {
-      document.execCommand(action, false, value);
+    } catch (error) {
+      console.error(`Error applying format ${action}:`, error);
     }
   };
 
@@ -155,11 +177,13 @@ const EditorContent = forwardRef<HTMLDivElement, EditorContentProps>(({
         onFocus={() => setIsFocused(true)}
         onBlur={() => {
           setIsFocused(false);
-          setTimeout(() => {
+          // Use setTimeout with cleanup via useEffect instead
+          const timer = setTimeout(() => {
             if (!document.activeElement?.closest('.floating-format-toolbar')) {
               setShowFormatToolbar(false);
             }
           }, 100);
+          return () => clearTimeout(timer);
         }}
         style={{
           fontFamily,

@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,12 +25,32 @@ const ChatContent = ({ initialMessages, className }: ChatContentProps) => {
     ]
   );
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
+  const timeoutRef = useRef<number | null>(null);
+  
+  // Safe scrolling implementation
+  const scrollToBottom = useCallback(() => {
     if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+      try {
+        messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+      } catch (error) {
+        console.error("Error scrolling to bottom:", error);
+      }
     }
-  }, [messages]);
+  }, []);
+
+  // Scroll to bottom when messages change
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, scrollToBottom]);
+
+  // Clean up any pending timeouts when component unmounts
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current !== null) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleSendMessage = () => {
     if (!message.trim()) return;
@@ -41,10 +61,15 @@ const ChatContent = ({ initialMessages, className }: ChatContentProps) => {
       sender: "user" as const,
     };
     
-    setMessages([...messages, newMessage]);
+    setMessages(prevMessages => [...prevMessages, newMessage]);
     setMessage("");
     
-    setTimeout(() => {
+    // Store timeout ID for cleanup
+    if (timeoutRef.current !== null) {
+      clearTimeout(timeoutRef.current);
+    }
+    
+    timeoutRef.current = window.setTimeout(() => {
       const responses = [
         "Entendi! Posso ajudar com isso.",
         "Obrigado pela mensagem. Vou verificar e retornar em breve.",
@@ -63,6 +88,8 @@ const ChatContent = ({ initialMessages, className }: ChatContentProps) => {
           sender: "agent",
         },
       ]);
+      
+      timeoutRef.current = null;
     }, 1000);
   };
 

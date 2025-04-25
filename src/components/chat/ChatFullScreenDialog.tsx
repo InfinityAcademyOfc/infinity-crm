@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { X } from "lucide-react";
 import {
   Dialog,
@@ -30,10 +30,23 @@ const ChatFullScreenDialog = ({
   activeTab,
   onTabChange,
 }: ChatFullScreenDialogProps) => {
+  // Ensure body scroll is disabled when dialog is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   return (
-    <Dialog open={true} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-5xl w-[90vw] h-[80vh] p-0">
         <DialogHeader className="px-4 py-2 border-b flex flex-row items-center justify-between bg-background/50 backdrop-blur supports-[backdrop-filter]:bg-background/50">
           <div className="flex items-center gap-2">

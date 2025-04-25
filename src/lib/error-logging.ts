@@ -19,18 +19,58 @@ export const setupErrorHandlers = () => {
     // Handle unhandled promise rejections
     window.addEventListener('unhandledrejection', (event) => {
       console.error('Unhandled Promise Rejection:', event.reason);
-      
-      // In a production app, you would typically send this to a logging service
-      // Example: sendToErrorLoggingService(event.reason);
     });
     
     // Handle global errors
     window.addEventListener('error', (event) => {
       console.error('Global error:', event.error);
-      
-      // In a production app, you would typically send this to a logging service
-      // Example: sendToErrorLoggingService(event.error);
     });
+  }
+};
+
+// Safely query DOM elements with proper error handling
+export const safeQuerySelector = <T extends Element>(
+  selector: string, 
+  parent: Document | Element = document
+): T | null => {
+  try {
+    return parent.querySelector<T>(selector);
+  } catch (error) {
+    console.error(`Error querying selector "${selector}":`, error);
+    return null;
+  }
+};
+
+// Safely modify DOM elements with proper checks
+export const safeModifyElement = (
+  element: Element | null | undefined,
+  modifier: (el: Element) => void
+): boolean => {
+  if (element) {
+    try {
+      modifier(element);
+      return true;
+    } catch (error) {
+      console.error('Error modifying DOM element:', error);
+      return false;
+    }
+  }
+  return false;
+};
+
+// Safe DOM node removal with proper checks
+export const safeRemoveChild = (parent: Node | null, child: Node | null): boolean => {
+  if (!parent || !child) return false;
+  
+  try {
+    if (child.parentNode === parent) {
+      parent.removeChild(child);
+      return true;
+    }
+    return false;
+  } catch (error) {
+    console.error('Error removing child node:', error);
+    return false;
   }
 };
 
@@ -41,6 +81,11 @@ export const setupDOMErrorTracking = () => {
     const originalRemoveChild = Node.prototype.removeChild;
     
     Node.prototype.removeChild = function(child) {
+      if (!child) {
+        console.error('Invalid removeChild call - child is null or undefined');
+        return child;
+      }
+      
       if (child.parentNode !== this) {
         console.error('Invalid removeChild call - node is not a child of the parent:', {
           parent: this,

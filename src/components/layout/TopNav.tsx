@@ -1,4 +1,5 @@
 
+import React from "react";
 import ThemeToggle from "@/components/theme/ThemeToggle";
 import { UserMenu } from "@/components/auth/UserMenu";
 import NotificationsDropdown from "@/components/layout/NotificationsDropdown";
@@ -31,6 +32,28 @@ export function TopNav() {
   const moduleInfo = moduleData[modulePath]
     ? { name: moduleData[modulePath].name || "", subtitle: moduleData[modulePath].subtitle || "" }
     : { name: "", subtitle: "" };
+
+  // Safe DOM operation with useEffect and checking existence before manipulating
+  React.useEffect(() => {
+    const headerElement = document.querySelector('header.sticky');
+    if (headerElement) {
+      try {
+        headerElement.classList.add('bg-background/50', 'backdrop-blur', 'supports-[backdrop-filter]:bg-background/50');
+      } catch (error) {
+        console.error("Error updating header style:", error);
+      }
+    }
+    
+    return () => {
+      if (headerElement) {
+        try {
+          headerElement.classList.remove('bg-background/50', 'backdrop-blur', 'supports-[backdrop-filter]:bg-background/50');
+        } catch (error) {
+          console.error("Error reverting header style:", error);
+        }
+      }
+    };
+  }, []);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/50 backdrop-blur supports-[backdrop-filter]:bg-background/50">
