@@ -1,3 +1,4 @@
+
 @tailwind components;
 
 @layer components {
@@ -25,46 +26,7 @@
 
   /* Sidebar styles - Restored previous style */
   .sidebar {
-    @apply bg-white dark:bg-gray-900;
-    height: 100vh;
-    overflow-y: auto;
-    overflow-x: hidden;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
-  }
-
-  .sidebar::-webkit-scrollbar {
-    width: 4px;
-  }
-
-  .sidebar::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  .sidebar::-webkit-scrollbar-thumb {
-    @apply bg-gray-300 dark:bg-gray-700 rounded;
-  }
-
-  /* Enhanced mobile animations */
-  @media (max-width: 768px) {
-    .sidebar {
-      @apply fixed top-0 left-0 w-64 shadow-xl;
-      transition: transform 0.3s ease-in-out;
-    }
-    
-    .sidebar.closed {
-      transform: translateX(-100%);
-    }
-    
-    .sidebar-overlay {
-      @apply fixed inset-0 bg-black bg-opacity-50 z-20;
-      animation: fadeIn 0.3s ease-in-out;
-    }
-  }
-
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    @apply bg-white dark:bg-gray-900 shadow-md;
   }
 
   /* Metallic styling - Updated for cleaner look */

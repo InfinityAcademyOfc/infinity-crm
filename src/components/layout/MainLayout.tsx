@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, Suspense } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
@@ -37,58 +36,21 @@ const MainLayout = () => {
     }
   }, [location.pathname, isMobileView]);
 
-  // Close sidebar when clicking outside on mobile
-  useEffect(() => {
-    if (!isMobileView) return;
-
-    const handleClickOutside = (event: MouseEvent) => {
-      const sidebar = document.querySelector('.sidebar');
-      const toggleButton = document.querySelector('.sidebar-toggle');
-      
-      if (sidebarOpen && 
-          sidebar && 
-          !sidebar.contains(event.target as Node) && 
-          toggleButton && 
-          !toggleButton.contains(event.target as Node)) {
-        setSidebarOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [sidebarOpen, isMobileView]);
-
   if (loading) {
     return <LoadingScreen />;
   }
 
   return (
     <SidebarProvider>
-      <div className="flex h-screen w-full bg-background overflow-hidden">
-        {/* Overlay for mobile */}
-        {isMobileView && sidebarOpen && (
-          <div 
-            className="fixed inset-0 bg-black/50 z-20 transition-opacity duration-300 md:hidden"
-            onClick={() => setSidebarOpen(false)}
-          />
-        )}
-
-        {/* Sidebar */}
-        <div className={cn(
-          "fixed h-screen z-30 transition-transform duration-300 ease-in-out",
-          isMobileView ? (sidebarOpen ? "translate-x-0" : "-translate-x-full") : "relative"
-        )}>
+      <div className="flex h-screen w-full bg-background">
+        <div className="h-screen flex-shrink-0 overflow-hidden">
           <Sidebar 
             open={sidebarOpen} 
             setOpen={setSidebarOpen}
           />
         </div>
 
-        {/* Main content */}
-        <div className={cn(
-          "flex-1 flex flex-col min-w-0 h-screen transition-all duration-300 ease-in-out",
-          !isMobileView && sidebarOpen ? "ml-64" : "ml-0"
-        )}>
+        <div className="flex flex-col flex-1 min-w-0 h-screen overflow-hidden">
           <TopNav />
           <main className="flex-1 overflow-y-auto bg-background p-4 md:p-6">
             <ErrorBoundary
@@ -128,26 +90,23 @@ const MainLayout = () => {
           </main>
         </div>
 
-        {/* Mobile toggle button */}
         {isMobileView && (
-          <Button 
-            variant="default" 
-            size="icon" 
+          <div 
             className={cn(
-              "sidebar-toggle fixed z-40 transition-all duration-300 rounded-full h-9 w-9",
-              "shadow-md bg-primary text-primary-foreground hover:bg-primary/90",
-              "shadow-[0_0_15px_rgba(130,80,223,0.4)]",
-              "bottom-16 left-4"
+              "fixed z-40 transition-all duration-300",
+              sidebarOpen ? "left-[16.5rem]" : "left-4",
+              "bottom-24"
             )}
-            onClick={() => setSidebarOpen(!sidebarOpen)}
           >
-            <ChevronLeft 
-              className={cn(
-                "h-4 w-4 transition-transform duration-300",
-                !sidebarOpen && "rotate-180"
-              )} 
-            />
-          </Button>
+            <Button 
+              variant="default" 
+              size="icon" 
+              className="rounded-full h-9 w-9 shadow-md bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_0_15px_rgba(130,80,223,0.4)]"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+            >
+              <ChevronLeft className={cn("h-4 w-4 transition-transform", !sidebarOpen && "rotate-180")} />
+            </Button>
+          </div>
         )}
         
         <UnifiedChatButton />
