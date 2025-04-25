@@ -81,13 +81,13 @@ const EdgeDialog = ({ isOpen, edge, onClose, onUpdate, onDelete }: EdgeDialogPro
 
   const handleMarkerChange = (value: string, setter: React.Dispatch<React.SetStateAction<MarkerType | null>>) => {
     if (value === "") {
-      setter(null);
+      setter(() => null);
     } else if (value === MarkerType.Arrow) {
-      setter(MarkerType.Arrow);
+      setter(() => MarkerType.Arrow);
     } else if (value === MarkerType.ArrowClosed) {
-      setter(MarkerType.ArrowClosed);
+      setter(() => MarkerType.ArrowClosed);
     } else {
-      setter(null);
+      setter(() => null);
     }
   };
 
