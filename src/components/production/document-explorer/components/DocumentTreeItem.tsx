@@ -84,8 +84,9 @@ const DocumentTreeItem: React.FC<DocumentTreeItemProps> = ({
     setSelectedFolder(selectedFolder === item.id ? null : item.id);
   };
 
-  const startRenaming = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  // Modified: Add parameter type and provide default empty event when needed
+  const startRenaming = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
     setEditingItem({ id: item.id, name: item.name });
   };
 
