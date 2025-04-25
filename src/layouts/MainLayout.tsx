@@ -1,101 +1,170 @@
 
-import { useState, useEffect, Suspense } from "react";
-import { Outlet, useLocation } from "react-router-dom";
-import { Toaster } from "sonner";
-import Header from "@/components/navigation/Header";
+import React, { useState, useEffect, Suspense } from "react";
+import { Outlet, useNavigate, useLocation } from "react-router-dom";
+import { ChevronLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import Sidebar from "@/components/navigation/Sidebar";
-import UnifiedFloatingAction from "@/components/chat/UnifiedFloatingAction";
-import { useThemeManager } from "@/hooks/useThemeManager";
-import { ErrorBoundary, ErrorFallback } from "@/components/ui/error-boundary";
-import PageTransition from "@/components/ui/page-transition";
-import { logError } from "@/lib/error-logging";
+import { TopNav } from "@/components/layout/TopNav";
+import { useAuth } from "@/contexts/AuthContext";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
+import UnifiedChatButton from "@/components/chat/UnifiedChatButton";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
-
-// Loading component
-const LoadingFallback = () => {
-  return (
-    <div className="flex items-center justify-center h-full">
-      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-    </div>
-  );
-};
+import LoadingScreen from "@/components/ui/loading-screen";
+import PageTransition from "@/components/ui/page-transition";
+import { toast } from "sonner";
 
 const MainLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [isMobile, setIsMobile] = useState(false);
-  const { isLoaded } = useThemeManager();
+  const { loading, profile } = useAuth();
+  const navigate = useNavigate();
   const location = useLocation();
+  const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
+  const [isLoadingPage, setIsLoadingPage] = useState(true);
 
+  // Handle window resize
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-      if (window.innerWidth < 768) {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobileView(mobile);
+      if (mobile && sidebarOpen) {
         setSidebarOpen(false);
-      } else {
-        setSidebarOpen(true);
       }
     };
+    
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [sidebarOpen]);
 
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
+  // Handle route changes
+  useEffect(() => {
+    if (isMobileView) {
+      setSidebarOpen(false);
+    }
+    setIsLoadingPage(true);
+    const timer = setTimeout(() => setIsLoadingPage(false), 300);
+    return () => clearTimeout(timer);
+  }, [location.pathname, isMobileView]);
 
-    return () => {
-      window.removeEventListener("resize", checkMobile);
-    };
-  }, []);
-
-  if (!isLoaded) {
-    return <LoadingFallback />;
+  if (loading) {
+    return <LoadingScreen />;
   }
 
   return (
-    <div className="h-screen flex flex-col bg-background text-foreground">
-      <PageTransition />
-      <div
-        className={cn(
-          "sticky top-0 z-40 transition-all duration-300 ease-in-out",
-          sidebarOpen ? "md:ml-64" : "md:ml-16"
-        )}
-      >
-        <Header 
-          toggleSidebar={() => setSidebarOpen(!sidebarOpen)} 
-          isSidebarOpen={sidebarOpen}
-          openSidebar={() => setSidebarOpen(true)}
-        />
-      </div>
-      
-      <div className="flex flex-1 overflow-hidden relative">
-        <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} />
-        
-        <main 
+    <SidebarProvider>
+      <div className="flex h-screen w-full overflow-hidden bg-background">
+        {/* Sidebar - Fixed position with transition */}
+        <aside 
           className={cn(
-            "flex-1 overflow-auto p-4 md:p-6 custom-scrollbar",
-            "transition-all duration-300 ease-in-out",
-            sidebarOpen ? "md:ml-64" : "md:ml-16",
-            "relative"
+            "fixed top-0 left-0 z-30 h-screen transition-all duration-300 ease-in-out",
+            "bg-background border-r border-border/40",
+            sidebarOpen ? "w-64" : "w-16",
+            isMobileView && !sidebarOpen && "w-0"
           )}
         >
-          <ErrorBoundary
-            fallback={
-              <ErrorFallback 
-                error={new Error("Erro ao carregar conteúdo")} 
-                resetErrorBoundary={() => window.location.reload()} 
-              />
-            }
-            onError={logError}
-          >
-            <Suspense fallback={<LoadingFallback />}>
-              <div key={location.pathname} className="animate-fade-in">
-                <Outlet />
-              </div>
-            </Suspense>
-          </ErrorBoundary>
+          <Sidebar 
+            open={sidebarOpen} 
+            setOpen={setSidebarOpen}
+          />
+        </aside>
+
+        {/* Main content wrapper - Shifts with sidebar */}
+        <main 
+          className={cn(
+            "flex flex-col flex-1 min-w-0 h-screen transition-all duration-300 ease-in-out",
+            "relative",
+            sidebarOpen ? "ml-64" : "ml-16",
+            isMobileView && !sidebarOpen && "ml-0"
+          )}
+        >
+          {/* TopNav - Fixed at top */}
+          <div
+            className={cn(
+              "sticky top-0 z-20 w-full transition-all duration-300",
+              sidebarOpen ? "ml-64" : "ml-16",
+              isMobileView && !sidebarOpen && "ml-0"
+            )}
+            >
+            <TopNav />
+          </div>
+          
+          {/* Scrollable content area */}
+          <div className="flex-1 overflow-y-auto bg-background p-4 md:p-6">
+            <ErrorBoundary
+              fallback={
+                <div className="p-6 bg-destructive/10 rounded-lg">
+                  <h2 className="text-xl font-bold text-destructive mb-2">
+                    Algo deu errado
+                  </h2>
+                  <p className="mb-4">
+                    Ocorreu um erro ao renderizar este componente.
+                  </p>
+                  <div className="flex gap-4">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigate(-1)}
+                      className="flex items-center"
+                    >
+                      <ChevronLeft className="mr-2 h-4 w-4" />
+                      Voltar
+                    </Button>
+                    <Button
+                      onClick={() => window.location.reload()}
+                      size="sm"
+                      variant="default"
+                    >
+                      Tentar novamente
+                    </Button>
+                  </div>
+                </div>
+              }
+              onError={(error) => {
+                console.error("Layout error caught:", error);
+                toast.error("Erro na interface", {
+                  description: "Um erro foi detectado e está sendo tratado"
+                });
+              }}
+            >
+              <PageTransition>
+                <Suspense fallback={<LoadingScreen minimal />}>
+                  {isLoadingPage ? (
+                    <LoadingScreen minimal />
+                  ) : (
+                    <Outlet />
+                  )}
+                </Suspense>
+              </PageTransition>
+            </ErrorBoundary>
+          </div>
         </main>
+
+        <UnifiedChatButton />
+
+        {/* Mobile toggle button */}
+        {isMobileView && (
+          <Button 
+            variant="default" 
+            size="icon" 
+            className={cn(
+              "fixed z-40 bottom-16 transition-all duration-300",
+              "rounded-full h-9 w-9 shadow-md",
+              "bg-primary text-primary-foreground hover:bg-primary/90",
+              "shadow-[0_0_15px_rgba(130,80,223,0.4)]",
+              sidebarOpen ? "left-[16.5rem]" : "left-4"
+            )}
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            aria-label={sidebarOpen ? "Fechar Menu" : "Abrir Menu"}
+          >
+            <ChevronLeft className={cn(
+              "h-4 w-4 transition-transform duration-300",
+              !sidebarOpen && "rotate-180"
+            )} />
+          </Button>
+        )}
       </div>
-      
-      <UnifiedFloatingAction />
-      <Toaster richColors closeButton position="top-right" />
-    </div>
+    </SidebarProvider>
   );
 };
 
