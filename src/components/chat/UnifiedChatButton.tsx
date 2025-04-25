@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { MessageCircle, Users, MessageSquare, X } from "lucide-react";
+import { MessageCircle, Users, MessageSquare, X, Maximize2, Minimize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -10,12 +10,16 @@ import ChatList from "./ChatList";
 import ChatHeader from "./ChatHeader";
 import ChatMessage from "./ChatMessage";
 import type { PersonContact, GroupContact, Message } from "./types";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useToast } from "@/hooks/use-toast";
 
 const UnifiedChatButton = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isMaximized, setIsMaximized] = useState(false);
   const [activeTab, setActiveTab] = useState("interno");
   const [selectedChat, setSelectedChat] = useState<string | null>(null);
   const [message, setMessage] = useState("");
+  const { toast } = useToast();
 
   const internalContacts: PersonContact[] = [
     { id: "1", name: "Ana Silva", status: "online", avatar: "", lastMessage: "Podemos revisar o documento?", unread: 2 },
@@ -41,14 +45,22 @@ const UnifiedChatButton = () => {
 
   const toggleChat = () => {
     setIsOpen(!isOpen);
-    if (selectedChat) {
+    if (!isOpen && selectedChat) {
       setSelectedChat(null);
     }
+  };
+
+  const toggleMaximize = () => {
+    setIsMaximized(!isMaximized);
   };
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
     if (message.trim()) {
+      toast({
+        title: "Mensagem enviada",
+        description: "Sua mensagem foi enviada com sucesso.",
+      });
       setMessage("");
     }
   };
@@ -71,9 +83,41 @@ const UnifiedChatButton = () => {
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end space-y-2">
       {isOpen && (
-        <Card className="w-80 h-96 flex flex-col overflow-hidden shadow-lg">
-          <div className="p-2 border-b">
-            <Tabs defaultValue="interno" onValueChange={setActiveTab}>
+        <Card className={`flex flex-col overflow-hidden shadow-lg transition-all duration-300 ${
+          isMaximized 
+            ? "fixed inset-4 w-auto h-auto z-50" 
+            : "w-80 h-[70vh] max-h-[500px]"
+        }`}>
+          <div className="p-2 border-b flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <Avatar className="h-6 w-6">
+                <AvatarImage src="/placeholder.svg" alt="User Profile" />
+                <AvatarFallback>AC</AvatarFallback>
+              </Avatar>
+              <span className="text-sm font-medium">Chat</span>
+            </div>
+            <div className="flex items-center space-x-1">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-7 w-7" 
+                onClick={toggleMaximize}
+              >
+                {isMaximized ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-7 w-7" 
+                onClick={toggleChat}
+              >
+                <X size={16} />
+              </Button>
+            </div>
+          </div>
+
+          <Tabs defaultValue="interno" onValueChange={setActiveTab} className="flex-1 flex flex-col">
+            <div className="border-b">
               <TabsList className="w-full">
                 <TabsTrigger value="interno" className="flex-1">
                   <MessageSquare className="h-4 w-4 mr-1" />
@@ -88,40 +132,42 @@ const UnifiedChatButton = () => {
                   Externo
                 </TabsTrigger>
               </TabsList>
-            </Tabs>
-          </div>
+            </div>
 
-          <div className="flex-1 flex flex-col">
-            {selectedChat && selectedContact ? (
-              <>
-                <ChatHeader contact={selectedContact} onBack={() => setSelectedChat(null)} />
-                <ScrollArea className="flex-1 p-3">
-                  <div className="space-y-3">
-                    {mockMessages.map(msg => (
-                      <ChatMessage key={msg.id} message={msg} />
-                    ))}
+            <div className="flex-1 flex flex-col overflow-hidden">
+              {selectedChat && selectedContact ? (
+                <>
+                  <ChatHeader contact={selectedContact} onBack={() => setSelectedChat(null)} />
+                  <ScrollArea className="flex-1 p-3">
+                    <div className="space-y-3">
+                      {mockMessages.map(msg => (
+                        <ChatMessage key={msg.id} message={msg} />
+                      ))}
+                    </div>
+                  </ScrollArea>
+                  <form onSubmit={handleSendMessage} className="border-t p-2 flex gap-2">
+                    <Input
+                      value={message}
+                      onChange={e => setMessage(e.target.value)}
+                      placeholder="Digite sua mensagem..."
+                      className="flex-1"
+                    />
+                    <Button type="submit" size="sm">Enviar</Button>
+                  </form>
+                </>
+              ) : (
+                <ScrollArea className="flex-1">
+                  <div className="p-2">
+                    <ChatList
+                      contacts={getContacts()}
+                      onSelectChat={(contact) => setSelectedChat(contact.id)}
+                      selectedId={selectedChat}
+                    />
                   </div>
                 </ScrollArea>
-                <form onSubmit={handleSendMessage} className="border-t p-2 flex gap-2">
-                  <Input
-                    value={message}
-                    onChange={e => setMessage(e.target.value)}
-                    placeholder="Digite sua mensagem..."
-                    className="flex-1"
-                  />
-                  <Button type="submit" size="sm">Enviar</Button>
-                </form>
-              </>
-            ) : (
-              <ScrollArea className="flex-1 p-2">
-                <ChatList
-                  contacts={getContacts()}
-                  onSelectChat={(contact) => setSelectedChat(contact.id)}
-                  selectedId={selectedChat}
-                />
-              </ScrollArea>
-            )}
-          </div>
+              )}
+            </div>
+          </Tabs>
         </Card>
       )}
 

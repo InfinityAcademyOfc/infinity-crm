@@ -1,3 +1,4 @@
+
 @tailwind base;
 
 @layer base {
@@ -8,19 +9,19 @@
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 270 50% 60%;
+    --primary: var(--theme-primary, 270 50% 60%);
     --primary-foreground: 210 40% 98%;
     --secondary: 260 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 270 50% 96.1%;
+    --accent: var(--theme-accent, 270 50% 96.1%);
     --accent-foreground: 222.2 47.4% 11.2%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 270 50% 60%;
+    --ring: var(--theme-ring, 270 50% 60%);
     --radius: 0.5rem;
     color-scheme: light;
   }
@@ -48,52 +49,60 @@
     color-scheme: dark;
   }
 
-  .blue {
+  [data-accent="blue"] {
     --theme-primary: 210 100% 50%;
     --theme-accent: 210 100% 50%;
     --theme-ring: 210 100% 50%;
+    --theme-gradient-color: 210, 100%, 50%;
   }
 
-  .green {
+  [data-accent="green"] {
     --theme-primary: 142 72% 29%;
     --theme-accent: 142 72% 29%;
     --theme-ring: 142 72% 29%;
+    --theme-gradient-color: 142, 72%, 29%;
   }
 
-  .purple {
+  [data-accent="purple"] {
     --theme-primary: 273 80% 60%;
     --theme-accent: 273 80% 60%;
     --theme-ring: 273 80% 60%;
+    --theme-gradient-color: 273, 80%, 60%;
   }
 
-  .red {
+  [data-accent="red"] {
     --theme-primary: 0 72% 50%;
     --theme-accent: 0 72% 50%;
     --theme-ring: 0 72% 50%;
+    --theme-gradient-color: 0, 72%, 50%;
   }
 
-  .orange {
+  [data-accent="orange"] {
     --theme-primary: 25 95% 53%;
     --theme-accent: 25 95% 53%;
     --theme-ring: 25 95% 53%;
+    --theme-gradient-color: 25, 95%, 53%;
   }
 
-  .yellow {
+  [data-accent="yellow"] {
     --theme-primary: 45 93% 47%;
     --theme-accent: 45 93% 47%;
     --theme-ring: 45 93% 47%;
+    --theme-gradient-color: 45, 93%, 47%;
   }
 
-  .pink {
+  [data-accent="pink"] {
     --theme-primary: 330 81% 60%;
     --theme-accent: 330 81% 60%;
     --theme-ring: 330 81% 60%;
+    --theme-gradient-color: 330, 81%, 60%;
   }
 
-  .indigo {
+  [data-accent="indigo"] {
     --theme-primary: 245 58% 51%;
     --theme-accent: 245 58% 51%;
     --theme-ring: 245 58% 51%;
+    --theme-gradient-color: 245, 58%, 51%;
   }
 }
 

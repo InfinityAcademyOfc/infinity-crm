@@ -33,6 +33,13 @@ export const useThemeManager = () => {
     } else {
       document.documentElement.classList.remove('dark');
     }
+
+    // Aplicar a classe de cor de destaque
+    if (savedAccent) {
+      document.documentElement.setAttribute('data-accent', savedAccent);
+    } else {
+      document.documentElement.setAttribute('data-accent', 'blue');
+    }
     
     // Observer para mudanças na preferência do sistema
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');

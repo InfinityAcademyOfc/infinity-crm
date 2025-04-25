@@ -1,5 +1,5 @@
 
-import { Palette, Check, Sun, Moon } from "lucide-react";
+import { Palette } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -11,10 +11,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { useThemeManager, type ThemeType, type AccentType } from "@/hooks/useThemeManager";
+import { Check, Moon, Sun } from "lucide-react";
 
 const themes = [
-  { name: "Escuro", value: "dark", color: "bg-gray-900" },
-  { name: "Claro", value: "light", color: "bg-white" },
+  { name: "Escuro", value: "dark", color: "bg-gray-900", icon: <Moon size={14} className="mr-2" /> },
+  { name: "Claro", value: "light", color: "bg-white", icon: <Sun size={14} className="mr-2" /> },
 ];
 
 const accentColors = [
@@ -29,7 +30,7 @@ const accentColors = [
 ];
 
 const ThemeToggle = () => {
-  const { isDark, theme, accent, setTheme, setAccent, toggleTheme } = useThemeManager();
+  const { isDark, theme, accent, setTheme, setAccent } = useThemeManager();
   const { toast } = useToast();
 
   const handleThemeChange = (theme: ThemeType) => {
@@ -77,7 +78,7 @@ const ThemeToggle = () => {
                 className="w-full justify-center"
                 onClick={() => handleThemeChange(themeOption.value as ThemeType)}
               >
-                {themeOption.value === 'dark' ? <Moon size={14} className="mr-2" /> : <Sun size={14} className="mr-2" />}
+                {themeOption.icon}
                 {themeOption.name}
               </Button>
             ))}
@@ -87,15 +88,16 @@ const ThemeToggle = () => {
           </div>
           <div className="grid grid-cols-4 gap-2">
             {accentColors.map((accentOption) => (
-              <div 
+              <button 
                 key={accentOption.value}
                 className={`w-8 h-8 rounded-full ${accentOption.color} border border-gray-300 dark:border-gray-600 cursor-pointer flex items-center justify-center transition-transform hover:scale-110 ${accent === accentOption.value ? 'ring-2 ring-offset-2 ring-offset-background ring-foreground' : ''}`}
                 onClick={() => handleAccentChange(accentOption.value as AccentType)}
+                type="button"
               >
                 {accent === accentOption.value && (
                   <Check size={14} className="text-white" />
                 )}
-              </div>
+              </button>
             ))}
           </div>
         </div>
