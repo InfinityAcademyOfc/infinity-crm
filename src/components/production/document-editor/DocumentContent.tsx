@@ -100,7 +100,7 @@ const DocumentContent: React.FC<DocumentContentProps> = ({
   };
   return <div className="h-full flex flex-col bg-background">
       <div className="relative h-60 flex flex-col justify-end bg-gray-100 dark:bg-neutral-800 rounded-t-lg overflow-hidden">
-        <img src={cover} alt="Capa" className="absolute w-full h-full object-cover opacity-80" />
+        <img src={cover} alt="Capa" className="absolute w-full h-full opacity-80 object-cover" />
         <div className="relative z-10 flex flex-row items-end gap-2 p-6">
           <input className="bg-transparent font-bold text-3xl px-4 py-2 outline-none w-full max-w-lg shadow-none border-0 focus:ring-0" value={title} ref={titleInputRef} onChange={e => setTitle(e.target.value)} placeholder="Digite o título..." onSelect={handleTitleSelection} onBlur={() => setShowTitleToolbar(false)} style={{
           color: '#fff',
