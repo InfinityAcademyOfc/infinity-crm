@@ -1,3 +1,4 @@
+
 import { useState, useEffect, Suspense } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { Toaster } from "sonner";
@@ -59,6 +60,7 @@ const MainLayout = () => {
         <Header 
           toggleSidebar={() => setSidebarOpen(!sidebarOpen)} 
           isSidebarOpen={sidebarOpen}
+          openSidebar={() => setSidebarOpen(true)}
         />
       </div>
       
