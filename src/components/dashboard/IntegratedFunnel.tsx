@@ -124,7 +124,7 @@ const IntegratedFunnel = () => {
                         <Activity className="h-4 w-4 text-blue-500" />
                         <h3 className="text-sm font-medium">Resumo Geral</h3>
                       </div>
-                      <div className="flex flex-col h-full justify-between">
+                      <div className="flex flex-col h-full justify-between my-0 mx-0 px-0 py-[45px]">
                         <div className="space-y-4 flex-grow">
                           <div className="flex flex-col space-y-1">
                             <div className="flex justify-between items-center text-sm">
