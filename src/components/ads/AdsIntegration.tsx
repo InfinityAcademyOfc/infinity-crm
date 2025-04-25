@@ -1,5 +1,17 @@
+
 import { useState } from "react";
-import { Facebook, AlertCircle, CheckCircle, Database, BarChart3, Zap, Settings, ArrowRight, Users, ExternalLink } from "lucide-react";
+import { 
+  Facebook, 
+  AlertCircle, 
+  CheckCircle, 
+  Database, 
+  BarChart3, 
+  Zap, 
+  Settings,
+  ArrowRight, 
+  Users,
+  ExternalLink
+} from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,34 +20,41 @@ import LeadMappingConfig from "./LeadMappingConfig";
 import AdsAnalytics from "./AdsAnalytics";
 import MetaAdsSetup from "./MetaAdsSetup";
 import GoogleAdsSetup from "./GoogleAdsSetup";
+
 const AdsIntegration = () => {
   const [metaConnected, setMetaConnected] = useState(false);
   const [googleConnected, setGoogleConnected] = useState(false);
   const [activeTab, setActiveTab] = useState("facebook");
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
+
   const handleConnectMeta = () => {
     // In a real implementation, this would handle OAuth flow with Meta Ads
     window.open("https://developers.facebook.com/docs/marketing-api/get-started", "_blank");
+    
     toast({
       title: "Redirecionando para Meta Ads",
-      description: "Você será redirecionado para autorizar o acesso à API de Marketing do Facebook."
+      description: "Você será redirecionado para autorizar o acesso à API de Marketing do Facebook.",
     });
   };
+
   const handleConnectGoogle = () => {
     // In a real implementation, this would handle OAuth flow with Google Ads
     window.open("https://developers.google.com/google-ads/api/docs/oauth/overview", "_blank");
+    
     toast({
       title: "Redirecionando para Google Ads",
-      description: "Você será redirecionado para autorizar o acesso à API do Google Ads."
+      description: "Você será redirecionado para autorizar o acesso à API do Google Ads.",
     });
   };
-  return <div className="space-y-6 py-0 mx-[9px] px-0 my-[15px]">
+
+  return (
+    <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between mb-6">
         <div>
-          
-          
+          <h2 className="text-3xl font-bold tracking-tight">Integração com Anúncios</h2>
+          <p className="text-muted-foreground">
+            Conecte suas contas de anúncios e capture leads diretamente no CRM.
+          </p>
         </div>
       </div>
 
@@ -49,14 +68,22 @@ const AdsIntegration = () => {
                 </div>
                 <CardTitle className="text-lg">Meta Ads</CardTitle>
               </div>
-              <div className={`px-2 py-1 text-xs rounded-full flex items-center gap-1 ${metaConnected ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'}`}>
-                {metaConnected ? <>
+              <div className={`px-2 py-1 text-xs rounded-full flex items-center gap-1 ${
+                metaConnected 
+                  ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' 
+                  : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
+              }`}>
+                {metaConnected ? (
+                  <>
                     <CheckCircle size={12} />
                     <span>Conectado</span>
-                  </> : <>
+                  </>
+                ) : (
+                  <>
                     <AlertCircle size={12} />
                     <span>Desconectado</span>
-                  </>}
+                  </>
+                )}
               </div>
             </div>
             <CardDescription>
@@ -66,13 +93,15 @@ const AdsIntegration = () => {
           <CardContent>
             <div className="space-y-4">
               <div className="text-sm">
-                {metaConnected ? "Sua conta do Meta Ads está conectada e pronta para capturar leads." : "Conecte sua conta para sincronizar leads dos anúncios do Facebook e Instagram."}
+                {metaConnected 
+                  ? "Sua conta do Meta Ads está conectada e pronta para capturar leads." 
+                  : "Conecte sua conta para sincronizar leads dos anúncios do Facebook e Instagram."}
               </div>
               
-              <Button onClick={() => {
-              setActiveTab("facebook");
-              handleConnectMeta();
-            }} className="w-full flex items-center justify-center">
+              <Button 
+                onClick={() => { setActiveTab("facebook"); handleConnectMeta(); }}
+                className="w-full flex items-center justify-center"
+              >
                 <ExternalLink size={16} className="mr-2" />
                 {metaConnected ? "Gerenciar Conexão" : "Conectar com Meta Ads"}
               </Button>
@@ -86,19 +115,27 @@ const AdsIntegration = () => {
               <div className="flex items-center gap-2">
                 <div className="bg-red-100 dark:bg-red-900/50 p-2 rounded-md">
                   <svg viewBox="0 0 24 24" width="24" height="24" className="text-red-600 dark:text-red-400">
-                    <path fill="currentColor" d="M12 22q-2.075 0-3.9-.788t-3.175-2.137q-1.35-1.35-2.137-3.175T2 12q0-2.075.788-3.9t2.137-3.175q1.35-1.35 3.175-2.137T12 2q2.075 0 3.9.788t3.175 2.137q1.35 1.35 2.138 3.175T22 12q0 2.075-.788 3.9t-2.137 3.175q-1.35 1.35-3.175 2.138T12 22Zm0-2q3.35 0 5.675-2.325T20 12q0-3.35-2.325-5.675T12 4Q8.65 4 6.325 6.325T4 12q0 3.35 2.325 5.675T12 20Zm0-8Z" />
+                    <path fill="currentColor" d="M12 22q-2.075 0-3.9-.788t-3.175-2.137q-1.35-1.35-2.137-3.175T2 12q0-2.075.788-3.9t2.137-3.175q1.35-1.35 3.175-2.137T12 2q2.075 0 3.9.788t3.175 2.137q1.35 1.35 2.138 3.175T22 12q0 2.075-.788 3.9t-2.137 3.175q-1.35 1.35-3.175 2.138T12 22Zm0-2q3.35 0 5.675-2.325T20 12q0-3.35-2.325-5.675T12 4Q8.65 4 6.325 6.325T4 12q0 3.35 2.325 5.675T12 20Zm0-8Z"/>
                   </svg>
                 </div>
                 <CardTitle className="text-lg">Google Ads</CardTitle>
               </div>
-              <div className={`px-2 py-1 text-xs rounded-full flex items-center gap-1 ${googleConnected ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'}`}>
-                {googleConnected ? <>
+              <div className={`px-2 py-1 text-xs rounded-full flex items-center gap-1 ${
+                googleConnected 
+                  ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' 
+                  : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
+              }`}>
+                {googleConnected ? (
+                  <>
                     <CheckCircle size={12} />
                     <span>Conectado</span>
-                  </> : <>
+                  </>
+                ) : (
+                  <>
                     <AlertCircle size={12} />
                     <span>Desconectado</span>
-                  </>}
+                  </>
+                )}
               </div>
             </div>
             <CardDescription>
@@ -108,13 +145,15 @@ const AdsIntegration = () => {
           <CardContent>
             <div className="space-y-4">
               <div className="text-sm">
-                {googleConnected ? "Sua conta do Google Ads está conectada e pronta para capturar leads." : "Conecte sua conta para sincronizar leads das campanhas do Google Ads."}
+                {googleConnected 
+                  ? "Sua conta do Google Ads está conectada e pronta para capturar leads." 
+                  : "Conecte sua conta para sincronizar leads das campanhas do Google Ads."}
               </div>
               
-              <Button onClick={() => {
-              setActiveTab("google");
-              handleConnectGoogle();
-            }} className="w-full flex items-center justify-center">
+              <Button 
+                onClick={() => { setActiveTab("google"); handleConnectGoogle(); }}
+                className="w-full flex items-center justify-center"
+              >
                 <ExternalLink size={16} className="mr-2" />
                 {googleConnected ? "Gerenciar Conexão" : "Conectar com Google Ads"}
               </Button>
@@ -161,7 +200,7 @@ const AdsIntegration = () => {
               </TabsTrigger>
               <TabsTrigger value="google">
                 <svg viewBox="0 0 24 24" width="16" height="16" className="mr-2">
-                  <path fill="currentColor" d="M12 22q-2.075 0-3.9-.788t-3.175-2.137q-1.35-1.35-2.137-3.175T2 12q0-2.075.788-3.9t2.137-3.175q1.35-1.35 3.175-2.137T12 2q2.075 0 3.9.788t3.175 2.137q1.35 1.35 2.138 3.175T22 12q0 2.075-.788 3.9t-2.137 3.175q-1.35 1.35-3.175 2.138T12 22Zm0-2q3.35 0 5.675-2.325T20 12q0-3.35-2.325-5.675T12 4Q8.65 4 6.325 6.325T4 12q0 3.35 2.325 5.675T12 20Zm0-8Z" />
+                  <path fill="currentColor" d="M12 22q-2.075 0-3.9-.788t-3.175-2.137q-1.35-1.35-2.137-3.175T2 12q0-2.075.788-3.9t2.137-3.175q1.35-1.35 3.175-2.137T12 2q2.075 0 3.9.788t3.175 2.137q1.35 1.35 2.138 3.175T22 12q0 2.075-.788 3.9t-2.137 3.175q-1.35 1.35-3.175 2.138T12 22Zm0-2q3.35 0 5.675-2.325T20 12q0-3.35-2.325-5.675T12 4Q8.65 4 6.325 6.325T4 12q0 3.35 2.325 5.675T12 20Zm0-8Z"/>
                 </svg>
                 Google Ads
               </TabsTrigger>
@@ -199,7 +238,12 @@ const AdsIntegration = () => {
                     <p className="text-sm text-muted-foreground mb-3">
                       Acesse developers.facebook.com e crie um aplicativo do tipo "Business".
                     </p>
-                    <Button variant="outline" size="sm" className="flex items-center" onClick={() => window.open("https://developers.facebook.com/apps/create/", "_blank")}>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="flex items-center"
+                      onClick={() => window.open("https://developers.facebook.com/apps/create/", "_blank")}
+                    >
                       <ExternalLink size={14} className="mr-2" />
                       Acessar Facebook para Desenvolvedores
                     </Button>
@@ -210,7 +254,12 @@ const AdsIntegration = () => {
                     <p className="text-sm text-muted-foreground mb-3">
                       Adicione a Marketing API ao seu aplicativo e solicite as permissões necessárias.
                     </p>
-                    <Button variant="outline" size="sm" className="flex items-center" onClick={() => window.open("https://developers.facebook.com/docs/marketing-api/get-started", "_blank")}>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="flex items-center"
+                      onClick={() => window.open("https://developers.facebook.com/docs/marketing-api/get-started", "_blank")}
+                    >
                       <ExternalLink size={14} className="mr-2" />
                       Documentação da Marketing API
                     </Button>
@@ -221,7 +270,12 @@ const AdsIntegration = () => {
                     <p className="text-sm text-muted-foreground mb-3">
                       Configure um Webhook para receber leads em tempo real das suas campanhas do Facebook.
                     </p>
-                    <Button variant="outline" size="sm" className="flex items-center" onClick={() => window.open("https://developers.facebook.com/docs/marketing-api/guides/lead-ads/retrieving/", "_blank")}>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="flex items-center"
+                      onClick={() => window.open("https://developers.facebook.com/docs/marketing-api/guides/lead-ads/retrieving/", "_blank")}
+                    >
                       <ExternalLink size={14} className="mr-2" />
                       Configurar Webhook para Lead Ads
                     </Button>
@@ -261,7 +315,12 @@ const AdsIntegration = () => {
                     <p className="text-sm text-muted-foreground mb-3">
                       Acesse console.cloud.google.com e crie um novo projeto.
                     </p>
-                    <Button variant="outline" size="sm" className="flex items-center" onClick={() => window.open("https://console.cloud.google.com/projectcreate", "_blank")}>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="flex items-center"
+                      onClick={() => window.open("https://console.cloud.google.com/projectcreate", "_blank")}
+                    >
                       <ExternalLink size={14} className="mr-2" />
                       Acessar Google Cloud Console
                     </Button>
@@ -272,7 +331,12 @@ const AdsIntegration = () => {
                     <p className="text-sm text-muted-foreground mb-3">
                       Crie credenciais OAuth2 para seu projeto e configure as telas de consentimento.
                     </p>
-                    <Button variant="outline" size="sm" className="flex items-center" onClick={() => window.open("https://console.cloud.google.com/apis/credentials", "_blank")}>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="flex items-center"
+                      onClick={() => window.open("https://console.cloud.google.com/apis/credentials", "_blank")}
+                    >
                       <ExternalLink size={14} className="mr-2" />
                       Configurar Credenciais
                     </Button>
@@ -283,7 +347,12 @@ const AdsIntegration = () => {
                     <p className="text-sm text-muted-foreground mb-3">
                       Ative a API Google Ads para seu projeto e solicite acesso para sua conta.
                     </p>
-                    <Button variant="outline" size="sm" className="flex items-center" onClick={() => window.open("https://developers.google.com/google-ads/api/docs/oauth/cloud-project", "_blank")}>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="flex items-center"
+                      onClick={() => window.open("https://developers.google.com/google-ads/api/docs/oauth/cloud-project", "_blank")}
+                    >
                       <ExternalLink size={14} className="mr-2" />
                       Documentação da Google Ads API
                     </Button>
@@ -327,21 +396,23 @@ const AdsIntegration = () => {
         </div>
         <div className="flex flex-wrap justify-center md:justify-end gap-3 w-full md:w-auto">
           <Button variant="outline" onClick={() => {
-          toast({
-            title: "Tutorial iniciado",
-            description: "Guia de integração de anúncios aberto."
-          });
-        }}>
+            toast({
+              title: "Tutorial iniciado",
+              description: "Guia de integração de anúncios aberto."
+            });
+          }}>
             Ver Tutorial
           </Button>
           <Button onClick={() => {
-          window.location.href = "/app/sales-funnel";
-        }}>
+            window.location.href = "/app/sales-funnel";
+          }}>
             <Users className="mr-2 h-4 w-4" />
             Ver Leads Capturados
           </Button>
         </div>
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default AdsIntegration;

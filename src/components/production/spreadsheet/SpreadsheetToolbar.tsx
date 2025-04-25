@@ -1,11 +1,40 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, AlignJustify, Save, FileDown, Calculator, Sigma, ChevronDown, FileText, BarChart2 } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Bold,
+  Italic,
+  Underline,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  AlignJustify,
+  Save,
+  FileDown,
+  Calculator,
+  Sigma,
+  ChevronDown,
+  FileText,
+  BarChart2,
+} from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
 const SpreadsheetToolbar: React.FC = () => {
-  return <div className="border-b p-1 flex flex-wrap items-center gap-1 bg-gray-950">
+  return (
+    <div className="border-b p-1 flex flex-wrap items-center gap-1">
       <div className="flex items-center mr-2">
         <Select defaultValue="Arial">
           <SelectTrigger className="h-8 w-32 text-xs">
@@ -119,6 +148,8 @@ const SpreadsheetToolbar: React.FC = () => {
           Exportar
         </Button>
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default SpreadsheetToolbar;

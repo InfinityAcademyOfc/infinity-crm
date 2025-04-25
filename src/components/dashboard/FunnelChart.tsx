@@ -1,18 +1,21 @@
+
 import { PieChart, Pie, Cell, Legend, Tooltip, ResponsiveContainer } from "recharts";
 import { PieChart as PieChartIcon } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+
 interface FunnelChartProps {
   data: Array<{
     name: string;
     value: number;
   }>;
 }
-const FunnelChart = ({
-  data
-}: FunnelChartProps) => {
+
+const FunnelChart = ({ data }: FunnelChartProps) => {
   const COLORS = ['#4361ee', '#7209b7', '#9d4edd', '#3a0ca3', '#4cc9f0'];
-  return <Card>
+  
+  return (
+    <Card>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-xl">Conversão do Funil</CardTitle>
@@ -23,27 +26,41 @@ const FunnelChart = ({
         </div>
         <CardDescription>Distribuição de leads por etapa</CardDescription>
       </CardHeader>
-      <CardContent className="bg-transparent rounded-none px-0 mx-0 my-0 py-0">
+      <CardContent>
         <div className="h-80">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
-              <Pie data={data} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value" label={({
-              name,
-              percent
-            }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={false}>
-                {data.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
+              <Pie
+                data={data}
+                cx="50%"
+                cy="50%"
+                innerRadius={60}
+                outerRadius={80}
+                paddingAngle={5}
+                dataKey="value"
+                label={({name, percent}) => `${name} ${(percent * 100).toFixed(0)}%`}
+                labelLine={false}
+              >
+                {data.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                ))}
               </Pie>
-              <Legend layout="vertical" verticalAlign="middle" align="right" iconType="circle" />
-              <Tooltip formatter={value => [`${value} leads`, "Quantidade"]} contentStyle={{
-              background: '#fff',
-              border: '1px solid #e5e7eb',
-              borderRadius: '6px',
-              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-            }} />
+              <Legend
+                layout="vertical"
+                verticalAlign="middle"
+                align="right"
+                iconType="circle"
+              />
+              <Tooltip 
+                formatter={(value) => [`${value} leads`, "Quantidade"]}
+                contentStyle={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: '6px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
+              />
             </PieChart>
           </ResponsiveContainer>
         </div>
       </CardContent>
-    </Card>;
+    </Card>
+  );
 };
+
 export default FunnelChart;
