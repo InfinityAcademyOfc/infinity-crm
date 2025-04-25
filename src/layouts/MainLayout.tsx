@@ -7,6 +7,7 @@ import { ErrorBoundary } from "@/components/ui/error-boundary";
 import UnifiedChatButton from "@/components/chat/UnifiedChatButton";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
+import CollapseButton from "@/components/common/buttons/CollapseButton";
 
 const MainLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -31,12 +32,23 @@ const MainLayout = () => {
         {/* Sidebar container with dynamic width */}
         <div 
           className={cn(
-            "flex-shrink-0 transition-all duration-300 ease-in-out",
+            "flex-shrink-0 transition-all duration-300 ease-in-out relative",
             sidebarOpen ? "w-64" : "w-16",
             isMobileView && !sidebarOpen && "w-0"
           )}
         >
           <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} />
+          
+          {/* Collapse button */}
+          <div className="absolute -right-4 top-4 z-30">
+            <CollapseButton
+              isCollapsed={!sidebarOpen}
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="shadow-lg bg-background border"
+              position="right"
+              title={sidebarOpen ? "Recolher menu" : "Expandir menu"}
+            />
+          </div>
         </div>
 
         {/* Main content area */}
@@ -52,7 +64,7 @@ const MainLayout = () => {
           </main>
         </div>
 
-        {/* Mobile toggle button */}
+        {/* Mobile toggle button - only show when in mobile view */}
         {isMobileView && (
           <button
             className={cn(

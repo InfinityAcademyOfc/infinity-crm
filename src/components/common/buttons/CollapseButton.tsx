@@ -23,7 +23,7 @@ const CollapseButton: React.FC<CollapseButtonProps> = ({
     <Button
       size="icon"
       variant="ghost"
-      className={cn("", className)}
+      className={cn("h-8 w-8 rounded-full", className)}
       title={title || (isCollapsed ? "Expandir" : "Recolher")}
       onClick={onClick}
     >
