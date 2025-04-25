@@ -4,47 +4,56 @@ import { Outlet } from "react-router-dom";
 import Sidebar from "@/components/navigation/Sidebar";
 import { TopNav } from "@/components/layout/TopNav";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
-import LoadingScreen from "@/components/ui/loading-screen";
 import UnifiedChatButton from "@/components/chat/UnifiedChatButton";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 
 const MainLayout = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
 
   useEffect(() => {
     const handleResize = () => {
       const mobile = window.innerWidth < 768;
       setIsMobileView(mobile);
-      if (mobile && sidebarOpen) {
-        setSidebarOpen(false);
+      if (mobile) {
+        setIsSidebarOpen(false);
       }
     };
 
     handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, [sidebarOpen]);
+  }, []);
 
   return (
     <SidebarProvider>
       <div className="flex h-screen w-full bg-background">
-        {/* Sidebar */}
-        <div
+        {/* Sidebar Container */}
+        <div 
           className={cn(
-            "h-full transition-all duration-300 ease-in-out relative",
-            sidebarOpen ? "w-64" : "w-16",
-            isMobileView && !sidebarOpen && "w-0"
+            "h-full transition-all duration-300 ease-in-out z-20",
+            isSidebarOpen ? "w-64" : "w-0 md:w-16",
+            "fixed md:relative"
           )}
         >
-          <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} />
+          <div className={cn(
+            "h-full bg-background border-r",
+            !isSidebarOpen && isMobileView && "hidden"
+          )}>
+            <Sidebar open={isSidebarOpen} setOpen={setIsSidebarOpen} />
+          </div>
         </div>
 
         {/* Main Content Area */}
-        <div className="flex-1 flex flex-col h-full min-w-0 overflow-hidden">
+        <div 
+          className={cn(
+            "flex-1 flex flex-col min-h-0 transition-all duration-300 ease-in-out",
+            isSidebarOpen ? "md:ml-64" : "ml-0 md:ml-16"
+          )}
+        >
           {/* Top Navigation */}
-          <div className="sticky top-0 z-20 w-full">
+          <div className="sticky top-0 z-10">
             <TopNav />
           </div>
 
@@ -62,12 +71,15 @@ const MainLayout = () => {
             className={cn(
               "fixed z-40 bottom-24 transition-all duration-300",
               "rounded-full h-9 w-9 bg-primary text-white shadow-md",
-              sidebarOpen ? "left-[16.5rem]" : "left-4"
+              isSidebarOpen ? "left-[16.5rem]" : "left-4"
             )}
-            onClick={() => setSidebarOpen(!sidebarOpen)}
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
           >
-            <span className={cn("transition-transform", !sidebarOpen && "rotate-180")}>
-              {sidebarOpen ? "←" : "→"}
+            <span className={cn(
+              "block transition-transform",
+              !isSidebarOpen && "rotate-180"
+            )}>
+              {isSidebarOpen ? "←" : "→"}
             </span>
           </button>
         )}
