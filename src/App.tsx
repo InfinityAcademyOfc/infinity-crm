@@ -3,18 +3,19 @@ import { useEffect, lazy, Suspense } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import MainLayout from "@/layouts/MainLayout";
 import { AuthProvider } from '@/contexts/AuthContext';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import LoadingScreen from '@/components/ui/loading-screen';
 import { useThemeManager } from '@/hooks/useThemeManager';
+import PageTransition from '@/components/ui/page-transition';
 
 // Import custom animations
 import '@/styles/animations.css';
 
-// Lazy-loaded components with proper error handling
+// Lazy-loaded components with proper error handling and better performance
 // Use a consistent pattern that will return a proper default export
 const Dashboard = lazy(() => 
   import('@/pages/Dashboard')
@@ -106,6 +107,18 @@ const NotFound = lazy(() =>
     .then(module => ({ default: module.default }))
 );
 
+// Custom route change handler for animations
+const RouteChangeHandler = () => {
+  const location = useLocation();
+  
+  useEffect(() => {
+    // Scroll to top on route change
+    window.scrollTo(0, 0);
+  }, [location]);
+  
+  return null;
+};
+
 // Configure query client with better caching and retry logic
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -130,23 +143,30 @@ const App = () => {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <BrowserRouter>
+          <RouteChangeHandler />
           <Toaster />
           <Sonner />
           <AuthProvider>
             <Routes>
               <Route path="/" element={
                 <Suspense fallback={<LoadingScreen />}>
-                  <Index />
+                  <PageTransition>
+                    <Index />
+                  </PageTransition>
                 </Suspense>
               } />
               <Route path="/login" element={
                 <Suspense fallback={<LoadingScreen />}>
-                  <Login />
+                  <PageTransition>
+                    <Login />
+                  </PageTransition>
                 </Suspense>
               } />
               <Route path="/register" element={
                 <Suspense fallback={<LoadingScreen />}>
-                  <Register />
+                  <PageTransition>
+                    <Register />
+                  </PageTransition>
                 </Suspense>
               } />
               
@@ -154,12 +174,12 @@ const App = () => {
               <Route element={<ProtectedRoute />}>
                 <Route path="/app" element={<MainLayout />}>
                   <Route index element={
-                    <Suspense fallback={<LoadingScreen />}>
+                    <Suspense fallback={<LoadingScreen minimal />}>
                       <Dashboard />
                     </Suspense>
                   } />
                   <Route path="sales-funnel" element={
-                    <Suspense fallback={<LoadingScreen />}>
+                    <Suspense fallback={<LoadingScreen minimal />}>
                       <SalesFunnel />
                     </Suspense>
                   } />

@@ -11,6 +11,7 @@ import UnifiedChatButton from "@/components/chat/UnifiedChatButton";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import LoadingScreen from "@/components/ui/loading-screen";
+import PageTransition from "@/components/ui/page-transition";
 import { toast } from "sonner";
 
 const MainLayout = () => {
@@ -46,16 +47,15 @@ const MainLayout = () => {
     if (isMobileView) {
       setSidebarOpen(false);
     }
-  }, [location.pathname, isMobileView]);
-
-  // Add simulated loading state with proper cleanup
-  useEffect(() => {
+    
+    // Reset loading state on route change
+    setIsLoadingPage(true);
     const timer = setTimeout(() => {
       setIsLoadingPage(false);
-    }, 500);
+    }, 300);
     
     return () => clearTimeout(timer);
-  }, [location.pathname]);
+  }, [location.pathname, isMobileView]);
 
   // Error handling for route changes
   useEffect(() => {
@@ -130,13 +130,15 @@ const MainLayout = () => {
                 });
               }}
             >
-              <Suspense fallback={<LoadingScreen minimal />}>
-                {isLoadingPage ? (
-                  <LoadingScreen minimal />
-                ) : (
-                  <Outlet />
-                )}
-              </Suspense>
+              <PageTransition>
+                <Suspense fallback={<LoadingScreen minimal />}>
+                  {isLoadingPage ? (
+                    <LoadingScreen minimal />
+                  ) : (
+                    <Outlet />
+                  )}
+                </Suspense>
+              </PageTransition>
             </ErrorBoundary>
           </main>
         </div>

@@ -1,28 +1,65 @@
 
-import React from "react";
-import StatsSection from "@/components/dashboard/StatsSection";
-import SalesChart from "@/components/dashboard/SalesChart";
-import FunnelChart from "@/components/dashboard/FunnelChart";
-import FinanceChart from "@/components/dashboard/FinanceChart";
-import ActivitiesSection from "@/components/dashboard/ActivitiesSection";
-import IntegratedFunnel from "@/components/dashboard/IntegratedFunnel";
-import { mockSalesData, mockFunnelData, mockTodayActivities } from "@/data/mockData";
-import { useAuth } from "@/contexts/AuthContext";
-import { Button } from "@/components/ui/button";
+import React, { Suspense, lazy, useState, useEffect } from "react";
 import { ArrowRight, Bell } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { useAuth } from "@/contexts/AuthContext";
+import { Skeleton } from "@/components/ui/skeleton";
+import { mockSalesData, mockFunnelData, mockTodayActivities } from "@/data/mockData";
+
+// Lazy load heavy components
+const StatsSection = lazy(() => import("@/components/dashboard/StatsSection"));
+const SalesChart = lazy(() => import("@/components/dashboard/SalesChart"));
+const FunnelChart = lazy(() => import("@/components/dashboard/FunnelChart"));
+const FinanceChart = lazy(() => import("@/components/dashboard/FinanceChart"));
+const ActivitiesSection = lazy(() => import("@/components/dashboard/ActivitiesSection"));
+const IntegratedFunnel = lazy(() => import("@/components/dashboard/IntegratedFunnel"));
+
+// Skeleton loaders for lazy loaded components
+const StatsSkeleton = () => (
+  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    {[1, 2, 3, 4].map((i) => (
+      <Card key={i} className="relative overflow-hidden">
+        <CardContent className="p-6">
+          <Skeleton className="h-4 w-1/3 mb-2" />
+          <Skeleton className="h-8 w-1/2 mb-4" />
+          <Skeleton className="h-2 w-full" />
+        </CardContent>
+      </Card>
+    ))}
+  </div>
+);
+
+const ChartSkeleton = () => (
+  <Card>
+    <CardContent className="p-6">
+      <Skeleton className="h-6 w-1/4 mb-2" />
+      <Skeleton className="h-4 w-1/3 mb-6" />
+      <Skeleton className="h-64 w-full rounded-lg" />
+    </CardContent>
+  </Card>
+);
 
 const Dashboard = () => {
   const { profile } = useAuth();
+  const [isLoaded, setIsLoaded] = useState(false);
   
   const userName = profile?.name || "usuário";
+  
+  useEffect(() => {
+    // Simulate data loading time
+    const timer = setTimeout(() => {
+      setIsLoaded(true);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       {/* Welcome Message Card */}
-      <Card className="bg-gradient-to-r from-primary/20 to-blue-600/20 border-none shadow-lg">
+      <Card className="bg-gradient-to-r from-primary/20 to-blue-600/20 border-none shadow-lg transition-all duration-300 hover:shadow-xl">
         <CardContent className="p-6 flex flex-col md:flex-row justify-between items-center">
-          <div>
+          <div className="animate-slide-in">
             <h2 className="text-2xl font-semibold mb-2">
               Olá {userName}, bem vindo!
             </h2>
@@ -31,7 +68,7 @@ const Dashboard = () => {
             </p>
           </div>
           <Button 
-            className="mt-4 md:mt-0 bg-white/10 hover:bg-white/20 text-white border border-white/20 backdrop-blur-sm"
+            className="mt-4 md:mt-0 bg-white/10 hover:bg-white/20 text-white border border-white/20 backdrop-blur-sm transition-all duration-300 hover:scale-105"
             size="sm"
           >
             News <ArrowRight className="ml-2 h-4 w-4" />
@@ -39,31 +76,43 @@ const Dashboard = () => {
         </CardContent>
       </Card>
       
-      <StatsSection />
+      <Suspense fallback={<StatsSkeleton />}>
+        <StatsSection />
+      </Suspense>
       
       {/* First row - Sales Chart 60% + Integrated Funnel 40% */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         <div className="lg:col-span-3">
-          <SalesChart data={mockSalesData} />
+          <Suspense fallback={<ChartSkeleton />}>
+            <SalesChart data={isLoaded ? mockSalesData : []} />
+          </Suspense>
         </div>
         <div className="lg:col-span-2">
-          <IntegratedFunnel />
+          <Suspense fallback={<ChartSkeleton />}>
+            <IntegratedFunnel />
+          </Suspense>
         </div>
       </div>
       
       {/* Second row - Funnel Chart (Conversão de Funil) 100% width */}
       <div className="grid grid-cols-1 gap-6">
-        <FunnelChart data={mockFunnelData} />
+        <Suspense fallback={<ChartSkeleton />}>
+          <FunnelChart data={isLoaded ? mockFunnelData : []} />
+        </Suspense>
       </div>
       
       {/* Third row - Finance Chart (DRE Simplificado) 100% */}
       <div className="grid grid-cols-1 gap-6">
-        <FinanceChart />
+        <Suspense fallback={<ChartSkeleton />}>
+          <FinanceChart />
+        </Suspense>
       </div>
       
       {/* Fourth row - Activities 100% */}
       <div className="grid grid-cols-1 gap-6">
-        <ActivitiesSection activities={mockTodayActivities} />
+        <Suspense fallback={<ChartSkeleton />}>
+          <ActivitiesSection activities={isLoaded ? mockTodayActivities : []} />
+        </Suspense>
       </div>
     </div>
   );
