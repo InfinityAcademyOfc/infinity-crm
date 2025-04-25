@@ -18,24 +18,7 @@ export function SectionHeader({
   className
 }: SectionHeaderProps) {
   return <div className={cn("mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4", className)}>
-      <div className="space-y-1 animate-fade-in">
-        <div className="flex items-center gap-2">
-          
-          {tooltip && <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-5 w-5 rounded-full hover:bg-muted">
-                    <HelpCircle className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="text-sm">{tooltip}</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>}
-        </div>
-        {description}
-      </div>
+      
       
       {actions && <div className="flex flex-wrap items-center gap-2 animate-fade-in">
           {actions}
