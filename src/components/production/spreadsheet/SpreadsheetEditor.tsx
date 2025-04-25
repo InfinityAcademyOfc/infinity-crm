@@ -11,20 +11,18 @@ const SpreadsheetEditor = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] h-full relative">
+    <div className="grid grid-cols-[300px_1fr] h-full">
       {!sidebarCollapsed ? (
         <>
-          <div className="border-b md:border-b-0 md:border-r">
-            <SpreadsheetExplorer 
-              onSelectFile={setSelectedFile} 
-              selectedFile={selectedFile} 
-            />
-          </div>
+          <SpreadsheetExplorer 
+            onSelectFile={setSelectedFile} 
+            selectedFile={selectedFile} 
+          />
           <div className="flex flex-col h-full relative">
             <CollapseButton 
               isCollapsed={false}
               onClick={() => setSidebarCollapsed(true)}
-              className="hidden md:flex absolute top-2 left-2 z-10"
+              className="absolute top-2 left-2 z-10"
               position="right"
             />
             <SpreadsheetToolbar />
@@ -32,11 +30,11 @@ const SpreadsheetEditor = () => {
           </div>
         </>
       ) : (
-        <div className="col-span-1 md:col-span-2 flex flex-col h-full relative">
+        <div className="col-span-2 flex flex-col h-full relative">
           <CollapseButton 
             isCollapsed={true}
             onClick={() => setSidebarCollapsed(false)}
-            className="hidden md:flex absolute top-2 left-2 z-10"
+            className="absolute top-2 left-2 z-10"
             position="right"
           />
           <SpreadsheetToolbar />

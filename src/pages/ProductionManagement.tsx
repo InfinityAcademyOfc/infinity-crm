@@ -11,8 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
 const ProductionManagement = () => {
+  // Updated mock data with id field in assignedTo
   const mockTasksKanbanColumns: KanbanColumnItem[] = [{
     id: "backlog",
     title: "Backlog",
@@ -94,7 +94,6 @@ const ProductionManagement = () => {
       completion: 100
     }]
   }];
-
   const [columns, setColumns] = useState<KanbanColumnItem[]>(mockTasksKanbanColumns);
   const [isNewTaskDialogOpen, setIsNewTaskDialogOpen] = useState(false);
   const [newTask, setNewTask] = useState({
@@ -102,11 +101,11 @@ const ProductionManagement = () => {
     description: "",
     client: "",
     priority: "medium" as "low" | "medium" | "high",
+    // Type assertion to match KanbanCardItem
     startDate: "",
     endDate: "",
     assignee: "user-1"
   });
-
   const {
     syncAllModules,
     isSyncing
@@ -114,7 +113,6 @@ const ProductionManagement = () => {
   const {
     toast
   } = useToast();
-
   const handleSyncModules = () => {
     syncAllModules();
     toast({
@@ -122,14 +120,12 @@ const ProductionManagement = () => {
       description: "Sincronizando dados entre todos os módulos..."
     });
   };
-
   const handleNewTaskChange = (field: string, value: string) => {
     setNewTask({
       ...newTask,
       [field]: value
     });
   };
-
   const handleCreateTask = () => {
     if (!newTask.title) {
       toast({
@@ -139,7 +135,6 @@ const ProductionManagement = () => {
       });
       return;
     }
-
     const users = [{
       id: "user-1",
       name: "Carlos Silva",
@@ -161,9 +156,9 @@ const ProductionManagement = () => {
       name: "Roberto Alves",
       avatar: "/placeholder.svg"
     }];
-
     const assignedUser = users.find(user => user.id === newTask.assignee) || users[0];
 
+    // Create a properly typed KanbanCardItem
     const newTaskItem: KanbanCardItem = {
       id: `task-${Date.now()}`,
       title: newTask.title,
@@ -174,6 +169,7 @@ const ProductionManagement = () => {
       completion: 0
     };
 
+    // Add to backlog column
     const updatedColumns = columns.map(column => {
       if (column.id === "backlog") {
         return {
@@ -183,7 +179,6 @@ const ProductionManagement = () => {
       }
       return column;
     });
-
     setColumns(updatedColumns);
     setIsNewTaskDialogOpen(false);
     setNewTask({
@@ -200,10 +195,9 @@ const ProductionManagement = () => {
       description: "A tarefa foi adicionada ao backlog e ao gráfico Gantt"
     });
   };
-
-  return <div className="space-y-4 sm:space-y-6">
-      <Card className="p-2 sm:p-4 backdrop-blur-md shadow-md border border-border/40 bg-transparent">
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-4">
+  return <div className="space-y-6">
+      <Card className="p-4 backdrop-blur-md shadow-md border border-border/40 bg-transparent">
+        <div className="flex justify-between items-center gap-4 flex-wrap">
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" className="flex items-center gap-1 h-8">
               <Filter size={14} />
@@ -230,7 +224,7 @@ const ProductionManagement = () => {
       <ProductionTabs columns={columns} setColumns={setColumns} />
       
       <Dialog open={isNewTaskDialogOpen} onOpenChange={setIsNewTaskDialogOpen}>
-        <DialogContent className="sm:max-w-[500px] w-[calc(100%-2rem)] p-4 sm:p-6">
+        <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Nova Tarefa</DialogTitle>
             <DialogDescription>
@@ -249,7 +243,7 @@ const ProductionManagement = () => {
               <Textarea id="description" value={newTask.description} onChange={e => handleNewTaskChange("description", e.target.value)} placeholder="Descrição detalhada da tarefa" />
             </div>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="client">Cliente</Label>
                 <Input id="client" value={newTask.client} onChange={e => handleNewTaskChange("client", e.target.value)} placeholder="Nome do cliente" />
@@ -269,7 +263,7 @@ const ProductionManagement = () => {
               </div>
             </div>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="startDate">Data de Início</Label>
                 <Input id="startDate" type="date" value={newTask.startDate} onChange={e => handleNewTaskChange("startDate", e.target.value)} />
@@ -297,7 +291,7 @@ const ProductionManagement = () => {
             </div>
           </div>
           
-          <DialogFooter className="sm:justify-end">
+          <DialogFooter>
             <Button variant="outline" onClick={() => setIsNewTaskDialogOpen(false)}>Cancelar</Button>
             <Button onClick={handleCreateTask}>Criar Tarefa</Button>
           </DialogFooter>
@@ -305,5 +299,4 @@ const ProductionManagement = () => {
       </Dialog>
     </div>;
 };
-
 export default ProductionManagement;
