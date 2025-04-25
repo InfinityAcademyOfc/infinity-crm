@@ -1,8 +1,6 @@
-
 import React from "react";
 import { ArrowDown, ArrowUp } from "lucide-react";
 import { cn } from "@/lib/utils";
-
 interface StatsCardProps {
   title: string;
   value: string | number;
@@ -14,15 +12,14 @@ interface StatsCardProps {
   };
   className?: string;
 }
-
-export function StatsCard({ title, value, icon, trend, className }: StatsCardProps) {
-  return (
-    <div
-      className={cn(
-        "dashboard-card transition-all duration-300 hover:shadow-md dark:hover:shadow-none",
-        className
-      )}
-    >
+export function StatsCard({
+  title,
+  value,
+  icon,
+  trend,
+  className
+}: StatsCardProps) {
+  return <div className="bg-gray-900 rounded-2xl px-[10px] py-[10px]">
       <div className="flex justify-between items-start">
         <div>
           <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">{title}</h3>
@@ -31,26 +28,12 @@ export function StatsCard({ title, value, icon, trend, className }: StatsCardPro
         {icon && <div>{icon}</div>}
       </div>
 
-      {trend && (
-        <div className="mt-2 flex items-center">
-          <span
-            className={cn(
-              "text-xs font-medium flex items-center mr-1",
-              trend.positive
-                ? "text-green-600 dark:text-green-400"
-                : "text-red-600 dark:text-red-400"
-            )}
-          >
-            {trend.positive ? (
-              <ArrowUp size={14} className="mr-0.5" />
-            ) : (
-              <ArrowDown size={14} className="mr-0.5" />
-            )}
+      {trend && <div className="mt-2 flex items-center">
+          <span className={cn("text-xs font-medium flex items-center mr-1", trend.positive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")}>
+            {trend.positive ? <ArrowUp size={14} className="mr-0.5" /> : <ArrowDown size={14} className="mr-0.5" />}
             {trend.value}%
           </span>
           <span className="text-xs text-gray-500 dark:text-gray-400">{trend.label}</span>
-        </div>
-      )}
-    </div>
-  );
+        </div>}
+    </div>;
 }
