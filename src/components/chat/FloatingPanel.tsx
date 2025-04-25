@@ -8,7 +8,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { ResizablePanelGroup, ResizablePanel } from "@/components/ui/resizable";
+import { ResizablePanelGroup, ResizablePanel, ImperativePanelGroupHandle } from "@/components/ui/resizable";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import ChatContent from "./ChatContent";
 import WhatsAppChat from "../whatsapp/WhatsAppChat";
@@ -37,7 +37,8 @@ const FloatingPanel = ({
   onFullScreen,
 }: FloatingPanelProps) => {
   const isMobile = useIsMobile();
-  const panelRef = useRef<HTMLDivElement>(null);
+  // Change from HTMLDivElement to ImperativePanelGroupHandle
+  const panelRef = useRef<ImperativePanelGroupHandle>(null);
   
   if (!isOpen) return null;
 
@@ -48,8 +49,14 @@ const FloatingPanel = ({
   // This handles clicking outside to close on mobile
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (isMobile && panelRef.current && !panelRef.current.contains(event.target as Node)) {
-        onClose();
+      // Since we can't directly check if the panel contains the event target anymore,
+      // we need a different approach for detecting outside clicks
+      if (isMobile) {
+        // Create a selector targeting the panel by its classname or other attributes
+        const panelElement = document.querySelector('.floating-panel-container');
+        if (panelElement && !panelElement.contains(event.target as Node)) {
+          onClose();
+        }
       }
     };
 
@@ -62,7 +69,7 @@ const FloatingPanel = ({
   return (
     <ResizablePanelGroup
       ref={panelRef}
-      className="mb-4 bg-background border rounded-lg shadow-lg overflow-hidden"
+      className="mb-4 bg-background border rounded-lg shadow-lg overflow-hidden floating-panel-container"
       style={{ width: adjustedWidth, height: adjustedHeight }}
       onResize={onResize}
       direction="vertical"
