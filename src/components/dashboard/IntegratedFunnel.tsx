@@ -2,8 +2,23 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { AlertTriangle, Filter, TrendingUp, Users, CheckCircle2 } from 'lucide-react';
+import { 
+  BarChart, 
+  Bar, 
+  LineChart, 
+  Line,
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer, 
+  Legend,
+  FunnelChart,
+  Funnel,
+  FunnelItem,
+  LabelList
+} from 'recharts';
+import { AlertTriangle, Filter, TrendingUp, Users, CheckCircle2, BarChart3, Activity, TrendingDown } from 'lucide-react';
 import { useModuleSync } from '@/services/moduleSyncService';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -12,7 +27,7 @@ type FunnelType = 'sales' | 'ltv' | 'production';
 
 interface FunnelStage {
   name: string;
-  count: number;
+  value: number;
   efficiency: number;
   leakage: number;
 }
@@ -33,6 +48,33 @@ const IntegratedFunnel = () => {
   });
   
   const { lastSyncTime } = useModuleSync();
+  const [isDark, setIsDark] = useState(false);
+  
+  // Effect to detect dark mode
+  useEffect(() => {
+    const checkDarkMode = () => {
+      const isDarkMode = document.documentElement.classList.contains('dark');
+      setIsDark(isDarkMode);
+    };
+    
+    // Check initial state
+    checkDarkMode();
+    
+    // Create a mutation observer to detect class changes on document.documentElement
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName === 'class') {
+          checkDarkMode();
+        }
+      });
+    });
+    
+    // Start observing
+    observer.observe(document.documentElement, { attributes: true });
+    
+    // Cleanup
+    return () => observer.disconnect();
+  }, []);
   
   // Effect to update funnel data when syncModule is called
   useEffect(() => {
@@ -40,93 +82,302 @@ const IntegratedFunnel = () => {
   }, [lastSyncTime]);
   
   const updateFunnelData = () => {
-    // This would typically fetch data from the unified data store
-    // For now, let's create mock data based on what would be in a real app
-    
     // Sales funnel
     const salesStages: FunnelStage[] = [
-      { name: 'Prospecção', count: 45, efficiency: 78, leakage: 22 },
-      { name: 'Qualificação', count: 32, efficiency: 71, leakage: 29 },
-      { name: 'Proposta', count: 24, efficiency: 75, leakage: 25 },
-      { name: 'Negociação', count: 18, efficiency: 72, leakage: 28 },
-      { name: 'Fechamento', count: 12, efficiency: 67, leakage: 33 }
+      { name: 'Prospecção', value: 45, efficiency: 78, leakage: 22 },
+      { name: 'Qualificação', value: 32, efficiency: 71, leakage: 29 },
+      { name: 'Proposta', value: 24, efficiency: 75, leakage: 25 },
+      { name: 'Negociação', value: 18, efficiency: 72, leakage: 28 },
+      { name: 'Fechamento', value: 12, efficiency: 67, leakage: 33 }
     ];
     
     // LTV funnel
     const ltvStages: FunnelStage[] = [
-      { name: 'Novos Clientes', count: 28, efficiency: 82, leakage: 18 },
-      { name: 'Clientes Ativos', count: 36, efficiency: 90, leakage: 10 },
-      { name: 'Clientes em Crescimento', count: 22, efficiency: 85, leakage: 15 },
-      { name: 'Clientes Fiéis', count: 18, efficiency: 94, leakage: 6 },
-      { name: 'Advogados da Marca', count: 12, efficiency: 92, leakage: 8 }
+      { name: 'Novos Clientes', value: 28, efficiency: 82, leakage: 18 },
+      { name: 'Clientes Ativos', value: 36, efficiency: 90, leakage: 10 },
+      { name: 'Clientes em Crescimento', value: 22, efficiency: 85, leakage: 15 },
+      { name: 'Clientes Fiéis', value: 18, efficiency: 94, leakage: 6 },
+      { name: 'Advogados da Marca', value: 12, efficiency: 92, leakage: 8 }
     ];
     
     // Production funnel
     const productionStages: FunnelStage[] = [
-      { name: 'Backlog', count: 32, efficiency: 72, leakage: 28 },
-      { name: 'Em Progresso', count: 18, efficiency: 83, leakage: 17 },
-      { name: 'Revisão', count: 12, efficiency: 75, leakage: 25 },
-      { name: 'Concluído', count: 42, efficiency: 95, leakage: 5 }
+      { name: 'Backlog', value: 32, efficiency: 72, leakage: 28 },
+      { name: 'Em Progresso', value: 18, efficiency: 83, leakage: 17 },
+      { name: 'Revisão', value: 12, efficiency: 75, leakage: 25 },
+      { name: 'Concluído', value: 42, efficiency: 95, leakage: 5 }
     ];
     
     setFunnelData({
       sales: { 
         type: 'sales', 
         stages: salesStages, 
-        totalItems: salesStages.reduce((acc, stage) => acc + stage.count, 0),
-        conversionRate: (salesStages[salesStages.length - 1].count / salesStages[0].count) * 100
+        totalItems: salesStages.reduce((acc, stage) => acc + stage.value, 0),
+        conversionRate: Math.round((salesStages[salesStages.length - 1].value / salesStages[0].value) * 100)
       },
       ltv: { 
         type: 'ltv', 
         stages: ltvStages, 
-        totalItems: ltvStages.reduce((acc, stage) => acc + stage.count, 0),
-        conversionRate: (ltvStages[ltvStages.length - 1].count / ltvStages[0].count) * 100
+        totalItems: ltvStages.reduce((acc, stage) => acc + stage.value, 0),
+        conversionRate: Math.round((ltvStages[ltvStages.length - 1].value / ltvStages[0].value) * 100)
       },
       production: { 
         type: 'production', 
         stages: productionStages, 
-        totalItems: productionStages.reduce((acc, stage) => acc + stage.count, 0),
-        conversionRate: (productionStages[productionStages.length - 1].count / productionStages[0].count) * 100
+        totalItems: productionStages.reduce((acc, stage) => acc + stage.value, 0),
+        conversionRate: Math.round((productionStages[productionStages.length - 1].value / productionStages[0].value) * 100)
       }
     });
   };
-  
-  const getActiveData = () => funnelData[activeTab];
+
+  const getColorsByType = (type: FunnelType) => {
+    const colorSets = {
+      sales: {
+        main: '#4361ee',
+        efficiency: '#06d6a0',
+        leakage: '#ef476f',
+        gradient: ['#4361ee', '#3a56e4', '#314bdb', '#2740d1', '#1d35c8'],
+        dark: ['#5D72F2', '#5369ED', '#4960E8', '#3F57E3', '#354EDF']
+      },
+      ltv: {
+        main: '#9d4edd',
+        efficiency: '#06d6a0',
+        leakage: '#ef476f',
+        gradient: ['#9d4edd', '#8a45c9', '#773cb4', '#64339f', '#512a8b'],
+        dark: ['#AE64E7', '#9E5AD7', '#8E51C7', '#7E47B7', '#6E3DA7'] 
+      },
+      production: {
+        main: '#4cc9f0',
+        efficiency: '#06d6a0',
+        leakage: '#ef476f',
+        gradient: ['#4cc9f0', '#43b4d9', '#3a9fc1', '#318baa', '#287792'],
+        dark: ['#65D2F9', '#5CBDE4', '#53A8CF', '#4A93BA', '#417EA5']
+      }
+    };
+    
+    return isDark ? {
+      ...colorSets[type],
+      gradient: colorSets[type].dark
+    } : colorSets[type];
+  };
   
   const getFunnelIcon = (type: FunnelType) => {
+    const colors = {
+      sales: "text-blue-500",
+      ltv: "text-purple-500",
+      production: "text-cyan-500"
+    };
+    
     switch (type) {
-      case 'sales': return <Filter className="mr-2 h-4 w-4 text-blue-500" />;
-      case 'ltv': return <Users className="mr-2 h-4 w-4 text-purple-500" />;
-      case 'production': return <CheckCircle2 className="mr-2 h-4 w-4 text-green-500" />;
-      default: return <Filter className="mr-2 h-4 w-4" />;
+      case 'sales': return <Filter className={`h-4 w-4 ${colors.sales}`} />;
+      case 'ltv': return <Users className={`h-4 w-4 ${colors.ltv}`} />;
+      case 'production': return <CheckCircle2 className={`h-4 w-4 ${colors.production}`} />;
     }
   };
   
-  const getFunnelTitle = (type: FunnelType) => {
-    switch (type) {
-      case 'sales': return 'Funil de Vendas';
-      case 'ltv': return 'Funil de LTV';
-      case 'production': return 'Funil de Produção';
-      default: return 'Funil';
-    }
+  const renderFunnelChart = (type: FunnelType) => {
+    const data = funnelData[type].stages;
+    const colors = getColorsByType(type);
+    
+    return (
+      <div className="h-56 md:h-64">
+        <ResponsiveContainer width="100%" height="100%">
+          <FunnelChart>
+            <Tooltip 
+              formatter={(value, name) => [`${value} itens`, 'Quantidade']}
+              contentStyle={{ 
+                background: isDark ? '#1f2937' : '#fff',
+                border: isDark ? '1px solid #374151' : '1px solid #e5e7eb', 
+                borderRadius: '6px', 
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                color: isDark ? '#f9fafb' : '#111827'
+              }}
+            />
+            <Funnel
+              dataKey="value"
+              data={data}
+              isAnimationActive
+              fill={colors.main}
+              gradient
+            >
+              <LabelList
+                position="right"
+                fill={isDark ? "#f9fafb" : "#111827"}
+                stroke="none"
+                dataKey="name"
+                fontSize={12}
+              />
+              <LabelList
+                position="center"
+                fill="#ffffff"
+                stroke="none"
+                dataKey="value"
+                fontSize={14}
+                fontWeight="bold"
+              />
+              {data.map((entry, index) => (
+                <FunnelItem 
+                  key={`funnel-item-${index}`}
+                  fill={colors.gradient[index % colors.gradient.length]} 
+                />
+              ))}
+            </Funnel>
+          </FunnelChart>
+        </ResponsiveContainer>
+      </div>
+    );
+  };
+
+  const renderConversionChart = (type: FunnelType) => {
+    const data = funnelData[type].stages;
+    const colors = getColorsByType(type);
+    
+    return (
+      <div className="h-56 md:h-64">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart
+            data={data}
+            layout="vertical"
+            margin={{ top: 5, right: 30, left: 60, bottom: 5 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke={isDark ? "#444" : "#e5e7eb"} />
+            <XAxis 
+              type="number" 
+              domain={[0, 100]} 
+              tick={{fontSize: 12}} 
+              stroke={isDark ? "#ccc" : "#374151"}
+            />
+            <YAxis 
+              dataKey="name" 
+              type="category" 
+              width={60} 
+              tick={{fontSize: 12}} 
+              stroke={isDark ? "#ccc" : "#374151"}
+            />
+            <Tooltip 
+              formatter={(value) => [`${value}%`, 'Eficiência']}
+              contentStyle={{ 
+                background: isDark ? '#1f2937' : '#fff',
+                border: isDark ? '1px solid #374151' : '1px solid #e5e7eb', 
+                borderRadius: '6px', 
+                color: isDark ? '#f9fafb' : '#111827'
+              }}
+            />
+            <Bar dataKey="efficiency" fill={colors.efficiency} radius={[0, 4, 4, 0]}>
+              <LabelList dataKey="efficiency" position="right" formatter={(value) => `${value}%`} />
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    );
+  };
+
+  const renderLeakageChart = (type: FunnelType) => {
+    const data = funnelData[type].stages;
+    const colors = getColorsByType(type);
+
+    return (
+      <div className="h-56 md:h-64">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart
+            data={data}
+            layout="vertical"
+            margin={{ top: 5, right: 30, left: 60, bottom: 5 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke={isDark ? "#444" : "#e5e7eb"} />
+            <XAxis 
+              type="number" 
+              domain={[0, 50]} 
+              tick={{fontSize: 12}} 
+              stroke={isDark ? "#ccc" : "#374151"}
+            />
+            <YAxis 
+              dataKey="name" 
+              type="category" 
+              width={60} 
+              tick={{fontSize: 12}} 
+              stroke={isDark ? "#ccc" : "#374151"}
+            />
+            <Tooltip 
+              formatter={(value) => [`${value}%`, 'Fugas']}
+              contentStyle={{ 
+                background: isDark ? '#1f2937' : '#fff',
+                border: isDark ? '1px solid #374151' : '1px solid #e5e7eb', 
+                borderRadius: '6px', 
+                color: isDark ? '#f9fafb' : '#111827'
+              }}
+            />
+            <Bar dataKey="leakage" fill={colors.leakage} radius={[0, 4, 4, 0]}>
+              <LabelList dataKey="leakage" position="right" formatter={(value) => `${value}%`} />
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    );
+  };
+
+  const renderFunnelSummary = (type: FunnelType) => {
+    const data = funnelData[type];
+    const totalLeakage = 100 - data.conversionRate;
+    const averageEfficiency = Math.round(
+      data.stages.reduce((sum, stage) => sum + stage.efficiency, 0) / data.stages.length
+    );
+    
+    return (
+      <div className="grid grid-cols-3 gap-2 text-center">
+        <div className="flex flex-col items-center justify-center rounded-lg p-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 shadow-sm">
+          <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+            <BarChart3 className="h-3 w-3" />
+            <span>Total</span>
+          </div>
+          <p className="text-lg font-bold text-blue-700 dark:text-blue-300">
+            {data.totalItems}
+          </p>
+        </div>
+        <div className="flex flex-col items-center justify-center rounded-lg p-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 shadow-sm">
+          <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+            <TrendingUp className="h-3 w-3" />
+            <span>Eficiência</span>
+          </div>
+          <p className="text-lg font-bold text-green-700 dark:text-green-300">
+            {averageEfficiency}%
+          </p>
+        </div>
+        <div className="flex flex-col items-center justify-center rounded-lg p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 shadow-sm">
+          <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+            <TrendingDown className="h-3 w-3" />
+            <span>Fugas</span>
+          </div>
+          <p className="text-lg font-bold text-red-700 dark:text-red-300">
+            {totalLeakage}%
+          </p>
+        </div>
+      </div>
+    );
   };
   
   return (
-    <Card className="shadow-md border border-border/60 bg-card/90 dark:bg-gray-800/90 backdrop-blur-sm">
+    <Card className="shadow-md border border-border/60 bg-card/90 dark:bg-gray-800/90 backdrop-blur-sm overflow-hidden transition-all duration-300 hover:shadow-lg">
       <CardHeader className="pb-2">
         <div className="flex justify-between items-center">
-          <CardTitle>Funil Integrado</CardTitle>
-          <Badge variant="outline" className="ml-2 flex items-center">
+          <div className="flex items-center gap-2">
+            <CardTitle>Funis Integrados</CardTitle>
+            <Badge variant="outline" className="flex items-center text-xs animate-pulse-subtle">
+              <Activity className="mr-1 h-3 w-3" /> 
+              Ao Vivo
+            </Badge>
+          </div>
+          <Badge variant="outline" className="flex items-center bg-primary/10 hover:bg-primary/20 transition-all">
             <TrendingUp className="mr-1 h-3 w-3" /> 
-            Conv: {getActiveData().conversionRate.toFixed(1)}%
+            Conv: {funnelData[activeTab].conversionRate}%
           </Badge>
         </div>
         <CardDescription>
-          Visão unificada dos funis de vendas, clientes e produção
+          Visão detalhada dos funis de vendas, clientes e produção
         </CardDescription>
       </CardHeader>
       
-      <CardContent>
+      <CardContent className="space-y-4">
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as FunnelType)} className="space-y-4">
           <TabsList className="grid grid-cols-3 gap-2">
             <TabsTrigger value="sales" className="flex items-center justify-center">
@@ -141,57 +392,80 @@ const IntegratedFunnel = () => {
           </TabsList>
           
           {Object.keys(funnelData).map((type) => (
-            <TabsContent key={type} value={type} className="space-y-2">
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={funnelData[type as FunnelType].stages}
-                    layout="vertical"
-                    margin={{ top: 5, right: 30, left: 30, bottom: 5 }}
-                  >
-                    <XAxis type="number" />
-                    <YAxis dataKey="name" type="category" width={100} />
-                    <Tooltip 
-                      formatter={(value, name) => [
-                        name === 'count' ? `${value} itens` : 
-                        name === 'efficiency' ? `${value}% eficiência` : 
-                        `${value}% fugas`,
-                        name === 'count' ? 'Quantidade' : 
-                        name === 'efficiency' ? 'Eficiência' : 
-                        'Fugas'
-                      ]}
-                    />
-                    <Legend />
-                    <Bar dataKey="count" fill="#4361ee" name="Quantidade" />
-                    <Bar dataKey="efficiency" fill="#06d6a0" name="Eficiência" />
-                    <Bar dataKey="leakage" fill="#ef476f" name="Fugas" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-              
-              <div className="grid grid-cols-3 gap-2 text-center">
-                <div className="flex flex-col items-center border rounded-lg p-2 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Total</p>
-                  <p className="text-xl font-bold text-blue-700 dark:text-blue-300">
-                    {funnelData[type as FunnelType].totalItems}
-                  </p>
-                </div>
-                <div className="flex flex-col items-center border rounded-lg p-2 bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800">
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Conversão</p>
-                  <p className="text-xl font-bold text-green-700 dark:text-green-300">
-                    {funnelData[type as FunnelType].conversionRate.toFixed(1)}%
-                  </p>
-                </div>
-                <div className="flex flex-col items-center border rounded-lg p-2 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800">
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Fugas</p>
-                  <p className="text-xl font-bold text-red-700 dark:text-red-300">
-                    {(100 - funnelData[type as FunnelType].conversionRate).toFixed(1)}%
-                  </p>
+            <TabsContent key={type} value={type} className="space-y-4 animation-fade-in">
+              <div className="grid grid-cols-1 gap-4 transition-all duration-300">
+                {/* Visual Funnel Chart */}
+                <Card className="p-4 shadow-sm hover:shadow-md transition-all duration-300 bg-card/50 overflow-hidden">
+                  <div className="flex items-center gap-2 mb-2">
+                    {getFunnelIcon(type as FunnelType)}
+                    <h3 className="text-sm font-medium">Funil Visual</h3>
+                  </div>
+                  {renderFunnelChart(type as FunnelType)}
+                </Card>
+                
+                {/* Three funnel metrics cards in a responsive grid */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Conversion Funnel */}
+                  <Card className="p-4 shadow-sm hover:shadow-md transition-all duration-300 bg-card/50 overflow-hidden">
+                    <div className="flex items-center gap-2 mb-2">
+                      <TrendingUp className="h-4 w-4 text-green-500" />
+                      <h3 className="text-sm font-medium">Conversão por Etapa</h3>
+                    </div>
+                    {renderConversionChart(type as FunnelType)}
+                  </Card>
+                  
+                  {/* Leakage Funnel */}
+                  <Card className="p-4 shadow-sm hover:shadow-md transition-all duration-300 bg-card/50 overflow-hidden">
+                    <div className="flex items-center gap-2 mb-2">
+                      <TrendingDown className="h-4 w-4 text-red-500" />
+                      <h3 className="text-sm font-medium">Fugas por Etapa</h3>
+                    </div>
+                    {renderLeakageChart(type as FunnelType)}
+                  </Card>
+                  
+                  {/* Overall Summary */}
+                  <Card className="p-4 shadow-sm hover:shadow-md transition-all duration-300 bg-card/50 overflow-hidden">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Activity className="h-4 w-4 text-blue-500" />
+                      <h3 className="text-sm font-medium">Resumo Geral</h3>
+                    </div>
+                    {/* Summary content with small visualizations */}
+                    <div className="flex flex-col h-full justify-between">
+                      <div className="space-y-4 flex-grow">
+                        <div className="flex flex-col space-y-1">
+                          <div className="flex justify-between items-center text-sm">
+                            <span>Etapas</span>
+                            <span className="font-semibold">{funnelData[type as FunnelType].stages.length}</span>
+                          </div>
+                          <div className="flex justify-between items-center text-sm">
+                            <span>Entrada</span>
+                            <span className="font-semibold">{funnelData[type as FunnelType].stages[0].value}</span>
+                          </div>
+                          <div className="flex justify-between items-center text-sm">
+                            <span>Saída</span>
+                            <span className="font-semibold">{funnelData[type as FunnelType].stages[funnelData[type as FunnelType].stages.length - 1].value}</span>
+                          </div>
+                          <div className="flex justify-between items-center text-sm">
+                            <span>Eficiência Média</span>
+                            <span className="font-semibold">{Math.round(funnelData[type as FunnelType].stages.reduce((sum, stage) => sum + stage.efficiency, 0) / funnelData[type as FunnelType].stages.length)}%</span>
+                          </div>
+                          <div className="flex justify-between items-center text-sm">
+                            <span>Taxa de Conversão</span>
+                            <span className="font-semibold">{funnelData[type as FunnelType].conversionRate}%</span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="mt-4">
+                        {renderFunnelSummary(type as FunnelType)}
+                      </div>
+                    </div>
+                  </Card>
                 </div>
               </div>
               
               {funnelData[type as FunnelType].stages.some(stage => stage.leakage > 30) && (
-                <div className="flex items-center p-2 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 text-sm">
+                <div className="flex items-center p-2 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 text-sm animate-pulse-subtle">
                   <AlertTriangle className="h-4 w-4 text-yellow-600 dark:text-yellow-400 mr-2" />
                   <span>Atenção: Algumas etapas possuem fugas acima de 30%</span>
                 </div>

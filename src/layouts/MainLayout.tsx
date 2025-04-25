@@ -77,17 +77,22 @@ const MainLayout = () => {
 
   return (
     <SidebarProvider>
-      <div className="flex h-screen w-full bg-background">
-        {/* Sidebar */}
-        <Sidebar 
-          open={sidebarOpen} 
-          setOpen={setSidebarOpen}
-        />
-
-        {/* Main content area that shifts with sidebar on desktop, but stays fixed on mobile */}
+      <div className="flex h-screen w-full overflow-hidden bg-background">
+        {/* Sidebar component - now positioned absolutely */}
         <div className={cn(
-          "flex-1 flex flex-col min-w-0 transition-all duration-300 ease-in-out",
-          !isMobileView && sidebarOpen ? "ml-64" : "ml-0"
+          "fixed top-0 left-0 z-30 h-screen transition-all duration-300 ease-in-out",
+          sidebarOpen ? "w-64" : "w-0"
+        )}>
+          <Sidebar 
+            open={sidebarOpen} 
+            setOpen={setSidebarOpen}
+          />
+        </div>
+
+        {/* Main content area that shifts with sidebar on desktop */}
+        <div className={cn(
+          "flex-1 flex flex-col min-w-0 h-screen transition-all duration-300 ease-in-out",
+          sidebarOpen && !isMobileView ? "ml-64" : "ml-0"
         )}>
           {/* TopNav that shifts with sidebar on desktop */}
           <TopNav />
@@ -143,6 +148,7 @@ const MainLayout = () => {
           </main>
         </div>
         
+        {/* Chat button positioned at the bottom right */}
         <UnifiedChatButton />
 
         {/* Mobile toggle button that's visible even when sidebar is closed */}
