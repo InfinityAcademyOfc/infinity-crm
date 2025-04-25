@@ -29,19 +29,19 @@ const MainLayout = () => {
 
   return (
     <SidebarProvider>
-      <div className="flex h-screen w-full overflow-hidden bg-background">
+      <div className="flex min-h-screen w-full bg-background">
         <Sidebar 
           open={sidebarOpen} 
           setOpen={setSidebarOpen}
         />
 
         <div className={cn(
-          "flex flex-col flex-1 min-w-0 h-screen transition-all duration-300",
-          sidebarOpen ? "ml-64" : "ml-16",
-          isMobileView && !sidebarOpen && "ml-0"
+          "flex flex-col flex-1 min-w-0 transition-all duration-300 ease-in-out",
+          sidebarOpen ? "md:ml-64" : "md:ml-16",
+          isMobileView && "ml-0"
         )}>
           <TopNav />
-          <main className="flex-1 overflow-y-auto bg-background p-4 md:p-6">
+          <main className="flex-1 overflow-y-auto p-4 md:p-6">
             <ErrorBoundary>
               <Suspense fallback={<LoadingScreen minimal />}>
                 <Outlet />
