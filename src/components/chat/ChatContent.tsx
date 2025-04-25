@@ -47,7 +47,7 @@ const ChatContent = ({ initialMessages, className }: ChatContentProps) => {
   useEffect(() => {
     return () => {
       if (timeoutRef.current !== null) {
-        clearTimeout(timeoutRef.current);
+        window.clearTimeout(timeoutRef.current);
       }
     };
   }, []);
@@ -66,7 +66,7 @@ const ChatContent = ({ initialMessages, className }: ChatContentProps) => {
     
     // Store timeout ID for cleanup
     if (timeoutRef.current !== null) {
-      clearTimeout(timeoutRef.current);
+      window.clearTimeout(timeoutRef.current);
     }
     
     timeoutRef.current = window.setTimeout(() => {

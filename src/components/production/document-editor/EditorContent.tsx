@@ -159,6 +159,25 @@ const EditorContent = forwardRef<HTMLDivElement, EditorContentProps>(({
     }
   };
 
+  // Use useEffect to handle blur with a timeout
+  useEffect(() => {
+    let blurTimeout: number | null = null;
+    
+    if (!isFocused) {
+      blurTimeout = window.setTimeout(() => {
+        if (!document.activeElement?.closest('.floating-format-toolbar')) {
+          setShowFormatToolbar(false);
+        }
+      }, 100);
+    }
+    
+    return () => {
+      if (blurTimeout !== null) {
+        window.clearTimeout(blurTimeout);
+      }
+    };
+  }, [isFocused]);
+
   return (
     <div className="relative w-full h-full">
       <div
@@ -175,16 +194,7 @@ const EditorContent = forwardRef<HTMLDivElement, EditorContentProps>(({
         onDragOver={handleDragOver}
         onMouseDown={handleMouseDown}
         onFocus={() => setIsFocused(true)}
-        onBlur={() => {
-          setIsFocused(false);
-          // Use setTimeout with cleanup via useEffect instead
-          const timer = setTimeout(() => {
-            if (!document.activeElement?.closest('.floating-format-toolbar')) {
-              setShowFormatToolbar(false);
-            }
-          }, 100);
-          return () => clearTimeout(timer);
-        }}
+        onBlur={() => setIsFocused(false)}
         style={{
           fontFamily,
           color: textColor,

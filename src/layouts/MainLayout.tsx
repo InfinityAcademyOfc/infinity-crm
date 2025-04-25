@@ -11,14 +11,17 @@ import UnifiedChatButton from "@/components/chat/UnifiedChatButton";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import LoadingScreen from "@/components/ui/loading-screen";
+import { toast } from "sonner";
 
 const MainLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const { loading } = useAuth();
+  const { loading, profile } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
+  const [isLoadingPage, setIsLoadingPage] = useState(true);
 
+  // Safely handle window resize with proper cleanup
   useEffect(() => {
     function handleResize() {
       const mobile = window.innerWidth < 768;
@@ -27,15 +30,46 @@ const MainLayout = () => {
         setSidebarOpen(false);
       }
     }
+    
+    // Set initial state
+    handleResize();
+    
+    // Add event listener with proper cleanup
     window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
   }, [sidebarOpen]);
 
+  // Collapse sidebar on mobile when changing pages
   useEffect(() => {
     if (isMobileView) {
       setSidebarOpen(false);
     }
   }, [location.pathname, isMobileView]);
+
+  // Add simulated loading state with proper cleanup
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoadingPage(false);
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, [location.pathname]);
+
+  // Error handling for route changes
+  useEffect(() => {
+    const handleRouteError = () => {
+      if (location.pathname !== '/app' && !location.pathname.startsWith('/app/')) {
+        toast.warning("Rota não encontrada", {
+          description: "Redirecionando para o dashboard"
+        });
+        navigate('/app');
+      }
+    };
+    
+    handleRouteError();
+  }, [location.pathname, navigate]);
 
   if (loading) {
     return <LoadingScreen />;
@@ -89,9 +123,19 @@ const MainLayout = () => {
                   </div>
                 </div>
               }
+              onError={(error) => {
+                console.error("Layout error caught:", error);
+                toast.error("Erro na interface", {
+                  description: "Um erro foi detectado e está sendo tratado"
+                });
+              }}
             >
               <Suspense fallback={<LoadingScreen minimal />}>
-                <Outlet />
+                {isLoadingPage ? (
+                  <LoadingScreen minimal />
+                ) : (
+                  <Outlet />
+                )}
               </Suspense>
             </ErrorBoundary>
           </main>

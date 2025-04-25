@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { X } from "lucide-react";
 import {
   Dialog,
@@ -30,16 +30,22 @@ const ChatFullScreenDialog = ({
   activeTab,
   onTabChange,
 }: ChatFullScreenDialogProps) => {
-  // Ensure body scroll is disabled when dialog is open
+  const originalOverflowStyle = useRef<string>('');
+
+  // Ensure body scroll is disabled when dialog is open with proper cleanup
   useEffect(() => {
     if (isOpen) {
+      // Store the original overflow style before modifying
+      originalOverflowStyle.current = document.body.style.overflow;
       document.body.style.overflow = 'hidden';
     } else {
-      document.body.style.overflow = '';
+      // Restore the original overflow style
+      document.body.style.overflow = originalOverflowStyle.current;
     }
     
+    // Always restore original overflow on unmount
     return () => {
-      document.body.style.overflow = '';
+      document.body.style.overflow = originalOverflowStyle.current;
     };
   }, [isOpen]);
 

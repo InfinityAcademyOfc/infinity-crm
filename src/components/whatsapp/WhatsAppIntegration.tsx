@@ -1,6 +1,7 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { QrCode, Smartphone, CheckCircle, MessageCircle, Clock, Settings } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
@@ -8,12 +9,23 @@ import QRCodeScanner from "./QRCodeScanner";
 import WhatsAppChat from "./WhatsAppChat";
 import WhatsAppSettings from "./WhatsAppSettings";
 import WhatsAppAutomation from "./WhatsAppAutomation";
+import { Skeleton } from "@/components/ui/skeleton";
+
 const WhatsAppIntegration = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [activeTab, setActiveTab] = useState("qrcode");
-  const {
-    toast
-  } = useToast();
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
+
+  // Simulate loading state
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 800);
+
+    return () => clearTimeout(timer);
+  }, []);
+
   const handleLogin = () => {
     setIsLoggedIn(true);
     setActiveTab("chat");
@@ -22,6 +34,7 @@ const WhatsAppIntegration = () => {
       description: "Sua conta do WhatsApp foi conectada com sucesso."
     });
   };
+
   const handleLogout = () => {
     setIsLoggedIn(false);
     setActiveTab("qrcode");
@@ -30,7 +43,28 @@ const WhatsAppIntegration = () => {
       description: "Sua conta do WhatsApp foi desconectada."
     });
   };
-  return <div className="space-y-6">
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col md:flex-row justify-between items-center mb-6">
+          <Skeleton className="h-8 w-32" />
+          <Skeleton className="h-8 w-24 mt-4 md:mt-0" />
+        </div>
+        <Card className="h-[600px]">
+          <CardHeader className="pb-2">
+            <Skeleton className="h-10 w-full" />
+          </CardHeader>
+          <CardContent className="flex-1 p-0">
+            <Skeleton className="h-[530px] w-full" />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-center mb-6">
         <div>
           
@@ -38,19 +72,25 @@ const WhatsAppIntegration = () => {
         </div>
         
         <div className="mt-4 md:mt-0 flex items-center gap-4">
-          {isLoggedIn && <div className="flex items-center gap-2 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 px-3 py-1 rounded-full">
+          {isLoggedIn && (
+            <div className="flex items-center gap-2 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 px-3 py-1 rounded-full">
               <CheckCircle size={14} />
               <span className="text-sm font-medium">Conectado</span>
-            </div>}
+            </div>
+          )}
           
-          {!isLoggedIn && <div className="flex items-center gap-2 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400 px-3 py-1 rounded-full">
+          {!isLoggedIn && (
+            <div className="flex items-center gap-2 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400 px-3 py-1 rounded-full">
               <Smartphone size={14} />
               <span className="text-sm font-medium">Não Conectado</span>
-            </div>}
+            </div>
+          )}
           
-          {isLoggedIn && <Button variant="destructive" onClick={handleLogout} size="sm">
+          {isLoggedIn && (
+            <Button variant="destructive" onClick={handleLogout} size="sm">
               Desconectar
-            </Button>}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -93,6 +133,8 @@ const WhatsAppIntegration = () => {
           </Tabs>
         </CardHeader>
       </Card>
-    </div>;
+    </div>
+  );
 };
+
 export default WhatsAppIntegration;
