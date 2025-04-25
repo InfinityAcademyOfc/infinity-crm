@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Tree } from "@/components/ui/tree";
 import { DocumentProvider } from "./contexts/DocumentContext";
@@ -11,7 +10,6 @@ import { DocumentItem } from "./types";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DndProvider } from "@/components/ui/dnd-provider";
-
 const initialDocuments: DocumentItem[] = [{
   id: "folder-1",
   name: "Projetos",
@@ -57,12 +55,10 @@ const initialDocuments: DocumentItem[] = [{
   expanded: false,
   children: []
 }];
-
 interface DocumentExplorerProps {
   onSelectFile: (file: DocumentItem) => void;
   selectedFile: DocumentItem | null;
 }
-
 const DocumentExplorerContent: React.FC<DocumentExplorerProps> = ({
   onSelectFile,
   selectedFile
@@ -86,24 +82,10 @@ const DocumentExplorerContent: React.FC<DocumentExplorerProps> = ({
     toggleFolderExpanded,
     handleDragEnd
   } = useDocumentOperations(onSelectFile);
-  
   const renderItems = (items: DocumentItem[]) => {
     if (!items || items.length === 0) return null;
     const filteredItems = searchQuery ? items.filter(item => item.name.toLowerCase().includes(searchQuery.toLowerCase()) || item.children && item.children.some(child => child.name.toLowerCase().includes(searchQuery.toLowerCase()))) : items;
-    
-    return filteredItems.map(item => (
-      <DocumentTreeItem 
-        key={item.id} 
-        item={item} 
-        onSelect={onSelectFile} 
-        onDelete={handleDeleteItem} 
-        onRename={handleRename} 
-        onExport={handleExportDocument} 
-        onToggleExpanded={toggleFolderExpanded} 
-        selectedFile={selectedFile} 
-        isImportFolder={item.id === "folder-imported"}
-      />
-    ));
+    return filteredItems.map(item => <DocumentTreeItem key={item.id} item={item} onSelect={onSelectFile} onDelete={handleDeleteItem} onRename={handleRename} onExport={handleExportDocument} onToggleExpanded={toggleFolderExpanded} selectedFile={selectedFile} isImportFolder={item.id === "folder-imported"} />);
   };
 
   // Get all document IDs for drag and drop functionality
@@ -121,7 +103,6 @@ const DocumentExplorerContent: React.FC<DocumentExplorerProps> = ({
 
   // Exclude the "Importados" folder from draggable items
   const itemIds = getAllItemIds(documents, ["folder-imported"]);
-
   if (sidebarCollapsed) {
     return <div className="h-full min-h-[300px] flex flex-col items-start justify-start">
         <Button size="icon" variant="ghost" className="m-2" title="Expandir barra" onClick={() => setSidebarCollapsed(false)}>
@@ -129,18 +110,9 @@ const DocumentExplorerContent: React.FC<DocumentExplorerProps> = ({
         </Button>
       </div>;
   }
-
   return <div className="h-full border-r flex flex-col transition-all">
       <div className="flex items-center p-2 pb-0 pt-2">
-        <Button 
-          size="icon" 
-          variant="ghost" 
-          className="ml-auto" 
-          title="Recolher barra" 
-          onClick={() => setSidebarCollapsed(true)}
-        >
-          <ChevronLeft />
-        </Button>
+        
       </div>
       <ExplorerHeader onAddItem={handleAddItem} />
       <div className="overflow-auto flex-1 p-2">
@@ -151,12 +123,10 @@ const DocumentExplorerContent: React.FC<DocumentExplorerProps> = ({
       <NewItemDialog open={newItemDialogOpen} onOpenChange={setNewItemDialogOpen} onCreateItem={handleCreateItem} />
     </div>;
 };
-
 const DocumentExplorer: React.FC<DocumentExplorerProps> = props => {
   const [documents, setDocuments] = useState<DocumentItem[]>(initialDocuments);
   return <DocumentProvider>
       <DocumentExplorerContent {...props} />
     </DocumentProvider>;
 };
-
 export default DocumentExplorer;
