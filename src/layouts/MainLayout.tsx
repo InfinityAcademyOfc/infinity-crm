@@ -27,53 +27,67 @@ const MainLayout = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, [sidebarOpen]);
 
-  return (
-    <SidebarProvider>
-      <div className="flex min-h-screen w-full bg-background">
-        <Sidebar 
-          open={sidebarOpen} 
-          setOpen={setSidebarOpen}
-        />
+ return (
+  <SidebarProvider>
+    <div className="flex h-screen w-full overflow-hidden bg-background">
+      
+      {/* Sidebar */}
+      <aside
+        className={cn(
+          "fixed top-0 left-0 z-30 h-screen transition-all duration-300 ease-in-out",
+          "bg-background border-r border-border/40",
+          sidebarOpen ? "w-64" : "w-16",
+          isMobileView && !sidebarOpen && "w-0"
+        )}
+      >
+        <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} />
+      </aside>
 
-        <div className={cn(
-          "flex flex-col flex-1 min-w-0 transition-all duration-300 ease-in-out",
-          sidebarOpen ? "md:ml-64" : "md:ml-16",
-          isMobileView ? "ml-0" : ""
-        )}>
-          <div className="sticky top-0 z-50 w-full">
-            <TopNav />
-          </div>
-          <main className="flex-1 overflow-y-auto p-4 md:p-6">
-            <ErrorBoundary>
-              <Suspense fallback={<LoadingScreen minimal />}>
-                <Outlet />
-              </Suspense>
-            </ErrorBoundary>
-          </main>
+      {/* Conteúdo principal (ajustável) */}
+      <div
+        className={cn(
+          "flex flex-col flex-1 min-w-0 h-screen transition-all duration-300 ease-in-out",
+          sidebarOpen ? "ml-64" : "ml-16",
+          isMobileView && !sidebarOpen && "ml-0"
+        )}
+      >
+        {/* TopNav fixo que acompanha a Sidebar */}
+        <div
+          className={cn(
+            "sticky top-0 z-20 w-full transition-all duration-300",
+            sidebarOpen ? "ml-0" : "ml-0",
+            isMobileView && !sidebarOpen && "ml-0"
+          )}
+        >
+          <TopNav />
         </div>
 
-        {isMobileView && (
-          <button 
-            className={cn(
-              "fixed z-40 transition-all duration-300",
-              sidebarOpen ? "left-[16.5rem]" : "left-4",
-              "bottom-24"
-            )}
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-          >
-            <span className={cn(
-              "h-4 w-4 transition-transform",
-              !sidebarOpen && "rotate-180"
-            )}>
-              {sidebarOpen ? "←" : "→"}
-            </span>
-          </button>
-        )}
-        
-        <UnifiedChatButton />
+        {/* Conteúdo scrollável */}
+        <main className="flex-1 overflow-auto p-4 md:p-6">
+          <Outlet />
+        </main>
       </div>
-    </SidebarProvider>
-  );
-};
+
+      {/* Botão flutuante para mobile */}
+      {isMobileView && (
+        <button
+          className={cn(
+            "fixed z-40 bottom-24 transition-all duration-300",
+            "rounded-full h-9 w-9 bg-primary text-white shadow-md",
+            sidebarOpen ? "left-[16.5rem]" : "left-4"
+          )}
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+        >
+          <span className={cn("transition-transform", !sidebarOpen && "rotate-180")}>
+            {sidebarOpen ? "←" : "→"}
+          </span>
+        </button>
+      )}
+
+      <UnifiedChatButton />
+    </div>
+  </SidebarProvider>
+);
+
 
 export default MainLayout;
