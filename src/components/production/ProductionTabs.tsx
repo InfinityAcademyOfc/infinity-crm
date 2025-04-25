@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ProductionKanban from "./ProductionKanban";
@@ -9,23 +8,22 @@ import GanttChart from "./gantt/GanttChart";
 import SpreadsheetEditor from "./spreadsheet/SpreadsheetEditor";
 import SpreadsheetContent from "./spreadsheet/SpreadsheetContent";
 import { DocumentProvider } from "./document-explorer/contexts/DocumentContext";
-
 interface ProductionTabsProps {
   columns: KanbanColumnItem[];
   setColumns: (columns: KanbanColumnItem[]) => void;
 }
-
-const ProductionTabs = ({ columns, setColumns }: ProductionTabsProps) => {
+const ProductionTabs = ({
+  columns,
+  setColumns
+}: ProductionTabsProps) => {
   const [activeTab, setActiveTab] = useState("documentos");
-
-  return (
-    <Tabs defaultValue="documentos" className="w-full" value={activeTab} onValueChange={setActiveTab}>
-      <TabsList className="grid grid-cols-5 w-full md:w-fit mb-6 bg-card/80 dark:bg-gray-800/40 backdrop-blur-md shadow-md metallic-item">
-        <TabsTrigger value="documentos" className="text-sm px-4">Documentos</TabsTrigger>
-        <TabsTrigger value="planilhas" className="text-sm px-4">Planilhas</TabsTrigger>
-        <TabsTrigger value="gantt" className="text-sm px-4">Gráfico Gantt</TabsTrigger>
-        <TabsTrigger value="kanban" className="text-sm px-4">Kanban</TabsTrigger>
-        <TabsTrigger value="mapamental" className="text-sm px-4">Mapa Mental</TabsTrigger>
+  return <Tabs defaultValue="documentos" className="w-full" value={activeTab} onValueChange={setActiveTab}>
+      <TabsList className="grid grid-cols-5 w-full md:w-fit mb-6 bg-card/80 dark:bg-gray-800/40 backdrop-blur-md shadow-md metallic-item mx-[3px] px-[6px] my-[15px]">
+        <TabsTrigger value="documentos" className="px-4 text-xs">Documentos</TabsTrigger>
+        <TabsTrigger value="planilhas" className="px-4 text-xs">Planilhas</TabsTrigger>
+        <TabsTrigger value="gantt" className="px-4 text-xs">Gráfico Gantt</TabsTrigger>
+        <TabsTrigger value="kanban" className="px-4 text-xs">Kanban</TabsTrigger>
+        <TabsTrigger value="mapamental" className="px-4 text-xs">Mapa Mental</TabsTrigger>
       </TabsList>
       
       <div className="relative min-h-[600px]">
@@ -53,8 +51,6 @@ const ProductionTabs = ({ columns, setColumns }: ProductionTabsProps) => {
           <MindMap />
         </TabsContent>
       </div>
-    </Tabs>
-  );
+    </Tabs>;
 };
-
 export default ProductionTabs;
