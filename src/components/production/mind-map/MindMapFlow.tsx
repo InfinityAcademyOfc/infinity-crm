@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useRef } from "react";
 import ReactFlow, {
   Controls,
@@ -11,16 +12,18 @@ import ReactFlow, {
   Connection,
   MarkerType,
   useReactFlow,
+  Panel,
 } from "reactflow";
 import CustomNode from "./CustomNode";
 import MindMapControls from "./MindMapControls";
 import NodeTemplates, { nodeTemplates } from "./NodeTemplates";
-import NodeEditButton from "./NodeEditButton";
-import { initialNodes, initialEdges } from "./constants";
 import SidebarPanel from "./SidebarPanel";
-import NodeDialog from "./NodeDialog";
-import EdgeDialog from "./EdgeDialog";
 import NodeDialogs from "./NodeDialogs";
+import { useToast } from "@/hooks/use-toast";
+
+// Initial empty state
+const initialNodes: Node[] = [];
+const initialEdges: Edge[] = [];
 
 const nodeTypes = {
   custom: CustomNode,
@@ -40,6 +43,7 @@ const MindMapFlow = () => {
   const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
   const templates = nodeTemplates;
   const reactFlowInstance = useReactFlow();
+  const { toast } = useToast();
 
   const handleNodeLabelChange = (id: string, value: string) => {
     setNodes((nds) =>
@@ -48,9 +52,26 @@ const MindMapFlow = () => {
       )
     );
   };
+  
   const handleNodeLabelEditDone = (id: string) => setEditingNodeId(null);
 
+  const handleNodeResize = (id: string, width: number, height: number) => {
+    setNodes((nds) =>
+      nds.map((node) =>
+        node.id === id ? { 
+          ...node,
+          style: {
+            ...node.style,
+            width: `${width}px`,
+            height: `${height}px`,
+          }
+        } : node
+      )
+    );
+  };
+
   const onConnect = useCallback((params: Connection) => {
+    // Create a new edge with default styling
     const newEdge = {
       ...params,
       type: 'smoothstep',
@@ -58,13 +79,15 @@ const MindMapFlow = () => {
       style: { stroke: '#555', strokeWidth: 2 },
       markerEnd: { type: MarkerType.ArrowClosed, color: '#555' },
     };
+    
+    // Add the edge to the flow
     setEdges((eds) => addEdge(newEdge, eds));
-  }, [setEdges]);
-
-  const onNodeClick = (_: React.MouseEvent, node: Node) => {
-    setSelectedNode(node);
-    setIsNodeDialogOpen(true);
-  };
+    
+    toast({
+      description: "Conexão criada com sucesso!",
+      duration: 2000,
+    });
+  }, [setEdges, toast]);
 
   const enhancedNodes = nodes.map((node) => ({
     ...node,
@@ -80,6 +103,8 @@ const MindMapFlow = () => {
         setSelectedNode(node);
         setIsNodeDialogOpen(true);
       },
+      onResize: (width: number, height: number) => 
+        handleNodeResize(node.id, width, height),
     },
   }));
 
@@ -88,6 +113,7 @@ const MindMapFlow = () => {
       x: window.innerWidth / 2 - 100,
       y: window.innerHeight / 2 - 100
     });
+    
     const node: Node = {
       id: `node-${Date.now()}`,
       type: "custom",
@@ -98,9 +124,18 @@ const MindMapFlow = () => {
         shape: template.shape,
         textColor: "#222",
         borderColor: "#999"
+      },
+      style: {
+        width: 120,
+        height: 60,
       }
     };
+    
     setNodes([...nodes, node]);
+    toast({
+      description: `Nó "${template.name}" adicionado!`,
+      duration: 2000,
+    });
   };
 
   return (
@@ -127,14 +162,24 @@ const MindMapFlow = () => {
                 borderColor: '#6D28D9',
                 shape: 'roundedRect',
               },
+              style: {
+                width: 120,
+                height: 60,
+              }
             };
             setNodes([...nodes, newNode]);
             setNodeName("");
+            
+            toast({
+              description: `Nó "${nodeName}" adicionado!`,
+              duration: 2000,
+            });
           }
         }}
         templates={templates}
         onAddTemplate={handleAddTemplateNode}
       />
+      
       <div className="w-full h-full relative">
         <ReactFlow
           nodes={enhancedNodes}
@@ -157,6 +202,8 @@ const MindMapFlow = () => {
           snapToGrid
           snapGrid={[15, 15]}
           defaultViewport={{ x: 0, y: 0, zoom: 0.8 }}
+          connectionLineStyle={{ stroke: '#555', strokeWidth: 2 }}
+          connectionLineType="smoothstep"
         >
           <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
           <Controls />
@@ -166,13 +213,30 @@ const MindMapFlow = () => {
             onFitView={() => reactFlowInstance.fitView()}
             onAddNode={() => { setEditingNodeId(null); }}
           />
+
+          <Panel position="top-right" className="bg-white dark:bg-gray-800 p-2 rounded shadow-md">
+            <div className="flex gap-2">
+              <Button 
+                size="sm" 
+                variant="outline" 
+                className="text-xs"
+                onClick={() => setShowTemplates(prev => !prev)}
+              >
+                {showTemplates ? "Esconder" : "Mostrar"} Templates
+              </Button>
+            </div>
+          </Panel>
+          
           {showTemplates && (
-            <NodeTemplates
-              templates={templates}
-              onAddTemplate={handleAddTemplateNode}
-            />
+            <Panel position="top-center" className="bg-white dark:bg-gray-800 p-3 rounded shadow-md">
+              <NodeTemplates
+                templates={templates}
+                onAddTemplate={handleAddTemplateNode}
+              />
+            </Panel>
           )}
         </ReactFlow>
+        
         <NodeDialogs
           selectedNode={selectedNode}
           selectedEdge={selectedEdge}

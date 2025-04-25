@@ -5,6 +5,9 @@ import SpreadsheetContent from "./SpreadsheetContent";
 import SpreadsheetToolbar from "./SpreadsheetToolbar";
 import { DocumentItem } from "../document-explorer/types";
 import CollapseButton from "@/components/common/buttons/CollapseButton";
+import { cn } from "@/lib/utils";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const SpreadsheetEditor = () => {
   const [selectedFile, setSelectedFile] = useState<DocumentItem | null>(null);
@@ -51,38 +54,50 @@ const SpreadsheetEditor = () => {
   }
   
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] h-full relative transition-all duration-300 ease-in-out">
-      {!sidebarCollapsed ? (
-        <>
-          <div className="border-b md:border-b-0 md:border-r transition-all duration-300 animate-fade-in">
-            <SpreadsheetExplorer 
-              onSelectFile={handleSelectFile} 
-              selectedFile={selectedFile} 
-            />
+    <div className="h-full flex flex-col md:flex-row relative transition-all duration-300 ease-in-out">
+      <div 
+        className={cn(
+          "border-r transition-all duration-300 overflow-hidden bg-card/80 dark:bg-gray-800/40 backdrop-blur-md",
+          sidebarCollapsed ? "w-0" : "w-full md:w-[300px] flex-shrink-0"
+        )}
+      >
+        {!sidebarCollapsed && (
+          <div className="h-full flex flex-col">
+            <div className="flex items-center justify-between p-2 border-b">
+              <h3 className="font-medium text-sm">Arquivos</h3>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-6 w-6 hidden md:flex"
+                onClick={toggleSidebar}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="flex-1 overflow-hidden">
+              <SpreadsheetExplorer 
+                onSelectFile={handleSelectFile} 
+                selectedFile={selectedFile} 
+              />
+            </div>
           </div>
-          <div className="flex flex-col h-full relative transition-all duration-300 animate-fade-in">
-            <CollapseButton 
-              isCollapsed={false}
-              onClick={toggleSidebar}
-              className="hidden md:flex absolute top-2 left-2 z-10 transition-transform hover:scale-110"
-              position="right"
-            />
-            <SpreadsheetToolbar />
-            <SpreadsheetContent selectedFile={selectedFile} />
-          </div>
-        </>
-      ) : (
-        <div className="col-span-1 md:col-span-2 flex flex-col h-full relative transition-all duration-300 animate-fade-in">
-          <CollapseButton 
-            isCollapsed={true}
+        )}
+      </div>
+
+      <div className="flex flex-col flex-1 h-full relative transition-all duration-300 animate-fade-in">
+        {sidebarCollapsed && (
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="absolute top-2 left-2 h-6 w-6 z-10 hidden md:flex"
             onClick={toggleSidebar}
-            className="hidden md:flex absolute top-2 left-2 z-10 transition-transform hover:scale-110"
-            position="right"
-          />
-          <SpreadsheetToolbar />
-          <SpreadsheetContent selectedFile={selectedFile} />
-        </div>
-      )}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        )}
+        <SpreadsheetToolbar />
+        <SpreadsheetContent selectedFile={selectedFile} />
+      </div>
     </div>
   );
 };

@@ -7,6 +7,7 @@ import { SpreadsheetGrid } from './SpreadsheetGrid';
 import { useSpreadsheet } from './useSpreadsheet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Plus, Save, Download } from 'lucide-react';
 
 export interface SpreadsheetContentProps {
   selectedFile: DocumentItem | null;
@@ -71,7 +72,7 @@ const SpreadsheetContent: React.FC<SpreadsheetContentProps> = ({ selectedFile })
       {
         id: "default",
         name: "Sheet 1",
-        data: Array(10).fill(Array(10).fill(''))
+        data: Array(20).fill(Array(20).fill(''))
       }
     ];
   }, [selectedFile]);
@@ -84,19 +85,45 @@ const SpreadsheetContent: React.FC<SpreadsheetContentProps> = ({ selectedFile })
     return (
       <div className="h-full flex flex-col items-center justify-center p-4 text-muted-foreground transition-opacity duration-300 animate-fade-in">
         <p>Selecione um arquivo para visualizar ou editar</p>
+        
+        <div className="mt-8 flex items-center gap-2">
+          <Input 
+            placeholder="Nome da planilha"
+            value={newSpreadsheetName}
+            onChange={(e) => setNewSpreadsheetName(e.target.value)}
+            className="w-60"
+          />
+          <Button onClick={handleCreateSpreadsheet} size="sm">
+            <Plus className="h-4 w-4 mr-1" />
+            Criar nova
+          </Button>
+        </div>
       </div>
     );
   }
   
   return (
-    <div className="h-full border-t transition-all duration-300 animate-fade-in">
-      <div className="p-2 sm:p-4">
-        <h3 className="text-base sm:text-lg font-semibold mb-2 sm:mb-4 transition-all">{selectedFile.name}</h3>
+    <div className="h-full flex flex-col transition-all duration-300 animate-fade-in">
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="p-2 flex items-center justify-between border-b">
+          <h3 className="text-base sm:text-lg font-semibold transition-all mr-4">{selectedFile.name}</h3>
+          
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" className="h-8">
+              <Save className="h-4 w-4 mr-1" />
+              Salvar
+            </Button>
+            <Button variant="outline" size="sm" className="h-8">
+              <Download className="h-4 w-4 mr-1" />
+              Exportar
+            </Button>
+          </div>
+        </div>
         
         {/* Sheet tabs with horizontal scroll */}
         {sheets.length > 1 && (
-          <ScrollArea className="w-full mb-4 border-b">
-            <div className="flex pb-2">
+          <ScrollArea className="w-full border-b">
+            <div className="flex">
               {sheets.map((sheet, index) => (
                 <button
                   key={sheet.id}
@@ -111,30 +138,29 @@ const SpreadsheetContent: React.FC<SpreadsheetContentProps> = ({ selectedFile })
           </ScrollArea>
         )}
         
-        {/* Responsive spreadsheet grid with horizontal scroll */}
-        <ScrollArea className="w-full overflow-x-auto">
+        <div className="flex-1 overflow-hidden">
           {isLoading ? (
-            <div className="grid grid-cols-5 gap-1 min-w-[800px]">
+            <div className="grid grid-cols-5 gap-1 p-4">
               {Array(5).fill(0).map((_, rowIdx) => (
                 <React.Fragment key={`skeleton-row-${rowIdx}`}>
                   {Array(5).fill(0).map((_, colIdx) => (
                     <Skeleton 
                       key={`skeleton-${rowIdx}-${colIdx}`}
-                      className="h-7 sm:h-8"
+                      className="h-9"
                     />
                   ))}
                 </React.Fragment>
               ))}
             </div>
           ) : (
-            <div className="min-w-[800px] transition-all duration-300">
+            <div className="h-full transition-all duration-300">
               <SpreadsheetGrid
                 data={gridData.length > 0 ? gridData : Array(20).fill(0).map(() => Array(20).fill({ value: '' }))}
                 onCellChange={handleCellChange}
               />
             </div>
           )}
-        </ScrollArea>
+        </div>
       </div>
     </div>
   );

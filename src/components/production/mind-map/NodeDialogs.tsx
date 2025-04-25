@@ -39,10 +39,17 @@ const NodeDialogs = ({
     }
   };
 
-  const handleUpdateEdge = (source: string, target: string) => {
+  const handleUpdateEdge = (source: string, target: string, style: any, markerStart: any, markerEnd: any) => {
     if (selectedEdge) {
       setEdges((edges: Edge[]) => edges.map((edge) => 
-        edge.id === selectedEdge.id ? { ...edge, source, target } : edge
+        edge.id === selectedEdge.id ? { 
+          ...edge, 
+          source, 
+          target,
+          style,
+          markerStart,
+          markerEnd
+        } : edge
       ));
       setIsEdgeDialogOpen(false);
     }
