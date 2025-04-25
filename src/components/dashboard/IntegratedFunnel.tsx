@@ -15,7 +15,6 @@ import {
   Legend,
   FunnelChart,
   Funnel,
-  FunnelItem,
   LabelList
 } from 'recharts';
 import { AlertTriangle, Filter, TrendingUp, Users, CheckCircle2, BarChart3, Activity, TrendingDown } from 'lucide-react';
@@ -30,6 +29,7 @@ interface FunnelStage {
   value: number;
   efficiency: number;
   leakage: number;
+  fill?: string; // Add fill property for colors
 }
 
 interface FunnelData {
@@ -82,30 +82,32 @@ const IntegratedFunnel = () => {
   }, [lastSyncTime]);
   
   const updateFunnelData = () => {
+    const colorSets = getColorsByType(activeTab);
+    
     // Sales funnel
     const salesStages: FunnelStage[] = [
-      { name: 'Prospecção', value: 45, efficiency: 78, leakage: 22 },
-      { name: 'Qualificação', value: 32, efficiency: 71, leakage: 29 },
-      { name: 'Proposta', value: 24, efficiency: 75, leakage: 25 },
-      { name: 'Negociação', value: 18, efficiency: 72, leakage: 28 },
-      { name: 'Fechamento', value: 12, efficiency: 67, leakage: 33 }
+      { name: 'Prospecção', value: 45, efficiency: 78, leakage: 22, fill: colorSets.sales.gradient[0] },
+      { name: 'Qualificação', value: 32, efficiency: 71, leakage: 29, fill: colorSets.sales.gradient[1] },
+      { name: 'Proposta', value: 24, efficiency: 75, leakage: 25, fill: colorSets.sales.gradient[2] },
+      { name: 'Negociação', value: 18, efficiency: 72, leakage: 28, fill: colorSets.sales.gradient[3] },
+      { name: 'Fechamento', value: 12, efficiency: 67, leakage: 33, fill: colorSets.sales.gradient[4] }
     ];
     
     // LTV funnel
     const ltvStages: FunnelStage[] = [
-      { name: 'Novos Clientes', value: 28, efficiency: 82, leakage: 18 },
-      { name: 'Clientes Ativos', value: 36, efficiency: 90, leakage: 10 },
-      { name: 'Clientes em Crescimento', value: 22, efficiency: 85, leakage: 15 },
-      { name: 'Clientes Fiéis', value: 18, efficiency: 94, leakage: 6 },
-      { name: 'Advogados da Marca', value: 12, efficiency: 92, leakage: 8 }
+      { name: 'Novos Clientes', value: 28, efficiency: 82, leakage: 18, fill: colorSets.ltv.gradient[0] },
+      { name: 'Clientes Ativos', value: 36, efficiency: 90, leakage: 10, fill: colorSets.ltv.gradient[1] },
+      { name: 'Clientes em Crescimento', value: 22, efficiency: 85, leakage: 15, fill: colorSets.ltv.gradient[2] },
+      { name: 'Clientes Fiéis', value: 18, efficiency: 94, leakage: 6, fill: colorSets.ltv.gradient[3] },
+      { name: 'Advogados da Marca', value: 12, efficiency: 92, leakage: 8, fill: colorSets.ltv.gradient[4] }
     ];
     
     // Production funnel
     const productionStages: FunnelStage[] = [
-      { name: 'Backlog', value: 32, efficiency: 72, leakage: 28 },
-      { name: 'Em Progresso', value: 18, efficiency: 83, leakage: 17 },
-      { name: 'Revisão', value: 12, efficiency: 75, leakage: 25 },
-      { name: 'Concluído', value: 42, efficiency: 95, leakage: 5 }
+      { name: 'Backlog', value: 32, efficiency: 72, leakage: 28, fill: colorSets.production.gradient[0] },
+      { name: 'Em Progresso', value: 18, efficiency: 83, leakage: 17, fill: colorSets.production.gradient[1] },
+      { name: 'Revisão', value: 12, efficiency: 75, leakage: 25, fill: colorSets.production.gradient[2] },
+      { name: 'Concluído', value: 42, efficiency: 95, leakage: 5, fill: colorSets.production.gradient[3] }
     ];
     
     setFunnelData({
@@ -156,9 +158,12 @@ const IntegratedFunnel = () => {
     };
     
     return isDark ? {
-      ...colorSets[type],
-      gradient: colorSets[type].dark
-    } : colorSets[type];
+      ...colorSets,
+      [type]: {
+        ...colorSets[type],
+        gradient: colorSets[type].dark
+      }
+    } : colorSets;
   };
   
   const getFunnelIcon = (type: FunnelType) => {
@@ -197,8 +202,7 @@ const IntegratedFunnel = () => {
               dataKey="value"
               data={data}
               isAnimationActive
-              fill={colors.main}
-              gradient
+              fill={colors[type].main}
             >
               <LabelList
                 position="right"
@@ -215,12 +219,6 @@ const IntegratedFunnel = () => {
                 fontSize={14}
                 fontWeight="bold"
               />
-              {data.map((entry, index) => (
-                <FunnelItem 
-                  key={`funnel-item-${index}`}
-                  fill={colors.gradient[index % colors.gradient.length]} 
-                />
-              ))}
             </Funnel>
           </FunnelChart>
         </ResponsiveContainer>
@@ -263,7 +261,7 @@ const IntegratedFunnel = () => {
                 color: isDark ? '#f9fafb' : '#111827'
               }}
             />
-            <Bar dataKey="efficiency" fill={colors.efficiency} radius={[0, 4, 4, 0]}>
+            <Bar dataKey="efficiency" fill={colors[type].efficiency} radius={[0, 4, 4, 0]}>
               <LabelList dataKey="efficiency" position="right" formatter={(value) => `${value}%`} />
             </Bar>
           </BarChart>
@@ -307,7 +305,7 @@ const IntegratedFunnel = () => {
                 color: isDark ? '#f9fafb' : '#111827'
               }}
             />
-            <Bar dataKey="leakage" fill={colors.leakage} radius={[0, 4, 4, 0]}>
+            <Bar dataKey="leakage" fill={colors[type].leakage} radius={[0, 4, 4, 0]}>
               <LabelList dataKey="leakage" position="right" formatter={(value) => `${value}%`} />
             </Bar>
           </BarChart>
