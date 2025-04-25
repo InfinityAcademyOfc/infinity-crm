@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -81,13 +82,13 @@ const EdgeDialog = ({ isOpen, edge, onClose, onUpdate, onDelete }: EdgeDialogPro
 
   const handleMarkerChange = (value: string, setter: React.Dispatch<React.SetStateAction<MarkerType | null>>) => {
     if (value === "") {
-      setter(null);
+      setter(() => null);
     } else if (Object.values(MarkerType).includes(value as MarkerType)) {
-      setter(value as MarkerType);
+      setter(() => value as MarkerType);
     } else if (value === "circle") {
-      setter("circle" as unknown as MarkerType);
+      setter(() => "circle" as unknown as MarkerType);
     } else {
-      setter(null);
+      setter(() => null);
     }
   };
 
