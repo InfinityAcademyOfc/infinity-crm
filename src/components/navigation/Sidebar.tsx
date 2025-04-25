@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { 
   X,
@@ -65,7 +64,6 @@ const Sidebar = ({ open, setOpen }: SidebarProps) => {
   }, [isMobile, open, setOpen]);
 
   useEffect(() => {
-    // Handle clicking outside the sidebar to close it on mobile
     const handleClickOutside = (event: MouseEvent) => {
       if (isMobile && open && sidebarRef.current && !sidebarRef.current.contains(event.target as Node)) {
         setOpen(false);
@@ -92,7 +90,6 @@ const Sidebar = ({ open, setOpen }: SidebarProps) => {
 
   return (
     <>
-      {/* Backdrop overlay for mobile */}
       {isMobile && (
         <div 
           className="fixed inset-0 bg-black/30 z-20 backdrop-blur-sm"
@@ -114,7 +111,6 @@ const Sidebar = ({ open, setOpen }: SidebarProps) => {
                 variant="ghost" 
                 size="icon" 
                 onClick={() => setOpen(false)}
-                aria-label="Close Sidebar"
               >
                 <X size={18} />
               </Button>
@@ -153,7 +149,6 @@ const Sidebar = ({ open, setOpen }: SidebarProps) => {
         </aside>
       </div>
       
-      {/* Desktop toggle button outside of sidebar */}
       {!isMobile && (
         <div 
           className={cn(
@@ -167,7 +162,6 @@ const Sidebar = ({ open, setOpen }: SidebarProps) => {
             size="icon" 
             className="rounded-full h-9 w-9 shadow-md bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_0_15px_rgba(130,80,223,0.4)]"
             onClick={toggleCollapse}
-            aria-label={open ? "Recolher Menu" : "Expandir Menu"}
           >
             {open ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
           </Button>
