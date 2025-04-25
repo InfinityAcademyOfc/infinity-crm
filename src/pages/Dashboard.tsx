@@ -1,10 +1,11 @@
+
 import React, { Suspense, lazy, useState, useEffect } from "react";
 import { ArrowRight, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
-import { Skeleton } from "@/components/ui/skeleton";
 import { mockSalesData, mockFunnelData, mockTodayActivities } from "@/data/mockData";
+import { StatsSkeleton, ChartSkeleton } from "@/components/dashboard/DashboardSkeletons";
 
 // Lazy load heavy components
 const StatsSection = lazy(() => import("@/components/dashboard/StatsSection"));
@@ -13,31 +14,6 @@ const FunnelChart = lazy(() => import("@/components/dashboard/FunnelChart"));
 const FinanceChart = lazy(() => import("@/components/dashboard/FinanceChart"));
 const ActivitiesSection = lazy(() => import("@/components/dashboard/ActivitiesSection"));
 const IntegratedFunnel = lazy(() => import("@/components/dashboard/IntegratedFunnel"));
-
-// Skeleton loaders for lazy loaded components
-const StatsSkeleton = () => (
-  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-    {[1, 2, 3, 4].map((i) => (
-      <Card key={i} className="relative overflow-hidden">
-        <CardContent className="p-6">
-          <Skeleton className="h-4 w-1/3 mb-2" />
-          <Skeleton className="h-8 w-1/2 mb-4" />
-          <Skeleton className="h-2 w-full" />
-        </CardContent>
-      </Card>
-    ))}
-  </div>
-);
-
-const ChartSkeleton = () => (
-  <Card>
-    <CardContent className="p-6">
-      <Skeleton className="h-6 w-1/4 mb-2" />
-      <Skeleton className="h-4 w-1/3 mb-6" />
-      <Skeleton className="h-64 w-full rounded-lg" />
-    </CardContent>
-  </Card>
-);
 
 const Dashboard = () => {
   const { profile } = useAuth();
