@@ -31,3 +31,7 @@ export interface SpreadsheetGridProps {
   onCellChange: (row: number, col: number, value: string) => void;
   onFormulaChange?: (row: number, col: number, formula: string) => void;
 }
+
+export interface SpreadsheetContentProps {
+  selectedFile: any | null;
+}

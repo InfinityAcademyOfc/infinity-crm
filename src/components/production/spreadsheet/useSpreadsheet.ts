@@ -10,9 +10,18 @@ export const useSpreadsheet = () => {
   const [gridData, setGridData] = useState<CellData[][]>([]);
 
   const createSpreadsheet = useCallback(async (name: string = 'Nova Planilha') => {
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    if (userError || !userData.user) {
+      console.error('User not authenticated:', userError);
+      return null;
+    }
+
     const { data, error } = await supabase
       .from('production_spreadsheets')
-      .insert({ name })
+      .insert({ 
+        name,
+        user_id: userData.user.id 
+      })
       .select()
       .single();
 
@@ -36,7 +45,7 @@ export const useSpreadsheet = () => {
       return null;
     }
 
-    return data;
+    return mapDatabaseSpreadsheetToItem(data);
   }, []);
 
   const fetchSpreadsheets = useCallback(async () => {
@@ -50,7 +59,7 @@ export const useSpreadsheet = () => {
       return;
     }
 
-    setSpreadsheets(data || []);
+    setSpreadsheets(data.map(mapDatabaseSpreadsheetToItem));
   }, []);
 
   const loadSpreadsheetData = useCallback(async (spreadsheetId: string) => {
@@ -98,15 +107,16 @@ export const useSpreadsheet = () => {
           grid.push([]);
         }
         grid[cell.row_index][cell.col_index] = {
+          id: cell.id,
           value: cell.value || '',
           formula: cell.formula || '',
           format: cell.format,
-          style: cell.style
+          style: cell.style ? JSON.parse(JSON.stringify(cell.style)) : undefined
         };
       });
 
-      setCurrentSpreadsheet(spreadsheetData);
-      setCurrentSheet(firstSheet);
+      setCurrentSpreadsheet(mapDatabaseSpreadsheetToItem(spreadsheetData));
+      setCurrentSheet(mapDatabaseSheetToItem(firstSheet));
       setGridData(grid);
     }
   }, []);
@@ -126,7 +136,7 @@ export const useSpreadsheet = () => {
         value: cellData.value,
         formula: cellData.formula,
         format: cellData.format,
-        style: cellData.style
+        style: cellData.style ? cellData.style : null
       })
       .select()
       .single();
@@ -137,6 +147,22 @@ export const useSpreadsheet = () => {
 
     return data;
   }, []);
+
+  // Helper function to map database response to our types
+  const mapDatabaseSpreadsheetToItem = (data: any): SpreadsheetItem => ({
+    id: data.id,
+    name: data.name,
+    createdAt: data.created_at,
+    updatedAt: data.updated_at
+  });
+
+  // Helper function to map database sheet to our types
+  const mapDatabaseSheetToItem = (data: any): SheetItem => ({
+    id: data.id,
+    spreadsheetId: data.spreadsheet_id,
+    name: data.name,
+    position: data.position
+  });
 
   return {
     spreadsheets,

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from "react";
 import { DocumentItem } from "../document-explorer/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -49,6 +50,9 @@ const SpreadsheetContent: React.FC<SpreadsheetContentProps> = ({ selectedFile })
       const newGridData = [...gridData];
       while (newGridData.length <= row) {
         newGridData.push([]);
+      }
+      if (!newGridData[row]) {
+        newGridData[row] = [];
       }
       newGridData[row][col] = { ...newGridData[row]?.[col], value };
       setGridData(newGridData);
@@ -124,30 +128,10 @@ const SpreadsheetContent: React.FC<SpreadsheetContentProps> = ({ selectedFile })
             </div>
           ) : (
             <div className="min-w-[800px] transition-all duration-300">
-              <div className="grid grid-cols-10 gap-0.5">
-                {Array(10).fill(0).map((_, rowIdx) => (
-                  <React.Fragment key={`row-${rowIdx}`}>
-                    {Array(10).fill(0).map((_, colIdx) => {
-                      const cellValue = activeSheet?.data?.[rowIdx]?.[colIdx];
-                      const displayValue = rowIdx === 0 ? 
-                        String.fromCharCode(65 + colIdx) : 
-                        colIdx === 0 ? rowIdx : cellValue || '';
-                      
-                      const isHeader = rowIdx === 0 || colIdx === 0;
-                      
-                      return (
-                        <div 
-                          key={`cell-${rowIdx}-${colIdx}`}
-                          className={`border h-7 sm:h-8 px-1 sm:px-2 flex items-center text-xs sm:text-sm transition-colors
-                            ${isHeader ? 'bg-muted/50 font-medium' : 'hover:bg-muted/20'}`}
-                        >
-                          {displayValue}
-                        </div>
-                      );
-                    })}
-                  </React.Fragment>
-                ))}
-              </div>
+              <SpreadsheetGrid
+                data={gridData.length > 0 ? gridData : Array(20).fill(0).map(() => Array(20).fill({ value: '' }))}
+                onCellChange={handleCellChange}
+              />
             </div>
           )}
         </ScrollArea>

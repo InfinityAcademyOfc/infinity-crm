@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ProductionKanban from "./ProductionKanban";
@@ -35,7 +36,7 @@ const ProductionTabs = ({ columns, setColumns }: ProductionTabsProps) => {
         </TabsContent>
         
         <TabsContent value="planilhas" className="mt-0">
-          <SpreadsheetContent />
+          <SpreadsheetEditor />
         </TabsContent>
         
         <TabsContent value="gantt" className="mt-0 bg-transparent dark:bg-transparent backdrop-blur-sm shadow-md rounded-lg">
