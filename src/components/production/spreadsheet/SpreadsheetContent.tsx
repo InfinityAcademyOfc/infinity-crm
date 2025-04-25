@@ -130,13 +130,13 @@ const SpreadsheetContent: React.FC<SpreadsheetContentProps> = ({
   return <div className="h-full flex flex-col bg-background">
       <SpreadsheetToolbar />
       <div className="flex flex-col h-full">
-        <form onSubmit={handleFormula} className="mb-2 flex items-center gap-2">
+        <form onSubmit={handleFormula} className="mb-2 flex items-center gap-2 bg-gray-950">
           <input value={formulaInput} onChange={e => setFormulaInput(e.target.value)} placeholder="Digite fórmula (ex: =SUM(A1:B2))" className="p-1 border rounded text-xs" style={{
           width: 180
         }} />
           <Button size="sm" type="submit" variant="secondary">Aplicar</Button>
         </form>
-        <div className="border-t flex items-center">
+        <div className="border-t flex items-center bg-gray-950">
           <ScrollArea className="flex-1 overflow-x-auto whitespace-nowrap">
             {sheets.map(sheet => <React.Fragment key={sheet.id}>
                 {renamingSheet === sheet.id ? <div className="inline-flex items-center ml-1">
