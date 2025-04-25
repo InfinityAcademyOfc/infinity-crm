@@ -4,13 +4,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { MarkerType } from "reactflow";
 import { MarkerControlsProps } from "./types";
 
-const MarkerControls = ({ markerStart, markerEnd, onMarkerChange }: MarkerControlsProps) => {
+const MarkerControls = ({ markerStart, markerEnd, strokeColor, onMarkerChange }: MarkerControlsProps) => {
   const handleMarkerChange = (value: string, isStart: boolean) => {
     let newMarker: MarkerType | null = null;
     
     if (value !== "") {
       if (Object.values(MarkerType).includes(value as any)) {
-        newMarker = value as unknown as MarkerType;
+        newMarker = value as MarkerType;
       } else if (value === "circle") {
         newMarker = "circle" as unknown as MarkerType;
       }

@@ -31,7 +31,7 @@ const EdgeDialog = ({ isOpen, edge, onClose, onUpdate, onDelete }: EdgeDialogPro
       
       if (edge.markerEnd) {
         const markerEndType = typeof edge.markerEnd === 'string' 
-          ? edge.markerEnd 
+          ? edge.markerEnd as MarkerType
           : edge.markerEnd.type as MarkerType;
         setMarkerEnd(markerEndType || MarkerType.ArrowClosed);
       }
