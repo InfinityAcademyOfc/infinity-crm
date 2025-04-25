@@ -21,18 +21,17 @@ const MainLayout = () => {
       }
     };
 
-    handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, [sidebarOpen]);
 
   return (
     <SidebarProvider>
-      <div className="flex h-screen w-full bg-background">
-        {/* Sidebar */}
-        <div
+      <div className="flex h-screen overflow-hidden bg-background">
+        {/* Sidebar container with dynamic width */}
+        <div 
           className={cn(
-            "h-full transition-all duration-300 ease-in-out relative",
+            "flex-shrink-0 transition-all duration-300 ease-in-out",
             sidebarOpen ? "w-64" : "w-16",
             isMobileView && !sidebarOpen && "w-0"
           )}
@@ -40,27 +39,26 @@ const MainLayout = () => {
           <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} />
         </div>
 
-        {/* Main Content Area */}
-        <div className="flex-1 flex flex-col h-full min-w-0 overflow-hidden">
-          {/* Top Navigation */}
-          <div className="sticky top-0 z-20 w-full">
-            <TopNav />
-          </div>
-
-          {/* Scrollable Content */}
-          <main className="flex-1 overflow-auto p-4 md:p-6">
-            <ErrorBoundary>
-              <Outlet />
-            </ErrorBoundary>
+        {/* Main content area */}
+        <div className="flex flex-col flex-1 w-0 overflow-hidden">
+          <TopNav />
+          
+          <main className="flex-1 overflow-auto">
+            <div className="container p-4 md:p-6">
+              <ErrorBoundary>
+                <Outlet />
+              </ErrorBoundary>
+            </div>
           </main>
         </div>
 
-        {/* Mobile Toggle Button */}
+        {/* Mobile toggle button */}
         {isMobileView && (
           <button
             className={cn(
               "fixed z-40 bottom-24 transition-all duration-300",
-              "rounded-full h-9 w-9 bg-primary text-white shadow-md",
+              "rounded-full h-9 w-9 bg-primary text-primary-foreground hover:bg-primary/90",
+              "flex items-center justify-center shadow-lg",
               sidebarOpen ? "left-[16.5rem]" : "left-4"
             )}
             onClick={() => setSidebarOpen(!sidebarOpen)}

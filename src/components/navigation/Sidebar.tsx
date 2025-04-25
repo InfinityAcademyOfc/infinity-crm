@@ -1,8 +1,6 @@
 import { useState, useEffect, useRef } from "react";
+import { useLocation } from "react-router-dom";
 import { 
-  X,
-  ChevronLeft,
-  ChevronRight,
   LayoutDashboard, 
   Filter, 
   Users, 
@@ -16,10 +14,13 @@ import {
   MessageCircle,
   Zap
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { useIsMobile } from "@/hooks/use-mobile";
 import NavSection from "./NavSection";
+import { cn } from "@/lib/utils";
+
+interface SidebarProps {
+  open: boolean;
+  setOpen: (open: boolean) => void;
+}
 
 const mainMenuItems = [
   { icon: <LayoutDashboard size={18} />, label: "Dashboard", to: "/app", end: true },
@@ -45,129 +46,56 @@ const systemItems = [
   { icon: <Settings size={18} />, label: "Configurações", to: "/app/settings" },
 ];
 
-interface SidebarProps {
-  open: boolean;
-  setOpen: (open: boolean) => void;
-}
-
 const Sidebar = ({ open, setOpen }: SidebarProps) => {
-  const isMobile = useIsMobile();
-  const [collapsed, setCollapsed] = useState(false);
-  const isCollapsed = !isMobile && collapsed && open;
+  const location = useLocation();
   const sidebarRef = useRef<HTMLDivElement>(null);
+  const isMobile = window.innerWidth < 768;
 
   useEffect(() => {
-    if (!isMobile && !open) {
-      setOpen(true);
-      setCollapsed(false);
-    }
-  }, [isMobile, open, setOpen]);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (isMobile && open && sidebarRef.current && !sidebarRef.current.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    };
-
-    if (isMobile && open) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isMobile, open, setOpen]);
-
-  const toggleCollapse = () => {
     if (isMobile) {
-      setOpen(!open);
-    } else {
-      setCollapsed(!collapsed);
+      setOpen(false);
     }
-  };
-
-  if (!open) return null;
+  }, [location.pathname, isMobile, setOpen]);
 
   return (
-    <>
-      {isMobile && (
-        <div 
-          className="fixed inset-0 bg-black/30 z-20 backdrop-blur-sm"
-          onClick={() => setOpen(false)}
+    <div 
+      ref={sidebarRef}
+      className={cn(
+        "h-full bg-background border-r", 
+        "flex flex-col overflow-hidden transition-all duration-300 ease-in-out",
+        !open && "w-16"
+      )}
+    >
+      <div className="flex-1 overflow-y-auto p-4">
+        <NavSection 
+          title="Menu Principal" 
+          items={mainMenuItems} 
+          isCollapsed={!open}
+          onItemClick={() => isMobile && setOpen(false)}
         />
-      )}
-      
-      <div className={cn("h-screen fixed top-0 left-0 z-30", isMobile ? "overflow-hidden" : "")} ref={sidebarRef}>
-        <aside
-          className={cn(
-            "sidebar border-r border-gray-200 dark:border-gray-800 h-full transition-all duration-300 relative flex flex-col",
-            isCollapsed ? "min-w-16 w-16" : "min-w-64 w-64",
-            isMobile ? "fixed inset-y-0 left-0 z-20 shadow-lg" : "relative"
-          )}
-        >
-          {isMobile && (
-            <div className="flex justify-end p-2">
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => setOpen(false)}
-              >
-                <X size={18} />
-              </Button>
-            </div>
-          )}
-
-          <div className="flex-grow overflow-y-auto px-4 py-2">
-            <NavSection 
-              title="Menu Principal" 
-              items={mainMenuItems} 
-              isCollapsed={isCollapsed}
-              onItemClick={() => isMobile && setOpen(false)}
-            />
-            <NavSection 
-              title="Integrações" 
-              items={integrationItems} 
-              isCollapsed={isCollapsed}
-              onItemClick={() => isMobile && setOpen(false)}
-              className="mt-6"
-            />
-            <NavSection 
-              title="Gestão" 
-              items={managementItems} 
-              isCollapsed={isCollapsed}
-              onItemClick={() => isMobile && setOpen(false)}
-              className="mt-6"
-            />
-            <NavSection 
-              title="Sistema" 
-              items={systemItems} 
-              isCollapsed={isCollapsed}
-              onItemClick={() => isMobile && setOpen(false)}
-              className="mt-6 mb-4"
-            />
-          </div>
-        </aside>
+        <NavSection 
+          title="Integrações" 
+          items={integrationItems} 
+          isCollapsed={!open}
+          onItemClick={() => isMobile && setOpen(false)}
+          className="mt-6"
+        />
+        <NavSection 
+          title="Gestão" 
+          items={managementItems} 
+          isCollapsed={!open}
+          onItemClick={() => isMobile && setOpen(false)}
+          className="mt-6"
+        />
+        <NavSection 
+          title="Sistema" 
+          items={systemItems} 
+          isCollapsed={!open}
+          onItemClick={() => isMobile && setOpen(false)}
+          className="mt-6 mb-4"
+        />
       </div>
-      
-      {!isMobile && (
-        <div 
-          className={cn(
-            "fixed z-40 transition-all duration-300",
-            open ? (isCollapsed ? "left-[4.5rem]" : "left-[16.5rem]") : "left-4",
-            "top-[calc(100vh-7rem)]"
-          )}
-        >
-          <Button 
-            variant="default" 
-            size="icon" 
-            className="rounded-full h-9 w-9 shadow-md bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_0_15px_rgba(130,80,223,0.4)]"
-            onClick={toggleCollapse}
-          >
-            {open ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
-          </Button>
-        </div>
-      )}
-    </>
+    </div>
   );
 };
 
