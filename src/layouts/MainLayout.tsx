@@ -4,7 +4,6 @@ import { Outlet } from "react-router-dom";
 import Sidebar from "@/components/navigation/Sidebar";
 import { TopNav } from "@/components/layout/TopNav";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
-import LoadingScreen from "@/components/ui/loading-screen";
 import UnifiedChatButton from "@/components/chat/UnifiedChatButton";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
