@@ -1,8 +1,14 @@
 
 import { useState, useEffect } from 'react';
 
+export type ThemeType = 'dark' | 'light';
+export type AccentType = 'purple' | 'blue' | 'green' | 'red' | 'orange' | 'yellow' | 'pink' | 'indigo';
+
 export const useThemeManager = () => {
   const [isDark, setIsDark] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [theme, setThemeState] = useState<ThemeType>('light');
+  const [accent, setAccentState] = useState<AccentType>('blue');
 
   useEffect(() => {
     // Verificar a preferência do sistema
@@ -10,13 +16,16 @@ export const useThemeManager = () => {
       window.matchMedia('(prefers-color-scheme: dark)').matches;
     
     // Verificar o tema armazenado anteriormente, se houver
-    const savedTheme = localStorage.getItem('theme');
+    const savedTheme = localStorage.getItem('theme') as ThemeType | null;
+    const savedAccent = localStorage.getItem('accent') as AccentType | null;
     
     // Determinar o tema inicial
     const initialIsDark = savedTheme === 'dark' || 
       (savedTheme === null && prefersDark);
     
     setIsDark(initialIsDark);
+    setThemeState(initialIsDark ? 'dark' : 'light');
+    setAccentState(savedAccent || 'blue');
     
     // Aplicar a classe 'dark' no elemento HTML quando necessário
     if (initialIsDark) {
@@ -29,8 +38,10 @@ export const useThemeManager = () => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const handleChange = (e: MediaQueryListEvent) => {
       if (localStorage.getItem('theme') === null) {
-        setIsDark(e.matches);
-        if (e.matches) {
+        const newIsDark = e.matches;
+        setIsDark(newIsDark);
+        setThemeState(newIsDark ? 'dark' : 'light');
+        if (newIsDark) {
           document.documentElement.classList.add('dark');
         } else {
           document.documentElement.classList.remove('dark');
@@ -43,6 +54,8 @@ export const useThemeManager = () => {
       mediaQuery.addEventListener('change', handleChange);
     }
     
+    setIsLoaded(true);
+    
     return () => {
       if (mediaQuery.removeEventListener) {
         mediaQuery.removeEventListener('change', handleChange);
@@ -53,7 +66,10 @@ export const useThemeManager = () => {
   // Função para alternar o tema
   const toggleTheme = () => {
     const newIsDark = !isDark;
+    const newTheme = newIsDark ? 'dark' : 'light';
+    
     setIsDark(newIsDark);
+    setThemeState(newTheme);
     
     if (newIsDark) {
       document.documentElement.classList.add('dark');
@@ -64,7 +80,39 @@ export const useThemeManager = () => {
     }
   };
   
-  return { isDark, toggleTheme };
+  // Função para definir o tema diretamente
+  const setTheme = (newTheme: ThemeType) => {
+    const newIsDark = newTheme === 'dark';
+    setIsDark(newIsDark);
+    setThemeState(newTheme);
+    
+    if (newIsDark) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    
+    localStorage.setItem('theme', newTheme);
+  };
+  
+  // Função para definir a cor de destaque
+  const setAccent = (newAccent: AccentType) => {
+    setAccentState(newAccent);
+    localStorage.setItem('accent', newAccent);
+    
+    // Aplicar classes CSS ou atributos de dados personalizados para o tema de cores
+    document.documentElement.setAttribute('data-accent', newAccent);
+  };
+  
+  return { 
+    isDark, 
+    toggleTheme, 
+    theme,
+    accent, 
+    setTheme, 
+    setAccent,
+    isLoaded
+  };
 };
 
 export default useThemeManager;

@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
-import { useThemeManager } from "@/hooks/useThemeManager";
+import { useThemeManager, type ThemeType, type AccentType } from "@/hooks/useThemeManager";
 
 const themes = [
   { name: "Escuro", value: "dark", color: "bg-gray-900" },
@@ -29,10 +29,10 @@ const accentColors = [
 ];
 
 const ThemeToggle = () => {
-  const { theme, accent, setTheme, setAccent } = useThemeManager();
+  const { isDark, theme, accent, setTheme, setAccent, toggleTheme } = useThemeManager();
   const { toast } = useToast();
 
-  const handleThemeChange = (theme: string) => {
+  const handleThemeChange = (theme: ThemeType) => {
     setTheme(theme);
     
     toast({
@@ -41,18 +41,13 @@ const ThemeToggle = () => {
     });
   };
 
-  const handleAccentChange = (accent: string) => {
+  const handleAccentChange = (accent: AccentType) => {
     setAccent(accent);
     
     toast({
       title: "Cor principal alterada",
       description: `A cor principal foi alterada para ${accentColors.find(a => a.value === accent)?.name || accent}`,
     });
-  };
-
-  const toggleTheme = () => {
-    const newTheme = theme === 'dark' ? 'light' : 'dark';
-    handleThemeChange(newTheme);
   };
 
   return (
@@ -63,7 +58,7 @@ const ThemeToggle = () => {
           size="icon" 
           className="relative text-foreground"
         >
-          {theme === 'dark' ? <Moon size={18} /> : <Sun size={18} />}
+          {isDark ? <Moon size={18} /> : <Sun size={18} />}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56 bg-background border-border">
@@ -80,7 +75,7 @@ const ThemeToggle = () => {
                 variant={theme === themeOption.value ? "default" : "outline"}
                 size="sm"
                 className="w-full justify-center"
-                onClick={() => handleThemeChange(themeOption.value)}
+                onClick={() => handleThemeChange(themeOption.value as ThemeType)}
               >
                 {themeOption.value === 'dark' ? <Moon size={14} className="mr-2" /> : <Sun size={14} className="mr-2" />}
                 {themeOption.name}
@@ -95,7 +90,7 @@ const ThemeToggle = () => {
               <div 
                 key={accentOption.value}
                 className={`w-8 h-8 rounded-full ${accentOption.color} border border-gray-300 dark:border-gray-600 cursor-pointer flex items-center justify-center transition-transform hover:scale-110 ${accent === accentOption.value ? 'ring-2 ring-offset-2 ring-offset-background ring-foreground' : ''}`}
-                onClick={() => handleAccentChange(accentOption.value)}
+                onClick={() => handleAccentChange(accentOption.value as AccentType)}
               >
                 {accent === accentOption.value && (
                   <Check size={14} className="text-white" />
