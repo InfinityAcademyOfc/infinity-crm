@@ -79,7 +79,13 @@ const MainLayout = () => {
           )}
         >
           {/* TopNav - Fixed at top */}
-          <div className="sticky top-0 z-20 w-full">
+          <div
+            className={cn(
+              "sticky top-0 z-20 w-full transition-all duration-300",
+              sidebarOpen ? "ml-64" : "ml-16",
+              isMobileView && !sidebarOpen && "ml-0"
+            )}
+            >
             <TopNav />
           </div>
           
