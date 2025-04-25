@@ -86,11 +86,9 @@ const EdgeDialog = ({ isOpen, edge, onClose, onUpdate, onDelete }: EdgeDialogPro
   const handleMarkerChange = (value: string, setter: React.Dispatch<React.SetStateAction<MarkerType | null>>) => {
     if (value === "") {
       setter(null);
-    } else if (value === MarkerType.Arrow || value === MarkerType.ArrowClosed) {
-      setter(value);
-    } else if (value === "circle") {
-      // Handle circle as a special case
-      setter("circle" as MarkerType);
+    } else {
+      // Using type assertion for known marker types
+      setter(value as MarkerType);
     }
   };
 
