@@ -80,14 +80,15 @@ const EdgeDialog = ({ isOpen, edge, onClose, onUpdate, onDelete }: EdgeDialogPro
   };
 
   const handleMarkerChange = (value: string, setter: React.Dispatch<React.SetStateAction<MarkerType | null>>) => {
-    const markerMapping: { [key: string]: MarkerType | null } = {
-      "": null,
-      [MarkerType.Arrow]: MarkerType.Arrow,
-      [MarkerType.ArrowClosed]: MarkerType.ArrowClosed,
-      "circle": null
-    };
-
-    setter(markerMapping[value] ?? null);
+    if (value === "") {
+      setter(() => null);
+    } else if (value === MarkerType.Arrow || value === MarkerType.ArrowClosed) {
+      setter(() => value as MarkerType);
+    } else if (value === "circle") {
+      setter(() => null);
+    } else {
+      setter(() => null);
+    }
   };
 
   const markerOptions = [
