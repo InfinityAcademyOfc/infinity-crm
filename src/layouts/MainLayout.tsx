@@ -32,7 +32,9 @@ const MainLayout = () => {
   }, [sidebarOpen]);
 
   useEffect(() => {
-    if (isMobileView) setSidebarOpen(false);
+    if (isMobileView) {
+      setSidebarOpen(false);
+    }
   }, [location.pathname, isMobileView]);
 
   if (loading) {
@@ -42,15 +44,23 @@ const MainLayout = () => {
   return (
     <SidebarProvider>
       <div className="flex h-screen w-full bg-background">
-        <div className="h-screen flex-shrink-0 overflow-hidden">
+        {/* Sidebar */}
+        <div className="fixed z-30">
           <Sidebar 
             open={sidebarOpen} 
             setOpen={setSidebarOpen}
           />
         </div>
 
-        <div className="flex flex-col flex-1 min-w-0 h-screen overflow-hidden">
+        {/* Main content area that shifts with sidebar */}
+        <div className={cn(
+          "flex-1 flex flex-col min-w-0 transition-all duration-300 ease-in-out",
+          sidebarOpen ? "ml-64" : "ml-0"
+        )}>
+          {/* TopNav that shifts with sidebar */}
           <TopNav />
+          
+          {/* Main scrollable content */}
           <main className="flex-1 overflow-y-auto bg-background p-4 md:p-6">
             <ErrorBoundary
               fallback={
@@ -89,6 +99,7 @@ const MainLayout = () => {
           </main>
         </div>
 
+        {/* Mobile toggle button */}
         {isMobileView && (
           <div 
             className={cn(

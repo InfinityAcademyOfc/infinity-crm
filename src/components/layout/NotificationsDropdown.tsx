@@ -1,44 +1,63 @@
 
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 
-// Mock events - in production fetch from state/backend
-const fetchUpcomingEvents = () => {
-  // Here you could fetch tasks/kanban/production/meetings due soon.
-  // For demo, we show static sample events:
+interface NotificationEvent {
+  id: string;
+  title: string;
+  subtitle: string;
+  type: string;
+  path?: string;
+  moduleId?: string;
+}
+
+// Mock events with routing information
+const fetchUpcomingEvents = (): NotificationEvent[] => {
   return [
     {
       id: "1",
       title: "Tarefa: Revisar documento A",
       subtitle: "Kanban · 10 minutos restantes",
       type: "kanban",
+      path: "/app/production",
+      moduleId: "document-a"
     },
     {
       id: "2",
       title: "Reunião: Equipe de Vendas",
       subtitle: "Reuniões · Em breve",
       type: "meeting",
+      path: "/app/meetings"
     },
     {
       id: "3",
       title: "Produção: Planilha Orçamento",
       subtitle: "Produção · 30 minutos restantes",
       type: "production",
+      path: "/app/production",
+      moduleId: "budget-sheet"
     },
   ];
 };
 
 export default function NotificationsDropdown() {
-  const [events, setEvents] = useState<{id:string,title:string,subtitle:string,type:string}[]>([]);
+  const navigate = useNavigate();
+  const [events, setEvents] = useState<NotificationEvent[]>([]);
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    // Imagine this fetches from your scheduler/kanban/meetings API
     setEvents(fetchUpcomingEvents());
-    // Optionally: poll or subscribe.
   }, []);
+
+  const handleNotificationClick = (event: NotificationEvent) => {
+    setOpen(false);
+    if (event.path) {
+      navigate(event.path, { state: { moduleId: event.moduleId } });
+    }
+  };
 
   const hasNotifications = events.length > 0;
 
@@ -71,6 +90,7 @@ export default function NotificationsDropdown() {
             events.map((event) => (
               <div
                 key={event.id}
+                onClick={() => handleNotificationClick(event)}
                 className="flex flex-col gap-1 p-3 border-b last:border-b-0 cursor-pointer hover:bg-muted/40"
               >
                 <span className="font-medium">{event.title}</span>
