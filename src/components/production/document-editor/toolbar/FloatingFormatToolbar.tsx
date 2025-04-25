@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { 
   Bold, Italic, Underline, Strikethrough, 
@@ -30,12 +29,30 @@ interface FloatingFormatToolbarProps {
 }
 
 const FloatingFormatToolbar: React.FC<FloatingFormatToolbarProps> = ({ position, onFormatAction }) => {
+  const calculatePosition = () => {
+    const viewportWidth = window.innerWidth;
+    const toolbarWidth = 325;
+    
+    let left = position.left;
+    if (left - (toolbarWidth / 2) < 0) {
+      left = toolbarWidth / 2;
+    } else if (left + (toolbarWidth / 2) > viewportWidth) {
+      left = viewportWidth - (toolbarWidth / 2);
+    }
+    
+    return {
+      top: `${Math.max(10, position.top)}px`,
+      left: `${left}px`,
+    };
+  };
+
+  const positionStyle = calculatePosition();
+  
   return (
     <div 
       className="floating-format-toolbar fixed z-50 bg-gray-800 dark:bg-gray-900 rounded-lg shadow-lg px-2 py-1 flex flex-wrap items-center gap-1"
       style={{
-        top: `${position.top}px`,
-        left: `${position.left}px`,
+        ...positionStyle,
         transform: 'translate(-50%, -120%)',
         minWidth: 325,
         borderRadius: 9,

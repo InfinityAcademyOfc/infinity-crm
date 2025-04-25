@@ -90,21 +90,37 @@ const DocumentExplorerContent: React.FC<DocumentExplorerProps> = ({
   const renderItems = (items: DocumentItem[]) => {
     if (!items || items.length === 0) return null;
     const filteredItems = searchQuery ? items.filter(item => item.name.toLowerCase().includes(searchQuery.toLowerCase()) || item.children && item.children.some(child => child.name.toLowerCase().includes(searchQuery.toLowerCase()))) : items;
-    return filteredItems.map(item => <DocumentTreeItem key={item.id} item={item} onSelect={onSelectFile} onDelete={handleDeleteItem} onRename={handleRename} onExport={handleExportDocument} onToggleExpanded={toggleFolderExpanded} selectedFile={selectedFile} />);
+    
+    return filteredItems.map(item => (
+      <DocumentTreeItem 
+        key={item.id} 
+        item={item} 
+        onSelect={onSelectFile} 
+        onDelete={handleDeleteItem} 
+        onRename={handleRename} 
+        onExport={handleExportDocument} 
+        onToggleExpanded={toggleFolderExpanded} 
+        selectedFile={selectedFile} 
+        isImportFolder={item.id === "folder-imported"}
+      />
+    ));
   };
 
   // Get all document IDs for drag and drop functionality
-  const getAllItemIds = (items: DocumentItem[]): string[] => {
+  const getAllItemIds = (items: DocumentItem[], excludeIds: string[] = []): string[] => {
     return items.reduce((acc: string[], item) => {
-      acc.push(item.id);
-      if (item.children && item.children.length > 0) {
-        acc = [...acc, ...getAllItemIds(item.children)];
+      if (!excludeIds.includes(item.id)) {
+        acc.push(item.id);
+        if (item.children && item.children.length > 0) {
+          acc = [...acc, ...getAllItemIds(item.children, excludeIds)];
+        }
       }
       return acc;
     }, []);
   };
 
-  const itemIds = getAllItemIds(documents);
+  // Exclude the "Importados" folder from draggable items
+  const itemIds = getAllItemIds(documents, ["folder-imported"]);
 
   if (sidebarCollapsed) {
     return <div className="h-full min-h-[300px] flex flex-col items-start justify-start">

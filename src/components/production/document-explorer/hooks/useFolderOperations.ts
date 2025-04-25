@@ -14,9 +14,17 @@ export const useFolderOperations = () => {
   };
 
   const addCustomColor = (color: string) => {
-    if (!recentColors.includes(color)) {
-      const newRecentColors = [color, ...recentColors].slice(0, 10);
-      setRecentColors(newRecentColors);
+    // Validate color format before adding to prevent UI freeze
+    try {
+      if (color && CSS.supports('color', color) && !recentColors.includes(color)) {
+        const newRecentColors = [color, ...recentColors].slice(0, 10);
+        setRecentColors(newRecentColors);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error("Invalid color format:", error);
+      return false;
     }
   };
 

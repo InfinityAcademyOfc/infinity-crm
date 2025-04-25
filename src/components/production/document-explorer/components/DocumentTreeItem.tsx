@@ -43,6 +43,7 @@ interface DocumentTreeItemProps {
   onExport: (item: DocumentItem) => void;
   onToggleExpanded: (id: string) => void;
   selectedFile: DocumentItem | null;
+  isImportFolder?: boolean;
 }
 
 const DocumentTreeItem: React.FC<DocumentTreeItemProps> = ({
@@ -53,6 +54,7 @@ const DocumentTreeItem: React.FC<DocumentTreeItemProps> = ({
   onExport,
   onToggleExpanded,
   selectedFile,
+  isImportFolder = false,
 }) => {
   const { selectedFolder, setSelectedFolder, editingItem, setEditingItem, recentColors, setRecentColors } = useDocumentContext();
   const [folderColor, setFolderColor] = useState((item as any).folderColor || folderColors[0]);
@@ -62,7 +64,7 @@ const DocumentTreeItem: React.FC<DocumentTreeItemProps> = ({
   const isFolder = item.type === "folder";
   const isExpanded = isFolder && item.expanded;
 
-  // DnD Kit integration
+  // DnD Kit integration - disable for import folder
   const {
     attributes,
     listeners,
@@ -75,7 +77,8 @@ const DocumentTreeItem: React.FC<DocumentTreeItemProps> = ({
     data: {
       type: 'document-item',
       item,
-    }
+    },
+    disabled: isImportFolder
   });
 
   const style = {
@@ -99,19 +102,37 @@ const DocumentTreeItem: React.FC<DocumentTreeItemProps> = ({
   };
 
   const handleColorChange = (color: string) => {
-    setFolderColor(color);
-    (item as any).folderColor = color;
-    
-    // Update recent colors if it's a custom color not in the predefined list
-    if (!folderColors.includes(color)) {
-      const updatedRecentColors = [color, ...recentColors.filter(c => c !== color)].slice(0, 10);
-      setRecentColors(updatedRecentColors);
+    try {
+      // Validate the color before applying it
+      if (CSS.supports('color', color)) {
+        setFolderColor(color);
+        (item as any).folderColor = color;
+        
+        // Update recent colors if it's a custom color not in the predefined list
+        if (!folderColors.includes(color)) {
+          const updatedRecentColors = [color, ...recentColors.filter(c => c !== color)].slice(0, 10);
+          setRecentColors(updatedRecentColors);
+        }
+      } else {
+        console.warn("Invalid color format:", color);
+      }
+    } catch (error) {
+      console.error("Error setting folder color:", error);
     }
   };
 
   const handleApplyCustomColor = () => {
-    handleColorChange(customColor);
-    setIsColorDialogOpen(false);
+    try {
+      // Validate custom color before applying
+      if (CSS.supports('color', customColor)) {
+        handleColorChange(customColor);
+        setIsColorDialogOpen(false);
+      } else {
+        console.warn("Invalid custom color format:", customColor);
+      }
+    } catch (error) {
+      console.error("Error applying custom color:", error);
+    }
   };
 
   if (editingItem?.id === item.id) {
@@ -147,13 +168,15 @@ const DocumentTreeItem: React.FC<DocumentTreeItemProps> = ({
         defaultOpen={isFolder ? item.expanded : undefined}
         icon={
           <div className="flex items-center">
-            <div 
-              {...listeners}
-              {...attributes}
-              className="cursor-grab hover:bg-muted/30 rounded mr-1"
-            >
-              <GripVertical className="h-4 w-4 text-muted-foreground" />
-            </div>
+            {!isImportFolder && (
+              <div 
+                {...listeners}
+                {...attributes}
+                className="cursor-grab hover:bg-muted/30 rounded mr-1"
+              >
+                <GripVertical className="h-4 w-4 text-muted-foreground" />
+              </div>
+            )}
             {isFolder && (
               <Button
                 variant="ghost"
@@ -201,7 +224,7 @@ const DocumentTreeItem: React.FC<DocumentTreeItemProps> = ({
                     <Download className="mr-2 h-4 w-4" /> Exportar
                   </DropdownMenuItem>
                 )}
-                {isFolder && (
+                {isFolder && !isImportFolder && (
                   <DropdownMenuSub>
                     <DropdownMenuSubTrigger>
                       <span className="flex items-center"><span style={{ fontSize: 18, marginRight: 6 }}>🎨</span>Cores</span>
@@ -250,10 +273,14 @@ const DocumentTreeItem: React.FC<DocumentTreeItemProps> = ({
                     </DropdownMenuSubContent>
                   </DropdownMenuSub>
                 )}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => onDelete(item.id)} className="text-destructive focus:text-destructive">
-                  <Trash className="mr-2 h-4 w-4" /> Excluir
-                </DropdownMenuItem>
+                {!isImportFolder && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => onDelete(item.id)} className="text-destructive focus:text-destructive">
+                      <Trash className="mr-2 h-4 w-4" /> Excluir
+                    </DropdownMenuItem>
+                  </>
+                )}
               </DropdownMenuGroup>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -269,6 +296,7 @@ const DocumentTreeItem: React.FC<DocumentTreeItemProps> = ({
             onExport={onExport}
             onToggleExpanded={onToggleExpanded}
             selectedFile={selectedFile}
+            isImportFolder={isImportFolder}
           />
         ))}
       </TreeItem>

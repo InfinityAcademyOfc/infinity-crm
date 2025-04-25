@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useDocumentContext } from '../document-explorer/contexts/DocumentContext';
 import { DocumentItem } from '../document-explorer/types';
@@ -28,6 +29,7 @@ const DocumentContent: React.FC<DocumentContentProps> = ({
   const editorRef = useRef<HTMLDivElement>(null);
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const { collaborators } = useDocumentContext();
+  const selectionRangeRef = useRef<Range | null>(null);
 
   useEffect(() => setContent(initialContent), [initialContent, documentId]);
 
@@ -50,12 +52,36 @@ const DocumentContent: React.FC<DocumentContentProps> = ({
     };
   }, []);
 
+  // Save current selection range for formatting operations
+  const saveCurrentSelection = () => {
+    const selection = window.getSelection();
+    if (selection && !selection.isCollapsed && selection.rangeCount > 0) {
+      selectionRangeRef.current = selection.getRangeAt(0).cloneRange();
+    } else {
+      selectionRangeRef.current = null;
+    }
+  };
+
+  // Restore saved selection
+  const restoreSelection = () => {
+    if (selectionRangeRef.current && editorRef.current) {
+      const selection = window.getSelection();
+      if (selection) {
+        selection.removeAllRanges();
+        selection.addRange(selectionRangeRef.current);
+      }
+    }
+  };
+
   const handleSelectionChange = useCallback(() => {
     const selection = window.getSelection();
     if (selection && !selection.isCollapsed && editorRef.current && selection.rangeCount) {
       const range = selection.getRangeAt(0);
       const rect = range.getBoundingClientRect();
       const editorRect = editorRef.current.getBoundingClientRect();
+      
+      // Save this selection for later use
+      selectionRangeRef.current = range.cloneRange();
       
       setToolbarPosition({
         top: rect.top - editorRect.top - 10,
@@ -68,8 +94,14 @@ const DocumentContent: React.FC<DocumentContentProps> = ({
   }, []);
 
   const handleFormatAction = (action: string, value?: string) => {
+    // Restore selection before applying formatting
+    restoreSelection();
+    
     document.execCommand(action, false, value);
     if (editorRef.current) setContent(editorRef.current.innerHTML);
+    
+    // Save the selection again after formatting
+    saveCurrentSelection();
   };
 
   const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -86,6 +118,62 @@ const DocumentContent: React.FC<DocumentContentProps> = ({
       setTimeout(() => {
         editorRef.current?.focus();
       }, 100);
+    }
+  };
+
+  // Handle keyboard shortcuts
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    // Save current selection on any key press
+    saveCurrentSelection();
+    
+    // Handle shortcuts
+    if (e.ctrlKey) {
+      switch (e.key) {
+        case 'b': // Bold
+          e.preventDefault();
+          handleFormatAction('bold');
+          break;
+        case 'i': // Italic
+          e.preventDefault();
+          handleFormatAction('italic');
+          break;
+        case 'u': // Underline
+          e.preventDefault();
+          handleFormatAction('underline');
+          break;
+        case 'c': // Copy
+          // Let default browser behavior handle this
+          console.log("Copy shortcut detected");
+          break;
+        case 'v': // Paste
+          // Let default browser behavior handle this, but ensure we update content
+          setTimeout(() => {
+            if (editorRef.current) {
+              setContent(editorRef.current.innerHTML);
+            }
+          }, 0);
+          break;
+        case 'x': // Cut
+          // Let default browser behavior handle this, but ensure we update content
+          setTimeout(() => {
+            if (editorRef.current) {
+              setContent(editorRef.current.innerHTML);
+            }
+          }, 0);
+          break;
+        case 'z': // Undo
+          e.preventDefault();
+          document.execCommand('undo');
+          if (editorRef.current) setContent(editorRef.current.innerHTML);
+          break;
+        case 'y': // Redo
+          e.preventDefault();
+          document.execCommand('redo');
+          if (editorRef.current) setContent(editorRef.current.innerHTML);
+          break;
+        default:
+          break;
+      }
     }
   };
 
@@ -117,6 +205,7 @@ const DocumentContent: React.FC<DocumentContentProps> = ({
         onInput={e => setContent((e.target as HTMLDivElement).innerHTML)}
         onMouseUp={handleSelectionChange}
         onKeyUp={handleSelectionChange}
+        onKeyDown={handleKeyDown}
         suppressContentEditableWarning
       />
       
