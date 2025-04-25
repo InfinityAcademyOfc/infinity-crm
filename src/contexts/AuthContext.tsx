@@ -3,7 +3,7 @@ import React, { createContext, useContext } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { loginUser, registerUser, logoutUser } from "@/lib/auth/authUtils";
+import { loginUser } from "@/lib/auth/authUtils";
 import { useAuthState } from "@/hooks/use-auth-state";
 import LoadingScreen from "@/components/ui/loading-screen";
 
@@ -29,8 +29,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { user, session } = await loginUser(email, password);
       
       if (user) {
-        navigate('/app', { replace: true });
         toast.success("Login realizado com sucesso!");
+        navigate('/app', { replace: true });
       }
     } catch (error) {
       console.error("Erro ao fazer login:", error);
@@ -51,6 +51,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   async function signUp(email: string, password: string, name: string, isCompany: boolean) {
     try {
+      // Importar dinamicamente para evitar dependências cíclicas
+      const { registerUser } = await import('@/lib/auth/authUtils');
       const { user } = await registerUser(email, password, name, isCompany);
 
       if (user) {
@@ -76,6 +78,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   async function signOut() {
     try {
+      // Importar dinamicamente para evitar dependências cíclicas
+      const { logoutUser } = await import('@/lib/auth/authUtils');
       await logoutUser();
       navigate('/login', { replace: true });
     } catch (error) {

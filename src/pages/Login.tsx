@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { Link, Navigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { ArrowLeft, LogIn, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,10 +29,16 @@ const Login = () => {
   const { signIn, user, loading } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const navigate = useNavigate();
 
   // Loader visual durante o login
   if (loading) {
     return <LoadingScreen />;
+  }
+
+  // Se o usuário já está autenticado, redirecionar para o dashboard
+  if (user && !loading) {
+    return <Navigate to="/app" replace />;
   }
 
   const form = useForm<LoginFormValues>({
@@ -47,17 +53,14 @@ const Login = () => {
     setIsSubmitting(true);
     try {
       await signIn(values.email, values.password);
+      // Forçar redirecionamento para o app
+      navigate('/app', { replace: true });
     } catch (error) {
       // Error handling done in the signIn function
     } finally {
       setIsSubmitting(false);
     }
   };
-
-  // Se o usuário já está autenticado, redirecionar para o dashboard
-  if (user && !loading) {
-    return <Navigate to="/app" replace />;
-  }
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-black via-gray-900 to-black text-white overflow-hidden">
@@ -84,23 +87,23 @@ const Login = () => {
       </header>
 
       <main className="flex-1 flex items-center justify-center p-4 relative z-10">
-        <div className="w-full max-w-md">
+        <div className="w-full max-w-sm">
           <Card className="bg-black/40 border-white/10 backdrop-blur-lg shadow-[0_0_25px_rgba(130,80,223,0.2)]">
-            <CardHeader>
-              <CardTitle className="text-2xl text-center text-white">Entrar</CardTitle>
-              <CardDescription className="text-center text-white/70">
+            <CardHeader className="space-y-1 px-4 py-3">
+              <CardTitle className="text-xl text-center text-white">Entrar</CardTitle>
+              <CardDescription className="text-center text-white/70 text-sm">
                 Acesse sua conta no Infinity CRM
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-4 py-2">
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
                   <FormField
                     control={form.control}
                     name="email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-white">E-mail</FormLabel>
+                        <FormLabel className="text-white text-sm">E-mail</FormLabel>
                         <FormControl>
                           <Input 
                             placeholder="seu@email.com" 
@@ -121,8 +124,8 @@ const Login = () => {
                     render={({ field }) => (
                       <FormItem>
                         <div className="flex items-center justify-between">
-                          <FormLabel className="text-white">Senha</FormLabel>
-                          <Link to="/forgot-password" className="text-sm text-primary hover:underline">
+                          <FormLabel className="text-white text-sm">Senha</FormLabel>
+                          <Link to="/forgot-password" className="text-xs text-primary hover:underline">
                             Esqueceu a senha?
                           </Link>
                         </div>
@@ -176,8 +179,8 @@ const Login = () => {
                 </form>
               </Form>
             </CardContent>
-            <CardFooter className="flex flex-col space-y-4 border-t border-white/10">
-              <div className="text-center text-sm text-white/70">
+            <CardFooter className="flex flex-col space-y-4 border-t border-white/10 px-4 py-3">
+              <div className="text-center text-xs text-white/70">
                 Não tem uma conta?{" "}
                 <Link to="/register" className="text-primary hover:underline">
                   Criar conta

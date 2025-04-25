@@ -35,16 +35,34 @@ export const useModuleSync = create<ModuleSyncState>((set, get) => ({
   assignClientToTask: (taskId, clientId) => assignClientToTaskAction(set, taskId, clientId),
   syncAllModules: () => syncAllModulesAction(set),
   fetchLeads: async () => {
-    // Retornando lista vazia temporariamente até criar a tabela de leads
-    return [];
+    try {
+      // Usando mock data temporariamente até criar a tabela
+      console.log("Obtendo leads");
+      return [];
+    } catch (error) {
+      console.error("Erro ao buscar leads:", error);
+      return [];
+    }
   },
   fetchClients: async () => {
-    // Retornando lista vazia temporariamente até criar a tabela de clients
-    return [];
+    try {
+      // Usando mock data temporariamente até criar a tabela
+      console.log("Obtendo clients");
+      return [];
+    } catch (error) {
+      console.error("Erro ao buscar clients:", error);
+      return [];
+    }
   },
   fetchTasks: async () => {
-    // Retornando lista vazia temporariamente até criar a tabela de tasks
-    return [];
+    try {
+      // Usando mock data temporariamente até criar a tabela
+      console.log("Obtendo tasks");
+      return [];
+    } catch (error) {
+      console.error("Erro ao buscar tasks:", error);
+      return [];
+    }
   },
 }));
 
@@ -53,7 +71,7 @@ export const updateDashboardData = () => {
   const { leads, clients, tasks, products, lastSyncTime } = useModuleSync.getState();
 
   // Here you would update dashboard data based on the current state
-  console.log(`Dashboard updated with data from: ${lastSyncTime}`);
+  console.log(`Dashboard updated with data from: ${lastSyncTime || 'initial load'}`);
 
   toast.success(`Dashboard atualizado`, {
     description: `Dados atualizados com sucesso`,

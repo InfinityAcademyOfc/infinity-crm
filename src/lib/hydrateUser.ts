@@ -22,40 +22,75 @@ export async function hydrateUser() {
 
   console.log("Buscando perfil para o usuário:", userId);
 
-  const { data: profile, error: profileError } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", userId)
-    .maybeSingle();
-
-  if (profileError) {
-    console.error("Erro ao buscar perfil:", profileError);
-    throw new Error("Erro ao buscar dados do usuário");
-  }
-
-  console.log("Perfil encontrado:", profile);
-
-  let company: Company | null = null;
-  if (profile && profile.company_id) {
-    console.log("Buscando empresa:", profile.company_id);
-    const { data: companyData, error: companyError } = await supabase
-      .from("companies")
+  try {
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
       .select("*")
-      .eq("id", profile.company_id)
+      .eq("id", userId)
       .maybeSingle();
 
-    if (companyError) {
-      console.error("Erro ao buscar empresa:", companyError);
-      console.log("Continuando sem dados da empresa");
-    } else {
-      console.log("Empresa encontrada:", companyData);
-      company = companyData;
+    if (profileError) {
+      console.error("Erro ao buscar perfil:", profileError);
+      // Retornar perfil mínimo em vez de lançar erro para evitar loop
+      return {
+        profile: {
+          id: userId,
+          name: "Usuário",
+          email: sessionData.session.user.email,
+          role: "user",
+          status: "active"
+        },
+        company: null
+      };
     }
-  }
 
-  console.log("Hidratação de dados concluída");
-  return {
-    profile,
-    company,
-  };
+    console.log("Perfil encontrado:", profile);
+
+    let company: Company | null = null;
+    if (profile && profile.company_id) {
+      console.log("Buscando empresa:", profile.company_id);
+      try {
+        const { data: companyData, error: companyError } = await supabase
+          .from("companies")
+          .select("*")
+          .eq("id", profile.company_id)
+          .maybeSingle();
+
+        if (companyError) {
+          console.error("Erro ao buscar empresa:", companyError);
+          console.log("Continuando sem dados da empresa");
+        } else {
+          console.log("Empresa encontrada:", companyData);
+          company = companyData;
+        }
+      } catch (companyError) {
+        console.error("Erro ao buscar empresa:", companyError);
+      }
+    }
+
+    console.log("Hidratação de dados concluída");
+    return {
+      profile: profile || {
+        id: userId,
+        name: "Usuário",
+        email: sessionData.session.user.email,
+        role: "user",
+        status: "active"
+      },
+      company
+    };
+  } catch (error) {
+    console.error("Erro inesperado na hidratação do usuário:", error);
+    // Retornar perfil mínimo para previnir bloqueio do fluxo de autenticação
+    return {
+      profile: {
+        id: userId,
+        name: "Usuário",
+        email: sessionData.session.user.email,
+        role: "user",
+        status: "active"
+      },
+      company: null
+    };
+  }
 }

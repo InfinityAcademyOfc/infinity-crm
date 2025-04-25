@@ -11,5 +11,17 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     storage: localStorage,
     persistSession: true,
     autoRefreshToken: true,
-  }
+    debug: true, // Ajuda a identificar problemas de autenticação
+  },
+  global: {
+    headers: {
+      'x-application-name': 'infinity-crm',
+    },
+  },
+  // Configurações para melhorar a experiência de desenvolvimento e evitar erros comuns
+  realtime: {
+    params: {
+      eventsPerSecond: 10,
+    },
+  },
 });
