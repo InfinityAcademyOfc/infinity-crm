@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -79,6 +80,18 @@ const EdgeDialog = ({ isOpen, edge, onClose, onUpdate, onDelete }: EdgeDialogPro
     } : null;
     
     onUpdate(source, target, style, markerStartObj, markerEndObj);
+  };
+
+  // Helper function to safely handle marker type values
+  const handleMarkerChange = (value: string, setter: React.Dispatch<React.SetStateAction<MarkerType | null>>) => {
+    if (value === "") {
+      setter(null);
+    } else if (value === MarkerType.Arrow || value === MarkerType.ArrowClosed) {
+      setter(value);
+    } else if (value === "circle") {
+      // Handle circle as a special case
+      setter("circle" as MarkerType);
+    }
   };
 
   const markerOptions = [
@@ -185,7 +198,7 @@ const EdgeDialog = ({ isOpen, edge, onClose, onUpdate, onDelete }: EdgeDialogPro
                 </Label>
                 <Select 
                   value={markerStart || ""} 
-                  onValueChange={(val) => setMarkerStart(val ? val as MarkerType : null)}
+                  onValueChange={(val) => handleMarkerChange(val, setMarkerStart)}
                 >
                   <SelectTrigger className="mt-1">
                     <SelectValue placeholder="Escolha" />
@@ -205,8 +218,8 @@ const EdgeDialog = ({ isOpen, edge, onClose, onUpdate, onDelete }: EdgeDialogPro
                   Marcador final:
                 </Label>
                 <Select 
-                  value={markerEnd} 
-                  onValueChange={(val) => setMarkerEnd(val as MarkerType)}
+                  value={markerEnd || ""} 
+                  onValueChange={(val) => handleMarkerChange(val, setMarkerEnd)}
                 >
                   <SelectTrigger className="mt-1">
                     <SelectValue placeholder="Escolha" />
