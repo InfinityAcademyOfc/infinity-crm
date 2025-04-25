@@ -30,7 +30,6 @@ interface FloatingFormatToolbarProps {
 }
 
 const FloatingFormatToolbar: React.FC<FloatingFormatToolbarProps> = ({ position, onFormatAction }) => {
-  // Centralizado e com z-index alto. Mais responsivo.
   return (
     <div 
       className="floating-format-toolbar fixed z-50 bg-gray-800 dark:bg-gray-900 rounded-lg shadow-lg px-2 py-1 flex flex-wrap items-center gap-1"

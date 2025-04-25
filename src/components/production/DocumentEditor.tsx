@@ -10,8 +10,9 @@ import { useDocumentOperations } from "./document-explorer/hooks/useDocumentOper
 
 const DocumentEditor: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<DocumentItem | null>(null);
+  const [explorerCollapsed, setExplorerCollapsed] = useState(false);
   const { toast } = useToast();
-  const { documents } = useDocumentContext();
+  const { documents, setDocuments } = useDocumentContext();
   const { updateFileContent } = useDocumentOperations(() => {});
   
   const handleSelectFile = (file: DocumentItem) => {
@@ -41,6 +42,93 @@ const DocumentEditor: React.FC = () => {
     }
   };
 
+  // Handle file drop for import
+  useEffect(() => {
+    const handleDrop = async (event: DragEvent) => {
+      event.preventDefault();
+      
+      if (!event.dataTransfer?.files.length) return;
+      
+      const files = Array.from(event.dataTransfer.files).filter(
+        file => file.type.includes('document') || file.type.includes('text')
+      );
+      
+      if (files.length === 0) {
+        toast({
+          title: "Formato não suportado",
+          description: "Apenas documentos de texto são suportados",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      // Find the imports folder or create it if it doesn't exist
+      let importFolder = documents.find(doc => doc.id === "folder-imported");
+      
+      if (!importFolder) {
+        importFolder = {
+          id: "folder-imported",
+          name: "Importados",
+          type: "folder",
+          expanded: true,
+          children: []
+        };
+        setDocuments([...documents, importFolder]);
+      }
+      
+      // Process each file
+      for (const file of files) {
+        try {
+          const content = await file.text();
+          const name = file.name.replace(/\.[^/.]+$/, ""); // Remove extension
+          
+          const newDoc: DocumentItem = {
+            id: `file-import-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            name,
+            type: "file",
+            content
+          };
+          
+          const updatedDocs = documents.map(doc => {
+            if (doc.id === "folder-imported") {
+              return {
+                ...doc,
+                expanded: true,
+                children: [...(doc.children || []), newDoc]
+              };
+            }
+            return doc;
+          });
+          
+          setDocuments(updatedDocs);
+          
+          toast({
+            title: "Documento importado",
+            description: `${name} foi importado com sucesso para a pasta Importados.`
+          });
+        } catch (error) {
+          toast({
+            title: "Erro ao importar",
+            description: `Falha ao importar ${file.name}.`,
+            variant: "destructive"
+          });
+        }
+      }
+    };
+    
+    const handleDragOver = (event: DragEvent) => {
+      event.preventDefault();
+    };
+    
+    document.addEventListener('drop', handleDrop);
+    document.addEventListener('dragover', handleDragOver);
+    
+    return () => {
+      document.removeEventListener('drop', handleDrop);
+      document.removeEventListener('dragover', handleDragOver);
+    };
+  }, [documents, setDocuments, toast]);
+  
   // Auto-save on unmount
   useEffect(() => {
     return () => {
@@ -51,11 +139,16 @@ const DocumentEditor: React.FC = () => {
   return (
     <div className="h-full border rounded-lg overflow-hidden" style={{ height: '842px' }}>
       <ResizablePanelGroup direction="horizontal" className="h-full">
-        <ResizablePanel defaultSize={20} minSize={15} maxSize={30}>
+        <ResizablePanel 
+          defaultSize={20} 
+          minSize={15} 
+          maxSize={30}
+          className={explorerCollapsed ? 'hidden' : ''}
+        >
           <DocumentExplorer onSelectFile={handleSelectFile} selectedFile={selectedFile} />
         </ResizablePanel>
         
-        <ResizableHandle withHandle />
+        {!explorerCollapsed && <ResizableHandle withHandle />}
         
         <ResizablePanel>
           {selectedFile ? (
@@ -69,6 +162,9 @@ const DocumentEditor: React.FC = () => {
               <div className="text-center">
                 <p>Selecione um documento para editar</p>
                 <p className="text-sm">ou crie um novo na barra lateral</p>
+                <p className="text-xs mt-4 text-muted-foreground">
+                  Você também pode arrastar e soltar arquivos para importá-los
+                </p>
               </div>
             </div>
           )}

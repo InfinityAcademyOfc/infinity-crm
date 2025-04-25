@@ -1,4 +1,5 @@
 
+
 @tailwind utilities;
 
 @layer utilities {
@@ -52,11 +53,46 @@
   }
 }
 
+/* Add drag and drop animation */
+.dragging {
+  opacity: 0.5;
+  transform: scale(1.05);
+  z-index: 999;
+}
+
+.drop-target {
+  background-color: rgba(var(--primary-rgb), 0.1);
+  border: 2px dashed hsl(var(--primary));
+}
+
+/* Add collaborator cursor animation */
+@keyframes cursorBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.cursor-blink {
+  animation: cursorBlink 1s infinite;
+}
+
+/* Add collaboration highlight animation */
+@keyframes highlightFade {
+  0% { background-color: rgba(var(--primary-rgb), 0.3); }
+  100% { background-color: transparent; }
+}
+
+.collaboration-highlight {
+  animation: highlightFade 2s ease-out forwards;
+}
+
 /* Reduced animation for users who prefer reduced motion */
 @media (prefers-reduced-motion: reduce) {
   .fade-in,
   .slide-up,
-  .animate-progress-bar {
+  .animate-progress-bar,
+  .dragging,
+  .cursor-blink,
+  .collaboration-highlight {
     animation: none;
   }
 }

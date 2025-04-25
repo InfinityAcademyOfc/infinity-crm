@@ -11,6 +11,19 @@ interface DocumentContextType {
   setEditingItem: (item: { id: string; name: string } | null) => void;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
+  recentColors: string[];
+  setRecentColors: (colors: string[]) => void;
+  collaborators: Collaborator[];
+  setCollaborators: (users: Collaborator[]) => void;
+}
+
+export interface Collaborator {
+  id: string;
+  name: string;
+  avatar: string;
+  color: string;
+  position?: { x: number, y: number };
+  lastActive: Date;
 }
 
 const DocumentContext = createContext<DocumentContextType | undefined>(undefined);
@@ -71,6 +84,33 @@ const initialDocuments: DocumentItem[] = [
         content: "# Processo de Onboarding\n\n1. Reunião inicial\n2. Levantamento de requisitos\n3. Definição de escopo"
       }
     ]
+  },
+  {
+    id: "folder-imported",
+    name: "Importados",
+    type: "folder",
+    expanded: false,
+    children: []
+  }
+];
+
+// Initial collaborators for demonstration
+const initialCollaborators: Collaborator[] = [
+  {
+    id: 'user1',
+    name: 'Ana Silva',
+    avatar: '/avatar-placeholder.jpg',
+    color: '#FF5733',
+    position: { x: 150, y: 80 },
+    lastActive: new Date()
+  },
+  {
+    id: 'user2',
+    name: 'Carlos Mendes',
+    avatar: '/avatar-placeholder.jpg',
+    color: '#33FF57',
+    position: { x: 300, y: 120 },
+    lastActive: new Date()
   }
 ];
 
@@ -79,6 +119,15 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
   const [editingItem, setEditingItem] = useState<{ id: string; name: string } | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  
+  // New state for folder colors customization
+  const [recentColors, setRecentColors] = useState<string[]>([
+    "#6E59A5", "#F97316", "#0EA5E9", "#8B5CF6", "#D946EF", 
+    "#ea384c", "#10B981", "#FEC6A1", "#22C55E", "#EAB308"
+  ]);
+  
+  // State for real-time collaboration
+  const [collaborators, setCollaborators] = useState<Collaborator[]>(initialCollaborators);
 
   return (
     <DocumentContext.Provider 
@@ -91,6 +140,10 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setEditingItem,
         searchQuery,
         setSearchQuery,
+        recentColors,
+        setRecentColors,
+        collaborators,
+        setCollaborators
       }}
     >
       {children}

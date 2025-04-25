@@ -8,7 +8,7 @@ export const useDocumentOperations = (onSelectFile: (file: DocumentItem | null) 
   const [newItemDialogOpen, setNewItemDialogOpen] = useState(false);
   const [newItemParentId, setNewItemParentId] = useState<string | null>(null);
   const { toast } = useToast();
-  const { documents, setDocuments, selectedFolder, setSelectedFolder, setEditingItem } = useDocumentContext();
+  const { documents, setDocuments, selectedFolder, setSelectedFolder, setEditingItem, recentColors, setRecentColors } = useDocumentContext();
 
   const handleAddItem = (parentId: string | null) => {
     setNewItemParentId(parentId);
@@ -79,16 +79,16 @@ export const useDocumentOperations = (onSelectFile: (file: DocumentItem | null) 
   const handleExportDocument = (item: DocumentItem) => {
     if (item.type === "file" && item.content) {
       const element = document.createElement("a");
-      const file = new Blob([item.content], {type: 'text/markdown'});
+      const file = new Blob([item.content], {type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
       element.href = URL.createObjectURL(file);
-      element.download = `${item.name}.md`;
+      element.download = `${item.name}.docx`;
       document.body.appendChild(element);
       element.click();
       document.body.removeChild(element);
       
       toast({
         title: "Documento exportado",
-        description: `${item.name} foi exportado com sucesso.`
+        description: `${item.name} foi exportado com sucesso como documento DOCX.`
       });
     }
   };
@@ -103,6 +103,99 @@ export const useDocumentOperations = (onSelectFile: (file: DocumentItem | null) 
     setDocuments(updatedDocs);
   };
 
+  const addCustomColor = (color: string) => {
+    // Add new color to recent colors if it doesn't already exist
+    if (!recentColors.includes(color)) {
+      const newRecentColors = [color, ...recentColors].slice(0, 10); // Keep only the 10 most recent colors
+      setRecentColors(newRecentColors);
+    }
+  };
+
+  // Handle drag and drop functionality
+  const handleDragEnd = (activeId: string, overId: string) => {
+    if (activeId === overId) return;
+    
+    const findItem = (items: DocumentItem[], id: string): DocumentItem | null => {
+      for (const item of items) {
+        if (item.id === id) return item;
+        if (item.children) {
+          const found = findItem(item.children, id);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+    
+    const active = findItem(documents, activeId);
+    const over = findItem(documents, overId);
+    
+    if (!active) return;
+    
+    // If trying to drop onto a file or outside valid targets
+    if (over?.type === "file") {
+      // Try to find the parent folder of the target file
+      const findParentFolder = (items: DocumentItem[], childId: string, parent: string | null = null): string | null => {
+        for (const item of items) {
+          if (item.children?.some(child => child.id === childId)) return item.id;
+          if (item.children) {
+            const found = findParentFolder(item.children, childId, item.id);
+            if (found) return found;
+          }
+        }
+        return parent;
+      };
+      
+      const targetFolderId = findParentFolder(documents, overId);
+      if (targetFolderId) {
+        moveItem(activeId, targetFolderId);
+      }
+    } else if (over?.type === "folder") {
+      // If dropping onto a folder, add it as a child of that folder
+      moveItem(activeId, overId);
+    }
+  };
+  
+  const moveItem = (itemId: string, targetFolderId: string) => {
+    // First find and remove the item from its current location
+    let itemToMove: DocumentItem | null = null;
+    
+    const removeItemFromSource = (items: DocumentItem[]): DocumentItem[] => {
+      const result = items.filter(item => {
+        if (item.id === itemId) {
+          itemToMove = { ...item };
+          return false;
+        }
+        
+        if (item.children) {
+          item.children = removeItemFromSource(item.children);
+        }
+        
+        return true;
+      });
+      
+      return result;
+    };
+    
+    let newDocs = removeItemFromSource([...documents]);
+    
+    // Then add the item to its new location
+    if (itemToMove) {
+      // If target is root level
+      if (targetFolderId === 'root') {
+        newDocs = [...newDocs, itemToMove];
+      } else {
+        newDocs = addItemToFolder(newDocs, targetFolderId, itemToMove);
+      }
+      
+      setDocuments(newDocs);
+      
+      toast({
+        title: "Item movido",
+        description: `${itemToMove.name} foi movido com sucesso.`
+      });
+    }
+  };
+
   return {
     newItemDialogOpen,
     setNewItemDialogOpen,
@@ -112,7 +205,10 @@ export const useDocumentOperations = (onSelectFile: (file: DocumentItem | null) 
     handleRename,
     handleExportDocument,
     toggleFolderExpanded,
-    updateFileContent
+    updateFileContent,
+    addCustomColor,
+    handleDragEnd,
+    moveItem
   };
 };
 

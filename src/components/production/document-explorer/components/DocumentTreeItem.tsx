@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { File, Folder, FolderOpen, MoreHorizontal, Pencil, Download, Trash, ChevronRight, ChevronDown } from 'lucide-react';
+import { File, Folder, FolderOpen, MoreHorizontal, Pencil, Download, Trash, ChevronRight, ChevronDown, GripVertical } from 'lucide-react';
 import { TreeItem } from '@/components/ui/tree';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,16 +19,21 @@ import {
 import { DocumentItem } from '../types';
 import { useDocumentContext } from '../contexts/DocumentContext';
 import { cn } from '@/lib/utils';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
-// Paleta de cores suaves + cores mais fortes
-const pastelColors = [
+// Enhanced color palette with more variety
+const folderColors = [
+  // Pastel colors
   "#F2FCE2", "#FEF7CD", "#FEC6A1", "#E5DEFF", "#FFDEE2",
-  "#FDE1D3", "#D3E4FD", "#F1F0FB"
+  "#FDE1D3", "#D3E4FD", "#F1F0FB",
+  // Strong colors
+  "#6E59A5", "#F97316", "#0EA5E9", "#8B5CF6", "#D946EF", 
+  "#ea384c", "#1A1F2C", "#403E43", "#1EAEDB", "#38bdf8",
+  // Vibrant colors
+  "#10B981", "#22C55E", "#EAB308", "#EC4899", "#06B6D4"
 ];
-const strongColors = [
-  "#6E59A5", "#F97316", "#0EA5E9", "#8B5CF6", "#D946EF", "#ea384c", "#1A1F2C", "#403E43", "#1EAEDB", "#38bdf8"
-];
-const folderColors = [...pastelColors, ...strongColors];
 
 interface DocumentTreeItemProps {
   item: DocumentItem;
@@ -49,25 +54,71 @@ const DocumentTreeItem: React.FC<DocumentTreeItemProps> = ({
   onToggleExpanded,
   selectedFile,
 }) => {
-  const { selectedFolder, setSelectedFolder, editingItem, setEditingItem } = useDocumentContext();
-  const [folderColor, setFolderColor] = useState(
-    (item as any).folderColor || folderColors[0]
-  );
+  const { selectedFolder, setSelectedFolder, editingItem, setEditingItem, recentColors, setRecentColors } = useDocumentContext();
+  const [folderColor, setFolderColor] = useState((item as any).folderColor || folderColors[0]);
+  const [isColorDialogOpen, setIsColorDialogOpen] = useState(false);
+  const [customColor, setCustomColor] = useState("#FFFFFF");
   const isSelected = selectedFile?.id === item.id || selectedFolder === item.id;
   const isFolder = item.type === "folder";
   const isExpanded = isFolder && item.expanded;
 
-  const handleFolderClick = () => setSelectedFolder(selectedFolder === item.id ? null : item.id);
+  // DnD Kit integration
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: item.id,
+    data: {
+      type: 'document-item',
+      item,
+    }
+  });
 
-  const startRenaming = () => setEditingItem({ id: item.id, name: item.name });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    position: 'relative' as const,
+    zIndex: isDragging ? 999 : 'auto' as any,
+  };
+
+  const handleFolderClick = () => {
+    if (isFolder) {
+      onToggleExpanded(item.id);
+    }
+    setSelectedFolder(selectedFolder === item.id ? null : item.id);
+  };
+
+  const startRenaming = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingItem({ id: item.id, name: item.name });
+  };
+
   const handleColorChange = (color: string) => {
     setFolderColor(color);
     (item as any).folderColor = color;
+    
+    // Update recent colors if it's a custom color not in the predefined list
+    if (!folderColors.includes(color)) {
+      const updatedRecentColors = [color, ...recentColors.filter(c => c !== color)].slice(0, 10);
+      setRecentColors(updatedRecentColors);
+    }
+  };
+
+  const handleApplyCustomColor = () => {
+    handleColorChange(customColor);
+    setIsColorDialogOpen(false);
   };
 
   if (editingItem?.id === item.id) {
     return (
       <TreeItem
+        ref={setNodeRef}
+        style={style}
         icon={isFolder ?
           <div className="relative"><div className="h-4 w-6 rounded-[0.25rem] mr-1 border" style={{ background: folderColor }}></div></div>
           : <File className="h-4 w-4" />}
@@ -89,101 +140,168 @@ const DocumentTreeItem: React.FC<DocumentTreeItemProps> = ({
   }
 
   return (
-    <TreeItem
-      defaultOpen={isFolder ? item.expanded : undefined}
-      icon={
-        <div className="flex items-center">
-          {isFolder && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-4 w-4 p-0 mr-1"
-              onClick={e => { e.stopPropagation(); onToggleExpanded(item.id); }}
-              title="Expandir/recolher pasta"
-              tabIndex={-1}
+    <>
+      <TreeItem
+        ref={setNodeRef}
+        style={style}
+        defaultOpen={isFolder ? item.expanded : undefined}
+        icon={
+          <div className="flex items-center">
+            <div 
+              {...listeners}
+              {...attributes}
+              className="cursor-grab hover:bg-muted/30 rounded mr-1"
             >
-              {isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
-            </Button>
-          )}
-          <span className={cn("h-4 w-4", isSelected && "text-primary")}>
-            {isFolder ? (
-              <div className="relative group">
-                <div
-                  className="h-4 w-6 rounded-[0.25rem] border border-gray-300 group-hover:brightness-95 cursor-pointer mr-1"
-                  style={{ background: folderColor, transition: "background 0.3s" }}
-                  title="Cor da pasta"
-                ></div>
-              </div>
-            ) : (
-              <File />
+              <GripVertical className="h-4 w-4 text-muted-foreground" />
+            </div>
+            {isFolder && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-4 w-4 p-0 mr-1"
+                onClick={(e) => { e.stopPropagation(); onToggleExpanded(item.id); }}
+                title={isExpanded ? "Recolher pasta" : "Expandir pasta"}
+                tabIndex={-1}
+              >
+                {isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+              </Button>
             )}
-          </span>
-        </div>
-      }
-      label={item.name}
-      onClick={isFolder ? handleFolderClick : () => onSelect(item)}
-      className={cn(isSelected && "bg-primary/10 group")}
-      actions={
-        // Sempre visível para pastas/arquivos: três pontos (menu)
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-6 w-6 opacity-70 hover:opacity-100">
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-44 z-50">
-            <DropdownMenuGroup>
-              <DropdownMenuItem onClick={startRenaming}>
-                <Pencil className="mr-2 h-4 w-4" /> Renomear
-              </DropdownMenuItem>
-              {item.type === "file" && (
-                <DropdownMenuItem onClick={() => onExport(item)}>
-                  <Download className="mr-2 h-4 w-4" /> Exportar
-                </DropdownMenuItem>
+            <span className={cn("h-4 w-4", isSelected && "text-primary")}>
+              {isFolder ? (
+                <div className="relative group">
+                  <div
+                    className="h-4 w-6 rounded-[0.25rem] border border-gray-300 group-hover:brightness-95 cursor-pointer mr-1"
+                    style={{ background: folderColor, transition: "background 0.3s" }}
+                    title="Cor da pasta"
+                  ></div>
+                </div>
+              ) : (
+                <File />
               )}
-              <DropdownMenuSub>
-                <DropdownMenuSubTrigger>
-                  <span className="flex items-center"><span style={{ fontSize: 18, marginRight: 6 }}>🎨</span>Cores</span>
-                </DropdownMenuSubTrigger>
-                <DropdownMenuSubContent className="p-2 grid grid-cols-5 gap-1 bg-white dark:bg-gray-900 rounded shadow z-50">
-                  {folderColors.map(color => (
-                    <Button
-                      key={color}
-                      variant="ghost"
-                      size="icon"
-                      className="w-5 h-5 border"
-                      style={{ background: color }}
-                      onClick={() => handleColorChange(color)}
-                      aria-label={`Cor ${color}`}
-                    />
-                  ))}
-                </DropdownMenuSubContent>
-              </DropdownMenuSub>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => onDelete(item.id)} className="text-destructive focus:text-destructive">
-                <Trash className="mr-2 h-4 w-4" /> Excluir
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      }
-    >
-      {isFolder && item.children && item.expanded && item.children.map(child => (
-        <DocumentTreeItem
-          key={child.id}
-          item={child}
-          onSelect={onSelect}
-          onDelete={onDelete}
-          onRename={onRename}
-          onExport={onExport}
-          onToggleExpanded={onToggleExpanded}
-          selectedFile={selectedFile}
-        />
-      ))}
-    </TreeItem>
+            </span>
+          </div>
+        }
+        label={item.name}
+        onClick={isFolder ? handleFolderClick : () => onSelect(item)}
+        className={cn(isSelected && "bg-primary/10 group")}
+        actions={
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-6 w-6 opacity-70 hover:opacity-100">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-44 z-50">
+              <DropdownMenuGroup>
+                <DropdownMenuItem onClick={startRenaming}>
+                  <Pencil className="mr-2 h-4 w-4" /> Renomear
+                </DropdownMenuItem>
+                {item.type === "file" && (
+                  <DropdownMenuItem onClick={() => onExport(item)}>
+                    <Download className="mr-2 h-4 w-4" /> Exportar
+                  </DropdownMenuItem>
+                )}
+                {isFolder && (
+                  <DropdownMenuSub>
+                    <DropdownMenuSubTrigger>
+                      <span className="flex items-center"><span style={{ fontSize: 18, marginRight: 6 }}>🎨</span>Cores</span>
+                    </DropdownMenuSubTrigger>
+                    <DropdownMenuSubContent className="p-2">
+                      <div className="grid grid-cols-5 gap-1 mb-2">
+                        {folderColors.map(color => (
+                          <Button
+                            key={color}
+                            variant="ghost"
+                            size="icon"
+                            className="w-5 h-5 border"
+                            style={{ background: color }}
+                            onClick={() => handleColorChange(color)}
+                            aria-label={`Cor ${color}`}
+                          />
+                        ))}
+                      </div>
+                      
+                      <DropdownMenuSeparator />
+                      
+                      <div className="pt-2">
+                        <p className="text-xs text-muted-foreground mb-1 px-2">Cores recentes</p>
+                        <div className="grid grid-cols-5 gap-1">
+                          {recentColors.slice(0, 5).map(color => (
+                            <Button
+                              key={color}
+                              variant="ghost"
+                              size="icon"
+                              className="w-5 h-5 border"
+                              style={{ background: color }}
+                              onClick={() => handleColorChange(color)}
+                              aria-label={`Cor ${color}`}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                      
+                      <DropdownMenuSeparator />
+                      
+                      <DropdownMenuItem onClick={() => setIsColorDialogOpen(true)}>
+                        <span className="flex items-center gap-2">
+                          <span style={{ fontSize: 16 }}>➕</span> Personalizar cor
+                        </span>
+                      </DropdownMenuItem>
+                    </DropdownMenuSubContent>
+                  </DropdownMenuSub>
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => onDelete(item.id)} className="text-destructive focus:text-destructive">
+                  <Trash className="mr-2 h-4 w-4" /> Excluir
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        }
+      >
+        {isFolder && item.children && item.expanded && item.children.map(child => (
+          <DocumentTreeItem
+            key={child.id}
+            item={child}
+            onSelect={onSelect}
+            onDelete={onDelete}
+            onRename={onRename}
+            onExport={onExport}
+            onToggleExpanded={onToggleExpanded}
+            selectedFile={selectedFile}
+          />
+        ))}
+      </TreeItem>
+
+      <Dialog open={isColorDialogOpen} onOpenChange={setIsColorDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Personalizar cor da pasta</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="flex items-center gap-4">
+              <Input
+                type="color"
+                value={customColor}
+                onChange={(e) => setCustomColor(e.target.value)}
+                className="w-24 h-12"
+              />
+              <div className="text-sm">{customColor}</div>
+            </div>
+            <div className="h-20 rounded-md border" style={{ backgroundColor: customColor }}></div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsColorDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleApplyCustomColor}>
+              Aplicar cor
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 
 export default DocumentTreeItem;
-
-// AVISO: Esse arquivo está ficando muito longo, considere pedir para refatorar.

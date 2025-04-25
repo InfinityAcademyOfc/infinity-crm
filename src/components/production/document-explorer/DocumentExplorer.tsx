@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Tree } from "@/components/ui/tree";
 import { DocumentProvider } from "./contexts/DocumentContext";
@@ -9,6 +10,7 @@ import NewItemDialog from "./NewItemDialog";
 import { DocumentItem } from "./types";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { DndProvider } from "@/components/ui/dnd-provider";
 
 const initialDocuments: DocumentItem[] = [{
   id: "folder-1",
@@ -48,6 +50,12 @@ const initialDocuments: DocumentItem[] = [{
     type: "file",
     content: "# Processo de Onboarding\n\n1. Reunião inicial\n2. Levantamento de requisitos\n3. Definição de escopo"
   }]
+}, {
+  id: "folder-imported",
+  name: "Importados",
+  type: "folder",
+  expanded: false,
+  children: []
 }];
 
 interface DocumentExplorerProps {
@@ -75,7 +83,8 @@ const DocumentExplorerContent: React.FC<DocumentExplorerProps> = ({
     handleDeleteItem,
     handleRename,
     handleExportDocument,
-    toggleFolderExpanded
+    toggleFolderExpanded,
+    handleDragEnd
   } = useDocumentOperations(onSelectFile);
   
   const renderItems = (items: DocumentItem[]) => {
@@ -83,6 +92,19 @@ const DocumentExplorerContent: React.FC<DocumentExplorerProps> = ({
     const filteredItems = searchQuery ? items.filter(item => item.name.toLowerCase().includes(searchQuery.toLowerCase()) || item.children && item.children.some(child => child.name.toLowerCase().includes(searchQuery.toLowerCase()))) : items;
     return filteredItems.map(item => <DocumentTreeItem key={item.id} item={item} onSelect={onSelectFile} onDelete={handleDeleteItem} onRename={handleRename} onExport={handleExportDocument} onToggleExpanded={toggleFolderExpanded} selectedFile={selectedFile} />);
   };
+
+  // Get all document IDs for drag and drop functionality
+  const getAllItemIds = (items: DocumentItem[]): string[] => {
+    return items.reduce((acc: string[], item) => {
+      acc.push(item.id);
+      if (item.children && item.children.length > 0) {
+        acc = [...acc, ...getAllItemIds(item.children)];
+      }
+      return acc;
+    }, []);
+  };
+
+  const itemIds = getAllItemIds(documents);
 
   if (sidebarCollapsed) {
     return <div className="h-full min-h-[300px] flex flex-col items-start justify-start">
@@ -94,14 +116,21 @@ const DocumentExplorerContent: React.FC<DocumentExplorerProps> = ({
 
   return <div className="h-full border-r flex flex-col transition-all">
       <div className="flex items-center p-2 pb-0 pt-2">
-        
-        
-        
-        
+        <Button 
+          size="icon" 
+          variant="ghost" 
+          className="ml-auto" 
+          title="Recolher barra" 
+          onClick={() => setSidebarCollapsed(true)}
+        >
+          <ChevronLeft />
+        </Button>
       </div>
       <ExplorerHeader onAddItem={handleAddItem} />
       <div className="overflow-auto flex-1 p-2">
-        <Tree className="min-h-[200px]">{renderItems(documents)}</Tree>
+        <DndProvider items={itemIds} onDragEnd={handleDragEnd}>
+          <Tree className="min-h-[200px]">{renderItems(documents)}</Tree>
+        </DndProvider>
       </div>
       <NewItemDialog open={newItemDialogOpen} onOpenChange={setNewItemDialogOpen} onCreateItem={handleCreateItem} />
     </div>;
