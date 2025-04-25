@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ProductionKanban from "./ProductionKanban";
@@ -7,6 +6,7 @@ import MindMap from "./MindMap";
 import DocumentEditor from "./DocumentEditor";
 import GanttChart from "./gantt/GanttChart";
 import SpreadsheetEditor from "./spreadsheet/SpreadsheetEditor";
+import SpreadsheetContent from "./spreadsheet/SpreadsheetContent";
 import { DocumentProvider } from "./document-explorer/contexts/DocumentContext";
 
 interface ProductionTabsProps {
@@ -35,7 +35,7 @@ const ProductionTabs = ({ columns, setColumns }: ProductionTabsProps) => {
         </TabsContent>
         
         <TabsContent value="planilhas" className="mt-0">
-          <SpreadsheetEditor />
+          <SpreadsheetContent />
         </TabsContent>
         
         <TabsContent value="gantt" className="mt-0 bg-transparent dark:bg-transparent backdrop-blur-sm shadow-md rounded-lg">

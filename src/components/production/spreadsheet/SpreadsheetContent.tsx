@@ -1,8 +1,11 @@
-
-import React, { useState, useMemo } from "react";
-import { DocumentItem, SpreadsheetSheet } from "../document-explorer/types";
+import React, { useState, useEffect, useMemo } from "react";
+import { DocumentItem } from "../document-explorer/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SpreadsheetGrid } from './SpreadsheetGrid';
+import { useSpreadsheet } from './useSpreadsheet';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 export interface SpreadsheetContentProps {
   selectedFile: DocumentItem | null;
@@ -11,6 +14,46 @@ export interface SpreadsheetContentProps {
 const SpreadsheetContent: React.FC<SpreadsheetContentProps> = ({ selectedFile }) => {
   const [activeSheetIndex, setActiveSheetIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  
+  const { 
+    spreadsheets, 
+    currentSpreadsheet,
+    currentSheet,
+    gridData,
+    createSpreadsheet,
+    fetchSpreadsheets,
+    loadSpreadsheetData,
+    updateCellData,
+    setGridData
+  } = useSpreadsheet();
+
+  const [newSpreadsheetName, setNewSpreadsheetName] = useState('');
+
+  useEffect(() => {
+    fetchSpreadsheets();
+  }, [fetchSpreadsheets]);
+
+  const handleCreateSpreadsheet = async () => {
+    const newSpreadsheet = await createSpreadsheet(newSpreadsheetName || undefined);
+    if (newSpreadsheet) {
+      await loadSpreadsheetData(newSpreadsheet.id);
+      setNewSpreadsheetName('');
+    }
+  };
+
+  const handleCellChange = async (row: number, col: number, value: string) => {
+    if (currentSpreadsheet && currentSheet) {
+      await updateCellData(currentSheet.id, row, col, { value });
+      
+      // Optimistically update local grid data
+      const newGridData = [...gridData];
+      while (newGridData.length <= row) {
+        newGridData.push([]);
+      }
+      newGridData[row][col] = { ...newGridData[row]?.[col], value };
+      setGridData(newGridData);
+    }
+  };
   
   // Use useMemo to optimize the sheets computation
   const sheets = useMemo(() => {
