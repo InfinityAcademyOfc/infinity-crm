@@ -38,8 +38,8 @@ const FloatingPanel = ({
   onFullScreen,
 }: FloatingPanelProps) => {
   const isMobile = useIsMobile();
-  // Use the proper PanelGroupHandle type from react-resizable-panels
-  const panelRef = useRef<ResizablePrimitive.PanelGroupHandle>(null);
+  // Using ResizablePrimitive.ImperativePanelGroupHandle which is the correct type
+  const panelRef = useRef<ResizablePrimitive.ImperativePanelGroupHandle>(null);
   
   if (!isOpen) return null;
 
