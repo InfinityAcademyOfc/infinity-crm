@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,14 +35,12 @@ const EdgeDialog = ({ isOpen, edge, onClose, onUpdate, onDelete }: EdgeDialogPro
       setSource(edge.source);
       setTarget(edge.target);
       
-      // Initialize with edge's existing style if available
       if (edge.style) {
         setStrokeColor(edge.style.stroke || "#555555");
         setStrokeWidth(edge.style.strokeWidth?.toString() || "2");
         setStrokeStyle(edge.style.strokeDasharray ? "dashed" : "solid");
       }
       
-      // Initialize markers
       if (edge.markerEnd) {
         const markerEndType = typeof edge.markerEnd === 'string' 
           ? edge.markerEnd 
@@ -82,13 +79,20 @@ const EdgeDialog = ({ isOpen, edge, onClose, onUpdate, onDelete }: EdgeDialogPro
     onUpdate(source, target, style, markerStartObj, markerEndObj);
   };
 
-  // Helper function to safely handle marker type values
   const handleMarkerChange = (value: string, setter: React.Dispatch<React.SetStateAction<MarkerType | null>>) => {
-    if (value === "") {
-      setter(null);
-    } else {
-      // Using type assertion for known marker types
-      setter(value as MarkerType);
+    switch (value) {
+      case "":
+        setter(null);
+        break;
+      case MarkerType.Arrow:
+      case MarkerType.ArrowClosed:
+        setter(value as MarkerType);
+        break;
+      case "circle":
+        setter(null);
+        break;
+      default:
+        setter(null);
     }
   };
 
