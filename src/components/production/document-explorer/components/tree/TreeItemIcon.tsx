@@ -55,7 +55,7 @@ export const TreeItemIcon: React.FC<TreeItemIconProps> = ({
             ></div>
           </div>
         ) : (
-          <File />
+          <File className="h-4 w-4" />
         )}
       </span>
     </div>

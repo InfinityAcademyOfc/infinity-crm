@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { TreeItem } from '@/components/ui/tree';
 import { Input } from '@/components/ui/input';
@@ -9,6 +10,7 @@ import { CSS as DndKitCSS } from '@dnd-kit/utilities';
 import { TreeItemIcon } from './tree/TreeItemIcon';
 import { TreeItemActions } from './tree/TreeItemActions';
 import { CustomColorDialog } from './tree/CustomColorDialog';
+import { File } from 'lucide-react';
 
 // Enhanced color palette with more variety
 const folderColors = [
