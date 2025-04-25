@@ -8,7 +8,8 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { ResizablePanelGroup, ResizablePanel, ImperativePanelGroupHandle } from "@/components/ui/resizable";
+import { ResizablePanelGroup, ResizablePanel } from "@/components/ui/resizable";
+import * as ResizablePrimitive from "react-resizable-panels";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import ChatContent from "./ChatContent";
 import WhatsAppChat from "../whatsapp/WhatsAppChat";
@@ -37,8 +38,8 @@ const FloatingPanel = ({
   onFullScreen,
 }: FloatingPanelProps) => {
   const isMobile = useIsMobile();
-  // Change from HTMLDivElement to ImperativePanelGroupHandle
-  const panelRef = useRef<ImperativePanelGroupHandle>(null);
+  // Use the proper PanelGroupHandle type from react-resizable-panels
+  const panelRef = useRef<ResizablePrimitive.PanelGroupHandle>(null);
   
   if (!isOpen) return null;
 
