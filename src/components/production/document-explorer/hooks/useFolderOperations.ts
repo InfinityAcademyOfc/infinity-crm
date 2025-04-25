@@ -25,3 +25,24 @@ export const useFolderOperations = () => {
     addCustomColor
   };
 };
+
+// Helper function for toggling folder expanded state
+const toggleExpanded = (items: DocumentItem[], itemId: string): DocumentItem[] => {
+  return items.map(item => {
+    if (item.id === itemId && item.type === "folder") {
+      return {
+        ...item,
+        expanded: !(item.expanded),
+      };
+    }
+    
+    if (item.children) {
+      return {
+        ...item,
+        children: toggleExpanded(item.children, itemId),
+      };
+    }
+    
+    return item;
+  });
+};

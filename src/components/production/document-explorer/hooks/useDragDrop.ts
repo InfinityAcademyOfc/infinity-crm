@@ -89,3 +89,21 @@ export const useDragDrop = () => {
     moveItem
   };
 };
+
+// Helper function for adding items to folders
+const addItemToFolder = (items: DocumentItem[], folderId: string, newItem: DocumentItem): DocumentItem[] => {
+  return items.map(item => {
+    if (item.id === folderId && item.type === "folder") {
+      return {
+        ...item,
+        children: [...(item.children || []), newItem],
+      };
+    } else if (item.children) {
+      return {
+        ...item,
+        children: addItemToFolder(item.children, folderId, newItem),
+      };
+    }
+    return item;
+  });
+};

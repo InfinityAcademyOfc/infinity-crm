@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { DocumentItem } from '../types';
@@ -143,46 +144,6 @@ const renameItem = (items: DocumentItem[], itemId: string, newName: string): Doc
       return {
         ...item,
         children: renameItem(item.children, itemId, newName),
-      };
-    }
-    
-    return item;
-  });
-};
-
-const toggleExpanded = (items: DocumentItem[], itemId: string): DocumentItem[] => {
-  return items.map(item => {
-    if (item.id === itemId && item.type === "folder") {
-      return {
-        ...item,
-        expanded: !(item.expanded),
-      };
-    }
-    
-    if (item.children) {
-      return {
-        ...item,
-        children: toggleExpanded(item.children, itemId),
-      };
-    }
-    
-    return item;
-  });
-};
-
-const updateContent = (items: DocumentItem[], itemId: string, content: string): DocumentItem[] => {
-  return items.map(item => {
-    if (item.id === itemId) {
-      return {
-        ...item,
-        content,
-      };
-    }
-    
-    if (item.children) {
-      return {
-        ...item,
-        children: updateContent(item.children, itemId, content),
       };
     }
     
