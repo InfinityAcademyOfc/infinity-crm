@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ProductionKanban from "./ProductionKanban";
@@ -8,17 +7,16 @@ import DocumentEditor from "./DocumentEditor";
 import GanttChart from "./gantt/GanttChart";
 import SpreadsheetEditor from "./spreadsheet/SpreadsheetEditor";
 import { DocumentProvider } from "./document-explorer/contexts/DocumentContext";
-
 interface ProductionTabsProps {
   columns: KanbanColumnItem[];
   setColumns: (columns: KanbanColumnItem[]) => void;
 }
-
-const ProductionTabs = ({ columns, setColumns }: ProductionTabsProps) => {
+const ProductionTabs = ({
+  columns,
+  setColumns
+}: ProductionTabsProps) => {
   const [activeTab, setActiveTab] = useState("documentos");
-
-  return (
-    <Tabs defaultValue="documentos" className="w-full" value={activeTab} onValueChange={setActiveTab}>
+  return <Tabs defaultValue="documentos" className="w-full" value={activeTab} onValueChange={setActiveTab}>
       <TabsList className="grid grid-cols-5 w-full md:w-fit mb-6 bg-card/80 dark:bg-gray-800/40 backdrop-blur-md shadow-md metallic-item">
         <TabsTrigger value="documentos" className="text-sm px-4">Documentos</TabsTrigger>
         <TabsTrigger value="planilhas" className="text-sm px-4">Planilhas</TabsTrigger>
@@ -28,7 +26,7 @@ const ProductionTabs = ({ columns, setColumns }: ProductionTabsProps) => {
       </TabsList>
       
       <div className="relative min-h-[600px]">
-        <TabsContent value="documentos" className="mt-0">
+        <TabsContent value="documentos" className="mt-0 mx-0 rounded-none">
           <DocumentProvider>
             <DocumentEditor />
           </DocumentProvider>
@@ -52,8 +50,6 @@ const ProductionTabs = ({ columns, setColumns }: ProductionTabsProps) => {
           <MindMap />
         </TabsContent>
       </div>
-    </Tabs>
-  );
+    </Tabs>;
 };
-
 export default ProductionTabs;
