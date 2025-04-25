@@ -33,7 +33,7 @@ export function TopNav() {
     : { name: "", subtitle: "" };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 w-full border-b bg-background/50 backdrop-blur supports-[backdrop-filter]:bg-background/50">
       <div className="container flex h-14 items-center">
         {/* Título/subtítulo alinhados à esquerda apenas */}
         <div className="flex flex-col items-start justify-center flex-1">

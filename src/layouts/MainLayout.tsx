@@ -98,6 +98,26 @@ const MainLayout = () => {
         </div>
         
         <UnifiedChatButton />
+
+        {/* Mobile toggle button that's visible even when sidebar is closed */}
+        {isMobileView && (
+          <div 
+            className={cn(
+              "fixed z-40 transition-all duration-300",
+              "bottom-16 left-4"
+            )}
+          >
+            <Button 
+              variant="default" 
+              size="icon" 
+              className="rounded-full h-9 w-9 shadow-md bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_0_15px_rgba(130,80,223,0.4)]"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              aria-label={sidebarOpen ? "Fechar Menu" : "Abrir Menu"}
+            >
+              <ChevronLeft className={cn("h-4 w-4 transition-transform", !sidebarOpen && "rotate-180")} />
+            </Button>
+          </div>
+        )}
       </div>
     </SidebarProvider>
   );

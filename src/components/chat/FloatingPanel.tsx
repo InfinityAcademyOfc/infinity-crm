@@ -1,6 +1,6 @@
 
 import React from "react";
-import { Maximize2, X, MessageSquare } from "lucide-react";
+import { Maximize2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Tabs,
@@ -8,7 +8,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
+import { ResizablePanelGroup, ResizablePanel } from "@/components/ui/resizable";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import ChatContent from "./ChatContent";
 import WhatsAppChat from "../whatsapp/WhatsAppChat";
@@ -58,7 +58,7 @@ const FloatingPanel = ({
               <Avatar className="h-8 w-8">
                 <AvatarImage src="/placeholder.svg" alt="User" />
                 <AvatarFallback>
-                  <MessageSquare className="w-4 h-4 text-primary" />
+                  <span className="text-primary">AC</span>
                 </AvatarFallback>
               </Avatar>
               <h3 className="font-medium">Comunicação</h3>
@@ -69,6 +69,7 @@ const FloatingPanel = ({
                 size="icon"
                 onClick={onFullScreen}
                 className="h-7 w-7"
+                aria-label="Expandir"
               >
                 <Maximize2 size={16} />
               </Button>
@@ -77,6 +78,7 @@ const FloatingPanel = ({
                 size="icon"
                 onClick={onClose}
                 className="h-7 w-7"
+                aria-label="Fechar"
               >
                 <X size={16} />
               </Button>

@@ -100,7 +100,7 @@ const Sidebar = ({ open, setOpen }: SidebarProps) => {
         />
       )}
       
-      <div className="h-screen fixed top-0 left-0 z-30" ref={sidebarRef}>
+      <div className={cn("h-screen fixed top-0 left-0 z-30", isMobile ? "overflow-hidden" : "")} ref={sidebarRef}>
         <aside
           className={cn(
             "sidebar border-r border-gray-200 dark:border-gray-800 h-full transition-all duration-300 relative flex flex-col",
@@ -121,7 +121,7 @@ const Sidebar = ({ open, setOpen }: SidebarProps) => {
             </div>
           )}
 
-          <div className="flex-grow overflow-y-auto px-4 py-0">
+          <div className="flex-grow overflow-y-auto px-4 py-2">
             <NavSection 
               title="Menu Principal" 
               items={mainMenuItems} 
@@ -153,24 +153,26 @@ const Sidebar = ({ open, setOpen }: SidebarProps) => {
         </aside>
       </div>
       
-      {/* Single toggle button outside of sidebar */}
-      <div 
-        className={cn(
-          "fixed z-40 transition-all duration-300",
-          open ? (isCollapsed ? "left-[4.5rem]" : "left-[16.5rem]") : "left-4",
-          "top-[calc(100vh-7rem)]"
-        )}
-      >
-        <Button 
-          variant="default" 
-          size="icon" 
-          className="rounded-full h-9 w-9 shadow-md bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_0_15px_rgba(130,80,223,0.4)]"
-          onClick={toggleCollapse}
-          aria-label={open ? "Recolher Menu" : "Expandir Menu"}
+      {/* Desktop toggle button outside of sidebar */}
+      {!isMobile && (
+        <div 
+          className={cn(
+            "fixed z-40 transition-all duration-300",
+            open ? (isCollapsed ? "left-[4.5rem]" : "left-[16.5rem]") : "left-4",
+            "top-[calc(100vh-7rem)]"
+          )}
         >
-          {open ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
-        </Button>
-      </div>
+          <Button 
+            variant="default" 
+            size="icon" 
+            className="rounded-full h-9 w-9 shadow-md bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_0_15px_rgba(130,80,223,0.4)]"
+            onClick={toggleCollapse}
+            aria-label={open ? "Recolher Menu" : "Expandir Menu"}
+          >
+            {open ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
+          </Button>
+        </div>
+      )}
     </>
   );
 };

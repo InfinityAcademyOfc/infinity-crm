@@ -1,11 +1,10 @@
 
 import React from "react";
-import { X, Maximize2, Minimize2 } from "lucide-react";
+import { X } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
-  DialogTitle,
 } from "@/components/ui/dialog";
 import {
   Tabs,
@@ -15,6 +14,8 @@ import {
 } from "@/components/ui/tabs";
 import ChatContent from "./ChatContent";
 import WhatsAppChat from "../whatsapp/WhatsAppChat";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 
 interface ChatFullScreenDialogProps {
   isOpen: boolean;
@@ -34,8 +35,20 @@ const ChatFullScreenDialog = ({
   return (
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent className="max-w-5xl w-[90vw] h-[80vh] p-0">
-        <DialogHeader className="px-4 py-2 border-b">
-          <DialogTitle>Comunicação</DialogTitle>
+        <DialogHeader className="px-4 py-2 border-b flex flex-row items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Avatar className="h-8 w-8">
+              <AvatarImage src="/placeholder.svg" alt="User" />
+              <AvatarFallback>
+                <span className="text-primary">AC</span>
+              </AvatarFallback>
+            </Avatar>
+            <h2 className="text-lg font-semibold">Comunicação</h2>
+          </div>
+          <Button variant="ghost" size="icon" onClick={onClose}>
+            <X className="h-4 w-4" />
+            <span className="sr-only">Fechar</span>
+          </Button>
         </DialogHeader>
         <Tabs value={activeTab} onValueChange={onTabChange} className="w-full h-full">
           <div className="border-b px-4">

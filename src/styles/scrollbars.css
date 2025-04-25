@@ -46,4 +46,14 @@
     transform: translateX(0);
     transition: transform 0.3s ease;
   }
+  
+  /* Ensure only one scrollbar in mobile sidebar */
+  .sidebar-content-container {
+    overflow-y: auto;
+    height: 100%;
+  }
+  
+  .sidebar-content-container > * {
+    overflow-y: visible;
+  }
 }

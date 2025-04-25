@@ -1,4 +1,5 @@
 
+
 @tailwind components;
 
 @layer components {
@@ -36,6 +37,30 @@
       height: 100vh !important;
       overflow-y: auto !important;
     }
+    
+    /* Improve mobile sidebar animation */
+    .sidebar-enter {
+      transform: translateX(-100%);
+    }
+    
+    .sidebar-enter-active {
+      transform: translateX(0);
+      transition: transform 300ms ease;
+    }
+    
+    .sidebar-exit {
+      transform: translateX(0);
+    }
+    
+    .sidebar-exit-active {
+      transform: translateX(-100%);
+      transition: transform 300ms ease;
+    }
+    
+    /* Mobile backdrop overlay */
+    .sidebar-backdrop {
+      @apply fixed inset-0 bg-black/50 z-20 backdrop-blur-sm;
+    }
   }
 
   /* Metallic styling - Updated for cleaner look */
@@ -64,5 +89,10 @@
   /* Card styling */
   .interactive-card {
     @apply transition-all duration-200 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-md hover:shadow-lg hover:-translate-y-1;
+  }
+  
+  /* Semi-transparent top bar */
+  .top-nav-transparent {
+    @apply bg-background/50 backdrop-blur-md;
   }
 }
