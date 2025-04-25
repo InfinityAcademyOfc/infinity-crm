@@ -1,6 +1,9 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { 
+  X,
+  ChevronLeft,
+  ChevronRight,
   LayoutDashboard, 
   Filter, 
   Users, 
@@ -11,9 +14,6 @@ import {
   UserCog, 
   Video, 
   Settings,
-  X,
-  ChevronLeft,
-  ChevronRight,
   MessageCircle,
   Zap
 } from "lucide-react";
@@ -55,12 +55,29 @@ const Sidebar = ({ open, setOpen }: SidebarProps) => {
   const isMobile = useIsMobile();
   const [collapsed, setCollapsed] = useState(false);
   const isCollapsed = !isMobile && collapsed && open;
+  const sidebarRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!isMobile && !open) {
       setOpen(true);
       setCollapsed(false);
     }
+  }, [isMobile, open, setOpen]);
+
+  useEffect(() => {
+    // Handle clicking outside the sidebar to close it on mobile
+    const handleClickOutside = (event: MouseEvent) => {
+      if (isMobile && open && sidebarRef.current && !sidebarRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+
+    if (isMobile && open) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
   }, [isMobile, open, setOpen]);
 
   const toggleCollapse = () => {
@@ -74,61 +91,69 @@ const Sidebar = ({ open, setOpen }: SidebarProps) => {
   if (!open) return null;
 
   return (
-    <div className="h-screen fixed top-0 left-0 z-30">
-      <aside
-        className={cn(
-          "sidebar border-r border-gray-200 dark:border-gray-800 overflow-y-auto transition-all duration-300 relative h-full",
-          isCollapsed ? "min-w-16 w-16" : "min-w-64 w-64",
-          isMobile ? "fixed inset-y-0 left-0 z-20 shadow-lg" : "relative"
-        )}
-        style={{
-          height: "100vh",
-          maxHeight: "100vh",
-        }}
-      >
-        {isMobile && (
-          <div className="flex justify-end p-2">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={() => setOpen(false)}
-              aria-label="Close Sidebar"
-            >
-              <X size={18} />
-            </Button>
-          </div>
-        )}
+    <>
+      {/* Backdrop overlay for mobile */}
+      {isMobile && (
+        <div 
+          className="fixed inset-0 bg-black/30 z-20 backdrop-blur-sm"
+          onClick={() => setOpen(false)}
+        />
+      )}
+      
+      <div className="h-screen fixed top-0 left-0 z-30" ref={sidebarRef}>
+        <aside
+          className={cn(
+            "sidebar border-r border-gray-200 dark:border-gray-800 h-full transition-all duration-300 relative flex flex-col",
+            isCollapsed ? "min-w-16 w-16" : "min-w-64 w-64",
+            isMobile ? "fixed inset-y-0 left-0 z-20 shadow-lg" : "relative"
+          )}
+        >
+          {isMobile && (
+            <div className="flex justify-end p-2">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => setOpen(false)}
+                aria-label="Close Sidebar"
+              >
+                <X size={18} />
+              </Button>
+            </div>
+          )}
 
-        <div className="p-4 overflow-y-auto max-h-full" style={{ height: "calc(100vh - 0px)" }}>
-          <NavSection 
-            title="Menu Principal" 
-            items={mainMenuItems} 
-            isCollapsed={isCollapsed}
-            onItemClick={() => isMobile && setOpen(false)}
-          />
-          <NavSection 
-            title="Integrações" 
-            items={integrationItems} 
-            isCollapsed={isCollapsed}
-            onItemClick={() => isMobile && setOpen(false)}
-            className="mt-6"
-          />
-          <NavSection 
-            title="Gestão" 
-            items={managementItems} 
-            isCollapsed={isCollapsed}
-            onItemClick={() => isMobile && setOpen(false)}
-            className="mt-6"
-          />
-          <NavSection 
-            title="Sistema" 
-            items={systemItems} 
-            isCollapsed={isCollapsed}
-            onItemClick={() => isMobile && setOpen(false)}
-            className="mt-6"
-          />
-        </div>
-      </aside>
+          <div className="flex-grow overflow-y-auto px-4 py-0">
+            <NavSection 
+              title="Menu Principal" 
+              items={mainMenuItems} 
+              isCollapsed={isCollapsed}
+              onItemClick={() => isMobile && setOpen(false)}
+            />
+            <NavSection 
+              title="Integrações" 
+              items={integrationItems} 
+              isCollapsed={isCollapsed}
+              onItemClick={() => isMobile && setOpen(false)}
+              className="mt-6"
+            />
+            <NavSection 
+              title="Gestão" 
+              items={managementItems} 
+              isCollapsed={isCollapsed}
+              onItemClick={() => isMobile && setOpen(false)}
+              className="mt-6"
+            />
+            <NavSection 
+              title="Sistema" 
+              items={systemItems} 
+              isCollapsed={isCollapsed}
+              onItemClick={() => isMobile && setOpen(false)}
+              className="mt-6 mb-4"
+            />
+          </div>
+        </aside>
+      </div>
+      
+      {/* Single toggle button outside of sidebar */}
       <div 
         className={cn(
           "fixed z-40 transition-all duration-300",
@@ -146,7 +171,7 @@ const Sidebar = ({ open, setOpen }: SidebarProps) => {
           {open ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
         </Button>
       </div>
-    </div>
+    </>
   );
 };
 

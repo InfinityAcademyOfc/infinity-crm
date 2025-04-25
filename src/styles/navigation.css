@@ -24,9 +24,18 @@
     @apply bg-primary dark:text-white dark:hover:bg-primary/90;
   }
 
-  /* Sidebar styles - Restored previous style */
+  /* Sidebar styles */
   .sidebar {
-    @apply bg-white dark:bg-gray-900 shadow-md;
+    @apply bg-white dark:bg-gray-900 shadow-md z-30;
+  }
+
+  /* Mobile sidebar specific styles */
+  @media (max-width: 767px) {
+    .sidebar {
+      @apply w-[280px] max-w-[85vw] shadow-xl;
+      height: 100vh !important;
+      overflow-y: auto !important;
+    }
   }
 
   /* Metallic styling - Updated for cleaner look */

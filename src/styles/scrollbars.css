@@ -37,3 +37,13 @@
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */
 }
+
+/* Mobile sidebar styles */
+@media (max-width: 767px) {
+  .sidebar {
+    max-width: 100%;
+    width: 280px !important;
+    transform: translateX(0);
+    transition: transform 0.3s ease;
+  }
+}

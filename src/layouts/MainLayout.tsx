@@ -45,19 +45,17 @@ const MainLayout = () => {
     <SidebarProvider>
       <div className="flex h-screen w-full bg-background">
         {/* Sidebar */}
-        <div className="fixed z-30">
-          <Sidebar 
-            open={sidebarOpen} 
-            setOpen={setSidebarOpen}
-          />
-        </div>
+        <Sidebar 
+          open={sidebarOpen} 
+          setOpen={setSidebarOpen}
+        />
 
-        {/* Main content area that shifts with sidebar */}
+        {/* Main content area that shifts with sidebar on desktop, but stays fixed on mobile */}
         <div className={cn(
           "flex-1 flex flex-col min-w-0 transition-all duration-300 ease-in-out",
-          sidebarOpen ? "ml-64" : "ml-0"
+          !isMobileView && sidebarOpen ? "ml-64" : "ml-0"
         )}>
-          {/* TopNav that shifts with sidebar */}
+          {/* TopNav that shifts with sidebar on desktop */}
           <TopNav />
           
           {/* Main scrollable content */}
@@ -98,26 +96,6 @@ const MainLayout = () => {
             </ErrorBoundary>
           </main>
         </div>
-
-        {/* Mobile toggle button */}
-        {isMobileView && (
-          <div 
-            className={cn(
-              "fixed z-40 transition-all duration-300",
-              sidebarOpen ? "left-[16.5rem]" : "left-4",
-              "bottom-24"
-            )}
-          >
-            <Button 
-              variant="default" 
-              size="icon" 
-              className="rounded-full h-9 w-9 shadow-md bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_0_15px_rgba(130,80,223,0.4)]"
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-            >
-              <ChevronLeft className={cn("h-4 w-4 transition-transform", !sidebarOpen && "rotate-180")} />
-            </Button>
-          </div>
-        )}
         
         <UnifiedChatButton />
       </div>

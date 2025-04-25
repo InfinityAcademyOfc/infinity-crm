@@ -134,4 +134,9 @@
   .button-stack-responsive {
     @apply flex flex-col sm:flex-row gap-2;
   }
+  
+  /* Mobile sidebar overlay */
+  .mobile-sidebar-overlay {
+    @apply fixed inset-0 bg-black/50 z-20 md:hidden;
+  }
 }
