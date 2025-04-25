@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { 
@@ -61,12 +62,18 @@ const Sidebar = ({ open, setOpen }: SidebarProps) => {
     <div 
       ref={sidebarRef}
       className={cn(
-        "h-full bg-background border-r", 
-        "flex flex-col overflow-hidden transition-all duration-300 ease-in-out",
-        !open && "w-16"
+        "h-full border-r glass-surface sidebar-gradient backdrop-blur-md",
+        "flex flex-col overflow-hidden transition-all duration-300 ease-in-out shadow-xl",
+        open ? "w-64" : isMobile ? "w-0" : "w-0"
       )}
     >
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className="flex justify-center py-6">
+        <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+          Infinity CRM
+        </h1>
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-4">
         <NavSection 
           title="Menu Principal" 
           items={mainMenuItems} 

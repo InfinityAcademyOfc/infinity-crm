@@ -22,14 +22,17 @@ const CollapseButton: React.FC<CollapseButtonProps> = ({
   return (
     <Button
       size="icon"
-      variant="ghost"
-      className={cn("h-8 w-8 rounded-full", className)}
+      variant="default"
+      className={cn(
+        "flex items-center justify-center rounded-full shadow-lg transition-all transform hover:scale-105 active:scale-95", 
+        className
+      )}
       title={title || (isCollapsed ? "Expandir" : "Recolher")}
       onClick={onClick}
     >
       {isCollapsed ? 
-        (position === "right" ? <ChevronRight size={16} /> : <ChevronLeft size={16} />) : 
-        (position === "right" ? <ChevronLeft size={16} /> : <ChevronRight size={16} />)
+        (position === "right" ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />) : 
+        (position === "right" ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />)
       }
     </Button>
   );

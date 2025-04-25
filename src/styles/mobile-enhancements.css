@@ -1,0 +1,103 @@
+
+@tailwind components;
+
+@layer components {
+  /* Mobile-specific sidebar improvements */
+  @media (max-width: 767px) {
+    .mobile-drawer {
+      @apply fixed top-0 left-0 h-full z-50 transform transition-transform duration-300;
+    }
+    
+    .mobile-drawer.open {
+      @apply translate-x-0;
+    }
+    
+    .mobile-drawer.closed {
+      @apply -translate-x-full;
+    }
+    
+    .mobile-overlay {
+      @apply fixed inset-0 bg-black/50 backdrop-blur-sm z-40 transition-opacity duration-300;
+    }
+    
+    .mobile-overlay.visible {
+      @apply opacity-100;
+    }
+    
+    .mobile-overlay.hidden {
+      @apply opacity-0 pointer-events-none;
+    }
+    
+    /* Enhanced touch targets for mobile */
+    .mobile-touch-target {
+      @apply min-h-12 min-w-12;
+    }
+    
+    /* Mobile optimized typography */
+    .mobile-heading {
+      @apply text-lg sm:text-xl font-semibold;
+    }
+    
+    .mobile-text {
+      @apply text-sm leading-relaxed;
+    }
+    
+    /* Mobile card styling */
+    .mobile-card {
+      @apply rounded-2xl shadow-lg p-4 border border-muted/30;
+    }
+    
+    /* Bottom safe area for mobile devices */
+    .mobile-safe-bottom {
+      @apply pb-16;
+    }
+    
+    /* Mobile optimized buttons */
+    .mobile-btn {
+      @apply h-12 min-w-[3rem] rounded-full flex items-center justify-center;
+    }
+    
+    /* Mobile full-width container */
+    .mobile-container {
+      @apply w-full px-4;
+    }
+    
+    /* Mobile floating action button positioning */
+    .mobile-fab {
+      @apply fixed bottom-6 right-6 z-50;
+    }
+    
+    /* Mobile drawer header */
+    .mobile-drawer-header {
+      @apply flex items-center justify-between py-4 px-4 border-b;
+    }
+    
+    /* Enhanced mobile scrolling */
+    .mobile-scroll {
+      @apply overflow-auto overscroll-contain scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent;
+      -webkit-overflow-scrolling: touch;
+    }
+  }
+  
+  /* Responsive spacing adjustments */
+  .responsive-p {
+    @apply p-3 sm:p-4 md:p-5 lg:p-6;
+  }
+  
+  .responsive-m {
+    @apply m-2 sm:m-3 md:m-4 lg:m-5;
+  }
+  
+  /* Responsive typography */
+  .text-fluid-xs {
+    @apply text-xs sm:text-sm;
+  }
+  
+  .text-fluid-sm {
+    @apply text-sm sm:text-base;
+  }
+  
+  .text-fluid-base {
+    @apply text-base sm:text-lg md:text-xl;
+  }
+}
