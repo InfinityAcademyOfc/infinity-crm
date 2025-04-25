@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { 
@@ -61,9 +62,11 @@ const Sidebar = ({ open, setOpen }: SidebarProps) => {
     <div 
       ref={sidebarRef}
       className={cn(
-        "h-full bg-background border-r", 
+        "h-full bg-background/95 backdrop-blur-md border-r shadow-lg",
         "flex flex-col overflow-hidden transition-all duration-300 ease-in-out",
-        !open && "w-16"
+        !open && "w-0",
+        "dark:bg-gray-900/90 dark:border-gray-800",
+        "bg-gradient-to-b from-background/95 to-background/98"
       )}
     >
       <div className="flex-1 overflow-y-auto p-4">

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Outlet } from "react-router-dom";
 import Sidebar from "@/components/navigation/Sidebar";
@@ -7,9 +8,11 @@ import UnifiedChatButton from "@/components/chat/UnifiedChatButton";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import CollapseButton from "@/components/common/buttons/CollapseButton";
+
 const MainLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
+
   useEffect(() => {
     const handleResize = () => {
       const mobile = window.innerWidth < 768;
@@ -21,20 +24,31 @@ const MainLayout = () => {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, [sidebarOpen]);
-  return <SidebarProvider>
+
+  return (
+    <SidebarProvider>
       <div className="flex h-screen overflow-hidden bg-background">
-        {/* Sidebar container with dynamic width */}
-        <div className={cn("flex-shrink-0 transition-all duration-300 ease-in-out relative", sidebarOpen ? "w-64" : "w-16", isMobileView && !sidebarOpen && "w-0")}>
+        {/* Mobile overlay when sidebar is open */}
+        {isMobileView && sidebarOpen && (
+          <div 
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-30"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
+        {/* Sidebar container */}
+        <div 
+          className={cn(
+            "flex-shrink-0 transition-all duration-300 ease-in-out",
+            isMobileView ? "fixed z-40 h-full" : "relative",
+            sidebarOpen ? "w-64" : "w-0",
+          )}
+        >
           <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} />
-          
-          {/* Collapse button */}
-          <div className="absolute -right-4 top-4 z-30">
-            <CollapseButton isCollapsed={!sidebarOpen} onClick={() => setSidebarOpen(!sidebarOpen)} className="shadow-lg bg-background border" position="right" title={sidebarOpen ? "Recolher menu" : "Expandir menu"} />
-          </div>
         </div>
 
         {/* Main content area */}
-        <div className="flex flex-col flex-1 w-0 overflow-hidden">
+        <div className="flex flex-col flex-1 w-full overflow-hidden">
           <TopNav />
           
           <main className="flex-1 overflow-auto">
@@ -46,11 +60,25 @@ const MainLayout = () => {
           </main>
         </div>
 
-        {/* Mobile toggle button - only show when in mobile view */}
-        {isMobileView}
+        {/* Floating collapse button */}
+        <div 
+          className={cn(
+            "fixed bottom-28 z-50 transition-all duration-300",
+            isMobileView ? "left-4" : sidebarOpen ? "left-60" : "left-12"
+          )}
+        >
+          <CollapseButton 
+            isCollapsed={!sidebarOpen} 
+            onClick={() => setSidebarOpen(!sidebarOpen)} 
+            className="shadow-lg bg-primary hover:bg-primary/90 text-primary-foreground"
+            position="left"
+          />
+        </div>
 
         <UnifiedChatButton />
       </div>
-    </SidebarProvider>;
+    </SidebarProvider>
+  );
 };
+
 export default MainLayout;
