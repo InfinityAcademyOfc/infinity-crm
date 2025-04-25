@@ -3,7 +3,6 @@ import { Button } from "./button";
 import { cn } from "@/lib/utils";
 import { HelpCircle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./tooltip";
-
 interface SectionHeaderProps {
   title: string;
   description?: string;
@@ -11,7 +10,6 @@ interface SectionHeaderProps {
   actions?: ReactNode;
   className?: string;
 }
-
 export function SectionHeader({
   title,
   description,
@@ -19,20 +17,14 @@ export function SectionHeader({
   actions,
   className
 }: SectionHeaderProps) {
-  return (
-    <div className={cn("mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4", className)}>
+  return <div className={cn("mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4", className)}>
       <div className="space-y-1 animate-fade-in">
         <div className="flex items-center gap-2">
-          <h2 className="text-2xl font-semibold tracking-tight transition-colors">{title}</h2>
-          {tooltip && (
-            <TooltipProvider>
+          
+          {tooltip && <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-5 w-5 rounded-full hover:bg-muted"
-                  >
+                  <Button variant="ghost" size="icon" className="h-5 w-5 rounded-full hover:bg-muted">
                     <HelpCircle className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
@@ -40,32 +32,22 @@ export function SectionHeader({
                   <p className="text-sm">{tooltip}</p>
                 </TooltipContent>
               </Tooltip>
-            </TooltipProvider>
-          )}
+            </TooltipProvider>}
         </div>
-        {description && (
-          <p className="text-sm text-muted-foreground">
-            {description}
-          </p>
-        )}
+        {description}
       </div>
       
-      {actions && (
-        <div className="flex flex-wrap items-center gap-2 animate-fade-in">
+      {actions && <div className="flex flex-wrap items-center gap-2 animate-fade-in">
           {actions}
-        </div>
-      )}
-    </div>
-  );
+        </div>}
+    </div>;
 }
-
 interface ActionButtonProps {
   icon: ReactNode;
   label: string;
   onClick: () => void;
   variant?: "default" | "outline" | "secondary";
 }
-
 export function ActionButton({
   icon,
   label,
