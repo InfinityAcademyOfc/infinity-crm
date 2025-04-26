@@ -21,8 +21,8 @@ interface SidebarPanelProps {
     name: string;
     shape: string;
     color: string;
-    icon?: React.ReactNode;
-    category?: string;
+    icon: React.ReactElement;  // Changed from ReactNode to ReactElement
+    category: string;          // Made non-optional
     nodes?: Array<{
       label: string;
       offsetX: number;
@@ -36,7 +36,7 @@ interface SidebarPanelProps {
       color?: string;
       width?: number;
     }>;
-    renderContent?: () => React.ReactNode;
+    renderContent: () => React.ReactElement; // Changed from optional ReactNode to required ReactElement
   }>;
   onAddTemplate?: (template: any) => void;
 }
