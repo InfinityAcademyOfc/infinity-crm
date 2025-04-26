@@ -9,7 +9,7 @@ import FunnelChart from './funnel/FunnelChart';
 import ConversionChart from './funnel/ConversionChart';
 import LeakageChart from './funnel/LeakageChart';
 import FunnelSummary from './funnel/FunnelSummary';
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 
 const IntegratedFunnel = () => {
   const {
@@ -98,68 +98,67 @@ const IntegratedFunnel = () => {
             </TabsTrigger>
           </TabsList>
           
-          {/* Renderizar o conteúdo das abas somente se tivermos dados disponíveis */}
           {Object.keys(funnelData).map(type => {
-            // Verificar se os dados do tipo específico existem
             if (!funnelData[type as FunnelType] || !funnelData[type as FunnelType].stages) {
               return null;
             }
             
             return <TabsContent key={type} value={type} className="space-y-4 animation-fade-in">
               <div className="grid grid-cols-1 gap-4 transition-all duration-300">
-                {/* Combined Visual Funnel Chart and Pie Chart */}
                 <Card className="p-4 shadow-sm hover:shadow-md transition-all duration-300 bg-card/50 overflow-hidden">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      {getFunnelIcon(type as FunnelType)}
-                      <h3 className="text-sm font-medium">Visão do Funil</h3>
-                    </div>
-                  </div>
-                  
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Visual Funnel Chart (left) */}
                     <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          {getFunnelIcon(type as FunnelType)}
+                          <h3 className="text-sm font-medium">Visão do Funil</h3>
+                        </div>
+                      </div>
                       <FunnelChart data={funnelData[type as FunnelType].stages} isDark={isDark} />
                     </div>
                     
-                    {/* Pie Chart (right) */}
-                    <div className="h-56 md:h-64 flex items-center">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie 
-                            data={getPieChartData(type as FunnelType)} 
-                            cx="50%" 
-                            cy="50%" 
-                            innerRadius={60} 
-                            outerRadius={80} 
-                            paddingAngle={5} 
-                            dataKey="value"
-                            label={({name, percent}) => `${name} ${(percent * 100).toFixed(0)}%`}
-                            labelLine={false}
-                          >
-                            {getPieChartData(type as FunnelType).map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                            ))}
-                          </Pie>
-                          <Legend layout="vertical" verticalAlign="middle" align="right" iconType="circle" />
-                          <Tooltip 
-                            formatter={value => [`${value} itens`, "Quantidade"]}
-                            contentStyle={{
-                              background: isDark ? '#1f2937' : '#fff',
-                              border: isDark ? '1px solid #374151' : '1px solid #e5e7eb',
-                              borderRadius: '6px',
-                              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                            }} 
-                          />
-                        </PieChart>
-                      </ResponsiveContainer>
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <TrendingUp className="h-4 w-4 text-green-500" />
+                          <h3 className="text-sm font-medium">Conversão do Funil</h3>
+                        </div>
+                      </div>
+                      <div className="h-56 md:h-64 flex items-center">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie 
+                              data={getPieChartData(type as FunnelType)} 
+                              cx="50%" 
+                              cy="50%" 
+                              innerRadius={60} 
+                              outerRadius={80} 
+                              paddingAngle={5} 
+                              dataKey="value"
+                              label={({name, percent}) => `${name} ${(percent * 100).toFixed(0)}%`}
+                              labelLine={false}
+                            >
+                              {getPieChartData(type as FunnelType).map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                              ))}
+                            </Pie>
+                            <Tooltip 
+                              formatter={value => [`${value} itens`, "Quantidade"]}
+                              contentStyle={{
+                                background: isDark ? '#1f2937' : '#fff',
+                                border: isDark ? '1px solid #374151' : '1px solid #e5e7eb',
+                                borderRadius: '6px',
+                                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                              }} 
+                            />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
                     </div>
                   </div>
                 </Card>
                   
-                {/* Three funnel metrics cards in a responsive grid */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {/* Conversion Funnel */}
                   <Card className="p-4 shadow-sm hover:shadow-md transition-all duration-300 bg-card/50 overflow-hidden">
                     <div className="flex items-center gap-2 mb-2">
                       <TrendingUp className="h-4 w-4 text-green-500" />
@@ -168,7 +167,6 @@ const IntegratedFunnel = () => {
                     <ConversionChart data={funnelData[type as FunnelType].stages} isDark={isDark} color={getColorsByType(type as FunnelType, isDark)[type as FunnelType]?.efficiency || '#22c55e'} />
                   </Card>
                   
-                  {/* Leakage Funnel */}
                   <Card className="p-4 shadow-sm hover:shadow-md transition-all duration-300 bg-card/50 overflow-hidden">
                     <div className="flex items-center gap-2 mb-2">
                       <TrendingUp className="h-4 w-4 text-red-500" />
@@ -177,7 +175,6 @@ const IntegratedFunnel = () => {
                     <LeakageChart data={funnelData[type as FunnelType].stages} isDark={isDark} color={getColorsByType(type as FunnelType, isDark)[type as FunnelType]?.leakage || '#ef4444'} />
                   </Card>
                   
-                  {/* Overall Summary */}
                   <Card className="p-4 shadow-sm hover:shadow-md transition-all duration-300 bg-card/50 overflow-hidden">
                     <div className="flex items-center gap-2 mb-2">
                       <Activity className="h-4 w-4 text-blue-500" />

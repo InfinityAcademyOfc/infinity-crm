@@ -8,6 +8,7 @@ export const useFolderOperations = () => {
   const { documents, setDocuments, recentColors, setRecentColors } = useDocumentContext();
   const { toast } = useToast();
 
+  // Função para alternar a expansão das pastas individualmente
   const toggleFolderExpanded = (folderId: string) => {
     const updatedDocs = toggleExpanded(documents, folderId);
     setDocuments(updatedDocs);
@@ -41,7 +42,7 @@ const toggleExpanded = (items: DocumentItem[], itemId: string): DocumentItem[] =
     if (item.id === itemId && item.type === "folder") {
       return {
         ...item,
-        expanded: !(item.expanded),
+        expanded: !item.expanded,
       };
     }
     
