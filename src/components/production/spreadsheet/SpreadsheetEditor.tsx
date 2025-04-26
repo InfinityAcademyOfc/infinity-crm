@@ -4,7 +4,7 @@ import { SpreadsheetGrid } from "./SpreadsheetGrid";
 import SpreadsheetToolbar from "./SpreadsheetToolbar";
 import { useSpreadsheet } from "./useSpreadsheet";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Plus, File, FileSpreadsheet } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, File, FileSpreadsheet, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card } from "@/components/ui/card";

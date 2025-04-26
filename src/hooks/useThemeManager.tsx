@@ -1,8 +1,20 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 
 export type ThemeType = 'dark' | 'light';
 export type AccentType = 'purple' | 'blue' | 'green' | 'red' | 'orange' | 'yellow' | 'pink' | 'indigo';
+
+interface ThemeContextType {
+  isDark: boolean;
+  toggleTheme: () => void;
+  theme: ThemeType;
+  accent: AccentType;
+  setTheme: (theme: ThemeType) => void;
+  setAccent: (accent: AccentType) => void;
+  isLoaded: boolean;
+}
+
+const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const useThemeManager = () => {
   const [isDark, setIsDark] = useState(false);
@@ -120,6 +132,28 @@ export const useThemeManager = () => {
     setAccent,
     isLoaded
   };
+};
+
+interface ThemeProviderProps {
+  children: ReactNode;
+}
+
+export const ThemeProvider = ({ children }: ThemeProviderProps) => {
+  const themeContext = useThemeManager();
+  
+  return (
+    <ThemeContext.Provider value={themeContext}>
+      {themeContext.isLoaded ? children : null}
+    </ThemeContext.Provider>
+  );
+};
+
+export const useTheme = (): ThemeContextType => {
+  const context = useContext(ThemeContext);
+  if (context === undefined) {
+    throw new Error('useTheme must be used within a ThemeProvider');
+  }
+  return context;
 };
 
 export default useThemeManager;
