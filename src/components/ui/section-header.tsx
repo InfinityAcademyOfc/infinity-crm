@@ -17,13 +17,7 @@ export function SectionHeader({
   actions,
   className
 }: SectionHeaderProps) {
-  return <div className={cn("mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4", className)}>
-      
-      
-      {actions && <div className="flex flex-wrap items-center gap-2 animate-fade-in">
-          {actions}
-        </div>}
-    </div>;
+  return;
 }
 interface ActionButtonProps {
   icon: ReactNode;
