@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import ProductionTabs from "@/components/production/ProductionTabs";
 import { KanbanColumnItem, KanbanCardItem } from "@/components/kanban/types";
@@ -201,7 +202,8 @@ const ProductionManagement = () => {
     });
   };
 
-  return <div className="space-y-4 sm:space-y-6">
+  return (
+    <div className="space-y-4 sm:space-y-6">
       <Card className="p-2 sm:p-4 backdrop-blur-md shadow-md border border-border/40 bg-transparent">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-4">
           <div className="flex items-center gap-2">
@@ -303,7 +305,8 @@ const ProductionManagement = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>;
+    </div>
+  );
 };
 
 export default ProductionManagement;
