@@ -10,34 +10,50 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import NodeTemplates, { nodeTemplates } from "./NodeTemplates";
 
+// Define a base template type with common properties
+interface BaseNodeTemplate {
+  id: string;
+  name: string;
+  shape: string;
+  color: string;
+  icon: React.ReactElement;
+  category: string;
+  renderContent: () => React.ReactElement;
+}
+
+// Define a type for templates with nodes and connections
+interface ComplexNodeTemplate extends BaseNodeTemplate {
+  nodes: Array<{
+    label: string;
+    offsetX: number;
+    offsetY: number;
+    color: string;
+    shape: string;
+  }>;
+  connections: Array<{
+    source: number;
+    target: number;
+    color?: string;
+    width?: number;
+  }>;
+}
+
+// Define a type for simple templates without nodes and connections
+interface SimpleNodeTemplate extends BaseNodeTemplate {
+  nodes?: never;
+  connections?: never;
+}
+
+// Combined type that can be either a simple or complex template
+type NodeTemplateType = SimpleNodeTemplate | ComplexNodeTemplate;
+
 interface SidebarPanelProps {
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
   nodeName: string;
   setNodeName: (name: string) => void;
   onAddNode: () => void;
-  templates?: Array<{
-    id: string;
-    name: string;
-    shape: string;
-    color: string;
-    icon: React.ReactElement;  // Changed from ReactNode to ReactElement
-    category: string;          // Made non-optional
-    nodes?: Array<{
-      label: string;
-      offsetX: number;
-      offsetY: number;
-      color: string;
-      shape: string;
-    }>;
-    connections?: Array<{
-      source: number;
-      target: number;
-      color?: string;
-      width?: number;
-    }>;
-    renderContent: () => React.ReactElement; // Changed from optional ReactNode to required ReactElement
-  }>;
+  templates?: NodeTemplateType[];
   onAddTemplate?: (template: any) => void;
 }
 
@@ -116,7 +132,7 @@ const SidebarPanel = ({
                       size="sm" 
                       className="flex flex-col items-center justify-center p-2 h-auto aspect-square"
                       onClick={() => {
-                        const template = {
+                        const template: SimpleNodeTemplate = {
                           id: shape.id,
                           name: shape.name,
                           shape: shape.id === "triangle" ? "triangle" : shape.id === "circle" ? "circle" : "rectangle",

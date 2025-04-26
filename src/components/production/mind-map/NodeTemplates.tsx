@@ -1,10 +1,42 @@
-
 import React from "react";
 import { Fuel, FileText, Network, Workflow, Shapes, Layout, Triangle, Palette } from "lucide-react";
 import { Node } from 'reactflow';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-export const nodeTemplates = [
+interface BaseNodeTemplate {
+  id: string;
+  name: string;
+  shape: string;
+  color: string;
+  icon: React.ReactElement;
+  category: string;
+  renderContent: () => React.ReactElement;
+}
+
+interface ComplexNodeTemplate extends BaseNodeTemplate {
+  nodes: Array<{
+    label: string;
+    offsetX: number;
+    offsetY: number;
+    color: string;
+    shape: string;
+  }>;
+  connections: Array<{
+    source: number;
+    target: number;
+    color?: string;
+    width?: number;
+  }>;
+}
+
+interface SimpleNodeTemplate extends BaseNodeTemplate {
+  nodes?: never;
+  connections?: never;
+}
+
+type NodeTemplateType = SimpleNodeTemplate | ComplexNodeTemplate;
+
+export const nodeTemplates: NodeTemplateType[] = [
   {
     id: "funnel",
     name: "Funil",
@@ -166,7 +198,12 @@ export const nodeTemplates = [
   }
 ];
 
-const NodeTemplates = ({ templates = nodeTemplates, onAddTemplate }) => {
+interface NodeTemplatesProps {
+  templates?: NodeTemplateType[];
+  onAddTemplate?: (template: any) => void;
+}
+
+const NodeTemplates: React.FC<NodeTemplatesProps> = ({ templates = nodeTemplates, onAddTemplate }) => {
   const categorizedTemplates = {
     estruturas: templates.filter(t => t.category === 'estruturas'),
     formas: templates.filter(t => t.category === 'formas'),
