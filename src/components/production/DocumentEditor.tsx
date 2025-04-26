@@ -1,19 +1,16 @@
-
 import React, { useState, useEffect } from "react";
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import DocumentExplorer from "./document-explorer/DocumentExplorer";
 import { DocumentItem } from "./document-explorer/types";
 import DocumentContent from "./document-editor/DocumentContent";
 import { useToast } from "@/hooks/use-toast";
 import { useDocumentContext } from "./document-explorer/contexts/DocumentContext";
 import { useDocumentOperations } from "./document-explorer/hooks/useDocumentOperations";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const DocumentEditor: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<DocumentItem | null>(null);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { toast } = useToast();
   const { documents, setDocuments } = useDocumentContext();
   const { updateFileContent } = useDocumentOperations(() => {});
@@ -43,10 +40,6 @@ const DocumentEditor: React.FC = () => {
     if (selectedFile?.content) {
       updateFileContent(selectedFile.id, selectedFile.content);
     }
-  };
-
-  const toggleSidebar = () => {
-    setSidebarCollapsed(!sidebarCollapsed);
   };
 
   // Handle file drop for import
@@ -145,46 +138,12 @@ const DocumentEditor: React.FC = () => {
   
   return (
     <div className="h-full border rounded-lg overflow-hidden dark:border-gray-800 dark:neon-floor" style={{ height: '842px' }}>
-      <div className="flex h-full relative">
-        {/* Toggle button that's always visible */}
-        <div className="absolute left-0 top-1/2 -translate-y-1/2 z-10">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={toggleSidebar}
-            className={cn(
-              "h-8 w-8 rounded-full bg-card shadow-md dark:bg-gray-800/50 backdrop-blur-sm",
-              "border border-border/40 -ml-4 transition-all",
-              "hover:bg-accent dark:hover:bg-gray-700/70",
-              "dark:shadow-[0_0_5px_rgba(125,90,250,0.3)]",
-              "dark:hover:shadow-[0_0_8px_rgba(125,90,250,0.5)]"
-            )}
-          >
-            {sidebarCollapsed ? (
-              <ChevronRight className="h-4 w-4 dark:text-purple-200" />
-            ) : (
-              <ChevronLeft className="h-4 w-4 dark:text-purple-200" />
-            )}
-          </Button>
+      <div className="flex h-full">
+        <div className="h-full">
+          <DocumentExplorer onSelectFile={handleSelectFile} selectedFile={selectedFile} />
         </div>
         
-        {/* Sidebar with animation */}
-        <AnimatePresence initial={false}>
-          {!sidebarCollapsed && (
-            <motion.div 
-              initial={{ width: 0, opacity: 0 }}
-              animate={{ width: 280, opacity: 1 }}
-              exit={{ width: 0, opacity: 0 }}
-              transition={{ duration: 0.3, ease: "easeInOut" }}
-              className="h-full border-r dark:border-gray-800 overflow-hidden bg-card/90 dark:bg-gray-800/50 backdrop-blur-md"
-            >
-              <DocumentExplorer onSelectFile={handleSelectFile} selectedFile={selectedFile} />
-            </motion.div>
-          )}
-        </AnimatePresence>
-        
-        {/* Main content area */}
-        <div className={cn("flex-grow transition-all duration-300", sidebarCollapsed ? "pl-5" : "")}>
+        <div className="flex-grow">
           {selectedFile ? (
             <DocumentContent 
               initialContent={selectedFile.content || ""}

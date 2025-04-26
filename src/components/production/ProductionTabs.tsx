@@ -7,7 +7,6 @@ import MindMap from "./MindMap";
 import DocumentEditor from "./DocumentEditor";
 import GanttChart from "./gantt/GanttChart";
 import { DocumentProvider } from "./document-explorer/contexts/DocumentContext";
-import SpreadsheetEditor from "./spreadsheet/SpreadsheetEditor";
 
 interface ProductionTabsProps {
   columns: KanbanColumnItem[];
@@ -27,12 +26,11 @@ const ProductionTabs = ({
       value={activeTab} 
       onValueChange={setActiveTab}
     >
-      <TabsList className="grid grid-cols-5 w-full md:w-fit mb-6 bg-card/80 dark:bg-gray-800/40 backdrop-blur-md shadow-md metallic-item mx-[3px] px-[6px] my-[15px]">
+      <TabsList className="grid grid-cols-4 w-full md:w-fit mb-6 bg-card/80 dark:bg-gray-800/40 backdrop-blur-md shadow-md metallic-item mx-[3px] px-[6px] my-[15px]">
         <TabsTrigger value="documentos" className="px-4 text-xs">Documentos</TabsTrigger>
         <TabsTrigger value="gantt" className="px-4 text-xs">Gráfico Gantt</TabsTrigger>
         <TabsTrigger value="kanban" className="px-4 text-xs">Kanban</TabsTrigger>
         <TabsTrigger value="mapamental" className="px-4 text-xs">Mapa Mental</TabsTrigger>
-        <TabsTrigger value="planilhas" className="px-4 text-xs">Planilhas</TabsTrigger>
       </TabsList>
       
       <div className="relative min-h-[600px]">
@@ -54,12 +52,6 @@ const ProductionTabs = ({
         
         <TabsContent value="mapamental" className="mt-0 bg-transparent dark:bg-transparent backdrop-blur-sm shadow-md rounded-lg">
           <MindMap />
-        </TabsContent>
-        
-        <TabsContent value="planilhas" className="mt-0 bg-transparent dark:bg-transparent backdrop-blur-sm shadow-md rounded-lg">
-          <div className="h-[842px]">
-            <SpreadsheetEditor />
-          </div>
         </TabsContent>
       </div>
     </Tabs>

@@ -57,9 +57,7 @@ export const TreeItemIcon: React.FC<TreeItemIconProps> = ({
               className={cn(
                 "h-4 w-6 rounded-[0.25rem] border border-gray-300 dark:border-gray-600",
                 "group-hover:brightness-95 cursor-pointer mr-1",
-                "dark:shadow-sm dark:hover:shadow-md dark:transition-shadow",
-                "dark:shadow-[0_0_3px_rgba(125,90,250,0.1)]",
-                "dark:hover:shadow-[0_0_5px_rgba(125,90,250,0.3)]"
+                "dark:shadow-sm dark:hover:shadow-md dark:transition-shadow"
               )}
               style={{
                 background: folderColor,
