@@ -1,9 +1,8 @@
-
 import { useEffect, lazy, Suspense } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import MainLayout from "@/layouts/MainLayout";
 import { AuthProvider } from '@/contexts/AuthContext';
@@ -142,113 +141,111 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <BrowserRouter>
-          <RouteChangeHandler />
-          <Toaster />
-          <Sonner />
-          <AuthProvider>
-            <Routes>
-              <Route path="/" element={
-                <Suspense fallback={<LoadingScreen />}>
-                  <PageTransition>
-                    <Index />
-                  </PageTransition>
-                </Suspense>
-              } />
-              <Route path="/login" element={
-                <Suspense fallback={<LoadingScreen />}>
-                  <PageTransition>
-                    <Login />
-                  </PageTransition>
-                </Suspense>
-              } />
-              <Route path="/register" element={
-                <Suspense fallback={<LoadingScreen />}>
-                  <PageTransition>
-                    <Register />
-                  </PageTransition>
-                </Suspense>
-              } />
-              
-              {/* Protected routes that require authentication */}
-              <Route element={<ProtectedRoute />}>
-                <Route path="/app" element={<MainLayout />}>
-                  <Route index element={
-                    <Suspense fallback={<LoadingScreen minimal />}>
-                      <Dashboard />
-                    </Suspense>
-                  } />
-                  <Route path="sales-funnel" element={
-                    <Suspense fallback={<LoadingScreen minimal />}>
-                      <SalesFunnel />
-                    </Suspense>
-                  } />
-                  <Route path="clients" element={
-                    <Suspense fallback={<LoadingScreen />}>
-                      <ClientManagement />
-                    </Suspense>
-                  } />
-                  <Route path="finance" element={
-                    <Suspense fallback={<LoadingScreen />}>
-                      <FinanceManagement />
-                    </Suspense>
-                  } />
-                  <Route path="products" element={
-                    <Suspense fallback={<LoadingScreen />}>
-                      <ProductsServices />
-                    </Suspense>
-                  } />
-                  <Route path="lead-import" element={
-                    <Suspense fallback={<LoadingScreen />}>
-                      <LeadImport />
-                    </Suspense>
-                  } />
-                  <Route path="production" element={
-                    <Suspense fallback={<LoadingScreen />}>
-                      <ProductionManagement />
-                    </Suspense>
-                  } />
-                  <Route path="team" element={
-                    <Suspense fallback={<LoadingScreen />}>
-                      <TeamManagement />
-                    </Suspense>
-                  } />
-                  <Route path="meetings" element={
-                    <Suspense fallback={<LoadingScreen />}>
-                      <Meetings />
-                    </Suspense>
-                  } />
-                  <Route path="settings" element={
-                    <Suspense fallback={<LoadingScreen />}>
-                      <Settings />
-                    </Suspense>
-                  } />
-                  <Route path="user-settings" element={
-                    <Suspense fallback={<LoadingScreen />}>
-                      <UserSettings />
-                    </Suspense>
-                  } />
-                  <Route path="whatsapp" element={
-                    <Suspense fallback={<LoadingScreen />}>
-                      <WhatsAppIntegration />
-                    </Suspense>
-                  } />
-                  <Route path="ads-integration" element={
-                    <Suspense fallback={<LoadingScreen />}>
-                      <AdsIntegrationPage />
-                    </Suspense>
-                  } />
-                </Route>
+        <RouteChangeHandler />
+        <Toaster />
+        <Sonner />
+        <AuthProvider>
+          <Routes>
+            <Route path="/" element={
+              <Suspense fallback={<LoadingScreen />}>
+                <PageTransition>
+                  <Index />
+                </PageTransition>
+              </Suspense>
+            } />
+            <Route path="/login" element={
+              <Suspense fallback={<LoadingScreen />}>
+                <PageTransition>
+                  <Login />
+                </PageTransition>
+              </Suspense>
+            } />
+            <Route path="/register" element={
+              <Suspense fallback={<LoadingScreen />}>
+                <PageTransition>
+                  <Register />
+                </PageTransition>
+              </Suspense>
+            } />
+            
+            {/* Protected routes that require authentication */}
+            <Route element={<ProtectedRoute />}>
+              <Route path="/app" element={<MainLayout />}>
+                <Route index element={
+                  <Suspense fallback={<LoadingScreen minimal />}>
+                    <Dashboard />
+                  </Suspense>
+                } />
+                <Route path="sales-funnel" element={
+                  <Suspense fallback={<LoadingScreen minimal />}>
+                    <SalesFunnel />
+                  </Suspense>
+                } />
+                <Route path="clients" element={
+                  <Suspense fallback={<LoadingScreen />}>
+                    <ClientManagement />
+                  </Suspense>
+                } />
+                <Route path="finance" element={
+                  <Suspense fallback={<LoadingScreen />}>
+                    <FinanceManagement />
+                  </Suspense>
+                } />
+                <Route path="products" element={
+                  <Suspense fallback={<LoadingScreen />}>
+                    <ProductsServices />
+                  </Suspense>
+                } />
+                <Route path="lead-import" element={
+                  <Suspense fallback={<LoadingScreen />}>
+                    <LeadImport />
+                  </Suspense>
+                } />
+                <Route path="production" element={
+                  <Suspense fallback={<LoadingScreen />}>
+                    <ProductionManagement />
+                  </Suspense>
+                } />
+                <Route path="team" element={
+                  <Suspense fallback={<LoadingScreen />}>
+                    <TeamManagement />
+                  </Suspense>
+                } />
+                <Route path="meetings" element={
+                  <Suspense fallback={<LoadingScreen />}>
+                    <Meetings />
+                  </Suspense>
+                } />
+                <Route path="settings" element={
+                  <Suspense fallback={<LoadingScreen />}>
+                    <Settings />
+                  </Suspense>
+                } />
+                <Route path="user-settings" element={
+                  <Suspense fallback={<LoadingScreen />}>
+                    <UserSettings />
+                  </Suspense>
+                } />
+                <Route path="whatsapp" element={
+                  <Suspense fallback={<LoadingScreen />}>
+                    <WhatsAppIntegration />
+                  </Suspense>
+                } />
+                <Route path="ads-integration" element={
+                  <Suspense fallback={<LoadingScreen />}>
+                    <AdsIntegrationPage />
+                  </Suspense>
+                } />
               </Route>
-              
-              <Route path="*" element={
-                <Suspense fallback={<LoadingScreen />}>
-                  <NotFound />
-                </Suspense>
-              } />
-            </Routes>
-          </AuthProvider>
-        </BrowserRouter>
+            </Route>
+            
+            <Route path="*" element={
+              <Suspense fallback={<LoadingScreen />}>
+                <NotFound />
+              </Suspense>
+            } />
+          </Routes>
+        </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );
