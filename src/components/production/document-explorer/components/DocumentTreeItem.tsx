@@ -77,11 +77,13 @@ const DocumentTreeItem: React.FC<DocumentTreeItemProps> = ({
     zIndex: isDragging ? 999 : 'auto' as any,
   };
 
-  const handleFolderClick = () => {
+  const handleFolderClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (isFolder) {
       onToggleExpanded(item.id);
+    } else {
+      onSelect(item);
     }
-    setSelectedFolder(selectedFolder === item.id ? null : item.id);
   };
 
   // Modified: Add parameter type and provide default empty event when needed
