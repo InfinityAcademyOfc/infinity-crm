@@ -139,7 +139,7 @@ const DocumentExplorerContent: React.FC<DocumentExplorerProps> = ({
       <div 
         className={cn(
           "absolute top-4 right-0 z-50 transform transition-transform duration-300",
-          sidebarCollapsed ? "translate-x-0" : "translate-x-0"
+          sidebarCollapsed ? "translate-x-0" : "translate-x-3"
         )}
         >
         <Button
