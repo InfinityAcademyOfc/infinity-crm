@@ -96,8 +96,18 @@ const DocumentTreeItem: React.FC<DocumentTreeItemProps> = ({
     try {
       if (window.CSS && window.CSS.supports('color', color)) {
         setFolderColor(color);
+      
         (item as any).folderColor = color;
-        
+
+        const updatedDocs = documents.map(doc => 
+          doc.id === item.id
+          ? { ...doc, folderColor: color }
+          : doc.children
+          ? { ...doc, children: updateChildFolderColor(doc.children, item.id, color) }
+          : doc
+      );
+        setDocuments(updatedDocs);
+
         if (!folderColors.includes(color)) {
           const updatedRecentColors = [color, ...recentColors.filter(c => c !== color)].slice(0, 10);
           setRecentColors(updatedRecentColors);
@@ -109,6 +119,18 @@ const DocumentTreeItem: React.FC<DocumentTreeItemProps> = ({
       console.error("Error setting folder color:", error);
     }
   };
+
+// Função auxiliar:
+const updateChildFolderColor = (children: DocumentItem[], id: string, color: string): DocumentItem[] => {
+  return children.map(child => 
+    child.id === id
+      ? { ...child, folderColor: color }
+      : child.children
+      ? { ...child, children: updateChildFolderColor(child.children, id, color) }
+      : child
+  );
+};
+
 
   const handleApplyCustomColor = () => {
     try {
