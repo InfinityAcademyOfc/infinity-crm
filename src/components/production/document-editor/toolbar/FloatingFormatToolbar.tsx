@@ -50,10 +50,10 @@ const FloatingFormatToolbar: React.FC<FloatingFormatToolbarProps> = ({ position,
   
   return (
     <div 
-      className="floating-format-toolbar fixed z-50 bg-gray-800 dark:bg-gray-900 rounded-lg shadow-lg px-2 py-1 flex flex-wrap items-center gap-1"
+      className="floating-format-toolbar fixed z-50 bg-white dark:bg-gray-900 text-black dark:text-white border border-gray-300 dark:border-gray-700"
       style={{
         ...positionStyle,
-        transform: 'translate(-50%, -120%)',
+        transform: 'translate(-50%, -100%)',
         minWidth: 325,
         borderRadius: 9,
         boxShadow: "0 8px 28px -3px rgb(0 0 0 / .25)",
