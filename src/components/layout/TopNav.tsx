@@ -1,3 +1,4 @@
+
 import React from "react";
 import ThemeToggle from "@/components/theme/ThemeToggle";
 import { UserMenu } from "@/components/auth/UserMenu";
@@ -58,46 +59,23 @@ const moduleData: Record<string, {
     subtitle: "Personalize seu sistema"
   }
 };
+
 export function TopNav() {
   const location = useLocation();
+  
   // Determine best match for path
-  const modulePath = Object.keys(moduleData).filter(key => location.pathname.startsWith(key)).sort((a, b) => b.length - a.length)[0];
+  const modulePath = Object.keys(moduleData)
+    .filter(key => location.pathname.startsWith(key))
+    .sort((a, b) => b.length - a.length)[0];
 
-  // Always set a default object shape, guaranteeing both properties exist
-  const moduleInfo = moduleData[modulePath] ? {
-    name: moduleData[modulePath].name || "",
-    subtitle: moduleData[modulePath].subtitle || ""
-  } : {
-    name: "",
-    subtitle: ""
-  };
+  const moduleInfo = moduleData[modulePath] || { name: "", subtitle: "" };
 
-  // Safe DOM operation with useEffect and checking existence before manipulating
-  React.useEffect(() => {
-    const headerElement = document.querySelector('header.sticky');
-    if (headerElement) {
-      try {
-        headerElement.classList.add('bg-background/50', 'backdrop-blur', 'supports-[backdrop-filter]:bg-background/50');
-      } catch (error) {
-        console.error("Error updating header style:", error);
-      }
-    }
-    return () => {
-      if (headerElement) {
-        try {
-          headerElement.classList.remove('bg-background/50', 'backdrop-blur', 'supports-[backdrop-filter]:bg-background/50');
-        } catch (error) {
-          console.error("Error reverting header style:", error);
-        }
-      }
-    };
-  }, []);
-  return <header className="sticky top-0 z-50 w-full border-b bg-background/50 backdrop-blur supports-[backdrop-filter]:bg-background/50">
+  return (
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/50">
       <div className="container flex h-14 items-center px-[10px]">
-        {/* Título/subtítulo alinhados à esquerda apenas */}
-        <div className="flex flex-col items-start justify-center flex-1 py-0 my-0">
-          {moduleInfo.name && <span className="text-md font-bold text-sm">{moduleInfo.name}</span>}
-          {moduleInfo.subtitle && <span className="text-muted-foreground py-0 my-0 font-normal text-xs px-0 mx-0">{moduleInfo.subtitle}</span>}
+        <div className="flex flex-col items-start justify-center flex-1 py-1">
+          {moduleInfo.name && <span className="text-sm font-bold">{moduleInfo.name}</span>}
+          {moduleInfo.subtitle && <span className="text-muted-foreground text-xs font-normal">{moduleInfo.subtitle}</span>}
         </div>
         <div className="flex items-center gap-2">
           <NotificationsDropdown />
@@ -105,5 +83,6 @@ export function TopNav() {
           <UserMenu />
         </div>
       </div>
-    </header>;
+    </header>
+  );
 }

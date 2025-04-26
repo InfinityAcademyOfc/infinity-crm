@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Tree } from "@/components/ui/tree";
 import { DocumentProvider } from "./contexts/DocumentContext";
@@ -72,10 +73,7 @@ const DocumentExplorerContent: React.FC<DocumentExplorerProps> = ({
 }) => {
   const {
     documents,
-    setDocuments,
     searchQuery,
-    selectedFolder,
-    setSelectedFolder
   } = useDocumentContext();
   
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -94,8 +92,29 @@ const DocumentExplorerContent: React.FC<DocumentExplorerProps> = ({
   
   const renderItems = (items: DocumentItem[]) => {
     if (!items || items.length === 0) return null;
-    const filteredItems = searchQuery ? items.filter(item => item.name.toLowerCase().includes(searchQuery.toLowerCase()) || item.children && item.children.some(child => child.name.toLowerCase().includes(searchQuery.toLowerCase()))) : items;
-    return filteredItems.map(item => <DocumentTreeItem key={item.id} item={item} onSelect={onSelectFile} onDelete={handleDeleteItem} onRename={handleRename} onExport={handleExportDocument} onToggleExpanded={toggleFolderExpanded} selectedFile={selectedFile} isImportFolder={item.id === "folder-imported"} />);
+    
+    const filteredItems = searchQuery 
+      ? items.filter(item => 
+          item.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+          (item.children && item.children.some(child => 
+            child.name.toLowerCase().includes(searchQuery.toLowerCase())
+          ))
+        ) 
+      : items;
+    
+    return filteredItems.map(item => (
+      <DocumentTreeItem 
+        key={item.id} 
+        item={item} 
+        onSelect={onSelectFile} 
+        onDelete={handleDeleteItem} 
+        onRename={handleRename} 
+        onExport={handleExportDocument} 
+        onToggleExpanded={toggleFolderExpanded} 
+        selectedFile={selectedFile} 
+        isImportFolder={item.id === "folder-imported"} 
+      />
+    ));
   };
 
   // Get all document IDs for drag and drop functionality
@@ -129,19 +148,19 @@ const DocumentExplorerContent: React.FC<DocumentExplorerProps> = ({
         aria-label={sidebarCollapsed ? "Expandir barra" : "Recolher barra"}
       >
         {sidebarCollapsed ? (
-          <ChevronRight className="h-4 w-4 text-primary dark:neon-text" />
+          <ChevronRight className="h-4 w-4 text-primary" />
         ) : (
-          <ChevronLeft className="h-4 w-4 text-primary dark:neon-text" />
+          <ChevronLeft className="h-4 w-4 text-primary" />
         )}
       </Button>
       
       {/* Sidebar content with animation */}
-      <AnimatePresence mode="wait">
+      <AnimatePresence>
         {!sidebarCollapsed && (
           <motion.div 
             className={cn(
               "h-full flex flex-col bg-card/95 dark:bg-gray-900/90 backdrop-blur-md",
-              "border-r dark:border-gray-800 sidebar-neon-border",
+              "border-r dark:border-gray-800",
               "overflow-hidden"
             )}
             initial={{ width: 0, opacity: 0 }}
@@ -152,10 +171,16 @@ const DocumentExplorerContent: React.FC<DocumentExplorerProps> = ({
             <ExplorerHeader onAddItem={handleAddItem} />
             <div className="overflow-auto flex-1 p-2">
               <DndProvider items={itemIds} onDragEnd={handleDragEnd}>
-                <Tree className="min-h-[200px]">{renderItems(documents)}</Tree>
+                <Tree className="min-h-[200px]">
+                  {renderItems(documents)}
+                </Tree>
               </DndProvider>
             </div>
-            <NewItemDialog open={newItemDialogOpen} onOpenChange={setNewItemDialogOpen} onCreateItem={handleCreateItem} />
+            <NewItemDialog 
+              open={newItemDialogOpen} 
+              onOpenChange={setNewItemDialogOpen} 
+              onCreateItem={handleCreateItem} 
+            />
           </motion.div>
         )}
       </AnimatePresence>
@@ -163,8 +188,7 @@ const DocumentExplorerContent: React.FC<DocumentExplorerProps> = ({
   );
 };
 
-const DocumentExplorer: React.FC<DocumentExplorerProps> = props => {
-  const [documents, setDocuments] = useState<DocumentItem[]>(initialDocuments);
+const DocumentExplorer: React.FC<DocumentExplorerProps> = (props) => {
   return (
     <DocumentProvider>
       <DocumentExplorerContent {...props} />
