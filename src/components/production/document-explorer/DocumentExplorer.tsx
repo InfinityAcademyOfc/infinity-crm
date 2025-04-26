@@ -138,7 +138,7 @@ const DocumentExplorerContent: React.FC<DocumentExplorerProps> = ({
       {/* Botão flutuante para recolher/expandir a sidebar */}
       <div 
         className={cn(
-          "absolute top-4 right-0 z-70 transform transition-transform duration-300",
+          "absolute top-4 right-0 z-30 transform transition-transform duration-300",
           sidebarCollapsed ? "translate-x-0" : "translate-x-1/2"
         )}
         >
