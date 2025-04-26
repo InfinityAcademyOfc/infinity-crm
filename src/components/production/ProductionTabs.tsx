@@ -16,7 +16,7 @@ const ProductionTabs = ({
 }: ProductionTabsProps) => {
   const [activeTab, setActiveTab] = useState("documentos");
   return <Tabs defaultValue="documentos" className="w-full" value={activeTab} onValueChange={setActiveTab}>
-      <TabsList className="grid grid-cols-4 w-full md:w-fit mb-6 bg-card/80 dark:bg-gray-800/40 backdrop-blur-md shadow-md metallic-item my-[15px] px-0 mx-0">
+      <TabsList className="grid grid-cols-4 w-full md:w-fit mb-6 bg-card/80 dark:bg-gray-800/40 backdrop-blur-md shadow-md metallic-item my-[15px] mx-0 px-[6px]">
         <TabsTrigger value="documentos" className="px-4 text-xs">Documentos</TabsTrigger>
         <TabsTrigger value="gantt" className="px-4 text-xs">Gráfico Gantt</TabsTrigger>
         <TabsTrigger value="kanban" className="px-4 text-xs">Kanban</TabsTrigger>
