@@ -46,7 +46,7 @@ const DocumentTreeItem: React.FC<DocumentTreeItemProps> = ({
   isImportFolder = false,
 }) => {
   const { selectedFolder, setSelectedFolder, editingItem, setEditingItem, recentColors, setRecentColors, documents, setDocuments } = useDocumentContext();
-  const [folderColor, setFolderColor] = useState((item as any).folderColor || folderColors[0]);
+  const [folderColor, setFolderColor] = useState(item.folderColor || folderColors[0]);
   const [isColorDialogOpen, setIsColorDialogOpen] = useState(false);
   const [customColor, setCustomColor] = useState("#FFFFFF");
   const isSelected = selectedFile?.id === item.id || selectedFolder === item.id;
@@ -79,14 +79,13 @@ const DocumentTreeItem: React.FC<DocumentTreeItemProps> = ({
 
   const handleFolderClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setSelectedFolder(prev => prev === item.id ? null : item.id);
+    setSelectedFolder(item.id === selectedFolder ? null : item.id);
   };
 
   // Toggle expansion independently of selection
-  const handleToggleExpanded = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleToggleExpanded = (id: string) => {
     if (isFolder) {
-      onToggleExpanded(item.id);
+      onToggleExpanded(id);
     }
   };
 

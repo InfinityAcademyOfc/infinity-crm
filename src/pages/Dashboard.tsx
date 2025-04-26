@@ -12,6 +12,7 @@ const SalesChart = lazy(() => import("@/components/dashboard/SalesChart"));
 const FinanceChart = lazy(() => import("@/components/dashboard/FinanceChart"));
 const ActivitiesSection = lazy(() => import("@/components/dashboard/ActivitiesSection"));
 const IntegratedFunnel = lazy(() => import("@/components/dashboard/IntegratedFunnel"));
+const FunnelChart = lazy(() => import("@/components/dashboard/FunnelChart"));
 
 const Dashboard = () => {
   const { profile } = useAuth();
@@ -99,6 +100,11 @@ const Dashboard = () => {
   return (
     <DashboardLayout
       welcomeSection={<WelcomeCard userName={userName} />}
+      funnelSection={
+        <Suspense fallback={<ChartSkeleton />}>
+          <FunnelChart />
+        </Suspense>
+      }
       integratedFunnelSection={
         <Suspense fallback={<ChartSkeleton />}>
           <IntegratedFunnel />

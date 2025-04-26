@@ -7,6 +7,7 @@ export interface DocumentItem {
   children?: DocumentItem[];
   expanded?: boolean;
   sheets?: SpreadsheetSheet[];
+  folderColor?: string; // Added folderColor property
 }
 
 export interface SpreadsheetSheet {
