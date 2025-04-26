@@ -84,9 +84,9 @@ const DocumentContent: React.FC<DocumentContentProps> = ({
       selectionRangeRef.current = range.cloneRange();
       
       setToolbarPosition({
-        top: rect.top - editorRect.top - 10,
-        left: rect.left + (rect.width / 2)
-      });
+        top: rect.top + window.scrollY - 10, // leva em conta o scroll vertical
+        left: rect.left + rect.width / 2 + window.scrollX // leva em conta scroll horizontal
+          });
       setShowToolbar(true);
     } else {
       setShowToolbar(false);
