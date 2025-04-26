@@ -134,20 +134,20 @@ const DocumentExplorerContent: React.FC<DocumentExplorerProps> = ({
   const itemIds = getAllItemIds(documents, ["folder-imported"]);
   
   return (
-    <div>
+    <div className="relative">
       <div 
         className={cn(
           "fixed top-6 z-50 transition-all duration-300",
           sidebarCollapsed ? "left-4" : "left-[17.5rem]"
         )}
-        >
+      >
         <Button
           variant="default"
           size="icon"
           className="rounded-full h-8 w-8 shadow-md bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_0_15px_rgba(130,80,223,0.4)]"
           onClick={() => setSidebarCollapsed(prev => !prev)}
           aria-label={sidebarCollapsed ? "Expandir barra" : "Recolher barra"}
-          >
+        >
           {sidebarCollapsed ? (
             <ChevronRight className="h-4 w-4 text-white" />
           ) : (
@@ -155,7 +155,6 @@ const DocumentExplorerContent: React.FC<DocumentExplorerProps> = ({
           )}
         </Button>
       </div>
-    </div>
       
       <AnimatePresence>
         {!sidebarCollapsed && (
