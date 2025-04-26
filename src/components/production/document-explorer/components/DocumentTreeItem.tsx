@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { TreeItem } from '@/components/ui/tree';
 import { Input } from '@/components/ui/input';
@@ -12,7 +11,6 @@ import { TreeItemActions } from './tree/TreeItemActions';
 import { CustomColorDialog } from './tree/CustomColorDialog';
 import { File } from 'lucide-react';
 
-// Enhanced color palette with more variety
 const folderColors = [
   // Pastel colors
   "#F2FCE2", "#FEF7CD", "#FEC6A1", "#E5DEFF", "#FFDEE2",
@@ -82,15 +80,13 @@ const DocumentTreeItem: React.FC<DocumentTreeItemProps> = ({
     setSelectedFolder(item.id === selectedFolder ? null : item.id);
   };
 
-  // Toggle expansion independently of selection
-  const handleToggleExpanded = (id: string) => {
+  const handleToggleExpand = () => {
     if (isFolder) {
-      onToggleExpanded(id);
+      onToggleExpanded(item.id);
     }
   };
 
-  const startRenaming = (e?: React.MouseEvent) => {
-    if (e) e.stopPropagation();
+  const startRenaming = () => {
     setEditingItem({ id: item.id, name: item.name });
   };
 
@@ -99,7 +95,6 @@ const DocumentTreeItem: React.FC<DocumentTreeItemProps> = ({
       if (window.CSS && window.CSS.supports('color', color)) {
         setFolderColor(color);
       
-        // Function to update folder color in the document tree
         const updateFolderColor = (doc: DocumentItem, id: string, color: string): DocumentItem => {
           if (doc.id === id) {
             return { ...doc, folderColor: color };
@@ -110,7 +105,6 @@ const DocumentTreeItem: React.FC<DocumentTreeItemProps> = ({
           return doc;
         };
         
-        // Update documents with the new folder color
         const updatedDocuments = documents.map(doc => updateFolderColor(doc, item.id, color));
         setDocuments(updatedDocuments);
 
@@ -177,7 +171,7 @@ const DocumentTreeItem: React.FC<DocumentTreeItemProps> = ({
             isExpanded={isExpanded}
             isImportFolder={isImportFolder}
             folderColor={folderColor}
-            onToggleExpanded={() => handleToggleExpanded(item.id)}
+            onToggleExpanded={handleToggleExpand}
             dragHandleProps={{ ...listeners, ...attributes }}
           />
         }
