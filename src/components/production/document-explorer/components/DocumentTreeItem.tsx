@@ -177,7 +177,7 @@ const DocumentTreeItem: React.FC<DocumentTreeItemProps> = ({
             isExpanded={isExpanded}
             isImportFolder={isImportFolder}
             folderColor={folderColor}
-            onToggleExpanded={handleToggleExpanded}
+            onToggleExpanded={() => handleToggleExpanded(item.id)}
             dragHandleProps={{ ...listeners, ...attributes }}
           />
         }

@@ -24,6 +24,15 @@ const Dashboard = () => {
   const [filterCollaborator, setFilterCollaborator] = useState("all");
   const [filterProduct, setFilterProduct] = useState("all");
   
+  // Funnel data for the chart
+  const [funnelData, setFunnelData] = useState([
+    { name: "Leads", value: 1200 },
+    { name: "Qualificados", value: 780 },
+    { name: "Reuniões", value: 610 },
+    { name: "Propostas", value: 320 },
+    { name: "Fechamentos", value: 200 }
+  ]);
+  
   const userName = profile?.name || "usuário";
   
   useEffect(() => {
@@ -102,7 +111,7 @@ const Dashboard = () => {
       welcomeSection={<WelcomeCard userName={userName} />}
       funnelSection={
         <Suspense fallback={<ChartSkeleton />}>
-          <FunnelChart />
+          <FunnelChart data={funnelData} />
         </Suspense>
       }
       integratedFunnelSection={
