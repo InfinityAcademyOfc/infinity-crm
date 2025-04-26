@@ -93,7 +93,7 @@ export function TopNav() {
     };
   }, []);
   return <header className="sticky top-0 z-50 w-full border-b bg-background/50 backdrop-blur supports-[backdrop-filter]:bg-background/50">
-      <div className="container flex h-14 items-center">
+      <div className="container flex h-14 items-center px-[10px]">
         {/* Título/subtítulo alinhados à esquerda apenas */}
         <div className="flex flex-col items-start justify-center flex-1 py-0 my-0">
           {moduleInfo.name && <span className="text-md font-bold text-sm">{moduleInfo.name}</span>}
