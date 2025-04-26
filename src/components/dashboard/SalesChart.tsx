@@ -1,18 +1,41 @@
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { BarChart3 } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { BarChart3, Filter } from "lucide-react";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/formatters";
+import { 
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue 
+} from "@/components/ui/select";
 
 interface SalesChartProps {
   data: Array<{
     month: string;
     value: number;
   }>;
+  onPeriodChange: (period: string) => void;
+  onCollaboratorChange: (collaborator: string) => void;
+  onProductChange: (product: string) => void;
+  filterPeriod: string;
+  filterCollaborator: string;
+  filterProduct: string;
 }
 
-const SalesChart = ({ data }: SalesChartProps) => {
+const SalesChart = ({ 
+  data, 
+  onPeriodChange, 
+  onCollaboratorChange,
+  onProductChange,
+  filterPeriod,
+  filterCollaborator,
+  filterProduct
+}: SalesChartProps) => {
   return (
     <Card className="lg:col-span-2">
       <CardHeader className="pb-2">
@@ -23,10 +46,61 @@ const SalesChart = ({ data }: SalesChartProps) => {
             Exportar
           </Button>
         </div>
-        <CardDescription>Performance de vendas nos últimos 12 meses</CardDescription>
+        <CardDescription>Performance de vendas nos últimos períodos</CardDescription>
       </CardHeader>
-      <CardContent>
-        <div className="h-80">
+      <CardContent className="space-y-4">
+        <div className="flex flex-wrap gap-2 items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Filter size={16} className="text-muted-foreground" />
+            <span className="text-sm font-medium">Filtrar:</span>
+          </div>
+          
+          <div className="flex flex-wrap gap-2">
+            <Select value={filterPeriod} onValueChange={onPeriodChange}>
+              <SelectTrigger className="w-[140px] h-8">
+                <SelectValue placeholder="Período" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Período</SelectLabel>
+                  <SelectItem value="3">Últimos 3 meses</SelectItem>
+                  <SelectItem value="6">Últimos 6 meses</SelectItem>
+                  <SelectItem value="12">Últimos 12 meses</SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+            
+            <Select value={filterCollaborator} onValueChange={onCollaboratorChange}>
+              <SelectTrigger className="w-[140px] h-8">
+                <SelectValue placeholder="Colaborador" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Colaborador</SelectLabel>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="user1">Carlos Silva</SelectItem>
+                  <SelectItem value="user2">Ana Oliveira</SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+            
+            <Select value={filterProduct} onValueChange={onProductChange}>
+              <SelectTrigger className="w-[140px] h-8">
+                <SelectValue placeholder="Produto" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Produto</SelectLabel>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="product1">Marketing Digital</SelectItem>
+                  <SelectItem value="product2">Consultoria</SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        
+        <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
@@ -41,6 +115,16 @@ const SalesChart = ({ data }: SalesChartProps) => {
           </ResponsiveContainer>
         </div>
       </CardContent>
+      
+      <CardFooter className="pt-0">
+        <div className="text-xs text-muted-foreground">
+          {data.length === 0 ? (
+            "Nenhum dado encontrado para os filtros selecionados"
+          ) : (
+            `Exibindo ${data.length} ${data.length === 1 ? 'período' : 'períodos'}`
+          )}
+        </div>
+      </CardFooter>
     </Card>
   );
 };

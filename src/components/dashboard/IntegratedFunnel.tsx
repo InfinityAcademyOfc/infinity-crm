@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Filter, Users, CheckCircle2, Activity, TrendingUp, AlertTriangle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -8,6 +9,8 @@ import FunnelChart from './funnel/FunnelChart';
 import ConversionChart from './funnel/ConversionChart';
 import LeakageChart from './funnel/LeakageChart';
 import FunnelSummary from './funnel/FunnelSummary';
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+
 const IntegratedFunnel = () => {
   const {
     activeTab,
@@ -29,6 +32,7 @@ const IntegratedFunnel = () => {
         </CardContent>
       </Card>;
   }
+  
   const getFunnelIcon = (type: FunnelType) => {
     const colors = {
       sales: "text-blue-500",
@@ -47,6 +51,19 @@ const IntegratedFunnel = () => {
 
   // Verificação adicional para garantir que a taxa de conversão existe
   const conversionRate = funnelData[activeTab]?.conversionRate || 0;
+  
+  // Transform funnel data to pie chart format for the merged view
+  const getPieChartData = (type: FunnelType) => {
+    if (!funnelData[type] || !funnelData[type].stages) return [];
+    
+    return funnelData[type].stages.map(stage => ({
+      name: stage.name,
+      value: stage.value
+    }));
+  };
+  
+  const COLORS = ['#4361ee', '#7209b7', '#9d4edd', '#3a0ca3', '#4cc9f0'];
+  
   return <Card className="shadow-md border border-border/60 backdrop-blur-sm overflow-hidden transition-all duration-300 hover:shadow-lg bg-transparent">
       <CardHeader className="pb-2">
         <div className="flex justify-between items-center">
@@ -83,85 +100,130 @@ const IntegratedFunnel = () => {
           
           {/* Renderizar o conteúdo das abas somente se tivermos dados disponíveis */}
           {Object.keys(funnelData).map(type => {
-          // Verificar se os dados do tipo específico existem
-          if (!funnelData[type as FunnelType] || !funnelData[type as FunnelType].stages) {
-            return null;
-          }
-          return <TabsContent key={type} value={type} className="space-y-4 animation-fade-in">
-                <div className="grid grid-cols-1 gap-4 transition-all duration-300">
-                  {/* Visual Funnel Chart */}
+            // Verificar se os dados do tipo específico existem
+            if (!funnelData[type as FunnelType] || !funnelData[type as FunnelType].stages) {
+              return null;
+            }
+            
+            return <TabsContent key={type} value={type} className="space-y-4 animation-fade-in">
+              <div className="grid grid-cols-1 gap-4 transition-all duration-300">
+                {/* Combined Visual Funnel Chart and Pie Chart */}
+                <Card className="p-4 shadow-sm hover:shadow-md transition-all duration-300 bg-card/50 overflow-hidden">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      {getFunnelIcon(type as FunnelType)}
+                      <h3 className="text-sm font-medium">Visão do Funil</h3>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Visual Funnel Chart (left) */}
+                    <div>
+                      <FunnelChart data={funnelData[type as FunnelType].stages} isDark={isDark} />
+                    </div>
+                    
+                    {/* Pie Chart (right) */}
+                    <div className="h-56 md:h-64 flex items-center">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie 
+                            data={getPieChartData(type as FunnelType)} 
+                            cx="50%" 
+                            cy="50%" 
+                            innerRadius={60} 
+                            outerRadius={80} 
+                            paddingAngle={5} 
+                            dataKey="value"
+                            label={({name, percent}) => `${name} ${(percent * 100).toFixed(0)}%`}
+                            labelLine={false}
+                          >
+                            {getPieChartData(type as FunnelType).map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            ))}
+                          </Pie>
+                          <Legend layout="vertical" verticalAlign="middle" align="right" iconType="circle" />
+                          <Tooltip 
+                            formatter={value => [`${value} itens`, "Quantidade"]}
+                            contentStyle={{
+                              background: isDark ? '#1f2937' : '#fff',
+                              border: isDark ? '1px solid #374151' : '1px solid #e5e7eb',
+                              borderRadius: '6px',
+                              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                            }} 
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                </Card>
+                  
+                {/* Three funnel metrics cards in a responsive grid */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Conversion Funnel */}
                   <Card className="p-4 shadow-sm hover:shadow-md transition-all duration-300 bg-card/50 overflow-hidden">
                     <div className="flex items-center gap-2 mb-2">
-                      {getFunnelIcon(type as FunnelType)}
-                      <h3 className="text-sm font-medium">Funil Visual</h3>
+                      <TrendingUp className="h-4 w-4 text-green-500" />
+                      <h3 className="text-sm font-medium">Conversão por Etapa</h3>
                     </div>
-                    <FunnelChart data={funnelData[type as FunnelType].stages} isDark={isDark} />
+                    <ConversionChart data={funnelData[type as FunnelType].stages} isDark={isDark} color={getColorsByType(type as FunnelType, isDark)[type as FunnelType]?.efficiency || '#22c55e'} />
                   </Card>
                   
-                  {/* Three funnel metrics cards in a responsive grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {/* Conversion Funnel */}
-                    <Card className="p-4 shadow-sm hover:shadow-md transition-all duration-300 bg-card/50 overflow-hidden">
-                      <div className="flex items-center gap-2 mb-2">
-                        <TrendingUp className="h-4 w-4 text-green-500" />
-                        <h3 className="text-sm font-medium">Conversão por Etapa</h3>
-                      </div>
-                      <ConversionChart data={funnelData[type as FunnelType].stages} isDark={isDark} color={getColorsByType(type as FunnelType, isDark)[type as FunnelType]?.efficiency || '#22c55e'} />
-                    </Card>
-                    
-                    {/* Leakage Funnel */}
-                    <Card className="p-4 shadow-sm hover:shadow-md transition-all duration-300 bg-card/50 overflow-hidden">
-                      <div className="flex items-center gap-2 mb-2">
-                        <TrendingUp className="h-4 w-4 text-red-500" />
-                        <h3 className="text-sm font-medium">Fugas por Etapa</h3>
-                      </div>
-                      <LeakageChart data={funnelData[type as FunnelType].stages} isDark={isDark} color={getColorsByType(type as FunnelType, isDark)[type as FunnelType]?.leakage || '#ef4444'} />
-                    </Card>
-                    
-                    {/* Overall Summary */}
-                    <Card className="p-4 shadow-sm hover:shadow-md transition-all duration-300 bg-card/50 overflow-hidden">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Activity className="h-4 w-4 text-blue-500" />
-                        <h3 className="text-sm font-medium">Resumo Geral</h3>
-                      </div>
-                      <div className="flex flex-col h-full justify-between my-0 mx-0 px-0 py-[45px]">
-                        <div className="space-y-4 flex-grow">
-                          <div className="flex flex-col space-y-1">
-                            <div className="flex justify-between items-center text-sm">
-                              <span>Etapas</span>
-                              <span className="font-semibold">{funnelData[type as FunnelType].stages.length}</span>
-                            </div>
-                            <div className="flex justify-between items-center text-sm">
-                              <span>Entrada</span>
-                              <span className="font-semibold">
-                                {funnelData[type as FunnelType].stages[0]?.value || 0}
-                              </span>
-                            </div>
-                            <div className="flex justify-between items-center text-sm">
-                              <span>Saída</span>
-                              <span className="font-semibold">
-                                {funnelData[type as FunnelType].stages[funnelData[type as FunnelType].stages.length - 1]?.value || 0}
-                              </span>
-                            </div>
+                  {/* Leakage Funnel */}
+                  <Card className="p-4 shadow-sm hover:shadow-md transition-all duration-300 bg-card/50 overflow-hidden">
+                    <div className="flex items-center gap-2 mb-2">
+                      <TrendingUp className="h-4 w-4 text-red-500" />
+                      <h3 className="text-sm font-medium">Fugas por Etapa</h3>
+                    </div>
+                    <LeakageChart data={funnelData[type as FunnelType].stages} isDark={isDark} color={getColorsByType(type as FunnelType, isDark)[type as FunnelType]?.leakage || '#ef4444'} />
+                  </Card>
+                  
+                  {/* Overall Summary */}
+                  <Card className="p-4 shadow-sm hover:shadow-md transition-all duration-300 bg-card/50 overflow-hidden">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Activity className="h-4 w-4 text-blue-500" />
+                      <h3 className="text-sm font-medium">Resumo Geral</h3>
+                    </div>
+                    <div className="flex flex-col h-full justify-between my-0 mx-0 px-0 py-[45px]">
+                      <div className="space-y-4 flex-grow">
+                        <div className="flex flex-col space-y-1">
+                          <div className="flex justify-between items-center text-sm">
+                            <span>Etapas</span>
+                            <span className="font-semibold">{funnelData[type as FunnelType].stages.length}</span>
+                          </div>
+                          <div className="flex justify-between items-center text-sm">
+                            <span>Entrada</span>
+                            <span className="font-semibold">
+                              {funnelData[type as FunnelType].stages[0]?.value || 0}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center text-sm">
+                            <span>Saída</span>
+                            <span className="font-semibold">
+                              {funnelData[type as FunnelType].stages[funnelData[type as FunnelType].stages.length - 1]?.value || 0}
+                            </span>
                           </div>
                         </div>
-                        
-                        <div className="mt-4">
-                          <FunnelSummary type={type as FunnelType} data={funnelData[type as FunnelType]} />
-                        </div>
                       </div>
-                    </Card>
-                  </div>
+                      
+                      <div className="mt-4">
+                        <FunnelSummary type={type as FunnelType} data={funnelData[type as FunnelType]} />
+                      </div>
+                    </div>
+                  </Card>
                 </div>
-                
-                {funnelData[type as FunnelType].stages.some(stage => (stage.leakage || 0) > 30) && <div className="flex items-center p-2 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 text-sm animate-pulse-subtle">
-                    <AlertTriangle className="h-4 w-4 text-yellow-600 dark:text-yellow-400 mr-2" />
-                    <span>Atenção: Algumas etapas possuem fugas acima de 30%</span>
-                  </div>}
-              </TabsContent>;
-        })}
+              </div>
+              
+              {funnelData[type as FunnelType].stages.some(stage => (stage.leakage || 0) > 30) && (
+                <div className="flex items-center p-2 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 text-sm animate-pulse-subtle">
+                  <AlertTriangle className="h-4 w-4 text-yellow-600 dark:text-yellow-400 mr-2" />
+                  <span>Atenção: Algumas etapas possuem fugas acima de 30%</span>
+                </div>
+              )}
+            </TabsContent>;
+          })}
         </Tabs>
       </CardContent>
     </Card>;
 };
+
 export default IntegratedFunnel;

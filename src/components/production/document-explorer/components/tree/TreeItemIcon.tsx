@@ -40,7 +40,10 @@ export const TreeItemIcon: React.FC<TreeItemIconProps> = ({
           variant="ghost" 
           size="icon" 
           className="h-4 w-4 p-0 mr-1 hover:bg-transparent"
-          onClick={() => onToggleExpanded(item.id)}
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleExpanded(item.id);
+          }}
         >
           {isExpanded ? (
             <ChevronDown className="h-3 w-3 text-muted-foreground dark:text-gray-400 dark:neon-text" />
@@ -64,7 +67,10 @@ export const TreeItemIcon: React.FC<TreeItemIconProps> = ({
                 transition: "all 0.3s"
               }} 
               title="Cor da pasta"
-              onClick={() => onToggleExpanded(item.id)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleExpanded(item.id);
+              }}
             />
           </div>
         ) : (

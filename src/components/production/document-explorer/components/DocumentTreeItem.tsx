@@ -45,7 +45,7 @@ const DocumentTreeItem: React.FC<DocumentTreeItemProps> = ({
   selectedFile,
   isImportFolder = false,
 }) => {
-  const { selectedFolder, setSelectedFolder, editingItem, setEditingItem, recentColors, setRecentColors } = useDocumentContext();
+  const { selectedFolder, setSelectedFolder, editingItem, setEditingItem, recentColors, setRecentColors, documents, setDocuments } = useDocumentContext();
   const [folderColor, setFolderColor] = useState((item as any).folderColor || folderColors[0]);
   const [isColorDialogOpen, setIsColorDialogOpen] = useState(false);
   const [customColor, setCustomColor] = useState("#FFFFFF");
@@ -78,16 +78,18 @@ const DocumentTreeItem: React.FC<DocumentTreeItemProps> = ({
   };
 
   const handleFolderClick = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Impede conflito com seleção
-
-    if (isFolder) {
-      onToggleExpanded(item.id); // Expande ou recolhe só esta pasta
-    }
-  
-    setSelectedFolder(prev => prev === item.id ? null : item.id); // Seleciona a pasta corretamente
+    e.stopPropagation();
+    setSelectedFolder(prev => prev === item.id ? null : item.id);
   };
 
-  // Modified: Add parameter type and provide default empty event when needed
+  // Toggle expansion independently of selection
+  const handleToggleExpanded = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isFolder) {
+      onToggleExpanded(item.id);
+    }
+  };
+
   const startRenaming = (e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     setEditingItem({ id: item.id, name: item.name });
@@ -98,6 +100,18 @@ const DocumentTreeItem: React.FC<DocumentTreeItemProps> = ({
       if (window.CSS && window.CSS.supports('color', color)) {
         setFolderColor(color);
       
+        // Function to update folder color in the document tree
+        const updateFolderColor = (doc: DocumentItem, id: string, color: string): DocumentItem => {
+          if (doc.id === id) {
+            return { ...doc, folderColor: color };
+          }
+          if (doc.children) {
+            return { ...doc, children: doc.children.map(child => updateFolderColor(child, id, color)) };
+          }
+          return doc;
+        };
+        
+        // Update documents with the new folder color
         const updatedDocuments = documents.map(doc => updateFolderColor(doc, item.id, color));
         setDocuments(updatedDocuments);
 
@@ -106,22 +120,11 @@ const DocumentTreeItem: React.FC<DocumentTreeItemProps> = ({
           setRecentColors(updatedRecentColors);
         }
       } else {
-        console.warn("Formato de cor inválido:", color);
+        console.warn("Invalid color format:", color);
       }
     } catch (error) {
-      console.error("Erro ao definir cor da pasta:", error);
+      console.error("Error setting folder color:", error);
     }
-  };
-
-  // Função auxiliar para atualizar cor da pasta no array de documentos
-  const updateFolderColor = (doc: DocumentItem, id: string, color: string): DocumentItem => {
-    if (doc.id === id) {
-      return { ...doc, folderColor: color };
-    }
-    if (doc.children) {
-      return { ...doc, children: doc.children.map(child => updateFolderColor(child, id, color)) };
-    }
-    return doc;
   };
 
   const handleApplyCustomColor = () => {
@@ -175,7 +178,7 @@ const DocumentTreeItem: React.FC<DocumentTreeItemProps> = ({
             isExpanded={isExpanded}
             isImportFolder={isImportFolder}
             folderColor={folderColor}
-            onToggleExpanded={onToggleExpanded}
+            onToggleExpanded={handleToggleExpanded}
             dragHandleProps={{ ...listeners, ...attributes }}
           />
         }

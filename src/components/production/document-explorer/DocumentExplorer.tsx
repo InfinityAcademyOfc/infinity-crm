@@ -102,7 +102,14 @@ const DocumentExplorerContent: React.FC<DocumentExplorerProps> = ({
         ) 
       : items;
     
-    return filteredItems.map(item => (
+    // Position "Importados" folder first in the list
+    const sortedItems = [...filteredItems].sort((a, b) => {
+      if (a.id === "folder-imported") return -1;
+      if (b.id === "folder-imported") return 1;
+      return 0;
+    });
+    
+    return sortedItems.map(item => (
       <DocumentTreeItem 
         key={item.id} 
         item={item} 
@@ -141,14 +148,14 @@ const DocumentExplorerContent: React.FC<DocumentExplorerProps> = ({
           "absolute top-4 right-0 z-50 transform transition-transform duration-300",
           sidebarCollapsed ? "translate-x-10" : "translate-x-5"
         )}
-        >
+      >
         <Button
           variant="default"
           size="icon"
           className="rounded-full h-8 w-8 shadow-md bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_0_15px_rgba(130,80,223,0.4)]"
           onClick={() => setSidebarCollapsed(prev => !prev)}
           aria-label={sidebarCollapsed ? "Expandir barra" : "Recolher barra"}
-          >
+        >
           {sidebarCollapsed ? (
             <ChevronRight className="h-4 w-4 text-white" />
           ) : (
