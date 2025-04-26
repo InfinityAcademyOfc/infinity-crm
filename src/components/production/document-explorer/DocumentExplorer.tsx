@@ -134,28 +134,27 @@ const DocumentExplorerContent: React.FC<DocumentExplorerProps> = ({
   const itemIds = getAllItemIds(documents, ["folder-imported"]);
   
   return (
-    <div className="relative h-full">
-      <div 
-        className={cn(
-          "absolute top-4 right-0 z-50 transform translate-x-1/2",
-          "transition-all duration-300", // animação de transição
-          sidebarCollapsed ? "translate-x-0" : "translate-x-1/2" // movimento junto com a sidebar
+    <div 
+      className={cn(
+        "absolute top-4 right-0 z-50 transform translate-x-1/2",
+        "transition-all duration-300", // animação de transição
+        sidebarCollapsed ? "translate-x-0" : "translate-x-1/2" // movimento junto com a sidebar
         )}
       >
-        <Button
-          variant="default"
-          size="icon"
-          className="rounded-full h-8 w-8 shadow-md bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_0_15px_rgba(130,80,223,0.4)]"
-          onClick={() => setSidebarCollapsed(prev => !prev)}
-          aria-label={sidebarCollapsed ? "Expandir barra" : "Recolher barra"}
+      <Button
+        variant="default"
+        size="icon"
+        className="rounded-full h-8 w-8 shadow-md bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_0_15px_rgba(130,80,223,0.4)]"
+        onClick={() => setSidebarCollapsed(prev => !prev)}
+        aria-label={sidebarCollapsed ? "Expandir barra" : "Recolher barra"}
         >
-          {sidebarCollapsed ? (
-            <ChevronRight className="h-4 w-4 text-white" /> 
-          ) : (
-            <ChevronLeft className="h-4 w-4 text-white" /> 
-          )}
-        </Button>
-      </div>
+        {sidebarCollapsed ? (
+          <ChevronRight className="h-4 w-4 text-white" /> 
+        ) : (
+          <ChevronLeft className="h-4 w-4 text-white" /> 
+        )}
+      </Button>
+    </div>
       
       {/* Sidebar content with animation */}
       <AnimatePresence>
