@@ -140,13 +140,12 @@ const DocumentExplorerContent: React.FC<DocumentExplorerProps> = ({
         size="icon" 
         variant="ghost" 
         className={cn(
-          "absolute top-4 right-0 z-50 transform translate-x-1/2",
-          "border border-border dark:border-gray-700 bg-background shadow-md",
-          "hover:bg-muted transition-all dark:hover:bg-gray-800"
-        )}
+          "absolute top-4 z-50 transition-all duration-300 ease-in-out",
+          sidebarCollapsed ? "left-2" : "left-[282px]" // <- muda o LEFT conforme a sidebar
+          )}
         onClick={() => setSidebarCollapsed(prev => !prev)}
         aria-label={sidebarCollapsed ? "Expandir barra" : "Recolher barra"}
-      >
+        >
         {sidebarCollapsed ? (
           <ChevronRight className="h-4 w-4 text-primary" />
         ) : (
