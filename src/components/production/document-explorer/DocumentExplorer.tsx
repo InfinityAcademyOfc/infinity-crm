@@ -140,9 +140,9 @@ const DocumentExplorerContent: React.FC<DocumentExplorerProps> = ({
         size="icon" 
         variant="ghost" 
         className={cn(
-          "absolute top-4 z-50 transition-all duration-300 ease-in-out",
-          sidebarCollapsed ? "left-2" : "left-[282px]" // <- muda o LEFT conforme a sidebar
-          )}
+          "rounded-full h-7 w-7 shadow-md bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_0_15px_rgba(130,80,223,0.4)]"
+        )}
+
         onClick={() => setSidebarCollapsed(prev => !prev)}
         aria-label={sidebarCollapsed ? "Expandir barra" : "Recolher barra"}
         >
