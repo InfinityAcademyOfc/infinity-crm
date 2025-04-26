@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import DocumentExplorer from "./document-explorer/DocumentExplorer";
@@ -7,10 +6,11 @@ import DocumentContent from "./document-editor/DocumentContent";
 import { useToast } from "@/hooks/use-toast";
 import { useDocumentContext } from "./document-explorer/contexts/DocumentContext";
 import { useDocumentOperations } from "./document-explorer/hooks/useDocumentOperations";
+import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 const DocumentEditor: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<DocumentItem | null>(null);
-  const [explorerCollapsed, setExplorerCollapsed] = useState(false);
   const { toast } = useToast();
   const { documents, setDocuments } = useDocumentContext();
   const { updateFileContent } = useDocumentOperations(() => {});
@@ -137,20 +137,13 @@ const DocumentEditor: React.FC = () => {
   }, [selectedFile]);
   
   return (
-    <div className="h-full border rounded-lg overflow-hidden" style={{ height: '842px' }}>
-      <ResizablePanelGroup direction="horizontal" className="h-full">
-        <ResizablePanel 
-          defaultSize={20} 
-          minSize={15} 
-          maxSize={30}
-          className={explorerCollapsed ? 'hidden' : ''}
-        >
+    <div className="h-full border rounded-lg overflow-hidden dark:border-gray-800 dark:neon-floor" style={{ height: '842px' }}>
+      <div className="flex h-full">
+        <div className="h-full">
           <DocumentExplorer onSelectFile={handleSelectFile} selectedFile={selectedFile} />
-        </ResizablePanel>
+        </div>
         
-        {!explorerCollapsed && <ResizableHandle withHandle />}
-        
-        <ResizablePanel>
+        <div className="flex-grow">
           {selectedFile ? (
             <DocumentContent 
               initialContent={selectedFile.content || ""}
@@ -168,8 +161,8 @@ const DocumentEditor: React.FC = () => {
               </div>
             </div>
           )}
-        </ResizablePanel>
-      </ResizablePanelGroup>
+        </div>
+      </div>
     </div>
   );
 };
