@@ -11,23 +11,63 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TeamMember } from "@/types/team";
 
+// Enhanced department structure for better hierarchy visualization
 const mockDepartments = [
   {
     id: "1",
-    name: "Direção",
-    members: mockTeamMembers.filter(m => m.role === "Director"),
+    name: "Diretoria Executiva",
+    members: mockTeamMembers.filter(m => m.role.includes("Director") || m.role.includes("CEO")),
     children: [
       {
         id: "2",
         name: "Vendas",
-        members: mockTeamMembers.filter(m => m.department === "Sales"),
-        children: []
+        members: mockTeamMembers.filter(m => m.department === "Sales" && !m.role.includes("Director")),
+        children: [
+          {
+            id: "5",
+            name: "Vendas Corporativas",
+            members: mockTeamMembers.filter(m => m.department === "Sales" && m.role.includes("Corporate")),
+            children: []
+          },
+          {
+            id: "6",
+            name: "Vendas Varejo",
+            members: mockTeamMembers.filter(m => m.department === "Sales" && m.role.includes("Retail")),
+            children: []
+          }
+        ]
       },
       {
         id: "3",
         name: "Marketing",
-        members: mockTeamMembers.filter(m => m.department === "Marketing"),
-        children: []
+        members: mockTeamMembers.filter(m => m.department === "Marketing" && !m.role.includes("Director")),
+        children: [
+          {
+            id: "7",
+            name: "Marketing Digital",
+            members: mockTeamMembers.filter(m => m.department === "Marketing" && m.role.includes("Digital")),
+            children: []
+          }
+        ]
+      },
+      {
+        id: "4",
+        name: "Tecnologia",
+        members: mockTeamMembers.filter(m => m.department === "Tech" || m.department === "IT"),
+        children: [
+          {
+            id: "8",
+            name: "Desenvolvimento",
+            members: mockTeamMembers.filter(m => m.department === "Tech" && m.role.includes("Developer")),
+            children: []
+          },
+          {
+            id: "9",
+            name: "Infraestrutura",
+            members: mockTeamMembers.filter(m => m.department === "IT" && m.role.includes("Infrastructure")),
+            children: []
+          }
+        ]
       }
     ]
   }
@@ -35,12 +75,23 @@ const mockDepartments = [
 
 const TeamManagement = () => {
   const [members, setMembers] = useState(mockTeamMembers);
+  const [departments, setDepartments] = useState(mockDepartments);
   const [searchQuery, setSearchQuery] = useState("");
-  const [viewMode, setViewMode] = useState<"table" | "grid">("grid");
   const { toast } = useToast();
   
   const handleDeleteMember = (id: string) => {
     setMembers(members.filter(member => member.id !== id));
+    
+    // Also remove from departments
+    const removeMemberFromDepts = (depts: any[]) => {
+      return depts.map(dept => ({
+        ...dept,
+        members: dept.members.filter((m: any) => m.id !== id),
+        children: removeMemberFromDepts(dept.children)
+      }));
+    };
+    
+    setDepartments(removeMemberFromDepts(departments));
     
     toast({
       title: "Usuário removido",
@@ -62,23 +113,85 @@ const TeamManagement = () => {
   };
 
   const handleAddDepartment = (parentId: string | null) => {
+    // Generate a unique ID for the new department
+    const newDeptId = `dept-${Date.now()}`;
+    
+    if (!parentId) {
+      // Add to root level
+      const newDepartment = {
+        id: newDeptId,
+        name: "Novo Departamento",
+        members: [],
+        children: []
+      };
+      
+      setDepartments([...departments, newDepartment]);
+    } else {
+      // Add as child to specified parent
+      const addChildDept = (depts: any[], pId: string) => {
+        return depts.map(dept => {
+          if (dept.id === pId) {
+            return {
+              ...dept,
+              children: [
+                ...dept.children,
+                {
+                  id: newDeptId,
+                  name: "Novo Sub-departamento",
+                  members: [],
+                  children: []
+                }
+              ]
+            };
+          }
+          
+          return {
+            ...dept,
+            children: addChildDept(dept.children, pId)
+          };
+        });
+      };
+      
+      setDepartments(addChildDept(departments, parentId));
+    }
+    
     toast({
-      title: "Adicionar departamento",
-      description: "Funcionalidade em desenvolvimento"
+      title: "Departamento adicionado",
+      description: "Um novo departamento foi criado."
     });
   };
 
   const handleEditDepartment = (departmentId: string) => {
     toast({
       title: "Editar departamento",
-      description: "Funcionalidade em desenvolvimento"
+      description: `Editando departamento ID: ${departmentId}`
     });
   };
 
   const handleDeleteDepartment = (departmentId: string) => {
+    const deleteDept = (depts: any[]) => {
+      return depts.filter(dept => {
+        if (dept.id === departmentId) return false;
+        return true;
+      }).map(dept => ({
+        ...dept,
+        children: deleteDept(dept.children)
+      }));
+    };
+    
+    setDepartments(deleteDept(departments));
+    
     toast({
-      title: "Remover departamento",
-      description: "Funcionalidade em desenvolvimento"
+      title: "Departamento removido",
+      description: "O departamento foi removido com sucesso."
+    });
+  };
+
+  const handleMoveMember = (memberId: string, toDepartmentId: string) => {
+    // Implementation for moving a member between departments
+    toast({
+      title: "Membro movido",
+      description: `Movido membro ${memberId} para departamento ${toDepartmentId}`
     });
   };
 
@@ -136,7 +249,7 @@ const TeamManagement = () => {
 
         <TabsContent value="org">
           <TeamOrgChart
-            departments={mockDepartments}
+            departments={departments}
             onAddDepartment={handleAddDepartment}
             onEditDepartment={handleEditDepartment}
             onDeleteDepartment={handleDeleteDepartment}

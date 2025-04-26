@@ -1,0 +1,54 @@
+
+@tailwind components;
+
+@layer components {
+  .tree-container {
+    --connector-color: #e2e8f0;
+    --node-spacing: 1.5rem;
+    width: 100%;
+  }
+
+  .tree-node {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .tree-connector-vertical {
+    position: absolute;
+    width: 2px;
+    background-color: var(--connector-color);
+    z-index: 0;
+  }
+
+  .tree-connector-horizontal {
+    position: absolute;
+    height: 2px;
+    background-color: var(--connector-color);
+    z-index: 0;
+  }
+
+  .tree-level {
+    display: flex;
+    justify-content: center;
+    gap: var(--node-spacing);
+    margin-bottom: var(--node-spacing);
+    width: 100%;
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .tree-level {
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .tree-connector-horizontal {
+      width: 2px;
+      height: var(--node-spacing);
+      left: 50%;
+      transform: translateX(-50%);
+    }
+  }
+}

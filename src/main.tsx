@@ -1,4 +1,3 @@
-
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
@@ -18,6 +17,7 @@ import './styles/animations.css'
 import './styles/tags.css'
 import './styles/whatsapp.css'
 import './styles/radix-overrides.css'
+import './styles/org-chart.css'
 
 // Responsive utilities
 import './styles/responsive.css'
