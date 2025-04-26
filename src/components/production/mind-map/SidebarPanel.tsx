@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import NodeTemplates from "./NodeTemplates";
+import NodeTemplates, { nodeTemplates } from "./NodeTemplates";
 
 interface SidebarPanelProps {
   sidebarOpen: boolean;
@@ -21,6 +21,22 @@ interface SidebarPanelProps {
     name: string;
     shape: string;
     color: string;
+    icon?: React.ReactNode;
+    category?: string;
+    nodes?: Array<{
+      label: string;
+      offsetX: number;
+      offsetY: number;
+      color: string;
+      shape: string;
+    }>;
+    connections?: Array<{
+      source: number;
+      target: number;
+      color?: string;
+      width?: number;
+    }>;
+    renderContent?: () => React.ReactNode;
   }>;
   onAddTemplate?: (template: any) => void;
 }
@@ -31,7 +47,7 @@ const SidebarPanel = ({
   nodeName,
   setNodeName,
   onAddNode,
-  templates = [],
+  templates = nodeTemplates,
   onAddTemplate
 }: SidebarPanelProps) => {
   const [toolTab, setToolTab] = useState<string>("nós");
@@ -104,7 +120,14 @@ const SidebarPanel = ({
                           id: shape.id,
                           name: shape.name,
                           shape: shape.id === "triangle" ? "triangle" : shape.id === "circle" ? "circle" : "rectangle",
-                          color: "#8B5CF6"
+                          color: "#8B5CF6",
+                          category: "formas",
+                          icon: shape.icon,
+                          renderContent: () => (
+                            <div className="w-8 h-8 flex items-center justify-center">
+                              {shape.icon}
+                            </div>
+                          )
                         };
                         onAddTemplate && onAddTemplate(template);
                       }}
