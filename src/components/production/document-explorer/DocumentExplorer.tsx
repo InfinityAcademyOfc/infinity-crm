@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Tree } from "@/components/ui/tree";
 import { DocumentProvider } from "./contexts/DocumentContext";
@@ -116,6 +117,7 @@ const DocumentExplorerContent: React.FC<DocumentExplorerProps> = ({
     ));
   };
 
+  // Get all document IDs for drag and drop functionality
   const getAllItemIds = (items: DocumentItem[], excludeIds: string[] = []): string[] => {
     return items.reduce((acc: string[], item) => {
       if (!excludeIds.includes(item.id)) {
@@ -128,30 +130,30 @@ const DocumentExplorerContent: React.FC<DocumentExplorerProps> = ({
     }, []);
   };
 
+  // Exclude the "Importados" folder from draggable items
   const itemIds = getAllItemIds(documents, ["folder-imported"]);
   
   return (
-    <>
-      <div 
-        className={cn(
-          "fixed top-6 z-50 transition-all duration-300",
-          sidebarCollapsed ? "left-4" : "left-[17.5rem]" // posição alinhada com sidebar
+    <div 
+      className={cn(
+        "fixed top-6 z-50 transition-all duration-300",
+        sidebarCollapsed ? "left-4" : "left-[17.5rem]" // posição alinhada com sidebar
         )}
       >
-        <Button
-          variant="default"
-          size="icon"
-          className="rounded-full h-8 w-8 shadow-md bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_0_15px_rgba(130,80,223,0.4)]"
-          onClick={() => setSidebarCollapsed(prev => !prev)}
-          aria-label={sidebarCollapsed ? "Expandir barra" : "Recolher barra"}
+      <Button
+        variant="default"
+        size="icon"
+        className="rounded-full h-8 w-8 shadow-md bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_0_15px_rgba(130,80,223,0.4)]"
+        onClick={() => setSidebarCollapsed(prev => !prev)}
+        aria-label={sidebarCollapsed ? "Expandir barra" : "Recolher barra"}
         >
-          {sidebarCollapsed ? (
-            <ChevronRight className="h-4 w-4 text-white" /> 
-          ) : (
-            <ChevronLeft className="h-4 w-4 text-white" /> 
-          )}
-        </Button>
-      </div>
+        {sidebarCollapsed ? (
+          <ChevronRight className="h-4 w-4 text-white" /> 
+        ) : (
+          <ChevronLeft className="h-4 w-4 text-white" /> 
+        )}
+      </Button>
+    </div>
       
       <AnimatePresence>
         {!sidebarCollapsed && (
@@ -182,7 +184,7 @@ const DocumentExplorerContent: React.FC<DocumentExplorerProps> = ({
           </motion.div>
         )}
       </AnimatePresence>
-    </>
+    </div>
   );
 };
 
