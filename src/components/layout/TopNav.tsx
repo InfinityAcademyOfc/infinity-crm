@@ -96,8 +96,8 @@ export function TopNav() {
       <div className="container flex h-14 items-center">
         {/* Título/subtítulo alinhados à esquerda apenas */}
         <div className="flex flex-col items-start justify-center flex-1 py-0 my-0">
-          {moduleInfo.name && <span className="text-md font-bold text-lg">{moduleInfo.name}</span>}
-          {moduleInfo.subtitle && <span className="text-muted-foreground text-sm py-0 my-0">{moduleInfo.subtitle}</span>}
+          {moduleInfo.name && <span className="text-md font-bold text-base">{moduleInfo.name}</span>}
+          {moduleInfo.subtitle && <span className="text-muted-foreground py-0 my-0 text-xs font-normal">{moduleInfo.subtitle}</span>}
         </div>
         <div className="flex items-center gap-2">
           <NotificationsDropdown />
