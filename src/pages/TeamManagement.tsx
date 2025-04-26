@@ -1,10 +1,11 @@
+
 import { useState } from "react";
 import { TeamTableView } from "@/components/team/TeamTableView";
 import { TeamGridView } from "@/components/team/TeamGridView";
 import TeamOrgChart from "@/components/team/TeamOrgChart";
 import { useToast } from "@/hooks/use-toast";
 import { mockTeamMembers } from "@/data/mockData";
-import { Search, Grid, List, LayoutOrganizeIcon } from "lucide-react";
+import { Search, Grid, List, LayoutPanelTop } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -114,7 +115,7 @@ const TeamManagement = () => {
             Tabela
           </TabsTrigger>
           <TabsTrigger value="org">
-            <LayoutOrganizeIcon className="h-4 w-4 mr-2" />
+            <LayoutPanelTop className="h-4 w-4 mr-2" />
             Organograma
           </TabsTrigger>
         </TabsList>
