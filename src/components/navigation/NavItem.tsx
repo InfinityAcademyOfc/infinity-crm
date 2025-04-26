@@ -22,7 +22,7 @@ const NavItem = ({
     <span className="shrink-0 transition-transform duration-200 ease-in-out hover:scale-110">
       {icon}
     </span>
-    {!collapsed && <span className="font-medium truncate transition-opacity duration-200 text-sm">
+    {!collapsed && <span className="truncate transition-opacity duration-200 text-sm font-normal">
         {label}
       </span>}
   </NavLink>;
