@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { TreeItem } from '@/components/ui/tree';
 import { Input } from '@/components/ui/input';
@@ -75,8 +76,7 @@ const DocumentTreeItem: React.FC<DocumentTreeItemProps> = ({
     zIndex: isDragging ? 999 : 'auto' as any,
   };
 
-  const handleFolderClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleFolderClick = () => {
     setSelectedFolder(item.id === selectedFolder ? null : item.id);
   };
 
