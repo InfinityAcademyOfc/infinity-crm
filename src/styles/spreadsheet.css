@@ -1,0 +1,187 @@
+
+/* Spreadsheet-specific styles */
+.spreadsheet-cell {
+  position: relative;
+  border: 1px solid #e2e8f0;
+  min-width: 100px;
+  height: 36px;
+  padding: 4px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  transition: all 0.1s ease;
+}
+
+.dark .spreadsheet-cell {
+  border-color: rgba(75, 85, 99, 0.6);
+}
+
+.spreadsheet-cell:hover {
+  background-color: rgba(239, 246, 255, 0.7);
+}
+
+.dark .spreadsheet-cell:hover {
+  background-color: rgba(55, 65, 81, 0.3);
+}
+
+.spreadsheet-cell.active {
+  border: 2px solid #3b82f6;
+  z-index: 1;
+}
+
+.dark .spreadsheet-cell.active {
+  border: 2px solid #60a5fa;
+  box-shadow: 0 0 5px rgba(125, 90, 250, 0.5);
+}
+
+.spreadsheet-cell.editing {
+  padding: 0;
+}
+
+.spreadsheet-cell input {
+  width: 100%;
+  height: 100%;
+  border: none;
+  padding: 4px;
+  outline: none;
+  background: transparent;
+}
+
+.spreadsheet-grid-container {
+  position: relative;
+  overflow: auto;
+  width: 100%;
+  height: 100%;
+}
+
+.spreadsheet-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: #f8fafc;
+  font-weight: 500;
+}
+
+.dark .spreadsheet-header {
+  background-color: #1f2937;
+}
+
+.spreadsheet-row-header {
+  position: sticky;
+  left: 0;
+  z-index: 5;
+  background-color: #f8fafc;
+  min-width: 36px;
+  width: 36px;
+  text-align: center;
+  font-weight: 500;
+}
+
+.dark .spreadsheet-row-header {
+  background-color: #1f2937;
+}
+
+.spreadsheet-corner {
+  position: sticky;
+  top: 0;
+  left: 0;
+  z-index: 15;
+  background-color: #f1f5f9;
+}
+
+.dark .spreadsheet-corner {
+  background-color: #374151;
+}
+
+.cell-drag-handle {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 6px;
+  height: 6px;
+  background-color: #3b82f6;
+  cursor: crosshair;
+}
+
+.dark .cell-drag-handle {
+  background-color: #60a5fa;
+}
+
+.cell-selection {
+  position: absolute;
+  border: 2px solid #3b82f6;
+  background-color: rgba(59, 130, 246, 0.1);
+  pointer-events: none;
+}
+
+.dark .cell-selection {
+  border-color: #60a5fa;
+  background-color: rgba(96, 165, 250, 0.1);
+  box-shadow: 0 0 8px rgba(125, 90, 250, 0.3);
+}
+
+/* Keyboard focus styles */
+.spreadsheet-cell:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px #3b82f6;
+}
+
+.dark .spreadsheet-cell:focus-visible {
+  box-shadow: inset 0 0 0 2px #60a5fa, 0 0 5px rgba(125, 90, 250, 0.5);
+}
+
+/* Cell formatting styles */
+.cell-bold {
+  font-weight: bold;
+}
+
+.cell-italic {
+  font-style: italic;
+}
+
+.cell-underline {
+  text-decoration: underline;
+}
+
+.cell-align-left {
+  text-align: left;
+}
+
+.cell-align-center {
+  text-align: center;
+}
+
+.cell-align-right {
+  text-align: right;
+}
+
+/* Animation for cell value changes */
+@keyframes cell-update {
+  0% {
+    background-color: rgba(59, 130, 246, 0.2);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.cell-updated {
+  animation: cell-update 1s ease;
+}
+
+/* Dark mode enhancements */
+.dark .spreadsheet-toolbar {
+  border-color: rgba(75, 85, 99, 0.6);
+  background-color: rgba(31, 41, 55, 0.8);
+  backdrop-filter: blur(10px);
+}
+
+.dark .spreadsheet-toolbar button:hover {
+  background-color: rgba(55, 65, 81, 0.7);
+  box-shadow: 0 0 8px rgba(125, 90, 250, 0.4);
+}
+
+.dark .spreadsheet-toolbar .active {
+  background-color: rgba(79, 70, 229, 0.2);
+  box-shadow: 0 0 8px rgba(125, 90, 250, 0.4);
+}

@@ -58,6 +58,21 @@ export function SidebarProvider({
     }
   }, [isMobile, setOpen])
 
+  // Fix for mobile menu issue - make sure the touch events work correctly
+  React.useEffect(() => {
+    if (isMobile) {
+      const handleTouchStart = (e: TouchEvent) => {
+        // Prevent default behavior only if needed
+        if (e.target && (e.target as HTMLElement).closest('[data-sidebar-toggle]')) {
+          e.preventDefault();
+        }
+      };
+
+      document.addEventListener('touchstart', handleTouchStart, { passive: false });
+      return () => document.removeEventListener('touchstart', handleTouchStart);
+    }
+  }, [isMobile]);
+
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (
