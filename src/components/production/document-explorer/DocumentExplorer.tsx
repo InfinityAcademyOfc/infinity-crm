@@ -134,20 +134,21 @@ const DocumentExplorerContent: React.FC<DocumentExplorerProps> = ({
   const itemIds = getAllItemIds(documents, ["folder-imported"]);
   
   return (
-    <div className="relative">
+    <div className="relative flex h-full">
+      {/* Botão flutuante para recolher/expandir a sidebar */}
       <div 
         className={cn(
-          "fixed top-6 z-50 transition-all duration-300",
-          sidebarCollapsed ? "left-4" : "left-[17.5rem]"
+          "absolute top-4 right-0 z-50 transform transition-transform duration-300",
+          sidebarCollapsed ? "translate-x-0" : "translate-x-1/2"
         )}
-      >
+        >
         <Button
           variant="default"
           size="icon"
           className="rounded-full h-8 w-8 shadow-md bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_0_15px_rgba(130,80,223,0.4)]"
           onClick={() => setSidebarCollapsed(prev => !prev)}
           aria-label={sidebarCollapsed ? "Expandir barra" : "Recolher barra"}
-        >
+          >
           {sidebarCollapsed ? (
             <ChevronRight className="h-4 w-4 text-white" />
           ) : (
