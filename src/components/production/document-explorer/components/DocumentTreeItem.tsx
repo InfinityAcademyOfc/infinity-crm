@@ -78,12 +78,13 @@ const DocumentTreeItem: React.FC<DocumentTreeItemProps> = ({
   };
 
   const handleFolderClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
+    e.stopPropagation(); // Impede conflito com seleção
+
     if (isFolder) {
-      onToggleExpanded(item.id);
-    } else {
-      onSelect(item);
+      onToggleExpanded(item.id); // Expande ou recolhe só esta pasta
     }
+  
+    setSelectedFolder(prev => prev === item.id ? null : item.id); // Seleciona a pasta corretamente
   };
 
   // Modified: Add parameter type and provide default empty event when needed
@@ -97,40 +98,31 @@ const DocumentTreeItem: React.FC<DocumentTreeItemProps> = ({
       if (window.CSS && window.CSS.supports('color', color)) {
         setFolderColor(color);
       
-        (item as any).folderColor = color;
-
-        const updatedDocs = documents.map(doc => 
-          doc.id === item.id
-          ? { ...doc, folderColor: color }
-          : doc.children
-          ? { ...doc, children: updateChildFolderColor(doc.children, item.id, color) }
-          : doc
-      );
-        setDocuments(updatedDocs);
+        const updatedDocuments = documents.map(doc => updateFolderColor(doc, item.id, color));
+        setDocuments(updatedDocuments);
 
         if (!folderColors.includes(color)) {
           const updatedRecentColors = [color, ...recentColors.filter(c => c !== color)].slice(0, 10);
           setRecentColors(updatedRecentColors);
         }
       } else {
-        console.warn("Invalid color format:", color);
+        console.warn("Formato de cor inválido:", color);
       }
     } catch (error) {
-      console.error("Error setting folder color:", error);
+      console.error("Erro ao definir cor da pasta:", error);
     }
   };
 
-// Função auxiliar:
-const updateChildFolderColor = (children: DocumentItem[], id: string, color: string): DocumentItem[] => {
-  return children.map(child => 
-    child.id === id
-      ? { ...child, folderColor: color }
-      : child.children
-      ? { ...child, children: updateChildFolderColor(child.children, id, color) }
-      : child
-  );
-};
-
+  // Função auxiliar para atualizar cor da pasta no array de documentos
+  const updateFolderColor = (doc: DocumentItem, id: string, color: string): DocumentItem => {
+    if (doc.id === id) {
+      return { ...doc, folderColor: color };
+    }
+    if (doc.children) {
+      return { ...doc, children: doc.children.map(child => updateFolderColor(child, id, color)) };
+    }
+    return doc;
+  };
 
   const handleApplyCustomColor = () => {
     try {
