@@ -1,7 +1,9 @@
+
 import React, { useState } from "react";
 import KanbanBoard from "@/components/kanban/KanbanBoard";
 import { KanbanColumnItem } from "@/components/kanban/types";
 import { SectionHeader } from "@/components/ui/section-header";
+import { useToast } from "@/hooks/use-toast";
 
 const initialColumns: KanbanColumnItem[] = [
   {
@@ -154,12 +156,57 @@ const initialColumns: KanbanColumnItem[] = [
 
 const ClientLtvFunnel = () => {
   const [columns, setColumns] = useState<KanbanColumnItem[]>(initialColumns);
+  const { toast } = useToast();
+  
+  // Function to export data
+  const handleExport = () => {
+    // Prepare export data
+    const exportData = {
+      funnel: "LTV",
+      columns: columns.map(col => ({
+        title: col.title,
+        cards: col.cards.length,
+        totalValue: col.cards.reduce((sum, card) => {
+          const value = card.metadata?.value || "0";
+          const numericValue = parseFloat(value.replace(/[^\d.,]/g, "").replace(",", "."));
+          return sum + (isNaN(numericValue) ? 0 : numericValue);
+        }, 0)
+      })),
+      totalClients: columns.reduce((sum, col) => sum + col.cards.length, 0),
+      exportDate: new Date().toISOString()
+    };
+    
+    // Create JSON file and download it
+    const jsonString = JSON.stringify(exportData, null, 2);
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ltv-funnel-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    toast({
+      title: "Exportação concluída",
+      description: "Os dados do funil LTV foram exportados com sucesso.",
+    });
+  };
 
   return (
     <div className="space-y-4">
       <SectionHeader 
         title="Funil de Valor do Cliente (LTV)" 
         description="Visualize e gerencie o ciclo de vida e valor de seus clientes" 
+        actions={[
+          {
+            icon: "download",
+            label: "Exportar",
+            onClick: handleExport,
+            variant: "outline"
+          }
+        ]}
       />
       <div className="overflow-x-auto pb-4">
         <KanbanBoard columns={columns} setColumns={setColumns} />

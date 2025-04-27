@@ -1,33 +1,83 @@
 
 import { useState } from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
-import { ArrowDownRight, ArrowUpRight, PieChart } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, PieChart, Download } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { formatCurrency } from "@/lib/formatters";
+import { useToast } from "@/hooks/use-toast";
 
-// Sample financial data
-const financialData = [
+// Sample financial data - full 12 months
+const completeFinancialData = [
   { month: "Jan", receitas: 95000, despesas: 78000, lucro: 17000 },
   { month: "Fev", receitas: 88000, despesas: 72000, lucro: 16000 },
   { month: "Mar", receitas: 92000, despesas: 75000, lucro: 17000 },
   { month: "Abr", receitas: 99000, despesas: 79000, lucro: 20000 },
   { month: "Mai", receitas: 103000, despesas: 82000, lucro: 21000 },
   { month: "Jun", receitas: 85000, despesas: 71000, lucro: 14000 },
+  { month: "Jul", receitas: 91000, despesas: 76000, lucro: 15000 },
+  { month: "Ago", receitas: 88000, despesas: 73000, lucro: 15000 },
+  { month: "Set", receitas: 94000, despesas: 77000, lucro: 17000 },
+  { month: "Out", receitas: 98000, despesas: 81000, lucro: 17000 },
+  { month: "Nov", receitas: 105000, despesas: 84000, lucro: 21000 },
+  { month: "Dez", receitas: 110000, despesas: 89000, lucro: 21000 },
 ];
 
 const FinanceChart = () => {
   const [period, setPeriod] = useState("6m");
   const [view, setView] = useState("receitas");
+  const { toast } = useToast();
+  
+  // Get financial data based on period
+  const financialData = (() => {
+    if (period === "3m") {
+      return completeFinancialData.slice(-3);
+    } else if (period === "6m") {
+      return completeFinancialData.slice(-6);
+    } else {
+      return completeFinancialData;
+    }
+  })();
   
   // Calculate totals
   const totalReceitas = financialData.reduce((acc, item) => acc + item.receitas, 0);
   const totalDespesas = financialData.reduce((acc, item) => acc + item.despesas, 0);
   const totalLucro = financialData.reduce((acc, item) => acc + item.lucro, 0);
   const lastMonthLucro = financialData[financialData.length - 1].lucro;
-  const prevMonthLucro = financialData[financialData.length - 2].lucro;
-  const lucroTrend = ((lastMonthLucro - prevMonthLucro) / prevMonthLucro) * 100;
+  const prevMonthLucro = financialData[financialData.length - 2]?.lucro || 0;
+  const lucroTrend = prevMonthLucro ? ((lastMonthLucro - prevMonthLucro) / prevMonthLucro) * 100 : 0;
+  
+  const handleExportDRE = () => {
+    // Create export data based on the current view and period
+    let exportData = {
+      tipo: view === "receitas" ? "Receitas" : view === "despesas" ? "Despesas" : "Lucro",
+      periodo: period === "3m" ? "Últimos 3 Meses" : period === "6m" ? "Últimos 6 Meses" : "Últimos 12 Meses",
+      dados: financialData.map(item => ({
+        mes: item.month,
+        valor: item[view as keyof typeof item]
+      })),
+      total: view === "receitas" ? totalReceitas : view === "despesas" ? totalDespesas : totalLucro,
+      dataExportacao: new Date().toISOString()
+    };
+    
+    // Create and download JSON file
+    const jsonString = JSON.stringify(exportData, null, 2);
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `dre-${view}-${period}-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    toast({
+      title: `Exportação concluída`,
+      description: `Os dados de ${view === "receitas" ? "Receitas" : view === "despesas" ? "Despesas" : "Lucro"} foram exportados com sucesso.`,
+    });
+  };
   
   return (
     <Card className="h-full">
@@ -48,8 +98,13 @@ const FinanceChart = () => {
                 {Math.abs(lucroTrend).toFixed(1)}%
               </span>
             </div>
-            <Button variant="outline" size="sm" className="gap-2 hidden md:flex">
-              <PieChart size={16} />
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="gap-2 hidden md:flex"
+              onClick={handleExportDRE}
+            >
+              <Download size={16} />
               Exportar
             </Button>
           </div>

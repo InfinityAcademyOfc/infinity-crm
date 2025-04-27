@@ -45,7 +45,7 @@ const Dashboard = () => {
     let filteredByDate = [...mockSalesData];
     
     // Apply period filter based on exact count of months
-    if (filterPeriod === "3" || filterPeriod === "6") {
+    if (filterPeriod === "3" || filterPeriod === "6" || filterPeriod === "12") {
       const monthsToShow = parseInt(filterPeriod);
       filteredByDate = mockSalesData.slice(-monthsToShow); // Take only the last N months
     }

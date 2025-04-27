@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useKanbanBoard } from "@/hooks/useKanbanBoard";
 import KanbanControls from "./KanbanControls";
@@ -12,6 +12,7 @@ import {
   getResponsiveColumnWidth,
   getContainerHeight
 } from "./utils/kanbanUtils";
+import { useToast } from "@/hooks/use-toast";
 
 interface KanbanBoardProps {
   columns: KanbanColumnItem[];
@@ -61,6 +62,13 @@ const KanbanBoard = ({
     handleEditColumn
   } = useKanbanBoard(columns, onColumnUpdate);
 
+  // New refs and state for drag-to-pan functionality
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startPosition, setStartPosition] = useState({ x: 0, y: 0 });
+  const [scrollPosition, setScrollPosition] = useState({ x: 0, y: 0 });
+  const { toast } = useToast();
+
   // Get unique assignees from all cards
   const assignees = getUniqueAssignees(columns);
 
@@ -82,6 +90,124 @@ const KanbanBoard = ({
 
   const handleEditColumnEvent = () => {
     handleEditColumn(columns, setColumns);
+  };
+
+  // New event handlers for drag-to-pan functionality
+  const handleMouseDown = (e: React.MouseEvent) => {
+    // Only start drag if it's not on a kanban card (check for data-draggable attribute)
+    if ((e.target as HTMLElement).closest('[data-draggable="true"]')) {
+      return;
+    }
+    
+    setIsDragging(true);
+    setStartPosition({ x: e.clientX, y: e.clientY });
+    setScrollPosition({
+      x: containerRef.current?.scrollLeft || 0,
+      y: containerRef.current?.scrollTop || 0,
+    });
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !containerRef.current) return;
+    
+    // Calculate the delta from the start position
+    const deltaX = startPosition.x - e.clientX;
+    const deltaY = startPosition.y - e.clientY;
+    
+    // Apply the scroll
+    containerRef.current.scrollLeft = scrollPosition.x + deltaX;
+    containerRef.current.scrollTop = scrollPosition.y + deltaY;
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  // Same for touch events
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if ((e.target as HTMLElement).closest('[data-draggable="true"]')) {
+      return;
+    }
+    
+    setIsDragging(true);
+    setStartPosition({ x: e.touches[0].clientX, y: e.touches[0].clientY });
+    setScrollPosition({
+      x: containerRef.current?.scrollLeft || 0,
+      y: containerRef.current?.scrollTop || 0,
+    });
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging || !containerRef.current) return;
+    
+    // Calculate the delta from the start position
+    const deltaX = startPosition.x - e.touches[0].clientX;
+    const deltaY = startPosition.y - e.touches[0].clientY;
+    
+    // Apply the scroll
+    containerRef.current.scrollLeft = scrollPosition.x + deltaX;
+    containerRef.current.scrollTop = scrollPosition.y + deltaY;
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+  };
+  
+  // For move and duplicate card functionality
+  const [moveCardDialogOpen, setMoveCardDialogOpen] = useState(false);
+  const [cardToMove, setCardToMove] = useState<{cardId: string, columnId: string} | null>(null);
+  const [moveAction, setMoveAction] = useState<'move' | 'duplicate'>('move');
+
+  const handleMoveCardRequest = (cardId: string, columnId: string, action: 'move' | 'duplicate') => {
+    setCardToMove({ cardId, columnId });
+    setMoveAction(action);
+    setMoveCardDialogOpen(true);
+  };
+
+  const handleMoveCard = (targetColumnId: string) => {
+    if (!cardToMove) return;
+    
+    const { cardId, columnId } = cardToMove;
+    
+    // Find source column and card
+    const sourceColumn = columns.find(col => col.id === columnId);
+    if (!sourceColumn) return;
+    
+    const cardIndex = sourceColumn.cards.findIndex(card => card.id === cardId);
+    if (cardIndex === -1) return;
+    
+    const card = sourceColumn.cards[cardIndex];
+    
+    // Update columns based on action type
+    const updatedColumns = columns.map(col => {
+      // Add card to target column
+      if (col.id === targetColumnId) {
+        return {
+          ...col,
+          cards: [...col.cards, { ...card }]
+        };
+      }
+      
+      // If moving (not duplicating), remove from source column
+      if (moveAction === 'move' && col.id === columnId) {
+        return {
+          ...col,
+          cards: col.cards.filter((_, i) => i !== cardIndex)
+        };
+      }
+      
+      return col;
+    });
+    
+    setColumns(updatedColumns);
+    setMoveCardDialogOpen(false);
+    setCardToMove(null);
+    
+    const actionText = moveAction === 'move' ? 'movido' : 'duplicado';
+    toast({
+      title: `Card ${actionText}`,
+      description: `O card foi ${actionText} com sucesso.`,
+    });
   };
 
   // Filter columns based on assignee
@@ -107,22 +233,40 @@ const KanbanBoard = ({
         isExpanded={isExpanded}
       />
 
-      <KanbanColumnList 
-        columns={columns}
-        filteredColumns={filteredColumns}
-        columnWidth={columnWidth}
-        onAddCard={onAddCard}
-        onEditCard={onEditCard}
-        onDeleteCard={onDeleteCard}
-        handleDragStart={handleDragStart}
-        handleDragOver={handleDragOver}
-        handleDrop={handleDropEvent}
-        openEditColumn={openEditColumn}
-        handleDeleteColumn={handleDeleteColumnEvent}
-        cardContent={cardContent}
-        modern={modern}
-        containerHeight={containerHeight}
-      />
+      <div 
+        ref={containerRef}
+        className="kanban-container overflow-x-auto pb-4"
+        style={{ 
+          height: containerHeight,
+          cursor: isDragging ? 'grabbing' : 'grab',
+          userSelect: isDragging ? 'none' : 'auto',
+        }}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        <KanbanColumnList 
+          columns={columns}
+          filteredColumns={filteredColumns}
+          columnWidth={columnWidth}
+          onAddCard={onAddCard}
+          onEditCard={onEditCard}
+          onDeleteCard={onDeleteCard}
+          handleDragStart={handleDragStart}
+          handleDragOver={handleDragOver}
+          handleDrop={handleDropEvent}
+          openEditColumn={openEditColumn}
+          handleDeleteColumn={handleDeleteColumnEvent}
+          cardContent={cardContent}
+          modern={modern}
+          containerHeight={containerHeight}
+          onMoveCard={handleMoveCardRequest}
+        />
+      </div>
 
       {/* Add Column Dialog */}
       <KanbanColumnDialog 
@@ -147,6 +291,15 @@ const KanbanBoard = ({
         setColumnColor={setNewColumnColor}
         onSave={handleEditColumnEvent}
         isEdit={true}
+      />
+
+      {/* Move/Duplicate Card Dialog */}
+      <KanbanColumnDialog 
+        isOpen={moveCardDialogOpen}
+        onOpenChange={setMoveCardDialogOpen}
+        title={moveAction === 'move' ? "Mover Card" : "Duplicar Card"}
+        targetColumns={columns.filter(col => !cardToMove || col.id !== cardToMove.columnId)}
+        onSelectColumn={handleMoveCard}
       />
     </div>
   );

@@ -1,6 +1,6 @@
 
 import { ReactNode, useState } from "react";
-import { MoreHorizontal } from "lucide-react";
+import { MoreHorizontal, Copy, ArrowRightLeft } from "lucide-react";
 import { KanbanCardItem } from "./types";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -8,6 +8,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { getPriorityColor, ChecklistItem } from "./KanbanCardUtils";
@@ -19,6 +20,7 @@ interface KanbanCardProps {
   onDragStart: () => void;
   onClick: () => void;
   onDelete: () => void;
+  onMove?: (action: 'move' | 'duplicate') => void;
   children?: ReactNode;
   modern?: boolean;
 }
@@ -28,6 +30,7 @@ const KanbanCard = ({
   onDragStart,
   onClick,
   onDelete,
+  onMove,
   children,
   modern = true,
 }: KanbanCardProps) => {
@@ -56,6 +59,7 @@ const KanbanCard = ({
         draggable
         onDragStart={onDragStart}
         onClick={() => setIsDetailOpen(true)}
+        data-draggable="true"
       >
         <MinimalistCardView card={card} priorityBadge={priorityBadge} />
         
@@ -64,6 +68,31 @@ const KanbanCard = ({
             <MoreHorizontal size={14} className="text-gray-500 dark:text-gray-400" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
+            {onMove && (
+              <>
+                <DropdownMenuItem
+                  className="flex items-center gap-2 cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onMove('move');
+                  }}
+                >
+                  <ArrowRightLeft size={14} />
+                  Mover card
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="flex items-center gap-2 cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onMove('duplicate');
+                  }}
+                >
+                  <Copy size={14} />
+                  Duplicar card
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </>
+            )}
             <DropdownMenuItem
               className="text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400 cursor-pointer"
               onClick={(e) => {
@@ -83,6 +112,7 @@ const KanbanCard = ({
         isOpen={isDetailOpen}
         onClose={() => setIsDetailOpen(false)}
         onChecklistChange={setChecklist}
+        onMove={onMove}
       />
     </>
   );

@@ -1,86 +1,140 @@
 
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { KanbanColumnItem } from "./types";
-import { cn } from "@/lib/utils";
 
 interface KanbanColumnDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
-  columnTitle: string;
-  setColumnTitle: (title: string) => void;
-  columnColor: string;
-  setColumnColor: (color: string) => void;
-  onSave: () => void;
+  columnTitle?: string;
+  columnColor?: string;
+  setColumnTitle?: (title: string) => void;
+  setColumnColor?: (color: string) => void;
+  onSave?: () => void;
   isEdit?: boolean;
+  targetColumns?: KanbanColumnItem[];
+  onSelectColumn?: (columnId: string) => void;
 }
 
 const KanbanColumnDialog = ({
   isOpen,
   onOpenChange,
   title,
-  columnTitle,
+  columnTitle = "",
+  columnColor = "bg-gray-200 dark:bg-gray-700",
   setColumnTitle,
-  columnColor,
   setColumnColor,
   onSave,
-  isEdit = false
+  isEdit = false,
+  targetColumns,
+  onSelectColumn
 }: KanbanColumnDialogProps) => {
-  const colorOptions = [
-    { light: "bg-gray-200", dark: "dark:bg-gray-700" },
-    { light: "bg-blue-200", dark: "dark:bg-blue-800" },
-    { light: "bg-green-200", dark: "dark:bg-green-800" },
-    { light: "bg-red-200", dark: "dark:bg-red-800" },
-    { light: "bg-yellow-200", dark: "dark:bg-yellow-800" },
-    { light: "bg-purple-200", dark: "dark:bg-purple-800" },
-    { light: "bg-pink-200", dark: "dark:bg-pink-800" },
-    { light: "bg-indigo-200", dark: "dark:bg-indigo-800" },
+  const colors = [
+    "bg-gray-200 dark:bg-gray-700",
+    "bg-blue-200 dark:bg-blue-900",
+    "bg-green-200 dark:bg-green-900",
+    "bg-yellow-200 dark:bg-yellow-900",
+    "bg-red-200 dark:bg-red-900",
+    "bg-purple-200 dark:bg-purple-900",
+    "bg-pink-200 dark:bg-pink-900",
+    "bg-indigo-200 dark:bg-indigo-900",
+    "bg-orange-200 dark:bg-orange-900",
   ];
 
-  const handleColorSelect = (light: string) => {
-    const dark = colorOptions.find(c => c.light === light)?.dark || "dark:bg-gray-700";
-    setColumnColor(`${light} ${dark}`);
+  const handleSave = () => {
+    if (onSave) onSave();
   };
+
+  const isMoveDialog = targetColumns !== undefined;
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-background text-foreground">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="columnTitle">Título da Coluna</Label>
-            <Input 
-              id="columnTitle" 
-              value={columnTitle} 
-              onChange={(e) => setColumnTitle(e.target.value)}
-              placeholder={isEdit ? "" : "Ex: A Fazer, Em Progresso, Concluído"} 
-              className="bg-background"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>Cor da Coluna</Label>
-            <div className="flex flex-wrap gap-2">
-              {colorOptions.map(({light, dark}) => (
-                <div 
-                  key={light}
-                  className={cn(
-                    `w-8 h-8 rounded-full ${light} cursor-pointer border-2`,
-                    columnColor.includes(light) ? 'border-primary' : 'border-transparent'
-                  )}
-                  onClick={() => handleColorSelect(light)}
-                />
-              ))}
+        
+        {!isMoveDialog ? (
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="column-title">Título da coluna</Label>
+              <Input
+                id="column-title"
+                value={columnTitle}
+                onChange={(e) => setColumnTitle?.(e.target.value)}
+                placeholder="Digite o título da coluna"
+                autoFocus
+              />
+            </div>
+            
+            <div className="grid gap-2">
+              <Label>Cor da coluna</Label>
+              <RadioGroup
+                value={columnColor}
+                onValueChange={setColumnColor}
+                className="grid grid-cols-3 gap-2"
+              >
+                {colors.map((color) => (
+                  <div key={color} className="flex items-center space-x-2">
+                    <RadioGroupItem
+                      value={color}
+                      id={color}
+                      className="sr-only"
+                    />
+                    <Label
+                      htmlFor={color}
+                      className={`w-8 h-8 rounded cursor-pointer border-2 ${
+                        columnColor === color
+                          ? "border-primary ring-2 ring-primary/20"
+                          : "border-transparent"
+                      } ${color}`}
+                    />
+                  </div>
+                ))}
+              </RadioGroup>
             </div>
           </div>
-        </div>
+        ) : (
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label>Selecione a coluna de destino</Label>
+              <RadioGroup
+                onValueChange={(value) => onSelectColumn?.(value)}
+                className="grid gap-2"
+              >
+                {targetColumns.map((column) => (
+                  <div key={column.id} className="flex items-center space-x-2">
+                    <RadioGroupItem
+                      value={column.id}
+                      id={column.id}
+                    />
+                    <Label
+                      htmlFor={column.id}
+                      className="flex items-center cursor-pointer"
+                    >
+                      <div className={`w-4 h-4 rounded mr-2 ${column.color || "bg-gray-200"}`}></div>
+                      {column.title}
+                    </Label>
+                  </div>
+                ))}
+              </RadioGroup>
+            </div>
+          </div>
+        )}
+        
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button onClick={onSave}>{isEdit ? "Salvar" : "Adicionar"}</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancelar
+          </Button>
+          {!isMoveDialog ? (
+            <Button onClick={handleSave} disabled={!columnTitle?.trim()}>
+              {isEdit ? "Salvar" : "Adicionar"}
+            </Button>
+          ) : null}
         </DialogFooter>
       </DialogContent>
     </Dialog>

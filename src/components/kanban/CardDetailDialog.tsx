@@ -1,126 +1,159 @@
 
 import { useState } from "react";
-import { Link } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Textarea } from "@/components/ui/textarea";
+import { Calendar, Clock, User, ArrowRightLeft, Copy } from "lucide-react";
 import { KanbanCardItem } from "./types";
-import { ChecklistItem, getPriorityColor } from "./KanbanCardUtils";
+import { formatDate } from "@/lib/formatters";
 import ChecklistComponent from "./ChecklistComponent";
-import { formatCurrency } from "@/lib/formatters";
+import { ChecklistItem } from "./KanbanCardUtils";
 
 interface CardDetailDialogProps {
   card: KanbanCardItem;
   isOpen: boolean;
   onClose: () => void;
-  onChecklistChange?: (checklist: ChecklistItem[]) => void;
+  onChecklistChange?: (items: ChecklistItem[]) => void;
+  onMove?: (action: 'move' | 'duplicate') => void;
 }
 
-const CardDetailDialog = ({ card, isOpen, onClose, onChecklistChange }: CardDetailDialogProps) => {
-  const [checklist, setChecklist] = useState<ChecklistItem[]>(card.checklist || []);
+const CardDetailDialog = ({
+  card,
+  isOpen,
+  onClose,
+  onChecklistChange,
+  onMove
+}: CardDetailDialogProps) => {
+  const [notes, setNotes] = useState(card.description || "");
+  const [checklist, setChecklist] = useState<ChecklistItem[]>(
+    card.checklist || []
+  );
 
-  const handleChecklistChange = (newChecklist: ChecklistItem[]) => {
-    setChecklist(newChecklist);
+  const handleNotesChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setNotes(e.target.value);
+  };
+
+  const handleChecklistChange = (items: ChecklistItem[]) => {
+    setChecklist(items);
     if (onChecklistChange) {
-      onChecklistChange(newChecklist);
+      onChecklistChange(items);
     }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-md sm:max-w-lg md:max-w-2xl overflow-hidden">
         <DialogHeader>
-          <DialogTitle className="text-lg">{card.title}</DialogTitle>
+          <DialogTitle className="text-xl font-semibold">{card.title}</DialogTitle>
         </DialogHeader>
         
-        <div className="space-y-4 my-2">
-          {/* Description */}
-          <div>
-            <h3 className="text-sm font-medium mb-1">Descrição</h3>
-            <p className="text-sm text-gray-700 dark:text-gray-300">{card.description || "Sem descrição"}</p>
-          </div>
-          
-          {/* Client */}
-          {card.client && (
-            <div>
-              <h3 className="text-sm font-medium mb-1">Cliente</h3>
-              <p className="text-sm text-gray-700 dark:text-gray-300">{card.client}</p>
-            </div>
-          )}
-          
-          {/* Tags and Priority */}
-          <div>
-            <h3 className="text-sm font-medium mb-1">Selos e Prioridade</h3>
-            <div className="flex flex-wrap gap-1">
-              {card.tags?.map((tag, index) => (
-                <Badge key={index} variant="outline" className={tag.color}>
+        <div className="mt-2 space-y-6 max-h-[calc(80vh-200px)] overflow-y-auto p-1">
+          {/* Card tags */}
+          {card.tags && card.tags.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {card.tags.map((tag, index) => (
+                <Badge key={index} className={tag.color}>
                   {tag.label}
                 </Badge>
               ))}
-              {card.priority && (
-                <Badge className={getPriorityColor(card.priority)}>
-                  {card.priority.charAt(0).toUpperCase() + card.priority.slice(1)}
-                </Badge>
-              )}
-            </div>
-          </div>
-          
-          {/* Assignee */}
-          {card.assignedTo && (
-            <div>
-              <h3 className="text-sm font-medium mb-1">Responsável</h3>
-              <div className="flex items-center">
-                <Avatar className="h-6 w-6 mr-2">
-                  <AvatarImage src={card.assignedTo.avatar || "/placeholder.svg"} alt={card.assignedTo.name} />
-                  <AvatarFallback>
-                    {card.assignedTo.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="text-sm">{card.assignedTo.name}</span>
-              </div>
             </div>
           )}
           
-          {/* Value */}
-          {card.value !== undefined && (
-            <div>
-              <h3 className="text-sm font-medium mb-1">Valor</h3>
-              <p className="text-sm font-medium">{formatCurrency(card.value)}</p>
-            </div>
-          )}
-          
-          {/* Checklist */}
-          <ChecklistComponent checklist={checklist} onChecklistChange={handleChecklistChange} />
-          
-          {/* Links */}
-          <div>
-            <h3 className="text-sm font-medium mb-1">Links</h3>
-            {card.links ? (
-              <div className="space-y-1">
-                {card.links.map((link, index) => (
-                  <a 
-                    key={index} 
-                    href={link.url} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="flex items-center text-sm text-blue-600 dark:text-blue-400 hover:underline"
-                  >
-                    <Link size={14} className="mr-1" />
-                    {link.label || link.url}
-                  </a>
-                ))}
+          {/* Card metadata */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {card.value !== undefined && (
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-green-100 dark:bg-green-900/20 rounded-full">
+                  <Clock className="h-4 w-4 text-green-600 dark:text-green-400" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Valor</p>
+                  <p className="font-medium">
+                    {typeof card.value === 'number'
+                      ? new Intl.NumberFormat('pt-BR', {
+                          style: 'currency',
+                          currency: 'BRL',
+                        }).format(card.value)
+                      : card.value}
+                  </p>
+                </div>
               </div>
-            ) : (
-              <p className="text-sm text-gray-500 dark:text-gray-400">Nenhum link adicionado</p>
+            )}
+            
+            {card.dueDate && (
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-full">
+                  <Calendar className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Prazo</p>
+                  <p className="font-medium">{formatDate(card.dueDate)}</p>
+                </div>
+              </div>
+            )}
+            
+            {card.assignedTo && (
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-purple-100 dark:bg-purple-900/20 rounded-full">
+                  <User className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Responsável</p>
+                  <p className="font-medium">
+                    {typeof card.assignedTo === "object"
+                      ? card.assignedTo.name
+                      : card.assignedTo}
+                  </p>
+                </div>
+              </div>
             )}
           </div>
+          
+          {/* Description */}
+          <div className="space-y-2">
+            <h3 className="text-sm font-medium">Descrição</h3>
+            <Textarea
+              placeholder="Adicionar descrição..."
+              className="resize-none"
+              value={notes}
+              onChange={handleNotesChange}
+              rows={4}
+            />
+          </div>
+          
+          {/* Checklist */}
+          <ChecklistComponent 
+            items={checklist} 
+            onChange={handleChecklistChange}
+          />
         </div>
         
-        <DialogFooter>
+        <DialogFooter className="flex justify-between items-center gap-2 mt-4">
+          <div className="flex gap-2">
+            {onMove && (
+              <>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="flex items-center gap-1"
+                  onClick={() => onMove('move')}
+                >
+                  <ArrowRightLeft className="h-4 w-4" />
+                  Mover
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="flex items-center gap-1"
+                  onClick={() => onMove('duplicate')}
+                >
+                  <Copy className="h-4 w-4" />
+                  Duplicar
+                </Button>
+              </>
+            )}
+          </div>
           <Button onClick={onClose}>Fechar</Button>
         </DialogFooter>
       </DialogContent>

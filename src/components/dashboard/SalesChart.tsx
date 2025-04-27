@@ -1,6 +1,6 @@
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { BarChart3, Filter } from "lucide-react";
+import { BarChart3, Filter, Download } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/formatters";
@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue 
 } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
 
 interface SalesChartProps {
   data: Array<{
@@ -36,13 +37,52 @@ const SalesChart = ({
   filterCollaborator,
   filterProduct
 }: SalesChartProps) => {
+  const { toast } = useToast();
+  
+  const handleExport = () => {
+    // Prepare export data based on current filters
+    const exportData = {
+      periodo: filterPeriod === "3" ? "Últimos 3 meses" : 
+              filterPeriod === "6" ? "Últimos 6 meses" : "Últimos 12 meses",
+      colaborador: filterCollaborator === "all" ? "Todos" : 
+                  filterCollaborator === "user1" ? "Carlos Silva" : "Ana Oliveira",
+      produto: filterProduct === "all" ? "Todos" : 
+              filterProduct === "product1" ? "Marketing Digital" : "Consultoria",
+      dados: data,
+      totalVendas: data.reduce((sum, item) => sum + item.value, 0),
+      dataExportacao: new Date().toISOString()
+    };
+    
+    // Create and download JSON file
+    const jsonString = JSON.stringify(exportData, null, 2);
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `vendas-${filterPeriod}m-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    toast({
+      title: `Exportação concluída`,
+      description: `Os dados de vendas foram exportados com sucesso.`,
+    });
+  };
+  
   return (
     <Card className="lg:col-span-2">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-xl">Vendas por Mês</CardTitle>
-          <Button variant="outline" size="sm" className="gap-2">
-            <BarChart3 size={16} />
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="gap-2"
+            onClick={handleExport}
+          >
+            <Download size={16} />
             Exportar
           </Button>
         </div>

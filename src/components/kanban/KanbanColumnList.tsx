@@ -1,11 +1,6 @@
 
-import React from "react";
-import { cn } from "@/lib/utils";
+import { KanbanColumnItem } from "./types";
 import KanbanColumn from "./KanbanColumn";
-import KanbanCard from "./KanbanCard";
-import { Button } from "@/components/ui/button";
-import { PlusCircle } from "lucide-react";
-import { KanbanCardItem, KanbanColumnItem } from "./types";
 
 interface KanbanColumnListProps {
   columns: KanbanColumnItem[];
@@ -14,14 +9,15 @@ interface KanbanColumnListProps {
   onAddCard?: (columnId: string) => void;
   onEditCard?: (cardId: string, columnId: string) => void;
   onDeleteCard?: (cardId: string, columnId: string) => void;
-  handleDragStart: (card: KanbanCardItem, columnId: string) => void;
+  handleDragStart: (cardId: string, columnId: string) => void;
   handleDragOver: (e: React.DragEvent) => void;
-  handleDrop: (e: React.DragEvent, columnId: string) => void;
+  handleDrop: (e: React.DragEvent, targetColumnId: string) => void;
   openEditColumn: (column: KanbanColumnItem) => void;
   handleDeleteColumn: (columnId: string) => void;
-  cardContent?: (card: KanbanCardItem) => React.ReactNode;
+  cardContent?: any;
   modern?: boolean;
-  containerHeight: string;
+  containerHeight?: string;
+  onMoveCard?: (cardId: string, columnId: string, action: 'move' | 'duplicate') => void;
 }
 
 const KanbanColumnList = ({
@@ -37,56 +33,29 @@ const KanbanColumnList = ({
   openEditColumn,
   handleDeleteColumn,
   cardContent,
-  modern = true,
-  containerHeight
+  modern,
+  containerHeight,
+  onMoveCard
 }: KanbanColumnListProps) => {
   return (
-    <div className={cn(
-      "flex gap-3 overflow-x-auto pb-4 custom-scrollbar dark:dark-scrollbar snap-x", 
-      containerHeight,
-      modern && "kanban-modern"
-    )}>
-      {filteredColumns.map(column => (
-        <div 
-          key={column.id} 
-          className="flex-shrink-0 snap-start"
-          style={{ width: columnWidth, transition: 'width 0.3s ease' }}
-        >
-          <KanbanColumn 
-            title={column.title} 
-            color={column.color}
-            onDragOver={handleDragOver}
-            onDrop={(e) => handleDrop(e, column.id)}
-            onEdit={() => openEditColumn(column)}
-            onDelete={() => handleDeleteColumn(column.id)}
-            modern={modern}
-          >
-            <div className="space-y-2">
-              {column.cards.map(card => (
-                <KanbanCard
-                  key={card.id}
-                  card={card}
-                  onDragStart={() => handleDragStart(card, column.id)}
-                  onClick={() => onEditCard && onEditCard(card.id, column.id)}
-                  onDelete={() => onDeleteCard && onDeleteCard(card.id, column.id)}
-                  modern={modern}
-                >
-                  {cardContent ? cardContent(card) : null}
-                </KanbanCard>
-              ))}
-              {onAddCard && (
-                <Button 
-                  variant="ghost" 
-                  className="w-full flex items-center justify-center gap-2 mt-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-300 dark:hover:bg-gray-800"
-                  onClick={() => onAddCard(column.id)}
-                >
-                  <PlusCircle size={16} />
-                  <span>Adicionar Card</span>
-                </Button>
-              )}
-            </div>
-          </KanbanColumn>
-        </div>
+    <div className="kanban-board flex p-2 gap-4" style={{ minHeight: containerHeight || '300px' }}>
+      {filteredColumns.map((column) => (
+        <KanbanColumn
+          key={column.id}
+          column={column}
+          onAddCard={onAddCard}
+          onEditCard={onEditCard}
+          onDeleteCard={onDeleteCard}
+          onDragStart={handleDragStart}
+          onDragOver={handleDragOver}
+          onDrop={handleDrop}
+          onEdit={() => openEditColumn(column)}
+          onDelete={() => handleDeleteColumn(column.id)}
+          width={columnWidth}
+          cardContent={cardContent}
+          modern={modern}
+          onMoveCard={onMoveCard}
+        />
       ))}
     </div>
   );

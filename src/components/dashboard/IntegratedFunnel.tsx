@@ -1,15 +1,17 @@
 
 import React from 'react';
-import { Filter, Users, CheckCircle2, Activity, TrendingUp, AlertTriangle } from 'lucide-react';
+import { Filter, Users, CheckCircle2, Activity, TrendingUp, AlertTriangle, Download } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button'; 
 import { useFunnelData, getColorsByType, type FunnelType } from '@/hooks/useFunnelData';
 import FunnelChart from './funnel/FunnelChart';
 import ConversionChart from './funnel/ConversionChart';
 import LeakageChart from './funnel/LeakageChart';
 import FunnelSummary from './funnel/FunnelSummary';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { useToast } from '@/hooks/use-toast';
 
 const IntegratedFunnel = () => {
   const {
@@ -18,6 +20,8 @@ const IntegratedFunnel = () => {
     funnelData,
     isDark
   } = useFunnelData();
+  
+  const { toast } = useToast();
 
   // Verificação de segurança para garantir que funnelData e suas propriedades existam
   if (!funnelData || !funnelData[activeTab]) {
@@ -64,6 +68,59 @@ const IntegratedFunnel = () => {
   
   const COLORS = ['#4361ee', '#7209b7', '#9d4edd', '#3a0ca3', '#4cc9f0'];
   
+  const handleExportFunnel = () => {
+    const funnelType = activeTab;
+    const currentData = funnelData[funnelType];
+    
+    // Prepare data for export based on funnel type
+    let exportData: any = {
+      funnelType,
+      stages: currentData.stages,
+      conversionRate: currentData.conversionRate,
+      date: new Date().toISOString()
+    };
+    
+    // Add extra data based on funnel type
+    if (funnelType === 'sales') {
+      exportData.salesData = {
+        leads: currentData.stages.reduce((acc, stage) => acc + stage.value, 0),
+        salesReps: ['Carlos Silva', 'Ana Oliveira', 'João Santos'],
+        efficiency: `${currentData.conversionRate}%`
+      };
+    } else if (funnelType === 'ltv') {
+      exportData.ltvData = {
+        clients: currentData.stages.reduce((acc, stage) => acc + stage.value, 0),
+        products: ['Marketing Digital', 'Consultoria', 'Desenvolvimento'],
+        averageValue: 'R$ 5.200,00'
+      };
+    } else if (funnelType === 'production') {
+      exportData.productionData = {
+        tasks: currentData.stages.reduce((acc, stage) => acc + stage.value, 0),
+        collaborators: ['Pedro Costa', 'Juliana Lima', 'Roberto Almeida'],
+        efficiency: `${currentData.conversionRate}%`
+      };
+    }
+    
+    // Convert to JSON string
+    const jsonString = JSON.stringify(exportData, null, 2);
+    
+    // Create a blob and download it
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `funil-${funnelType}-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    toast({
+      title: `Exportação concluída`,
+      description: `Os dados do funil de ${funnelType === 'sales' ? 'Vendas' : funnelType === 'ltv' ? 'LTV' : 'Produção'} foram exportados com sucesso.`,
+    });
+  };
+  
   return <Card className="shadow-md border border-border/60 backdrop-blur-sm overflow-hidden transition-all duration-300 hover:shadow-lg bg-transparent">
       <CardHeader className="pb-2">
         <div className="flex justify-between items-center">
@@ -74,10 +131,21 @@ const IntegratedFunnel = () => {
               Ao Vivo
             </Badge>
           </div>
-          <Badge variant="outline" className="flex items-center bg-primary/10 hover:bg-primary/20 transition-all">
-            <TrendingUp className="mr-1 h-3 w-3" /> 
-            Conv: {conversionRate}%
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="flex items-center bg-primary/10 hover:bg-primary/20 transition-all">
+              <TrendingUp className="mr-1 h-3 w-3" /> 
+              Conv: {conversionRate}%
+            </Badge>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="h-8 flex items-center gap-1"
+              onClick={handleExportFunnel}
+            >
+              <Download className="h-4 w-4" />
+              <span className="hidden sm:inline">Exportar</span>
+            </Button>
+          </div>
         </div>
         <CardDescription>
           Visão detalhada dos funis de vendas, clientes e produção
