@@ -1,19 +1,17 @@
 
-import { useState } from "react";
-import { Check, Clock, Calendar, Filter, ArrowUpRight } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Download } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface Activity {
   id: string;
-  type: string;
-  title: string;
-  time?: string;
-  relatedTo?: string;
-  status?: string; // Optional to match mockData
-  priority?: string;
+  action: string;
+  target: string;
+  time: string;
+  user: string;
+  avatar?: string;
+  status?: string;
 }
 
 interface ActivitiesSectionProps {
@@ -21,142 +19,96 @@ interface ActivitiesSectionProps {
 }
 
 const ActivitiesSection = ({ activities }: ActivitiesSectionProps) => {
-  const [activeTab, setActiveTab] = useState("today");
-
-  const renderActivityIcon = (type: string) => {
-    switch (type) {
-      case 'task':
-        return <Check size={14} className="text-blue-500" />;
-      case 'meeting':
-        return <Calendar size={14} className="text-purple-500" />;
-      case 'deadline':
-        return <Clock size={14} className="text-red-500" />;
-      case 'note':
-        return <Filter size={14} className="text-gray-500" />;
-      default:
-        return null;
-    }
-  };
+  const { toast } = useToast();
   
-  const renderPriorityBadge = (priority?: string) => {
-    if (!priority) return null;
+  const handleExport = () => {
+    if (!activities || activities.length === 0) return;
     
-    const colors: Record<string, string> = {
-      low: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
-      medium: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300",
-      high: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
-    };
+    // Prepare CSV content
+    const headers = ["ID", "Ação", "Alvo", "Hora", "Usuário", "Status"];
+    const rows = activities.map(activity => [
+      activity.id,
+      activity.action,
+      activity.target,
+      activity.time,
+      activity.user,
+      activity.status || ""
+    ]);
     
-    return (
-      <Badge variant="outline" className={`${colors[priority]} ml-2`}>
-        {priority}
-      </Badge>
-    );
+    // Combine headers and rows
+    const csvContent = [
+      headers.join(","),
+      ...rows.map(row => row.join(","))
+    ].join("\n");
+    
+    // Create blob and trigger download
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `atividades-${new Date().toISOString().slice(0,10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast({
+      title: "Exportação concluída",
+      description: "Os dados de atividades foram exportados em formato CSV",
+      duration: 2000 // Reduced to 2 seconds
+    });
   };
-
-  // Filter activities based on active tab
-  const filteredActivities = activities.filter(activity => {
-    if (activeTab === "today") return true;
-    if (activeTab === "upcoming") return activity.status === "pending";
-    if (activeTab === "overdue") return activity.status === "overdue";
-    return false;
-  });
 
   return (
     <Card>
-      <CardHeader className="pb-2">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <CardTitle className="text-xl">Atividades</CardTitle>
-          <Tabs defaultValue="today" className="w-auto" onValueChange={setActiveTab}>
-            <TabsList>
-              <TabsTrigger value="today">Hoje</TabsTrigger>
-              <TabsTrigger value="upcoming">Próximas</TabsTrigger>
-              <TabsTrigger value="overdue">Atrasadas</TabsTrigger>
-            </TabsList>
-          </Tabs>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+          <CardTitle>Atividades Recentes</CardTitle>
+          <CardDescription>Últimas ações realizadas hoje</CardDescription>
         </div>
+        <Button variant="outline" size="sm" className="gap-2" onClick={handleExport}>
+          <Download size={16} />
+          Exportar CSV
+        </Button>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="today" value={activeTab} className="w-full">
-          <TabsContent value="today" className="mt-0">
-            <div className="space-y-4">
-              {filteredActivities.map(activity => (
-                <div key={activity.id} className="flex items-start p-3 rounded-md border border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                  <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-md mr-3">
-                    {renderActivityIcon(activity.type)}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center">
-                      <h4 className="font-medium text-gray-900 dark:text-gray-100">{activity.title}</h4>
-                      {renderPriorityBadge(activity.priority)}
-                    </div>
-                    <div className="flex items-center mt-1 text-sm text-gray-500 dark:text-gray-400">
-                      {activity.time && <span className="mr-2">{activity.time}</span>}
-                      {activity.relatedTo && <span>• {activity.relatedTo}</span>}
-                    </div>
-                  </div>
-                  <Button variant="ghost" size="sm" className="shrink-0">
-                    <ArrowUpRight size={16} />
-                  </Button>
-                </div>
-              ))}
+        <div className="space-y-8">
+          {activities.length === 0 ? (
+            <div className="text-center py-6 text-muted-foreground">
+              Não há atividades registradas hoje.
             </div>
-          </TabsContent>
-          <TabsContent value="upcoming" className="mt-0">
-            <div className="space-y-4">
-              {filteredActivities.map(activity => (
-                <div key={activity.id} className="flex items-start p-3 rounded-md border border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                  <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-md mr-3">
-                    {renderActivityIcon(activity.type)}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center">
-                      <h4 className="font-medium text-gray-900 dark:text-gray-100">{activity.title}</h4>
-                      {renderPriorityBadge(activity.priority)}
-                    </div>
-                    <div className="flex items-center mt-1 text-sm text-gray-500 dark:text-gray-400">
-                      {activity.time && <span className="mr-2">{activity.time}</span>}
-                      {activity.relatedTo && <span>• {activity.relatedTo}</span>}
-                    </div>
-                  </div>
-                  <Button variant="ghost" size="sm" className="shrink-0">
-                    <ArrowUpRight size={16} />
-                  </Button>
+          ) : (
+            activities.map((activity) => (
+              <div key={activity.id} className="flex items-center">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium leading-none">
+                    {activity.user} <span className="text-muted-foreground">realizou</span> {activity.action}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {activity.target} • {activity.time}
+                  </p>
                 </div>
-              ))}
-            </div>
-          </TabsContent>
-          <TabsContent value="overdue" className="mt-0">
-            <div className="space-y-4">
-              {filteredActivities.map(activity => (
-                <div key={activity.id} className="flex items-start p-3 rounded-md border border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                  <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-md mr-3">
-                    {renderActivityIcon(activity.type)}
+                {activity.status && (
+                  <div className="ml-auto">
+                    <span
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        activity.status === "completed"
+                          ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
+                          : activity.status === "pending"
+                          ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300"
+                          : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
+                      }`}
+                    >
+                      {activity.status === "completed"
+                        ? "Concluído"
+                        : activity.status === "pending"
+                        ? "Pendente"
+                        : "Atrasado"}
+                    </span>
                   </div>
-                  <div className="flex-1">
-                    <div className="flex items-center">
-                      <h4 className="font-medium text-gray-900 dark:text-gray-100">{activity.title}</h4>
-                      {renderPriorityBadge(activity.priority)}
-                    </div>
-                    <div className="flex items-center mt-1 text-sm text-gray-500 dark:text-gray-400">
-                      {activity.time && <span className="mr-2">{activity.time}</span>}
-                      {activity.relatedTo && <span>• {activity.relatedTo}</span>}
-                    </div>
-                  </div>
-                  <Button variant="ghost" size="sm" className="shrink-0">
-                    <ArrowUpRight size={16} />
-                  </Button>
-                </div>
-              ))}
-            </div>
-          </TabsContent>
-        </Tabs>
-        
-        <div className="mt-4 text-center">
-          <Button variant="outline" className="gap-2">
-            <Clock size={16} />
-            Ver Todas as Atividades
-          </Button>
+                )}
+              </div>
+            ))
+          )}
         </div>
       </CardContent>
     </Card>

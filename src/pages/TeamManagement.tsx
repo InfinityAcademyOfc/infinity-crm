@@ -1,257 +1,198 @@
-import { useState } from "react";
-import { TeamTableView } from "@/components/team/TeamTableView";
-import { TeamGridView } from "@/components/team/TeamGridView";
-import TeamOrgChart from "@/components/team/TeamOrgChart";
-import { useToast } from "@/hooks/use-toast";
-import { mockTeamMembers } from "@/data/mockData";
-import { Search, Grid, List, LayoutPanelTop } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { TeamMember } from "@/types/team";
 
-const mockDepartments = [
-  {
-    id: "1",
-    name: "Diretoria Executiva",
-    members: mockTeamMembers.filter(m => m.role.includes("Director") || m.role.includes("CEO")),
-    children: [
-      {
-        id: "2",
-        name: "Vendas",
-        members: mockTeamMembers.filter(m => m.department === "Sales" && !m.role.includes("Director")),
-        children: [
-          {
-            id: "5",
-            name: "Vendas Corporativas",
-            members: mockTeamMembers.filter(m => m.department === "Sales" && m.role.includes("Corporate")),
-            children: []
-          },
-          {
-            id: "6",
-            name: "Vendas Varejo",
-            members: mockTeamMembers.filter(m => m.department === "Sales" && m.role.includes("Retail")),
-            children: []
-          }
-        ]
-      },
-      {
-        id: "3",
-        name: "Marketing",
-        members: mockTeamMembers.filter(m => m.department === "Marketing" && !m.role.includes("Director")),
-        children: [
-          {
-            id: "7",
-            name: "Marketing Digital",
-            members: mockTeamMembers.filter(m => m.department === "Marketing" && m.role.includes("Digital")),
-            children: []
-          }
-        ]
-      },
-      {
-        id: "4",
-        name: "Tecnologia",
-        members: mockTeamMembers.filter(m => m.department === "Tech" || m.department === "IT"),
-        children: [
-          {
-            id: "8",
-            name: "Desenvolvimento",
-            members: mockTeamMembers.filter(m => m.department === "Tech" && m.role.includes("Developer")),
-            children: []
-          },
-          {
-            id: "9",
-            name: "Infraestrutura",
-            members: mockTeamMembers.filter(m => m.department === "IT" && m.role.includes("Infrastructure")),
-            children: []
-          }
-        ]
-      }
-    ]
-  }
-];
+import { useState } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Search, Plus } from "lucide-react";
+import TeamMemberList from "@/components/team/TeamMemberList";
+import TeamMembersTable from "@/components/team/TeamMembersTable";
+import OrgChart from "@/components/team/OrgChart";
+import NewTeamMemberDialog from "@/components/team/NewTeamMemberDialog";
+
+// Types
+interface TeamMember {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  department: string;
+  avatar: string;
+  status: string;
+  joinedDate: string;
+  phone: string;
+  tasksAssigned: number;
+  tasksCompleted: number;
+}
+
+interface DepartmentNode {
+  id: string;
+  name: string;
+  members: TeamMember[];
+  children: DepartmentNode[];
+}
 
 const TeamManagement = () => {
-  const [members, setMembers] = useState(mockTeamMembers);
-  const [departments, setDepartments] = useState(mockDepartments);
+  const [activeTab, setActiveTab] = useState("cards");
   const [searchQuery, setSearchQuery] = useState("");
-  const { toast } = useToast();
-  
-  const handleDeleteMember = (id: string) => {
-    setMembers(members.filter(member => member.id !== id));
-    
-    const removeMemberFromDepts = (depts: any[]) => {
-      return depts.map(dept => ({
-        ...dept,
-        members: dept.members.filter((m: any) => m.id !== id),
-        children: removeMemberFromDepts(dept.children)
-      }));
-    };
-    
-    setDepartments(removeMemberFromDepts(departments));
-    
-    toast({
-      title: "Usuário removido",
-      description: "O usuário foi removido da sua equipe."
-    });
-  };
+  const [isNewMemberDialogOpen, setIsNewMemberDialogOpen] = useState(false);
 
-  const handleUpdateMember = (updatedMember: any) => {
-    setMembers(
-      members.map(member => 
-        member.id === updatedMember.id ? { ...member, ...updatedMember } : member
-      )
-    );
-    
-    toast({
-      title: "Usuário atualizado",
-      description: "As informações do usuário foram atualizadas."
-    });
-  };
-
-  const handleAddDepartment = (parentId: string | null) => {
-    const newDeptId = `dept-${Date.now()}`;
-    
-    if (!parentId) {
-      const newDepartment = {
-        id: newDeptId,
-        name: "Novo Departamento",
-        members: [],
-        children: []
-      };
-      
-      setDepartments([...departments, newDepartment]);
-    } else {
-      const addChildDept = (depts: any[], pId: string) => {
-        return depts.map(dept => {
-          if (dept.id === pId) {
-            return {
-              ...dept,
-              children: [
-                ...dept.children,
-                {
-                  id: newDeptId,
-                  name: "Novo Sub-departamento",
-                  members: [],
-                  children: []
-                }
-              ]
-            };
-          }
-          
-          return {
-            ...dept,
-            children: addChildDept(dept.children, pId)
-          };
-        });
-      };
-      
-      setDepartments(addChildDept(departments, parentId));
+  // Mock team members data
+  const mockTeamMembers: TeamMember[] = [
+    {
+      id: "1",
+      name: "Carlos Silva",
+      email: "carlos.silva@empresa.com",
+      role: "CEO",
+      department: "Diretoria",
+      avatar: "/avatar-placeholder.jpg",
+      status: "active",
+      joinedDate: "2020-01-15",
+      phone: "(11) 98765-4321",
+      tasksAssigned: 12,
+      tasksCompleted: 10
+    },
+    {
+      id: "2",
+      name: "Ana Oliveira",
+      email: "ana.oliveira@empresa.com",
+      role: "Gerente de Vendas",
+      department: "Vendas",
+      avatar: "/avatar-placeholder.jpg",
+      status: "active",
+      joinedDate: "2020-03-22",
+      phone: "(11) 98765-4322",
+      tasksAssigned: 18,
+      tasksCompleted: 15
+    },
+    {
+      id: "3",
+      name: "Pedro Santos",
+      email: "pedro.santos@empresa.com",
+      role: "Desenvolvedor",
+      department: "TI",
+      avatar: "/avatar-placeholder.jpg",
+      status: "busy",
+      joinedDate: "2021-05-10",
+      phone: "(11) 98765-4323",
+      tasksAssigned: 8,
+      tasksCompleted: 5
+    },
+    {
+      id: "4",
+      name: "Mariana Costa",
+      email: "mariana.costa@empresa.com",
+      role: "Designer",
+      department: "Marketing",
+      avatar: "/avatar-placeholder.jpg",
+      status: "away",
+      joinedDate: "2021-06-15",
+      phone: "(11) 98765-4324",
+      tasksAssigned: 14,
+      tasksCompleted: 12
+    },
+    {
+      id: "5",
+      name: "Lucas Mendes",
+      email: "lucas.mendes@empresa.com",
+      role: "Analista Financeiro",
+      department: "Financeiro",
+      avatar: "/avatar-placeholder.jpg",
+      status: "active",
+      joinedDate: "2022-01-10",
+      phone: "(11) 98765-4325",
+      tasksAssigned: 10,
+      tasksCompleted: 8
     }
-    
-    toast({
-      title: "Departamento adicionado",
-      description: "Um novo departamento foi criado."
-    });
-  };
+  ];
 
-  const handleEditDepartment = (departmentId: string) => {
-    toast({
-      title: "Editar departamento",
-      description: `Editando departamento ID: ${departmentId}`
-    });
-  };
+  // Mock org chart data
+  const mockOrgChartData: DepartmentNode[] = [
+    {
+      id: "dept-1",
+      name: "Diretoria",
+      members: [mockTeamMembers[0]],
+      children: [
+        {
+          id: "dept-2",
+          name: "Vendas",
+          members: [mockTeamMembers[1]],
+          children: []
+        },
+        {
+          id: "dept-3",
+          name: "TI",
+          members: [mockTeamMembers[2]],
+          children: []
+        },
+        {
+          id: "dept-4",
+          name: "Marketing",
+          members: [mockTeamMembers[3]],
+          children: []
+        },
+        {
+          id: "dept-5",
+          name: "Financeiro",
+          members: [mockTeamMembers[4]],
+          children: []
+        }
+      ]
+    }
+  ];
 
-  const handleDeleteDepartment = (departmentId: string) => {
-    const deleteDept = (depts: any[]) => {
-      return depts.filter(dept => {
-        if (dept.id === departmentId) return false;
-        return true;
-      }).map(dept => ({
-        ...dept,
-        children: deleteDept(dept.children)
-      }));
-    };
-    
-    setDepartments(deleteDept(departments));
-    
-    toast({
-      title: "Departamento removido",
-      description: "O departamento foi removido com sucesso."
-    });
-  };
-
-  const handleMoveMember = (memberId: string, toDepartmentId: string) => {
-    toast({
-      title: "Membro movido",
-      description: `Movido membro ${memberId} para departamento ${toDepartmentId}`
-    });
-  };
-
-  const filteredMembers = members.filter(member => 
-    member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    member.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    member.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (member.department && member.department.toLowerCase().includes(searchQuery.toLowerCase()))
+  // Filter members based on search query
+  const filteredMembers = mockTeamMembers.filter(
+    (member) =>
+      member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      member.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      member.department.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-        <div className="w-full sm:w-auto relative">
-          <Search className="absolute left-3 top-2.5 text-gray-400 h-4 w-4" />
-          <Input
-            type="search"
-            placeholder="Buscar membros..."
-            className="w-full pl-10 pr-4 py-2"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+      <div className="flex flex-col md:flex-row justify-between gap-4 md:items-center">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-[400px]">
+          <TabsList className="grid grid-cols-3 w-full">
+            <TabsTrigger value="cards">Cards</TabsTrigger>
+            <TabsTrigger value="table">Tabela</TabsTrigger>
+            <TabsTrigger value="orgchart">Organograma</TabsTrigger>
+          </TabsList>
+        </Tabs>
+        
+        <div className="flex gap-2 ml-auto">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar membros..."
+              className="pl-8 w-[200px] h-9"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+
+          <Button size="sm" className="h-9" onClick={() => setIsNewMemberDialogOpen(true)}>
+            <Plus className="h-4 w-4 mr-1" />
+            <span>Novo Membro</span>
+          </Button>
         </div>
       </div>
 
-      <Tabs defaultValue="org">
-        <TabsList>
-          <TabsTrigger value="grid">
-            <Grid className="h-4 w-4 mr-2" />
-            Cards
-          </TabsTrigger>
-          <TabsTrigger value="table">
-            <List className="h-4 w-4 mr-2" />
-            Tabela
-          </TabsTrigger>
-          <TabsTrigger value="org">
-            <LayoutPanelTop className="h-4 w-4 mr-2" />
-            Organograma
-          </TabsTrigger>
-        </TabsList>
+      <TabsContent value="cards" className="m-0">
+        <TeamMemberList members={filteredMembers} />
+      </TabsContent>
 
-        <TabsContent value="grid">
-          <TeamGridView 
-            members={filteredMembers}
-            onUpdateMember={handleUpdateMember}
-          />
-        </TabsContent>
+      <TabsContent value="table" className="m-0">
+        <TeamMembersTable members={filteredMembers} />
+      </TabsContent>
 
-        <TabsContent value="table">
-          <TeamTableView 
-            members={filteredMembers}
-            onDeleteMember={handleDeleteMember}
-          />
-        </TabsContent>
+      <TabsContent value="orgchart" className="m-0">
+        <OrgChart data={mockOrgChartData} />
+      </TabsContent>
 
-        <TabsContent value="org" className="mt-4">
-          <TeamOrgChart
-            departments={departments}
-            onAddDepartment={handleAddDepartment}
-            onEditDepartment={handleEditDepartment}
-            onDeleteDepartment={handleDeleteDepartment}
-            onAddMember={handleUpdateMember}
-            onEditMember={handleUpdateMember}
-            onDeleteMember={handleDeleteMember}
-          />
-        </TabsContent>
-      </Tabs>
+      <NewTeamMemberDialog
+        open={isNewMemberDialogOpen}
+        onOpenChange={setIsNewMemberDialogOpen}
+      />
     </div>
   );
 };

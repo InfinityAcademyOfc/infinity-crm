@@ -49,9 +49,13 @@ export function FunnelHeader({
   
   const handleFilter = () => {
     setFilterDialogOpen(false);
+    // Automatically turn on analytics view after filter is applied
+    setShowAnalytics(true);
+    
     toast({
       title: "Filtros aplicados",
       description: `Filtros: ${vendedor !== "todos" ? `Vendedor: ${vendedor}, ` : ""}${produto !== "todos" ? `Produto: ${produto}, ` : ""}Período: ${dataInicio ? format(dataInicio, "dd/MM/yyyy") : ""} até ${dataFim ? format(dataFim, "dd/MM/yyyy") : ""}`,
+      duration: 2000 // Reduced to 2 seconds
     });
   };
   
@@ -85,44 +89,43 @@ export function FunnelHeader({
     toast({
       title: "Exportação concluída",
       description: "Os dados do funil de vendas foram exportados com sucesso.",
+      duration: 2000 // Reduced to 2 seconds
     });
   };
 
   return (
     <>
-      <div className="flex flex-wrap justify-between items-center gap-2 p-2 bg-card/80 dark:bg-gray-800/40 backdrop-blur-md shadow-md rounded-md">
-        <div className="flex items-center gap-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="h-8 flex items-center gap-1"
-            onClick={() => setFilterDialogOpen(true)}
-          >
-            <Filter className="h-4 w-4" />
-            <span className="text-xs">Filtrar</span>
-          </Button>
-          
-          <Button 
-            variant={showAnalytics ? "default" : "outline"}
-            size="sm" 
-            className="h-8 flex items-center gap-1"
-            onClick={() => setShowAnalytics(!showAnalytics)}
-          >
-            <BarChart2 className="h-4 w-4" />
-            <span className="text-xs">Analytics</span>
-          </Button>
-          
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="h-8 flex items-center gap-1"
-            onClick={() => setExportDialogOpen(true)}
-          >
-            <Download className="h-4 w-4" />
-            <span className="text-xs">Exportar</span>
-          </Button>
-        </div>
+      <div className="flex justify-end items-center gap-2 mb-4 p-2 bg-card/80 dark:bg-gray-800/40 backdrop-blur-md shadow-md rounded-md">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="h-8 flex items-center gap-1"
+          onClick={() => setFilterDialogOpen(true)}
+        >
+          <Filter className="h-4 w-4" />
+          <span className="text-xs">Filtrar</span>
+        </Button>
         
+        <Button 
+          variant={showAnalytics ? "default" : "outline"}
+          size="sm" 
+          className="h-8 flex items-center gap-1"
+          onClick={() => setShowAnalytics(!showAnalytics)}
+        >
+          <BarChart2 className="h-4 w-4" />
+          <span className="text-xs">Analytics</span>
+        </Button>
+        
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="h-8 flex items-center gap-1"
+          onClick={() => setExportDialogOpen(true)}
+        >
+          <Download className="h-4 w-4" />
+          <span className="text-xs">Exportar</span>
+        </Button>
+
         <Button 
           size="sm" 
           className="h-8 flex items-center gap-1"
@@ -256,13 +259,13 @@ export function FunnelHeader({
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label>Formato</Label>
-              <Select defaultValue="json">
+              <Select defaultValue="csv">
                 <SelectTrigger>
                   <SelectValue placeholder="Selecionar formato" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="csv">CSV</SelectItem>
                   <SelectItem value="json">JSON</SelectItem>
-                  <SelectItem value="csv">CSV (em breve)</SelectItem>
                   <SelectItem value="excel">Excel (em breve)</SelectItem>
                 </SelectContent>
               </Select>

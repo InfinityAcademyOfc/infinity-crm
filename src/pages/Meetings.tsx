@@ -126,7 +126,8 @@ const Meetings = () => {
     setIsInMeeting(true);
     toast({
       title: "Reunião iniciada",
-      description: "Sua reunião instantânea foi iniciada com sucesso."
+      description: "Sua reunião instantânea foi iniciada com sucesso.",
+      duration: 2000
     });
   };
 
@@ -135,7 +136,8 @@ const Meetings = () => {
     setIsInMeeting(true);
     toast({
       title: "Reunião iniciada",
-      description: `Você entrou na reunião: ${meeting.title}`
+      description: `Você entrou na reunião: ${meeting.title}`,
+      duration: 2000
     });
   };
 
@@ -149,7 +151,8 @@ const Meetings = () => {
     setIsLeavingMeeting(false);
     toast({
       title: "Reunião encerrada",
-      description: "Você saiu da reunião."
+      description: "Você saiu da reunião.",
+      duration: 2000
     });
   };
 
@@ -187,12 +190,27 @@ const Meetings = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-        <div className="flex items-center gap-2 w-full sm:w-auto">
+      <div className="flex flex-col sm:flex-row gap-4 justify-between">
+        <Tabs 
+          value={activeTab} 
+          onValueChange={setActiveTab}
+          className="w-auto"
+        >
+          <TabsList className="h-9">
+            <TabsTrigger value="upcoming" className="text-sm px-3">
+              Próximas
+            </TabsTrigger>
+            <TabsTrigger value="past" className="text-sm px-3">
+              Anteriores
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+        
+        <div className="flex gap-2 ml-auto">
           <Button 
             variant="outline" 
             size="sm" 
-            className="h-8 px-2 text-xs bg-card dark:bg-gray-800/60 shadow-sm"
+            className="h-9 px-2 text-xs bg-card dark:bg-gray-800/60 shadow-sm"
             onClick={() => setIsFilterOpen(!isFilterOpen)}
           >
             <Filter size={16} className="mr-1" />
@@ -201,18 +219,16 @@ const Meetings = () => {
           <Button 
             variant="outline" 
             size="sm" 
-            className={`h-8 px-2 text-xs bg-card dark:bg-gray-800/60 shadow-sm ${viewMode === 'calendar' ? 'bg-primary/20' : ''}`}
+            className={`h-9 px-2 text-xs bg-card dark:bg-gray-800/60 shadow-sm ${viewMode === 'calendar' ? 'bg-primary/20' : ''}`}
             onClick={() => setViewMode(viewMode === 'calendar' ? 'list' : 'calendar')}
           >
             <Calendar size={16} className="mr-1" />
             Calendário
           </Button>
-        </div>
-        <div className="flex gap-2 w-full sm:w-auto">
           <Button 
             onClick={startMeetingNow}
             size="sm"
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 h-9"
           >
             <Video size={16} />
             Iniciar Agora
@@ -221,7 +237,7 @@ const Meetings = () => {
             variant="outline" 
             onClick={() => setIsNewMeetingOpen(true)}
             size="sm"
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 h-9"
           >
             <Plus size={16} />
             Nova Reunião
@@ -292,34 +308,19 @@ const Meetings = () => {
       {viewMode === 'calendar' ? (
         <MeetingCalendarView meetings={filteredMeetings} onJoinMeeting={joinMeeting} />
       ) : (
-        <Tabs 
-          value={activeTab} 
-          onValueChange={setActiveTab} 
-          className="space-y-4"
-        >
-          <TabsList className="bg-muted/80 shadow-sm">
-            <TabsTrigger value="upcoming">Próximas</TabsTrigger>
-            <TabsTrigger value="past">Anteriores</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="upcoming" className="space-y-4">
-            {filteredMeetings.length > 0 ? (
-              filteredMeetings.map((meeting) => (
+        <div className="mt-4">
+          {filteredMeetings.length > 0 ? (
+            <div className="space-y-4">
+              {filteredMeetings.map((meeting) => (
                 <MeetingCard key={meeting.id} meeting={meeting} onJoin={joinMeeting} />
-              ))
-            ) : (
-              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                <p>Nenhuma reunião encontrada para os filtros selecionados.</p>
-              </div>
-            )}
-          </TabsContent>
-          
-          <TabsContent value="past" className="space-y-4">
-            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-              <p>Histórico de reuniões anteriores aparecerá aqui.</p>
+              ))}
             </div>
-          </TabsContent>
-        </Tabs>
+          ) : (
+            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+              <p>Nenhuma reunião encontrada para os filtros selecionados.</p>
+            </div>
+          )}
+        </div>
       )}
       
       <NewMeetingDialog 

@@ -9,7 +9,7 @@ import DashboardLayout from "@/components/dashboard/DashboardLayout";
 // Lazy load heavy components
 const StatsSection = lazy(() => import("@/components/dashboard/StatsSection"));
 const SalesChart = lazy(() => import("@/components/dashboard/SalesChart"));
-const FinanceChart = lazy(() => import("@/components/dashboard/FinanceChart"));
+const DreChart = lazy(() => import("@/components/dashboard/DreChart"));
 const ActivitiesSection = lazy(() => import("@/components/dashboard/ActivitiesSection"));
 const IntegratedFunnel = lazy(() => import("@/components/dashboard/IntegratedFunnel"));
 
@@ -19,7 +19,7 @@ const Dashboard = () => {
   
   // New state for filtered sales data
   const [filteredSalesData, setFilteredSalesData] = useState([]);
-  const [filterPeriod, setFilterPeriod] = useState("12"); // Default to 12 months
+  const [filterPeriod, setFilterPeriod] = useState("6"); // Default to 6 months
   const [filterCollaborator, setFilterCollaborator] = useState("all");
   const [filterProduct, setFilterProduct] = useState("all");
   
@@ -30,8 +30,9 @@ const Dashboard = () => {
     const timer = setTimeout(() => {
       setIsLoaded(true);
       
-      // Initialize with all data
-      setFilteredSalesData(mockSalesData);
+      // Initialize with last 6 months of data
+      const last6Months = mockSalesData.slice(-6);
+      setFilteredSalesData(last6Months);
     }, 300);
     
     return () => clearTimeout(timer);
@@ -109,7 +110,7 @@ const Dashboard = () => {
             />
           </Suspense>
           <Suspense fallback={<ChartSkeleton />}>
-            <FinanceChart />
+            <DreChart />
           </Suspense>
         </>
       }

@@ -44,6 +44,7 @@ const KanbanColumn = ({
   onMoveCard,
 }: KanbanColumnProps) => {
   const [isOver, setIsOver] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const handleDragStart = (cardId: string) => {
     onDragStart(cardId, column.id);
@@ -99,20 +100,24 @@ const KanbanColumn = ({
           </div>
         </div>
         
-        <DropdownMenu>
+        <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="-mr-1.5">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="-mr-1.5"
+            >
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={onEdit} className="flex items-center gap-2 cursor-pointer">
+            <DropdownMenuItem onClick={() => { onEdit(); setIsMenuOpen(false); }} className="flex items-center gap-2 cursor-pointer">
               <Pencil size={14} />
               Editar
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem 
-              onClick={onDelete} 
+              onClick={() => { onDelete(); setIsMenuOpen(false); }} 
               className="text-red-500 focus:text-red-500 flex items-center gap-2 cursor-pointer"
             >
               <Trash2 size={14} />

@@ -40,34 +40,33 @@ const SalesChart = ({
   const { toast } = useToast();
   
   const handleExport = () => {
-    // Prepare export data based on current filters
-    const exportData = {
-      periodo: filterPeriod === "3" ? "Últimos 3 meses" : 
-              filterPeriod === "6" ? "Últimos 6 meses" : "Últimos 12 meses",
-      colaborador: filterCollaborator === "all" ? "Todos" : 
-                  filterCollaborator === "user1" ? "Carlos Silva" : "Ana Oliveira",
-      produto: filterProduct === "all" ? "Todos" : 
-              filterProduct === "product1" ? "Marketing Digital" : "Consultoria",
-      dados: data,
-      totalVendas: data.reduce((sum, item) => sum + item.value, 0),
-      dataExportacao: new Date().toISOString()
-    };
+    // Prepare CSV content
+    const headers = ["Mês", "Valor"];
+    const rows = data.map(item => [
+      item.month,
+      item.value
+    ]);
     
-    // Create and download JSON file
-    const jsonString = JSON.stringify(exportData, null, 2);
-    const blob = new Blob([jsonString], { type: 'application/json' });
+    // Combine headers and rows
+    const csvContent = [
+      headers.join(","),
+      ...rows.map(row => row.join(","))
+    ].join("\n");
+    
+    // Create blob and trigger download
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `vendas-${filterPeriod}m-${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `vendas-${filterPeriod}m-${new Date().toISOString().slice(0,10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
     
     toast({
       title: `Exportação concluída`,
-      description: `Os dados de vendas foram exportados com sucesso.`,
+      description: `Os dados de vendas foram exportados para CSV com sucesso.`,
+      duration: 2000 // Reduced to 2 seconds
     });
   };
   
@@ -83,7 +82,7 @@ const SalesChart = ({
             onClick={handleExport}
           >
             <Download size={16} />
-            Exportar
+            Exportar CSV
           </Button>
         </div>
         <CardDescription>Performance de vendas nos últimos períodos</CardDescription>
@@ -148,7 +147,12 @@ const SalesChart = ({
               <YAxis tickFormatter={(value) => `R$${value/1000}k`} tickLine={false} axisLine={false} />
               <Tooltip 
                 formatter={(value) => [formatCurrency(Number(value)), "Vendas"]}
-                contentStyle={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: '6px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
+                contentStyle={{ 
+                  background: 'var(--background)', 
+                  border: '1px solid var(--border)', 
+                  borderRadius: '6px', 
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' 
+                }}
               />
               <Bar dataKey="value" fill="#4361ee" radius={[4, 4, 0, 0]} />
             </BarChart>
