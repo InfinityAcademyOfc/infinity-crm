@@ -3,7 +3,36 @@ import { useState } from "react";
 import { KanbanCardItem, KanbanColumnItem } from "@/components/kanban/types";
 import { useToast } from "@/hooks/use-toast";
 
-export function useSalesFunnel(initialColumns: KanbanColumnItem[]) {
+// Default columns in case none are provided
+const defaultColumns: KanbanColumnItem[] = [
+  {
+    id: "prospecting",
+    title: "Prospecção",
+    cards: []
+  },
+  {
+    id: "qualification",
+    title: "Qualificação",
+    cards: []
+  },
+  {
+    id: "proposal",
+    title: "Proposta",
+    cards: []
+  },
+  {
+    id: "negotiation",
+    title: "Negociação",
+    cards: []
+  },
+  {
+    id: "closed_won",
+    title: "Ganhos",
+    cards: []
+  }
+];
+
+export function useSalesFunnel(initialColumns: KanbanColumnItem[] = defaultColumns) {
   const [columns, setColumns] = useState<KanbanColumnItem[]>(initialColumns);
   const [newCardOpen, setNewCardOpen] = useState(false);
   const [editCardOpen, setEditCardOpen] = useState(false);
@@ -45,6 +74,7 @@ export function useSalesFunnel(initialColumns: KanbanColumnItem[]) {
     toast({
       title: "Lead adicionado com sucesso",
       description: `${data.title} foi adicionado à etapa ${columns.find(col => col.id === activeColumnId)?.title}`,
+      duration: 2000,
     });
   };
 
@@ -81,6 +111,7 @@ export function useSalesFunnel(initialColumns: KanbanColumnItem[]) {
     toast({
       title: "Lead atualizado com sucesso",
       description: `As informações de ${updatedCard.title} foram atualizadas`,
+      duration: 2000,
     });
   };
 
@@ -106,6 +137,7 @@ export function useSalesFunnel(initialColumns: KanbanColumnItem[]) {
     toast({
       title: "Lead removido",
       description: `${card.title} foi removido do funil`,
+      duration: 2000,
     });
   };
 

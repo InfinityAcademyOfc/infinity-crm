@@ -7,6 +7,36 @@ import NewLeadDialog from "@/components/sales-funnel/NewLeadDialog";
 import { EditLeadDialog } from "@/components/sales-funnel/EditLeadDialog";
 import { SalesFunnelBoard } from "@/components/sales-funnel/SalesFunnelBoard";
 import { useSalesFunnel } from "@/hooks/useSalesFunnel";
+import { KanbanColumnItem } from "@/components/kanban/types";
+
+// Mock data for initial columns
+const mockKanbanColumns: KanbanColumnItem[] = [
+  {
+    id: "prospecting",
+    title: "Prospecção",
+    cards: []
+  },
+  {
+    id: "qualification",
+    title: "Qualificação",
+    cards: []
+  },
+  {
+    id: "proposal",
+    title: "Proposta",
+    cards: []
+  },
+  {
+    id: "negotiation",
+    title: "Negociação",
+    cards: []
+  },
+  {
+    id: "closed_won",
+    title: "Ganhos",
+    cards: []
+  }
+];
 
 const SalesFunnel = () => {
   const [showAnalytics, setShowAnalytics] = useState(false);
@@ -29,7 +59,14 @@ const SalesFunnel = () => {
     handleEditCard,
     handleUpdateCard,
     handleDeleteCard
-  } = useSalesFunnel(/* mockKanbanColumns - usando valor interno em useSalesFunnel */);
+  } = useSalesFunnel(mockKanbanColumns);
+
+  // Handler for when filters are applied
+  const handleFiltersApplied = () => {
+    // When filters are applied, automatically show analytics
+    setShowAnalytics(true);
+    setFilterMenuOpen(false);
+  };
 
   return (
     <div className="space-y-4 bg-background text-foreground transition-colors duration-300">
@@ -39,7 +76,8 @@ const SalesFunnel = () => {
           setShowAnalytics={setShowAnalytics} 
           filterMenuOpen={filterMenuOpen} 
           setFilterMenuOpen={setFilterMenuOpen} 
-          onAddNewLead={handleAddNewLead} 
+          onAddNewLead={handleAddNewLead}
+          onFiltersApplied={handleFiltersApplied}
         />
       </div>
       
