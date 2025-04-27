@@ -8,28 +8,7 @@ import TeamMemberList from "@/components/team/TeamMemberList";
 import TeamMembersTable from "@/components/team/TeamMembersTable";
 import OrgChart from "@/components/team/OrgChart";
 import NewTeamMemberDialog from "@/components/team/NewTeamMemberDialog";
-
-// Types
-interface TeamMember {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  department: string;
-  avatar: string;
-  status: string;
-  joinedDate: string;
-  phone: string;
-  tasksAssigned: number;
-  tasksCompleted: number;
-}
-
-interface DepartmentNode {
-  id: string;
-  name: string;
-  members: TeamMember[];
-  children: DepartmentNode[];
-}
+import { TeamMember, DepartmentNode } from "@/types/team";
 
 const TeamManagement = () => {
   const [activeTab, setActiveTab] = useState("cards");

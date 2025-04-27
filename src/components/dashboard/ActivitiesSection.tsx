@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-interface Activity {
+export interface Activity {
   id: string;
   action: string;
   target: string;
