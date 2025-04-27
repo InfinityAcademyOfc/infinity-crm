@@ -213,7 +213,10 @@ export const mockTeamMembers = [
     department: 'Executive',
     avatar: '/placeholder.svg',
     status: 'active',
-    joinedDate: '2020-01-15'
+    joinedDate: '2020-01-15',
+    phone: '(11) 99999-1111',
+    tasksAssigned: 12,
+    tasksCompleted: 10
   },
   {
     id: '2',
@@ -223,7 +226,10 @@ export const mockTeamMembers = [
     department: 'Sales',
     avatar: '/placeholder.svg',
     status: 'active',
-    joinedDate: '2020-03-10'
+    joinedDate: '2020-03-10',
+    phone: '(11) 99999-2222',
+    tasksAssigned: 15,
+    tasksCompleted: 13
   },
   {
     id: '3',
@@ -233,7 +239,10 @@ export const mockTeamMembers = [
     department: 'Marketing',
     avatar: '/placeholder.svg',
     status: 'active',
-    joinedDate: '2020-05-22'
+    joinedDate: '2020-05-22',
+    phone: '(11) 99999-3333',
+    tasksAssigned: 18,
+    tasksCompleted: 15
   },
   {
     id: '4',
@@ -243,7 +252,10 @@ export const mockTeamMembers = [
     department: 'Sales',
     avatar: '/placeholder.svg',
     status: 'active',
-    joinedDate: '2021-01-05'
+    joinedDate: '2021-01-05',
+    phone: '(11) 99999-4444',
+    tasksAssigned: 20,
+    tasksCompleted: 18
   },
   {
     id: '5',
@@ -253,7 +265,10 @@ export const mockTeamMembers = [
     department: 'Sales',
     avatar: '/placeholder.svg',
     status: 'active',
-    joinedDate: '2021-04-12'
+    joinedDate: '2021-04-12',
+    phone: '(11) 99999-5555',
+    tasksAssigned: 16,
+    tasksCompleted: 14
   },
   {
     id: '6',
@@ -263,7 +278,10 @@ export const mockTeamMembers = [
     department: 'Marketing',
     avatar: '/placeholder.svg',
     status: 'active',
-    joinedDate: '2021-06-30'
+    joinedDate: '2021-06-30',
+    phone: '(11) 99999-6666',
+    tasksAssigned: 14,
+    tasksCompleted: 12
   },
   {
     id: '7',
@@ -273,7 +291,10 @@ export const mockTeamMembers = [
     department: 'Tech',
     avatar: '/placeholder.svg',
     status: 'active',
-    joinedDate: '2021-08-15'
+    joinedDate: '2021-08-15',
+    phone: '(11) 99999-7777',
+    tasksAssigned: 22,
+    tasksCompleted: 20
   },
   {
     id: '8',
@@ -283,7 +304,10 @@ export const mockTeamMembers = [
     department: 'Tech',
     avatar: '/placeholder.svg',
     status: 'active',
-    joinedDate: '2022-01-10'
+    joinedDate: '2022-01-10',
+    phone: '(11) 99999-8888',
+    tasksAssigned: 10,
+    tasksCompleted: 8
   },
   {
     id: '9',
@@ -293,6 +317,9 @@ export const mockTeamMembers = [
     department: 'IT',
     avatar: '/placeholder.svg',
     status: 'active',
-    joinedDate: '2022-03-01'
+    joinedDate: '2022-03-01',
+    phone: '(11) 99999-9999',
+    tasksAssigned: 12,
+    tasksCompleted: 10
   }
 ];

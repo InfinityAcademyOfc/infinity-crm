@@ -12,7 +12,7 @@ interface EditLeadDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   activeCard: KanbanCardItem | null;
-  onUpdate: (e: React.FormEvent) => void;
+  onUpdate: (updatedCard: KanbanCardItem) => void;
 }
 
 export const EditLeadDialog = ({ 
@@ -22,6 +22,21 @@ export const EditLeadDialog = ({
   onUpdate 
 }: EditLeadDialogProps) => {
   if (!activeCard) return null;
+  
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const formData = new FormData(e.target as HTMLFormElement);
+    
+    const updatedCard: KanbanCardItem = {
+      ...activeCard,
+      title: formData.get('title') as string,
+      description: formData.get('description') as string,
+      value: Number(formData.get('value')),
+      priority: formData.get('priority') as string || 'medium',
+    };
+    
+    onUpdate(updatedCard);
+  };
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -33,7 +48,7 @@ export const EditLeadDialog = ({
           </DialogDescription>
         </DialogHeader>
         
-        <form onSubmit={onUpdate}>
+        <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="edit-title">Nome do Lead*</Label>
