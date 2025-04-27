@@ -80,7 +80,7 @@ const DREChart = () => {
         </div>
         <CardDescription>Demonstração de Resultados do Exercício</CardDescription>
       </CardHeader>
-      <CardContent className="my-[58px]">
+      <CardContent className="py-0 px-[6px] my-[70px]">
         <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={mockDREData} margin={{
