@@ -6,11 +6,6 @@ import { useToast } from "@/hooks/use-toast";
 // Default columns in case none are provided
 const defaultColumns: KanbanColumnItem[] = [
   {
-    id: "new_lead",
-    title: "Novo Lead",
-    cards: []
-  },
-  {
     id: "prospecting",
     title: "Prospecção",
     cards: []
@@ -51,8 +46,7 @@ export function useSalesFunnel(initialColumns: KanbanColumnItem[] = defaultColum
   };
 
   const handleAddNewLead = () => {
-    // Sempre adicionar novo lead à primeira coluna (Novo Lead)
-    setActiveColumnId("new_lead");
+    setActiveColumnId("prospecting");
     setNewCardOpen(true);
   };
 
