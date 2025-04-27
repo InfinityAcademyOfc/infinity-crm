@@ -39,6 +39,7 @@ const ThemeToggle = () => {
     toast({
       title: "Tema alterado",
       description: `O tema foi alterado para ${themes.find(t => t.value === theme)?.name || theme}`,
+      duration: 2000,
     });
   };
 
@@ -48,6 +49,7 @@ const ThemeToggle = () => {
     toast({
       title: "Cor principal alterada",
       description: `A cor principal foi alterada para ${accentColors.find(a => a.value === accent)?.name || accent}`,
+      duration: 2000,
     });
   };
 

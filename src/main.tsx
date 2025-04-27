@@ -7,6 +7,7 @@ import App from "./App";
 import "./index.css";
 import "./styles/kanban.css";
 import "./styles/dashboard.css"; 
+import "./styles/theme.css"; // Import theme.css to apply theme changes
 
 // Create a client
 const queryClient = new QueryClient();
