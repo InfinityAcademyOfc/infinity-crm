@@ -84,15 +84,16 @@ const KanbanColumn = ({
 
   return (
     <div
-      className={`kanban-column flex-shrink-0 rounded-lg ${column.color || "bg-gray-100 dark:bg-gray-800"}`}
+      className={`kanban-column flex-shrink-0 rounded-lg flex flex-col ${column.color || "bg-gray-200 dark:bg-gray-800"}`}
       style={{ width }}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
-      <div className="kanban-column-header px-3 py-2 flex items-center justify-between">
+      <div className="kanban-column-header sticky top-0 z-10 px-3 py-2 flex items-center justify-between bg-opacity-95 backdrop-blur-sm" 
+           style={{ backgroundColor: 'inherit', borderTopLeftRadius: 'inherit', borderTopRightRadius: 'inherit' }}>
         <div className="flex items-center space-x-2">
-          <h3 className="font-medium truncate">{column.title}</h3>
+          <h3 className="font-semibold truncate">{column.title}</h3>
           <div className="kanban-column-badge px-1.5 py-0.5 text-xs rounded-full bg-white/80 dark:bg-gray-700/80">
             {column.cards.length}
           </div>
@@ -122,7 +123,7 @@ const KanbanColumn = ({
       </div>
 
       <div
-        className={`kanban-column-content p-2 overflow-y-auto transition-colors ${
+        className={`kanban-column-content flex-1 p-2 overflow-y-auto transition-colors ${
           isOver ? "bg-primary/5 dark:bg-primary/10" : ""
         }`}
         style={{ maxHeight: "calc(100% - 42px)" }}
@@ -145,7 +146,7 @@ const KanbanColumn = ({
           <Button
             variant="ghost"
             size="sm"
-            className="w-full mt-2 text-muted-foreground hover:text-foreground flex items-center gap-1"
+            className="w-full mt-2 text-muted-foreground hover:text-foreground flex items-center justify-center gap-1"
             onClick={() => onAddCard(column.id)}
           >
             <Plus className="h-4 w-4" />

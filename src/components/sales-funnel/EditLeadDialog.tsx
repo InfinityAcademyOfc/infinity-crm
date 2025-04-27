@@ -1,3 +1,4 @@
+
 import { Share2, Tag, User, X } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -7,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { KanbanCardItem } from "@/components/kanban/types";
+import { FormEvent } from "react";
 
 interface EditLeadDialogProps {
   open: boolean;
@@ -23,7 +25,7 @@ export const EditLeadDialog = ({
 }: EditLeadDialogProps) => {
   if (!activeCard) return null;
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     const formData = new FormData(e.target as HTMLFormElement);
     

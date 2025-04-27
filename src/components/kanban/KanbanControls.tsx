@@ -1,18 +1,29 @@
-import { ZoomIn, ZoomOut, PlusSquare, Maximize2, Minimize2 } from "lucide-react";
+
+import { ChevronDown, ChevronUp, Maximize2, Minimize2, Plus, User, ZoomIn, ZoomOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { KanbanCardAssignee } from "./types";
+
 interface KanbanControlsProps {
   zoomLevel: number;
   increaseZoom: () => void;
   decreaseZoom: () => void;
   onAddColumn: () => void;
-  assignees: string[];
+  assignees: KanbanCardAssignee[];
   filterByAssignee: string | null;
-  setFilterByAssignee: (value: string | null) => void;
+  setFilterByAssignee: (assignee: string | null) => void;
   toggleExpand: () => void;
   isExpanded: boolean;
 }
+
 const KanbanControls = ({
   zoomLevel,
   increaseZoom,
@@ -22,77 +33,89 @@ const KanbanControls = ({
   filterByAssignee,
   setFilterByAssignee,
   toggleExpand,
-  isExpanded
+  isExpanded,
 }: KanbanControlsProps) => {
-  return <div className="flex justify-between mb-4 gap-2 flex-wrap px-0">
+  const handleFilterChange = (value: string) => {
+    setFilterByAssignee(value === "all" ? null : value);
+  };
+
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-2 mb-4 p-2 bg-background rounded-lg border shadow-sm">
       <div className="flex items-center gap-2">
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="outline" size="icon" onClick={decreaseZoom} className="bg-background">
-                <ZoomOut size={16} />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Reduzir tamanho</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="outline" size="icon" onClick={increaseZoom} className="bg-background">
-                <ZoomIn size={16} />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Aumentar tamanho</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="outline" size="icon" onClick={toggleExpand} className="bg-background">
-                {isExpanded ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{isExpanded ? "Minimizar quadro" : "Expandir quadro"}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <Button onClick={onAddColumn} variant="default" size="sm" className="gap-1">
+          <Plus size={16} />
+          <span>Nova Coluna</span>
+        </Button>
+        
+        <div className="h-6 w-[1px] bg-border mx-1 hidden sm:block" />
+        
+        <div className="flex items-center rounded-md border bg-background shadow-sm">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 rounded-r-none"
+            onClick={decreaseZoom}
+            disabled={zoomLevel <= 0.5}
+            title="Reduzir"
+          >
+            <ZoomOut size={14} />
+          </Button>
+          <div className="flex items-center justify-center font-mono text-xs px-2 border-l border-r">
+            {Math.round(zoomLevel * 100)}%
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 rounded-l-none"
+            onClick={increaseZoom}
+            disabled={zoomLevel >= 2}
+            title="Ampliar"
+          >
+            <ZoomIn size={14} />
+          </Button>
+        </div>
       </div>
-      
+
       <div className="flex items-center gap-2">
-        {assignees.length > 0 && <Select value={filterByAssignee || "all"} onValueChange={value => setFilterByAssignee(value === "all" ? null : value)}>
-            <SelectTrigger className="w-[180px] bg-background">
-              <SelectValue placeholder="Filtrar por usuário" />
+        {assignees.length > 0 && (
+          <Select 
+            defaultValue={filterByAssignee || "all"} 
+            onValueChange={handleFilterChange}
+          >
+            <SelectTrigger className="w-[180px] h-9 text-xs">
+              <div className="flex items-center gap-1">
+                <User size={14} />
+                <SelectValue placeholder="Filtrar por responsável" />
+              </div>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todos os usuários</SelectItem>
-              {assignees.map(name => <SelectItem key={name} value={name}>
-                  {name}
-                </SelectItem>)}
+              <SelectGroup>
+                <SelectLabel>Responsáveis</SelectLabel>
+                <SelectItem value="all">Todos</SelectItem>
+                {assignees.map((assignee) => (
+                  <SelectItem key={assignee.id} value={assignee.id}>
+                    <div className="flex items-center gap-2">
+                      {assignee.name}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectGroup>
             </SelectContent>
-          </Select>}
+          </Select>
+        )}
         
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="outline" size="sm" onClick={onAddColumn} className="bg-background">
-                <PlusSquare size={16} className="mr-2" />
-                Nova Coluna
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Adicionar nova coluna</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-9 w-9"
+          onClick={toggleExpand}
+          title={isExpanded ? "Minimizar" : "Expandir"}
+        >
+          {isExpanded ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+        </Button>
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default KanbanControls;
