@@ -8,7 +8,7 @@ const MarkerControls = ({ markerStart, markerEnd, strokeColor, onMarkerChange }:
   const handleMarkerChange = (value: string, isStart: boolean) => {
     let newMarker: MarkerType | null = null;
     
-    if (value !== "") {
+    if (value !== "none") {
       if (Object.values(MarkerType).includes(value as any)) {
         newMarker = value as MarkerType;
       } else if (value === "circle") {
@@ -23,7 +23,7 @@ const MarkerControls = ({ markerStart, markerEnd, strokeColor, onMarkerChange }:
   };
 
   const markerOptions = [
-    { label: "Nenhum", value: "" },
+    { label: "Nenhum", value: "none" },
     { label: "Ponta de Seta", value: MarkerType.ArrowClosed },
     { label: "Seta", value: MarkerType.Arrow },
     { label: "Círculo", value: "circle" }
@@ -36,7 +36,7 @@ const MarkerControls = ({ markerStart, markerEnd, strokeColor, onMarkerChange }:
           Marcador inicial:
         </Label>
         <Select 
-          value={markerStart || ""} 
+          value={markerStart || "none"} 
           onValueChange={(val) => handleMarkerChange(val, true)}
         >
           <SelectTrigger className="mt-1">
@@ -57,7 +57,7 @@ const MarkerControls = ({ markerStart, markerEnd, strokeColor, onMarkerChange }:
           Marcador final:
         </Label>
         <Select 
-          value={markerEnd || ""} 
+          value={markerEnd || "none"} 
           onValueChange={(val) => handleMarkerChange(val, false)}
         >
           <SelectTrigger className="mt-1">
