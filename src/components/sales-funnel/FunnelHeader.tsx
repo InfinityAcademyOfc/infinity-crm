@@ -3,7 +3,6 @@ import React from 'react';
 import { Button } from "@/components/ui/button";
 import { BarChart3, Filter, Download, Plus } from "lucide-react";
 import { FilterMenu } from "./FilterMenu";
-import { useToast } from "@/hooks/use-toast";
 
 interface FunnelHeaderProps {
   showAnalytics: boolean;
@@ -12,7 +11,6 @@ interface FunnelHeaderProps {
   setFilterMenuOpen: (open: boolean) => void;
   onAddNewLead: () => void;
   onFiltersApplied: () => void;
-  onExport: () => void;
 }
 
 export function FunnelHeader({ 
@@ -21,8 +19,7 @@ export function FunnelHeader({
   filterMenuOpen, 
   setFilterMenuOpen, 
   onAddNewLead,
-  onFiltersApplied,
-  onExport
+  onFiltersApplied
 }: FunnelHeaderProps) {
   return (
     <div className="flex flex-wrap items-center gap-2 justify-end w-full">
@@ -57,7 +54,6 @@ export function FunnelHeader({
         variant="outline" 
         size="sm" 
         className="h-8"
-        onClick={onExport}
       >
         <Download className="h-4 w-4 mr-1" />
         Exportar
