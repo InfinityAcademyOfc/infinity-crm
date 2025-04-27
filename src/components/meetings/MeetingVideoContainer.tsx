@@ -1,139 +1,162 @@
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { X, Maximize2, Minimize2 } from "lucide-react";
-import VideoCall from "@/components/chat/VideoCall";
-import { cn } from "@/lib/utils";
+import { X, Maximize, Minimize } from "lucide-react";
+
+interface Meeting {
+  id: string;
+  title: string;
+  date: string;
+  time: string;
+  duration: string;
+  participants: any[];
+}
 
 interface MeetingVideoContainerProps {
-  meeting: {
-    id: string;
-    title: string;
-    participants: number | { name: string; avatar?: string }[];
-  };
+  meeting: Meeting;
   onLeave: () => void;
 }
 
 const MeetingVideoContainer = ({ meeting, onLeave }: MeetingVideoContainerProps) => {
-  const [isMaximized, setIsMaximized] = useState(false);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  
-  // Container size state for resizing
-  const [containerSize, setContainerSize] = useState({ width: '100%', height: '85vh' });
+  const [isFullScreen, setIsFullScreen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [dragOffsetX, setDragOffsetX] = useState(0);
+  const [dragOffsetY, setDragOffsetY] = useState(0);
+  
+  // Generate a random meeting ID for Jitsi
+  const roomName = meeting.id || `meeting-${Math.random().toString(36).substring(2, 9)}`;
 
-  const toggleMaximize = () => {
-    setIsMaximized(!isMaximized);
-    if (!isMaximized) {
-      // Saving current size before maximizing
-      if (containerRef.current) {
-        const { width, height } = containerRef.current.getBoundingClientRect();
-        setContainerSize({ 
-          width: `${width}px`, 
-          height: `${height}px` 
-        });
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src = "https://meet.jit.si/external_api.js";
+    script.async = true;
+
+    script.onload = () => {
+      if (iframeRef.current && typeof window.JitsiMeetExternalAPI === 'function') {
+        const domain = "meet.jit.si";
+        const options = {
+          roomName,
+          width: "100%",
+          height: "100%",
+          parentNode: iframeRef.current,
+          interfaceConfigOverwrite: {
+            filmStripOnly: false,
+          },
+        };
+
+        const api = new window.JitsiMeetExternalAPI(domain, options);
+        api.executeCommand("displayName", "Usuário");
       }
-    }
-  };
+    };
 
+    document.body.appendChild(script);
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, [roomName]);
+
+  // Handle dragging
   const handleMouseDown = (e: React.MouseEvent) => {
-    if (isMaximized) return; // Don't allow resizing when maximized
+    if (!containerRef.current || isFullScreen) return;
+    
     setIsDragging(true);
-    setDragStart({ x: e.clientX, y: e.clientY });
-  };
-
-  const handleMouseMove = (e: MouseEvent) => {
-    if (!isDragging) return;
     
-    const deltaX = e.clientX - dragStart.x;
-    const deltaY = e.clientY - dragStart.y;
-    
-    if (containerRef.current) {
-      const { width, height } = containerRef.current.getBoundingClientRect();
-      setContainerSize({
-        width: `${width + deltaX}px`,
-        height: `${height + deltaY}px`
-      });
-    }
-    
-    setDragStart({ x: e.clientX, y: e.clientY });
+    const rect = containerRef.current.getBoundingClientRect();
+    setDragOffsetX(e.clientX - rect.left);
+    setDragOffsetY(e.clientY - rect.top);
   };
 
   const handleMouseUp = () => {
     setIsDragging(false);
   };
 
-  useEffect(() => {
-    if (isDragging) {
-      window.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mouseup', handleMouseUp);
-    } else {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
-    }
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !containerRef.current) return;
     
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [isDragging]);
+    const x = e.clientX - dragOffsetX;
+    const y = e.clientY - dragOffsetY;
+    
+    // Ensure the element stays within viewport bounds
+    const containerWidth = containerRef.current.offsetWidth;
+    const containerHeight = containerRef.current.offsetHeight;
+    const maxX = window.innerWidth - containerWidth;
+    const maxY = window.innerHeight - containerHeight;
+    
+    containerRef.current.style.left = `${Math.max(0, Math.min(x, maxX))}px`;
+    containerRef.current.style.top = `${Math.max(0, Math.min(y, maxY))}px`;
+  };
+
+  // Toggle fullscreen
+  const toggleFullScreen = () => {
+    setIsFullScreen(!isFullScreen);
+    if (containerRef.current) {
+      // Reset position when toggling fullscreen
+      if (isFullScreen) {
+        containerRef.current.style.left = '50%';
+        containerRef.current.style.top = '50%';
+        containerRef.current.style.transform = 'translate(-50%, -50%)';
+      } else {
+        containerRef.current.style.left = '0';
+        containerRef.current.style.top = '0';
+        containerRef.current.style.transform = 'none';
+      }
+    }
+  };
 
   return (
     <div 
       ref={containerRef}
-      className={cn(
-        "flex flex-col rounded-lg overflow-hidden transition-all duration-300 bg-card shadow-lg border",
-        isMaximized ? "fixed inset-0 z-50" : "relative"
-      )}
-      style={!isMaximized ? containerSize : undefined}
+      className={`flex flex-col ${isFullScreen ? 'fixed inset-0 z-50' : 'fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90vw] h-[90vh] z-40'}`}
+      style={{
+        backgroundColor: "#1a1a1a",
+        boxShadow: "0 4px 20px rgba(0, 0, 0, 0.25)",
+        borderRadius: isFullScreen ? "0" : "8px",
+        overflow: "hidden",
+      }}
+      onMouseDown={handleMouseDown}
+      onMouseUp={handleMouseUp}
+      onMouseMove={handleMouseMove}
     >
-      <div className="flex items-center justify-between p-4 border-b">
-        <div className="flex items-center gap-2">
-          <Button 
-            variant="outline" 
-            size="icon" 
-            onClick={onLeave}
-            className="h-8 w-8 text-red-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20"
-          >
-            <X size={16} />
-          </Button>
-          <h2 className="text-xl font-bold">{meeting.title}</h2>
-        </div>
-        
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-500 dark:text-gray-400 mr-2">
-            {typeof meeting.participants === 'number' 
-              ? `${meeting.participants} participantes` 
-              : `${meeting.participants.length} participantes`}
-          </span>
+      <div 
+        className="flex items-center justify-between p-2 bg-gray-900 cursor-grab"
+        onMouseDown={handleMouseDown}
+      >
+        <h2 className="text-white font-medium px-2 truncate">
+          {meeting.title} - {meeting.date} {meeting.time}
+        </h2>
+        <div className="flex items-center">
           <Button
-            variant="outline"
+            variant="ghost"
             size="icon"
-            onClick={toggleMaximize}
-            className="h-8 w-8"
+            className="text-white hover:bg-gray-800"
+            onClick={toggleFullScreen}
           >
-            {isMaximized ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+            {isFullScreen ? <Minimize size={18} /> : <Maximize size={18} />}
+          </Button>
+          <Button
+            variant="ghost" 
+            size="icon"
+            className="text-white hover:bg-gray-800"
+            onClick={onLeave}
+          >
+            <X size={18} />
           </Button>
         </div>
       </div>
       
-      <div className="flex-1 overflow-hidden bg-black">
-        <VideoCall 
-          isOpen={true} 
-          onClose={onLeave}
-          onEndCall={onLeave}
-        />
+      <div className="flex-1 overflow-y-auto relative bg-black">
+        <div ref={iframeRef} className="w-full h-full" />
       </div>
-      
-      {!isMaximized && (
-        <div 
-          className="absolute bottom-0 right-0 w-6 h-6 cursor-se-resize"
-          onMouseDown={handleMouseDown}
-        />
-      )}
     </div>
   );
 };
+
+declare global {
+  interface Window {
+    JitsiMeetExternalAPI: any;
+  }
+}
 
 export default MeetingVideoContainer;

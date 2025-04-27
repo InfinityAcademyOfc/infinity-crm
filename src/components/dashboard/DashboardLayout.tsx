@@ -4,7 +4,7 @@ import { ChartSkeleton } from "./DashboardSkeletons";
 
 interface DashboardLayoutProps {
   welcomeSection: React.ReactNode;
-  funnelSection: React.ReactNode;
+  funnelSection: React.ReactNode; // This is now empty but we'll keep it for compatibility
   integratedFunnelSection: React.ReactNode;
   salesAndFinanceSection: React.ReactNode;
   activitiesSection: React.ReactNode;
@@ -12,7 +12,6 @@ interface DashboardLayoutProps {
 
 const DashboardLayout = ({
   welcomeSection,
-  funnelSection,
   integratedFunnelSection,
   salesAndFinanceSection,
   activitiesSection,
@@ -22,26 +21,19 @@ const DashboardLayout = ({
       {/* Welcome Message Card */}
       {welcomeSection}
       
-      {/* First row - Funnel Chart 100% width */}
-      <div className="grid grid-cols-1 gap-6">
-        <Suspense fallback={<ChartSkeleton />}>
-          {funnelSection}
-        </Suspense>
-      </div>
-
-      {/* Second row - Integrated Funnel 100% */}
+      {/* First row - Integrated Funnel 100% */}
       <div className="grid grid-cols-1 gap-6">
         <Suspense fallback={<ChartSkeleton />}>
           {integratedFunnelSection}
         </Suspense>
       </div>
       
-      {/* Third row - Sales Chart 50% + Finance Chart 50% */}
+      {/* Second row - Sales Chart 50% + Finance Chart 50% */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {salesAndFinanceSection}
       </div>
       
-      {/* Fourth row - Activities 100% */}
+      {/* Third row - Activities 100% */}
       <div className="grid grid-cols-1 gap-6">
         <Suspense fallback={<ChartSkeleton />}>
           {activitiesSection}

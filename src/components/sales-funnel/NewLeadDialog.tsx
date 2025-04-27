@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -95,7 +94,6 @@ export function NewLeadDialog({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validation
     if (!title) {
       toast.error("O título do lead é obrigatório");
       return;
@@ -106,7 +104,6 @@ export function NewLeadDialog({
       return;
     }
 
-    // Format the value as a number
     const formattedValue = value ? parseFloat(value.replace(/[^\d,.-]/g, '').replace(',', '.')) : 0;
 
     const selectedAssignee = mockTeamMembers.find(member => member.id === assignee);
@@ -134,33 +131,41 @@ export function NewLeadDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent 
+        className="sm:max-w-xs md:max-w-sm w-full"
+        style={{ 
+          maxHeight: '80vh',
+          overflowY: 'auto',
+          zIndex: 100
+        }}
+      >
         <DialogHeader>
           <DialogTitle>Adicionar Novo Lead</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="title">Nome da Empresa/Cliente *</Label>
-              <Input
-                id="title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Ex: Empresa ABC"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="value">Valor Potencial</Label>
-              <Input
-                id="value"
-                value={value}
-                onChange={(e) => setValue(e.target.value)}
-                placeholder="Ex: 5000"
-                type="text"
-                inputMode="decimal"
-              />
-            </div>
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <div className="space-y-2">
+            <Label htmlFor="title">Nome da Empresa/Cliente *</Label>
+            <Input
+              id="title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Ex: Empresa ABC"
+              required
+              className="text-sm"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="value">Valor Potencial</Label>
+            <Input
+              id="value"
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              placeholder="Ex: 5000"
+              type="text"
+              inputMode="decimal"
+              className="text-sm"
+            />
           </div>
 
           <div className="space-y-2">
@@ -171,53 +176,34 @@ export function NewLeadDialog({
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Detalhes sobre o lead..."
               rows={2}
+              className="text-sm"
             />
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="phone">Telefone</Label>
-              <Input
-                id="phone"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="(00) 0000-0000"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="contato@empresa.com"
-                type="email"
-              />
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="phone">Telefone</Label>
+            <Input
+              id="phone"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="(00) 0000-0000"
+              className="text-sm"
+            />
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="website">Website</Label>
-              <Input
-                id="website"
-                value={website}
-                onChange={(e) => setWebsite(e.target.value)}
-                placeholder="www.empresa.com"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="social">Rede Social</Label>
-              <Input
-                id="social"
-                value={socialMedia}
-                onChange={(e) => setSocialMedia(e.target.value)}
-                placeholder="@empresa"
-              />
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="contato@empresa.com"
+              type="email"
+              className="text-sm"
+            />
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-2">
             <div className="space-y-2">
               <Label htmlFor="dueDate">Data Prevista</Label>
               <Input
@@ -225,12 +211,13 @@ export function NewLeadDialog({
                 type="date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
+                className="text-sm"
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="priority">Prioridade</Label>
               <Select value={priority} onValueChange={setPriority}>
-                <SelectTrigger id="priority">
+                <SelectTrigger id="priority" className="text-sm">
                   <SelectValue placeholder="Selecione a prioridade" />
                 </SelectTrigger>
                 <SelectContent>
@@ -245,7 +232,7 @@ export function NewLeadDialog({
           <div className="space-y-2">
             <Label htmlFor="assignee">Responsável *</Label>
             <Select value={assignee} onValueChange={setAssignee} required>
-              <SelectTrigger id="assignee">
+              <SelectTrigger id="assignee" className="text-sm">
                 <SelectValue placeholder="Atribuir para..." />
               </SelectTrigger>
               <SelectContent>
@@ -260,11 +247,12 @@ export function NewLeadDialog({
           
           <div className="space-y-2">
             <Label>Tarefas</Label>
-            <div className="flex gap-2">
+            <div className="flex gap-1">
               <Input
                 value={newTask}
                 onChange={(e) => setNewTask(e.target.value)}
                 placeholder="Nova tarefa..."
+                className="text-sm"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     e.preventDefault();
@@ -272,8 +260,8 @@ export function NewLeadDialog({
                   }
                 }}
               />
-              <Button type="button" onClick={handleAddTask} size="sm">
-                Adicionar
+              <Button type="button" onClick={handleAddTask} size="sm" className="shrink-0">
+                +
               </Button>
             </div>
             
@@ -287,17 +275,18 @@ export function NewLeadDialog({
                           id={`task-${index}`} 
                           checked={task.completed}
                           onCheckedChange={() => toggleTask(index)}
+                          className="h-4 w-4"
                         />
                         <label 
                           htmlFor={`task-${index}`}
-                          className={`text-sm flex-1 ${task.completed ? 'line-through text-muted-foreground' : ''}`}
+                          className={`text-xs flex-1 ${task.completed ? 'line-through text-muted-foreground' : ''}`}
                         >
                           {task.text}
                         </label>
                         <Button 
                           variant="ghost" 
                           size="sm" 
-                          className="h-6 w-6 p-0 text-red-500"
+                          className="h-5 w-5 p-0 text-red-500"
                           onClick={() => handleRemoveTask(index)}
                         >
                           &times;
@@ -310,11 +299,11 @@ export function NewLeadDialog({
             )}
           </div>
           
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+          <DialogFooter className="mt-6">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} size="sm">
               Cancelar
             </Button>
-            <Button type="submit">Salvar</Button>
+            <Button type="submit" size="sm">Salvar</Button>
           </DialogFooter>
         </form>
       </DialogContent>

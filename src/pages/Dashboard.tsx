@@ -12,7 +12,6 @@ const SalesChart = lazy(() => import("@/components/dashboard/SalesChart"));
 const FinanceChart = lazy(() => import("@/components/dashboard/FinanceChart"));
 const ActivitiesSection = lazy(() => import("@/components/dashboard/ActivitiesSection"));
 const IntegratedFunnel = lazy(() => import("@/components/dashboard/IntegratedFunnel"));
-const FunnelChart = lazy(() => import("@/components/dashboard/FunnelChart"));
 
 const Dashboard = () => {
   const { profile } = useAuth();
@@ -23,15 +22,6 @@ const Dashboard = () => {
   const [filterPeriod, setFilterPeriod] = useState("12"); // Default to 12 months
   const [filterCollaborator, setFilterCollaborator] = useState("all");
   const [filterProduct, setFilterProduct] = useState("all");
-  
-  // Funnel data for the chart
-  const [funnelData, setFunnelData] = useState([
-    { name: "Leads", value: 1200 },
-    { name: "Qualificados", value: 780 },
-    { name: "Reuniões", value: 610 },
-    { name: "Propostas", value: 320 },
-    { name: "Fechamentos", value: 200 }
-  ]);
   
   const userName = profile?.name || "usuário";
   
@@ -52,22 +42,12 @@ const Dashboard = () => {
     if (!isLoaded) return;
     
     // Filter by time period
-    const currentDate = new Date();
-    const monthsToInclude = parseInt(filterPeriod);
-    
     let filteredByDate = [...mockSalesData];
     
-    if (monthsToInclude < 12) {
-      const cutoffDate = new Date();
-      cutoffDate.setMonth(currentDate.getMonth() - monthsToInclude);
-      
-      filteredByDate = mockSalesData.filter(item => {
-        const itemDate = new Date();
-        // Convert month name to month number
-        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-        itemDate.setMonth(months.indexOf(item.month));
-        return itemDate >= cutoffDate;
-      });
+    // Apply period filter based on exact count of months
+    if (filterPeriod === "3" || filterPeriod === "6") {
+      const monthsToShow = parseInt(filterPeriod);
+      filteredByDate = mockSalesData.slice(-monthsToShow); // Take only the last N months
     }
     
     // Apply collaborator filter if not "all"
@@ -109,11 +89,7 @@ const Dashboard = () => {
   return (
     <DashboardLayout
       welcomeSection={<WelcomeCard userName={userName} />}
-      funnelSection={
-        <Suspense fallback={<ChartSkeleton />}>
-          <FunnelChart data={funnelData} />
-        </Suspense>
-      }
+      funnelSection={<></>} // Empty to remove this section
       integratedFunnelSection={
         <Suspense fallback={<ChartSkeleton />}>
           <IntegratedFunnel />
