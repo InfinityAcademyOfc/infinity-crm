@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { ArrowLeft, LogIn, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -31,13 +31,13 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
-  // Loader visual durante o login
+  // Render loader first to prevent conditional hook calls
   if (loading) {
     return <LoadingScreen />;
   }
 
-  // Se o usuário já está autenticado, redirecionar para o dashboard
-  if (user && !loading) {
+  // Redirect if already authenticated
+  if (user) {
     return <Navigate to="/app" replace />;
   }
 

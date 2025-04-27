@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -99,13 +99,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     company
   };
 
-  if (loading) {
-    return <LoadingScreen />;
-  }
-
   return (
     <AuthContext.Provider value={value}>
-      {children}
+      {loading ? <LoadingScreen /> : children}
     </AuthContext.Provider>
   );
 }
