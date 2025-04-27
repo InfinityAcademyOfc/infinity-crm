@@ -1,9 +1,7 @@
-
 import { ZoomIn, ZoomOut, PlusSquare, Maximize2, Minimize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-
 interface KanbanControlsProps {
   zoomLevel: number;
   increaseZoom: () => void;
@@ -15,7 +13,6 @@ interface KanbanControlsProps {
   toggleExpand: () => void;
   isExpanded: boolean;
 }
-
 const KanbanControls = ({
   zoomLevel,
   increaseZoom,
@@ -27,8 +24,7 @@ const KanbanControls = ({
   toggleExpand,
   isExpanded
 }: KanbanControlsProps) => {
-  return (
-    <div className="flex justify-between mb-4 gap-2 flex-wrap">
+  return <div className="flex justify-between mb-4 gap-2 flex-wrap px-0">
       <div className="flex items-center gap-2">
         <TooltipProvider>
           <Tooltip>
@@ -71,24 +67,17 @@ const KanbanControls = ({
       </div>
       
       <div className="flex items-center gap-2">
-        {assignees.length > 0 && (
-          <Select 
-            value={filterByAssignee || "all"} 
-            onValueChange={(value) => setFilterByAssignee(value === "all" ? null : value)}
-          >
+        {assignees.length > 0 && <Select value={filterByAssignee || "all"} onValueChange={value => setFilterByAssignee(value === "all" ? null : value)}>
             <SelectTrigger className="w-[180px] bg-background">
               <SelectValue placeholder="Filtrar por usuário" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos os usuários</SelectItem>
-              {assignees.map((name) => (
-                <SelectItem key={name} value={name}>
+              {assignees.map(name => <SelectItem key={name} value={name}>
                   {name}
-                </SelectItem>
-              ))}
+                </SelectItem>)}
             </SelectContent>
-          </Select>
-        )}
+          </Select>}
         
         <TooltipProvider>
           <Tooltip>
@@ -104,8 +93,6 @@ const KanbanControls = ({
           </Tooltip>
         </TooltipProvider>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default KanbanControls;
