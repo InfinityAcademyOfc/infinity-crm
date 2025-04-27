@@ -4,8 +4,23 @@
 @layer components {
   .tree-container {
     --connector-color: #e2e8f0;
-    --node-spacing: 1.5rem;
+    --node-spacing: 2rem;
     width: 100%;
+    height: 100%;
+    overflow: hidden;
+    position: relative;
+    cursor: grab;
+  }
+  
+  .tree-container.grabbing {
+    cursor: grabbing;
+  }
+
+  .tree-wrapper {
+    transform-origin: center;
+    transition: transform 0.2s ease;
+    min-height: 400px;
+    padding: 2rem;
   }
 
   .tree-node {
@@ -17,14 +32,14 @@
 
   .tree-connector-vertical {
     position: absolute;
-    width: 2px;
+    width: 1px;
     background-color: var(--connector-color);
     z-index: 0;
   }
 
   .tree-connector-horizontal {
     position: absolute;
-    height: 2px;
+    height: 1px;
     background-color: var(--connector-color);
     z-index: 0;
   }
@@ -37,18 +52,44 @@
     width: 100%;
   }
 
-  /* Responsive adjustments */
+  .member-node {
+    @apply relative flex flex-col items-center;
+    max-width: 120px;
+  }
+
+  .member-avatar {
+    @apply relative z-10 rounded-full border-2 border-white shadow-lg transition-transform hover:scale-105;
+    width: 60px;
+    height: 60px;
+  }
+
+  .department-node {
+    @apply relative p-2 rounded-lg border shadow-sm bg-white/50 backdrop-blur-sm 
+           hover:shadow-md transition-all cursor-pointer;
+    min-width: 100px;
+  }
+
+  .department-title {
+    @apply text-xs font-medium text-center;
+  }
+
+  .zoom-controls {
+    @apply fixed bottom-4 right-4 flex gap-2 bg-white/80 backdrop-blur-sm rounded-lg 
+           shadow-lg p-2 z-50;
+  }
+
   @media (max-width: 768px) {
-    .tree-level {
-      flex-direction: column;
-      align-items: center;
+    .member-avatar {
+      width: 45px;
+      height: 45px;
     }
 
-    .tree-connector-horizontal {
-      width: 2px;
-      height: var(--node-spacing);
-      left: 50%;
-      transform: translateX(-50%);
+    .department-node {
+      min-width: 80px;
+    }
+
+    .tree-level {
+      --node-spacing: 1.5rem;
     }
   }
 }

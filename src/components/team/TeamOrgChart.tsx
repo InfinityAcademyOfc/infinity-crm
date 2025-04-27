@@ -1,12 +1,11 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Plus, Pencil, Trash2, MoveVertical } from "lucide-react";
+import { Plus, Minus, ZoomIn, ZoomOut, Move } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { TeamMember } from "@/types/team";
-import { Badge } from "@/components/ui/badge";
 import { DndProvider } from "@/components/ui/dnd-provider";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from '@dnd-kit/utilities';
@@ -16,6 +15,7 @@ interface DepartmentNode {
   name: string;
   members: TeamMember[];
   children: DepartmentNode[];
+  expanded?: boolean;
 }
 
 interface TeamOrgChartProps {
@@ -26,15 +26,9 @@ interface TeamOrgChartProps {
   onAddMember: (departmentId: string) => void;
   onEditMember: (memberId: string) => void;
   onDeleteMember: (memberId: string) => void;
-  onMoveMember?: (memberId: string, toDepartmentId: string) => void;
-  onMoveDepartment?: (departmentId: string, toParentId: string | null) => void;
 }
 
-const SortableMember = ({ member, onEdit, onDelete }: { 
-  member: TeamMember; 
-  onEdit: (id: string) => void; 
-  onDelete: (id: string) => void; 
-}) => {
+const MemberNode = ({ member }: { member: TeamMember }) => {
   const {
     attributes,
     listeners,
@@ -49,134 +43,92 @@ const SortableMember = ({ member, onEdit, onDelete }: {
   };
 
   return (
-    <Card ref={setNodeRef} style={style} key={member.id} className="p-3 flex items-center justify-between gap-2 mb-2 hover:shadow-md transition-shadow">
-      <div className="flex items-center gap-2">
-        <Avatar className="h-8 w-8">
-          <AvatarImage src={member.avatar} alt={member.name} />
-          <AvatarFallback>{member.name.substring(0, 2).toUpperCase()}</AvatarFallback>
-        </Avatar>
-        <div>
-          <h4 className="font-medium text-sm">{member.name}</h4>
-          <p className="text-xs text-muted-foreground">{member.role}</p>
-        </div>
+    <div ref={setNodeRef} style={style} className="member-node" {...attributes} {...listeners}>
+      <Avatar className="member-avatar">
+        <AvatarImage src={member.avatar} alt={member.name} />
+        <AvatarFallback>{member.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+      </Avatar>
+      <div className="mt-2 text-xs font-medium text-center">
+        <div className="truncate max-w-[120px]">{member.name}</div>
+        <div className="text-muted-foreground text-[10px] truncate">{member.role}</div>
       </div>
-      <div className="flex gap-1">
-        <Button variant="ghost" size="icon" className="h-7 w-7" {...attributes} {...listeners}>
-          <MoveVertical className="h-3 w-3" />
-        </Button>
-        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(member.id)}>
-          <Pencil className="h-3 w-3" />
-        </Button>
-        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onDelete(member.id)}>
-          <Trash2 className="h-3 w-3" />
-        </Button>
-      </div>
-    </Card>
+    </div>
   );
 };
 
 const Department = ({ 
-  department, 
-  level = 0, 
-  onEdit, 
-  onDelete, 
-  onAddMember, 
-  onAddDept, 
-  onEditMember,
-  onDeleteMember
-}: { 
-  department: DepartmentNode; 
-  level?: number; 
-  onEdit: (id: string) => void; 
-  onDelete: (id: string) => void; 
-  onAddMember: (id: string) => void; 
-  onAddDept: (id: string) => void; 
-  onEditMember: (id: string) => void;
-  onDeleteMember: (id: string) => void;
+  department,
+  level = 0,
+  onToggleExpand,
+  onEdit,
+  onDelete,
+  onAddMember,
+  onAddDept,
+}: {
+  department: DepartmentNode;
+  level?: number;
+  onToggleExpand: (id: string) => void;
+  onEdit: (id: string) => void;
+  onDelete: (id: string) => void;
+  onAddMember: (id: string) => void;
+  onAddDept: (id: string) => void;
 }) => {
-  const memberIds = department.members.map(m => m.id);
-
-  const handleDragEnd = (activeId: string, overId: string) => {
-    // This would be implemented to handle member reordering within a department
-    console.log(`Moving ${activeId} over ${overId}`);
-  };
-
   return (
-    <div className={`relative ${level === 0 ? 'w-full mb-6' : 'w-full'}`}>
-      <Card className={`p-4 ${level === 0 ? 'border-primary/50 shadow-md' : ''}`}>
-        <div className="flex items-center justify-between mb-3">
-          <div>
-            <h3 className={`${level === 0 ? 'text-xl' : 'text-lg'} font-semibold`}>
-              {department.name}
-            </h3>
-            <Badge variant="secondary" className="mt-1">
-              {department.members.length} {department.members.length === 1 ? 'membro' : 'membros'}
-            </Badge>
-          </div>
-          <div className="flex gap-1">
-            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => onAddMember(department.id)}>
-              <Plus className="h-4 w-4" />
+    <div className="tree-node">
+      <div 
+        className="department-node"
+        onClick={() => onToggleExpand(department.id)}
+      >
+        <h3 className="department-title">{department.name}</h3>
+        {department.expanded && (
+          <div className="flex gap-1 mt-2 justify-center">
+            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => {
+              e.stopPropagation();
+              onAddMember(department.id);
+            }}>
+              <Plus className="h-3 w-3" />
             </Button>
-            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => onAddDept(department.id)}>
-              <Plus className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => onEdit(department.id)}>
-              <Pencil className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => onDelete(department.id)}>
-              <Trash2 className="h-4 w-4" />
+            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => {
+              e.stopPropagation();
+              onEdit(department.id);
+            }}>
+              <Move className="h-3 w-3" />
             </Button>
           </div>
-        </div>
-        
-        <div className="space-y-2">
-          <DndProvider items={memberIds} onDragEnd={handleDragEnd}>
-            {department.members.map(member => (
-              <SortableMember 
-                key={member.id} 
-                member={member} 
-                onEdit={onEditMember} 
-                onDelete={onDeleteMember} 
+        )}
+      </div>
+
+      {department.expanded && (
+        <>
+          {department.members.length > 0 && (
+            <div className="tree-connector-vertical h-8 top-full" />
+          )}
+          <div className="tree-level">
+            {department.members.map((member, index) => (
+              <MemberNode key={member.id} member={member} />
+            ))}
+          </div>
+        </>
+      )}
+
+      {department.children.length > 0 && department.expanded && (
+        <>
+          <div className="tree-connector-vertical h-8" />
+          <div className="tree-level">
+            {department.children.map(child => (
+              <Department
+                key={child.id}
+                department={child}
+                level={level + 1}
+                onToggleExpand={onToggleExpand}
+                onEdit={onEdit}
+                onDelete={onDelete}
+                onAddMember={onAddMember}
+                onAddDept={onAddDept}
               />
             ))}
-          </DndProvider>
-        </div>
-      </Card>
-
-      {department.children.length > 0 && (
-        <div className="mt-4 relative">
-          {/* Vertical line from parent to children */}
-          <div className="absolute left-1/2 -top-4 w-px h-4 bg-border -translate-x-1/2"></div>
-          
-          {/* Horizontal line connecting all children */}
-          {department.children.length > 1 && (
-            <div className="absolute top-0 left-1/4 right-1/4 h-px bg-border"></div>
-          )}
-          
-          <div className={`grid grid-cols-1 ${
-            department.children.length > 1 
-              ? 'sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' 
-              : ''
-          } gap-4`}>
-            {department.children.map(child => (
-              <div key={child.id} className="relative">
-                {/* Vertical line from horizontal connector to child */}
-                <div className="absolute left-1/2 -top-4 w-px h-4 bg-border -translate-x-1/2"></div>
-                
-                <Department 
-                  department={child} 
-                  level={level + 1} 
-                  onEdit={onEdit} 
-                  onDelete={onDelete}
-                  onAddMember={onAddMember}
-                  onAddDept={onAddDept}
-                  onEditMember={onEditMember}
-                  onDeleteMember={onDeleteMember}
-                />
-              </div>
-            ))}
           </div>
-        </div>
+        </>
       )}
     </div>
   );
@@ -191,40 +143,91 @@ const TeamOrgChart: React.FC<TeamOrgChartProps> = ({
   onEditMember,
   onDeleteMember,
 }) => {
-  const { toast } = useToast();
-  const [expandedDepts, setExpandedDepts] = useState<string[]>([]);
+  const [zoom, setZoom] = useState(1);
+  const [isDragging, setIsDragging] = useState(false);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [startPos, setStartPos] = useState({ x: 0, y: 0 });
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [expandedDepts, setExpandedDepts] = useState<string[]>([departments[0]?.id || '']);
 
-  const toggleDeptExpand = (deptId: string) => {
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    setStartPos({ x: e.clientX - position.x, y: e.clientY - position.y });
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging) return;
+    setPosition({
+      x: e.clientX - startPos.x,
+      y: e.clientY - startPos.y
+    });
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleZoom = (delta: number) => {
+    setZoom(prev => Math.min(Math.max(0.5, prev + delta), 2));
+  };
+
+  const toggleDepartmentExpand = (deptId: string) => {
     setExpandedDepts(prev => 
       prev.includes(deptId) 
-        ? prev.filter(id => id !== deptId) 
+        ? prev.filter(id => id !== deptId)
         : [...prev, deptId]
     );
   };
 
+  const [deptState, setDeptState] = useState(departments.map(dept => ({
+    ...dept,
+    expanded: expandedDepts.includes(dept.id)
+  })));
+
+  useEffect(() => {
+    setDeptState(departments.map(dept => ({
+      ...dept,
+      expanded: expandedDepts.includes(dept.id)
+    })));
+  }, [departments, expandedDepts]);
+
   return (
-    <div className="p-4 overflow-x-auto">
-      <div className="mb-6 flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Organograma da Empresa</h2>
-        <Button onClick={() => onAddDepartment(null)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Novo Departamento
-        </Button>
+    <div className="relative h-[calc(100vh-200px)] overflow-hidden border rounded-lg">
+      <div 
+        ref={containerRef}
+        className={`tree-container ${isDragging ? 'grabbing' : ''}`}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+      >
+        <div 
+          className="tree-wrapper"
+          style={{
+            transform: `translate(${position.x}px, ${position.y}px) scale(${zoom})`
+          }}
+        >
+          {deptState.map(department => (
+            <Department
+              key={department.id}
+              department={department}
+              onToggleExpand={toggleDepartmentExpand}
+              onEdit={onEditDepartment}
+              onDelete={onDeleteDepartment}
+              onAddMember={onAddMember}
+              onAddDept={onAddDepartment}
+            />
+          ))}
+        </div>
       </div>
-      
-      <div className="min-w-max tree-container pb-10">
-        {departments.map(dept => (
-          <Department 
-            key={dept.id} 
-            department={dept} 
-            onEdit={onEditDepartment} 
-            onDelete={onDeleteDepartment}
-            onAddMember={onAddMember}
-            onAddDept={onAddDepartment}
-            onEditMember={onEditMember}
-            onDeleteMember={onDeleteMember}
-          />
-        ))}
+
+      <div className="zoom-controls">
+        <Button variant="outline" size="icon" onClick={() => handleZoom(0.1)}>
+          <ZoomIn className="h-4 w-4" />
+        </Button>
+        <Button variant="outline" size="icon" onClick={() => handleZoom(-0.1)}>
+          <ZoomOut className="h-4 w-4" />
+        </Button>
       </div>
     </div>
   );

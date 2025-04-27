@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { TeamTableView } from "@/components/team/TeamTableView";
 import { TeamGridView } from "@/components/team/TeamGridView";
@@ -11,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TeamMember } from "@/types/team";
 
-// Enhanced department structure for better hierarchy visualization
 const mockDepartments = [
   {
     id: "1",
@@ -82,7 +80,6 @@ const TeamManagement = () => {
   const handleDeleteMember = (id: string) => {
     setMembers(members.filter(member => member.id !== id));
     
-    // Also remove from departments
     const removeMemberFromDepts = (depts: any[]) => {
       return depts.map(dept => ({
         ...dept,
@@ -113,11 +110,9 @@ const TeamManagement = () => {
   };
 
   const handleAddDepartment = (parentId: string | null) => {
-    // Generate a unique ID for the new department
     const newDeptId = `dept-${Date.now()}`;
     
     if (!parentId) {
-      // Add to root level
       const newDepartment = {
         id: newDeptId,
         name: "Novo Departamento",
@@ -127,7 +122,6 @@ const TeamManagement = () => {
       
       setDepartments([...departments, newDepartment]);
     } else {
-      // Add as child to specified parent
       const addChildDept = (depts: any[], pId: string) => {
         return depts.map(dept => {
           if (dept.id === pId) {
@@ -188,7 +182,6 @@ const TeamManagement = () => {
   };
 
   const handleMoveMember = (memberId: string, toDepartmentId: string) => {
-    // Implementation for moving a member between departments
     toast({
       title: "Membro movido",
       description: `Movido membro ${memberId} para departamento ${toDepartmentId}`
@@ -217,7 +210,7 @@ const TeamManagement = () => {
         </div>
       </div>
 
-      <Tabs defaultValue="grid">
+      <Tabs defaultValue="org">
         <TabsList>
           <TabsTrigger value="grid">
             <Grid className="h-4 w-4 mr-2" />
@@ -247,7 +240,7 @@ const TeamManagement = () => {
           />
         </TabsContent>
 
-        <TabsContent value="org">
+        <TabsContent value="org" className="mt-4">
           <TeamOrgChart
             departments={departments}
             onAddDepartment={handleAddDepartment}
