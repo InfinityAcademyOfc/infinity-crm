@@ -27,12 +27,14 @@ export const EditLeadDialog = ({
     e.preventDefault();
     const formData = new FormData(e.target as HTMLFormElement);
     
+    const priority = formData.get('priority') as "high" | "medium" | "low" | undefined;
+    
     const updatedCard: KanbanCardItem = {
       ...activeCard,
       title: formData.get('title') as string,
       description: formData.get('description') as string,
       value: Number(formData.get('value')),
-      priority: formData.get('priority') as string || 'medium',
+      priority: priority || 'medium',
     };
     
     onUpdate(updatedCard);
