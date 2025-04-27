@@ -1,4 +1,3 @@
-
 import { useEffect, lazy, Suspense } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -13,7 +12,18 @@ import { useThemeManager } from '@/hooks/useThemeManager';
 import PageTransition from '@/components/ui/page-transition';
 
 // Import custom animations
-import '@/styles/animations.css';
+import "./styles/theme.css";
+import "./styles/animations.css";
+import "./styles/base.css";
+import "./styles/cards.css";
+import "./styles/navigation.css";
+import "./styles/responsive.css";
+import "./styles/scrollbars.css";
+import "./styles/org-chart.css";
+import "./styles/tags.css";
+import "./styles/whatsapp.css";
+import "./styles/kanban.css";
+import "./styles/dashboard.css";
 
 // Lazy-loaded components with proper error handling and better performance
 // Use a consistent pattern that will return a proper default export

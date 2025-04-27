@@ -40,39 +40,37 @@ const SalesChart = ({
   const { toast } = useToast();
   
   const handleExport = () => {
-    // Prepare export data based on current filters
-    const exportData = {
-      periodo: filterPeriod === "3" ? "Últimos 3 meses" : 
-              filterPeriod === "6" ? "Últimos 6 meses" : "Últimos 12 meses",
-      colaborador: filterCollaborator === "all" ? "Todos" : 
-                  filterCollaborator === "user1" ? "Carlos Silva" : "Ana Oliveira",
-      produto: filterProduct === "all" ? "Todos" : 
-              filterProduct === "product1" ? "Marketing Digital" : "Consultoria",
-      dados: data,
-      totalVendas: data.reduce((sum, item) => sum + item.value, 0),
-      dataExportacao: new Date().toISOString()
-    };
+    // Create CSV content
+    let csvContent = "data:text/csv;charset=utf-8,";
     
-    // Create and download JSON file
-    const jsonString = JSON.stringify(exportData, null, 2);
-    const blob = new Blob([jsonString], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `vendas-${filterPeriod}m-${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    // Add headers
+    csvContent += "Mês,Valor\n";
+    
+    // Add data rows
+    data.forEach(item => {
+      csvContent += `${item.month},${item.value}\n`;
+    });
+    
+    // Create download link
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `vendas-${filterPeriod}m-${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    
+    // Download CSV file
+    link.click();
+    document.body.removeChild(link);
     
     toast({
-      title: `Exportação concluída`,
-      description: `Os dados de vendas foram exportados com sucesso.`,
+      title: "Exportação concluída",
+      description: "Os dados de vendas foram exportados com sucesso para CSV.",
+      duration: 2000, // 2 segundos conforme solicitado
     });
   };
   
   return (
-    <Card className="lg:col-span-2">
+    <Card className="lg:col-span-1">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-xl">Vendas por Mês</CardTitle>

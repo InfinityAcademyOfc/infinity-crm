@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, memo } from "react";
 import { Plus, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { KanbanColumnItem, KanbanCardItem } from "./types";
@@ -28,7 +28,8 @@ interface KanbanColumnProps {
   onMoveCard?: (cardId: string, columnId: string, action: 'move' | 'duplicate') => void;
 }
 
-const KanbanColumn = ({
+// Usando memo para melhorar a performance de renderização
+const KanbanColumn = memo(({
   column,
   onAddCard,
   onEditCard,
@@ -156,6 +157,9 @@ const KanbanColumn = ({
       </div>
     </div>
   );
-};
+});
+
+// Definir displayName para o componente memo
+KanbanColumn.displayName = "KanbanColumn";
 
 export default KanbanColumn;

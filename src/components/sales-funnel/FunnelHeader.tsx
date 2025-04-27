@@ -49,79 +49,81 @@ export function FunnelHeader({
   
   const handleFilter = () => {
     setFilterDialogOpen(false);
+    // Automaticamente exibe Analytics ao aplicar filtros
+    setShowAnalytics(true); 
+    
     toast({
       title: "Filtros aplicados",
       description: `Filtros: ${vendedor !== "todos" ? `Vendedor: ${vendedor}, ` : ""}${produto !== "todos" ? `Produto: ${produto}, ` : ""}Período: ${dataInicio ? format(dataInicio, "dd/MM/yyyy") : ""} até ${dataFim ? format(dataFim, "dd/MM/yyyy") : ""}`,
+      duration: 2000, // 2 segundos conforme solicitado
     });
   };
   
   const handleExport = () => {
     setExportDialogOpen(false);
     
-    // Simulação de exportação
-    const exportData = {
-      filtros: {
-        vendedor: vendedor !== "todos" ? vendedor : "Todos",
-        produto: produto !== "todos" ? produto : "Todos",
-        periodo: periodo,
-        dataInicio: dataInicio ? format(dataInicio, "yyyy-MM-dd") : null,
-        dataFim: dataFim ? format(dataFim, "yyyy-MM-dd") : null,
-      },
-      dataExportacao: new Date().toISOString()
-    };
+    // Simulação de exportação para CSV
+    let csvContent = "data:text/csv;charset=utf-8,";
     
-    // Create file and trigger download
-    const jsonString = JSON.stringify(exportData, null, 2);
-    const blob = new Blob([jsonString], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `funil-vendas-${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    // Add headers
+    csvContent += "Filtro,Valor\n";
+    csvContent += `Vendedor,${vendedor !== "todos" ? vendedor : "Todos"}\n`;
+    csvContent += `Produto,${produto !== "todos" ? produto : "Todos"}\n`;
+    csvContent += `Período,${periodo}\n`;
+    csvContent += `Data Início,${dataInicio ? format(dataInicio, "yyyy-MM-dd") : ""}\n`;
+    csvContent += `Data Fim,${dataFim ? format(dataFim, "yyyy-MM-dd") : ""}\n`;
+    csvContent += `Data Exportação,${new Date().toISOString()}\n`;
+    
+    // Create download link
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `funil-vendas-${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    
+    // Download CSV file
+    link.click();
+    document.body.removeChild(link);
     
     toast({
       title: "Exportação concluída",
-      description: "Os dados do funil de vendas foram exportados com sucesso.",
+      description: "Os dados do funil de vendas foram exportados com sucesso para CSV.",
+      duration: 2000, // 2 segundos conforme solicitado
     });
   };
 
   return (
     <>
-      <div className="flex flex-wrap justify-between items-center gap-2 p-2 bg-card/80 dark:bg-gray-800/40 backdrop-blur-md shadow-md rounded-md">
-        <div className="flex items-center gap-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="h-8 flex items-center gap-1"
-            onClick={() => setFilterDialogOpen(true)}
-          >
-            <Filter className="h-4 w-4" />
-            <span className="text-xs">Filtrar</span>
-          </Button>
-          
-          <Button 
-            variant={showAnalytics ? "default" : "outline"}
-            size="sm" 
-            className="h-8 flex items-center gap-1"
-            onClick={() => setShowAnalytics(!showAnalytics)}
-          >
-            <BarChart2 className="h-4 w-4" />
-            <span className="text-xs">Analytics</span>
-          </Button>
-          
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="h-8 flex items-center gap-1"
-            onClick={() => setExportDialogOpen(true)}
-          >
-            <Download className="h-4 w-4" />
-            <span className="text-xs">Exportar</span>
-          </Button>
-        </div>
+      <div className="flex justify-end items-center gap-2 p-2 bg-card/80 dark:bg-gray-800/40 backdrop-blur-md shadow-md rounded-md">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="h-8 flex items-center gap-1"
+          onClick={() => setFilterDialogOpen(true)}
+        >
+          <Filter className="h-4 w-4" />
+          <span className="text-xs">Filtrar</span>
+        </Button>
+        
+        <Button 
+          variant={showAnalytics ? "default" : "outline"}
+          size="sm" 
+          className="h-8 flex items-center gap-1"
+          onClick={() => setShowAnalytics(!showAnalytics)}
+        >
+          <BarChart2 className="h-4 w-4" />
+          <span className="text-xs">Analytics</span>
+        </Button>
+        
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="h-8 flex items-center gap-1"
+          onClick={() => setExportDialogOpen(true)}
+        >
+          <Download className="h-4 w-4" />
+          <span className="text-xs">Exportar</span>
+        </Button>
         
         <Button 
           size="sm" 
@@ -256,13 +258,13 @@ export function FunnelHeader({
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label>Formato</Label>
-              <Select defaultValue="json">
+              <Select defaultValue="csv">
                 <SelectTrigger>
                   <SelectValue placeholder="Selecionar formato" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="json">JSON</SelectItem>
-                  <SelectItem value="csv">CSV (em breve)</SelectItem>
+                  <SelectItem value="csv">CSV</SelectItem>
+                  <SelectItem value="json">JSON (em breve)</SelectItem>
                   <SelectItem value="excel">Excel (em breve)</SelectItem>
                 </SelectContent>
               </Select>

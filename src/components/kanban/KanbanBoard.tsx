@@ -62,7 +62,7 @@ const KanbanBoard = ({
     handleEditColumn
   } = useKanbanBoard(columns, onColumnUpdate);
 
-  // New refs and state for drag-to-pan functionality
+  // Refs e estado para funcionalidade de arrastar o quadro
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [startPosition, setStartPosition] = useState({ x: 0, y: 0 });
@@ -103,7 +103,7 @@ const KanbanBoard = ({
     handleEditColumn(columns, setColumns);
   };
 
-  // New event handlers for drag-to-pan functionality
+  // Event handlers for drag-to-pan funcionality (horizontal and vertical)
   const handleMouseDown = (e: React.MouseEvent) => {
     // Only start drag if it's not on a kanban card (check for data-draggable attribute)
     if ((e.target as HTMLElement).closest('[data-draggable="true"]')) {
@@ -121,11 +121,11 @@ const KanbanBoard = ({
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!isDragging || !containerRef.current) return;
     
-    // Calculate the delta from the start position
+    // Calcular a diferença com a posição inicial
     const deltaX = startPosition.x - e.clientX;
     const deltaY = startPosition.y - e.clientY;
     
-    // Apply the scroll
+    // Aplicar a rolagem horizontal e vertical
     containerRef.current.scrollLeft = scrollPosition.x + deltaX;
     containerRef.current.scrollTop = scrollPosition.y + deltaY;
   };
@@ -134,7 +134,7 @@ const KanbanBoard = ({
     setIsDragging(false);
   };
 
-  // Same for touch events
+  // O mesmo para eventos de toque
   const handleTouchStart = (e: React.TouchEvent) => {
     if ((e.target as HTMLElement).closest('[data-draggable="true"]')) {
       return;
@@ -151,11 +151,11 @@ const KanbanBoard = ({
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!isDragging || !containerRef.current) return;
     
-    // Calculate the delta from the start position
+    // Calcular a diferença com a posição inicial
     const deltaX = startPosition.x - e.touches[0].clientX;
     const deltaY = startPosition.y - e.touches[0].clientY;
     
-    // Apply the scroll
+    // Aplicar a rolagem horizontal e vertical
     containerRef.current.scrollLeft = scrollPosition.x + deltaX;
     containerRef.current.scrollTop = scrollPosition.y + deltaY;
   };
@@ -164,7 +164,7 @@ const KanbanBoard = ({
     setIsDragging(false);
   };
   
-  // For move and duplicate card functionality
+  // Funcionalidade para mover e duplicar cards
   const [moveCardDialogOpen, setMoveCardDialogOpen] = useState(false);
   const [cardToMove, setCardToMove] = useState<{cardId: string, columnId: string} | null>(null);
   const [moveAction, setMoveAction] = useState<'move' | 'duplicate'>('move');
@@ -195,7 +195,7 @@ const KanbanBoard = ({
       if (col.id === targetColumnId) {
         return {
           ...col,
-          cards: [...col.cards, { ...card }]
+          cards: [...col.cards, { ...card, id: moveAction === 'duplicate' ? `${card.id}-copy-${Date.now()}` : card.id }]
         };
       }
       
@@ -218,17 +218,34 @@ const KanbanBoard = ({
     toast({
       title: `Card ${actionText}`,
       description: `O card foi ${actionText} com sucesso.`,
+      duration: 2000,
     });
   };
 
-  // Filter columns based on assignee
+  // Filtrar colunas com base no responsável
   const filteredColumns = filterColumnsByAssignee(columns, filterByAssignee);
 
-  // Calculate responsive column width
+  // Calcular largura responsiva da coluna
   const columnWidth = getResponsiveColumnWidth(filteredColumns, zoomLevel, isExpanded);
   
-  // Calculate container height
+  // Calcular altura do container
   const containerHeight = getContainerHeight(isExpanded);
+
+  // Otimizar renderização
+  useEffect(() => {
+    // Forçar um refresh do quadro quando o componente é montado
+    const timer = setTimeout(() => {
+      if (containerRef.current) {
+        // Técnica para forçar um reflow
+        containerRef.current.style.opacity = '0.99';
+        setTimeout(() => {
+          if (containerRef.current) containerRef.current.style.opacity = '1';
+        }, 10);
+      }
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <div className={cn("transition-all duration-300", isExpanded ? "scale-100" : "scale-95")}>
@@ -246,7 +263,7 @@ const KanbanBoard = ({
 
       <div 
         ref={containerRef}
-        className="kanban-container overflow-x-auto pb-4"
+        className="kanban-container overflow-x-auto overflow-y-auto pb-4"
         style={{ 
           height: containerHeight,
           cursor: isDragging ? 'grabbing' : 'grab',

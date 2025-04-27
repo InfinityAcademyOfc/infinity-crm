@@ -1,5 +1,5 @@
 
-import { ReactNode, useState } from "react";
+import { ReactNode, useState, memo } from "react";
 import { MoreHorizontal, Copy, ArrowRightLeft } from "lucide-react";
 import { KanbanCardItem } from "./types";
 import { Button } from "@/components/ui/button";
@@ -25,7 +25,8 @@ interface KanbanCardProps {
   modern?: boolean;
 }
 
-const KanbanCard = ({
+// Usando memo para melhorar a performance de renderização
+const KanbanCard = memo(({
   card,
   onDragStart,
   onClick,
@@ -48,6 +49,20 @@ const KanbanCard = ({
     </span>
   ) : null;
 
+  // Usamos o servidor RequestAnimationFrame para evitar problemas de renderização
+  const handleCardClick = () => {
+    // Usar RAF para adiar a abertura do detalhe do card
+    // Isso ajuda a evitar problemas de renderização
+    requestAnimationFrame(() => {
+      setIsDetailOpen(true);
+    });
+  };
+
+  // Prevenir propagação de eventos para dropdown
+  const handleDropdownClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+  };
+
   return (
     <>
       <div
@@ -58,13 +73,13 @@ const KanbanCard = ({
         )}
         draggable
         onDragStart={onDragStart}
-        onClick={() => setIsDetailOpen(true)}
+        onClick={handleCardClick}
         data-draggable="true"
       >
         <MinimalistCardView card={card} priorityBadge={priorityBadge} />
         
         <DropdownMenu>
-          <DropdownMenuTrigger className="absolute top-2 right-2 focus:outline-none opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+          <DropdownMenuTrigger className="absolute top-2 right-2 focus:outline-none opacity-0 group-hover:opacity-100 transition-opacity" onClick={handleDropdownClick}>
             <MoreHorizontal size={14} className="text-gray-500 dark:text-gray-400" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
@@ -107,15 +122,20 @@ const KanbanCard = ({
       </div>
 
       {/* Detailed Card Dialog */}
-      <CardDetailDialog 
-        card={card}
-        isOpen={isDetailOpen}
-        onClose={() => setIsDetailOpen(false)}
-        onChecklistChange={setChecklist}
-        onMove={onMove}
-      />
+      {isDetailOpen && (
+        <CardDetailDialog 
+          card={card}
+          isOpen={isDetailOpen}
+          onClose={() => setIsDetailOpen(false)}
+          onChecklistChange={setChecklist}
+          onMove={onMove}
+        />
+      )}
     </>
   );
-};
+});
+
+// Definir displayName para o componente memo
+KanbanCard.displayName = "KanbanCard";
 
 export default KanbanCard;

@@ -12,6 +12,7 @@ const SalesChart = lazy(() => import("@/components/dashboard/SalesChart"));
 const FinanceChart = lazy(() => import("@/components/dashboard/FinanceChart"));
 const ActivitiesSection = lazy(() => import("@/components/dashboard/ActivitiesSection"));
 const IntegratedFunnel = lazy(() => import("@/components/dashboard/IntegratedFunnel"));
+const DREChart = lazy(() => import("@/components/dashboard/DREChart")); // Novo componente DRE
 
 const Dashboard = () => {
   const { profile } = useAuth();
@@ -19,7 +20,7 @@ const Dashboard = () => {
   
   // New state for filtered sales data
   const [filteredSalesData, setFilteredSalesData] = useState([]);
-  const [filterPeriod, setFilterPeriod] = useState("12"); // Default to 12 months
+  const [filterPeriod, setFilterPeriod] = useState("6"); // Default to 6 months
   const [filterCollaborator, setFilterCollaborator] = useState("all");
   const [filterProduct, setFilterProduct] = useState("all");
   
@@ -109,7 +110,7 @@ const Dashboard = () => {
             />
           </Suspense>
           <Suspense fallback={<ChartSkeleton />}>
-            <FinanceChart />
+            <DREChart />
           </Suspense>
         </>
       }
