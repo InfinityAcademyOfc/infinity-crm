@@ -2,6 +2,23 @@
 @tailwind components;
 
 @layer components {
+  /* Define the missing custom-scrollbar class */
+  .custom-scrollbar::-webkit-scrollbar {
+    @apply h-2 w-2;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-transparent rounded-full;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-gray-400/50 dark:bg-gray-600/50 rounded-full hover:bg-gray-500/70 dark:hover:bg-gray-500/70;
+  }
+  
+  .custom-scrollbar {
+    @apply scrollbar-thin scrollbar-thumb-gray-400/50 dark:scrollbar-thumb-gray-600/50 scrollbar-track-transparent;
+  }
+
   .kanban-column {
     @apply rounded-lg p-3 min-h-[500px] w-full transition-all duration-300 flex-shrink-0;
   }
@@ -36,7 +53,12 @@
   }
   
   .kanban-board {
-    @apply flex gap-3 overflow-x-auto pb-4 snap-x snap-mandatory custom-scrollbar;
+    @apply flex gap-3 overflow-x-auto pb-4 snap-x snap-mandatory;
+  }
+  
+  /* Apply the custom scrollbar to the kanban board */
+  .kanban-board {
+    @apply custom-scrollbar;
   }
   
   .kanban-column-container {

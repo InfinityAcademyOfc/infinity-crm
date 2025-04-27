@@ -46,7 +46,7 @@ const KanbanColumnList = ({
           onAddCard={onAddCard}
           onEditCard={onEditCard}
           onDeleteCard={onDeleteCard}
-          onDragStart={handleDragStart}
+          onDragStart={(cardId, columnId) => handleDragStart(cardId, columnId)}
           onDragOver={handleDragOver}
           onDrop={handleDrop}
           onEdit={() => openEditColumn(column)}

@@ -54,7 +54,7 @@ const KanbanBoard = ({
     increaseZoom,
     decreaseZoom,
     toggleExpand,
-    handleDragStart,
+    handleDragStart: originalHandleDragStart,
     handleDrop,
     handleAddColumn,
     handleDeleteColumn,
@@ -71,6 +71,17 @@ const KanbanBoard = ({
 
   // Get unique assignees from all cards
   const assignees = getUniqueAssignees(columns);
+
+  // Adapter for handleDragStart to work with string ID instead of KanbanCardItem object
+  const handleDragStart = (cardId: string, columnId: string) => {
+    const column = columns.find(col => col.id === columnId);
+    if (!column) return;
+    
+    const card = column.cards.find(card => card.id === cardId);
+    if (!card) return;
+    
+    originalHandleDragStart(card, columnId);
+  };
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();

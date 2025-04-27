@@ -4,6 +4,8 @@ import KanbanBoard from "@/components/kanban/KanbanBoard";
 import { KanbanColumnItem } from "@/components/kanban/types";
 import { SectionHeader } from "@/components/ui/section-header";
 import { useToast } from "@/hooks/use-toast";
+import { Download } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const initialColumns: KanbanColumnItem[] = [
   {
@@ -199,15 +201,15 @@ const ClientLtvFunnel = () => {
       <SectionHeader 
         title="Funil de Valor do Cliente (LTV)" 
         description="Visualize e gerencie o ciclo de vida e valor de seus clientes" 
-        actions={[
-          {
-            icon: "download",
-            label: "Exportar",
-            onClick: handleExport,
-            variant: "outline"
-          }
-        ]}
       />
+      
+      <div className="flex justify-end mb-4">
+        <Button variant="outline" size="sm" className="flex items-center gap-1" onClick={handleExport}>
+          <Download size={14} />
+          <span>Exportar</span>
+        </Button>
+      </div>
+      
       <div className="overflow-x-auto pb-4">
         <KanbanBoard columns={columns} setColumns={setColumns} />
       </div>
