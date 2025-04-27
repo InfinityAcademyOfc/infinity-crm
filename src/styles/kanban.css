@@ -1,8 +1,6 @@
-
 @tailwind components;
 
 @layer components {
-  /* Define the missing custom-scrollbar class */
   .custom-scrollbar::-webkit-scrollbar {
     @apply h-2 w-2;
   }
@@ -16,7 +14,9 @@
   }
   
   .custom-scrollbar {
-    @apply scrollbar-thin scrollbar-thumb-gray-400/50 dark:scrollbar-thumb-gray-600/50 scrollbar-track-transparent;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+    scrollbar-track-color: transparent;
   }
 
   .kanban-column {
