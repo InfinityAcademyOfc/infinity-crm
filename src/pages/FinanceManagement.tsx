@@ -60,11 +60,12 @@ import { useToast } from "@/hooks/use-toast";
 import { mockTransactions } from "@/data/mockData";
 import { formatCurrency, formatDate } from "@/lib/formatters";
 import FinanceReports from "@/components/finance/FinanceReports";
+import { Transaction, TransactionType } from "@/types/finance";
 
 const FinanceManagement = () => {
-  const [transactions, setTransactions] = useState(mockTransactions);
+  const [transactions, setTransactions] = useState<Transaction[]>(mockTransactions as Transaction[]);
   const [newTransactionOpen, setNewTransactionOpen] = useState(false);
-  const [transactionType, setTransactionType] = useState<"income" | "expense">("income");
+  const [transactionType, setTransactionType] = useState<TransactionType>("income");
   const [activeTab, setActiveTab] = useState("transactions");
   const { toast } = useToast();
   
@@ -96,7 +97,7 @@ const FinanceManagement = () => {
       return;
     }
     
-    const newTransaction = {
+    const newTransaction: Transaction = {
       id: (transactions.length + 1).toString(),
       type: transactionType,
       description,

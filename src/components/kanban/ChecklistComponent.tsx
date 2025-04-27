@@ -7,20 +7,20 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { ChecklistItem } from "./KanbanCardUtils";
 
-interface ChecklistProps {
-  checklist: ChecklistItem[];
-  onChecklistChange: (newChecklist: ChecklistItem[]) => void;
+export interface ChecklistProps {
+  items: ChecklistItem[];
+  onChange: (newChecklist: ChecklistItem[]) => void;
 }
 
-const ChecklistComponent = ({ checklist, onChecklistChange }: ChecklistProps) => {
+const ChecklistComponent = ({ items, onChange }: ChecklistProps) => {
   const [newChecklistItem, setNewChecklistItem] = useState("");
   const [showChecklistInput, setShowChecklistInput] = useState(false);
 
   const handleCheck = (id: string) => {
-    const updatedChecklist = checklist.map(item => 
+    const updatedChecklist = items.map(item => 
       item.id === id ? { ...item, completed: !item.completed } : item
     );
-    onChecklistChange(updatedChecklist);
+    onChange(updatedChecklist);
   };
 
   const addChecklistItem = () => {
@@ -30,20 +30,20 @@ const ChecklistComponent = ({ checklist, onChecklistChange }: ChecklistProps) =>
         text: newChecklistItem,
         completed: false
       };
-      onChecklistChange([...checklist, newItem]);
+      onChange([...items, newItem]);
       setNewChecklistItem("");
       setShowChecklistInput(false);
     }
   };
 
   const removeChecklistItem = (id: string) => {
-    onChecklistChange(checklist.filter(item => item.id !== id));
+    onChange(items.filter(item => item.id !== id));
   };
 
   return (
     <div>
       <div className="flex justify-between items-center mb-2">
-        <h3 className="text-sm font-medium">Checklist ({checklist.filter(item => item.completed).length}/{checklist.length})</h3>
+        <h3 className="text-sm font-medium">Checklist ({items.filter(item => item.completed).length}/{items.length})</h3>
         <Button 
           variant="outline" 
           size="sm" 
@@ -70,7 +70,7 @@ const ChecklistComponent = ({ checklist, onChecklistChange }: ChecklistProps) =>
       )}
       
       <div className="space-y-1">
-        {checklist.map(item => (
+        {items.map(item => (
           <div key={item.id} className="flex items-start gap-2 group">
             <Checkbox 
               checked={item.completed} 
@@ -94,7 +94,7 @@ const ChecklistComponent = ({ checklist, onChecklistChange }: ChecklistProps) =>
           </div>
         ))}
         
-        {checklist.length === 0 && (
+        {items.length === 0 && (
           <p className="text-sm text-gray-500 dark:text-gray-400">Nenhuma tarefa adicionada</p>
         )}
       </div>

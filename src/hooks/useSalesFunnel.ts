@@ -21,33 +21,12 @@ export function useSalesFunnel(initialColumns: KanbanColumnItem[]) {
     setNewCardOpen(true);
   };
 
-  const handleSaveNewCard = (e: React.FormEvent) => {
-    e.preventDefault();
-    const form = e.target as HTMLFormElement;
-    const formData = new FormData(form);
-    
-    const title = formData.get("title") as string;
-    const description = formData.get("description") as string;
-    const value = parseFloat(formData.get("value") as string);
-    const priority = formData.get("priority") as "low" | "medium" | "high";
-    
-    if (!title || !activeColumnId) return;
+  const handleSaveNewLead = (data: any) => {
+    if (!activeColumnId) return;
     
     const newCard: KanbanCardItem = {
       id: Date.now().toString(),
-      title,
-      description,
-      value: isNaN(value) ? 0 : value,
-      priority,
-      tags: [
-        { label: "Novo", color: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300" }
-      ],
-      assignedTo: {
-        id: "user-1",
-        name: "Carlos Silva",
-        avatar: "/placeholder.svg"
-      },
-      dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      ...data
     };
     
     const newColumns = columns.map(col => {
@@ -62,11 +41,10 @@ export function useSalesFunnel(initialColumns: KanbanColumnItem[]) {
     
     setColumns(newColumns);
     setNewCardOpen(false);
-    form.reset();
     
     toast({
       title: "Lead adicionado com sucesso",
-      description: `${title} foi adicionado à etapa ${columns.find(col => col.id === activeColumnId)?.title}`,
+      description: `${data.title} foi adicionado à etapa ${columns.find(col => col.id === activeColumnId)?.title}`,
     });
   };
 
@@ -82,32 +60,15 @@ export function useSalesFunnel(initialColumns: KanbanColumnItem[]) {
     setEditCardOpen(true);
   };
 
-  const handleUpdateCard = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!activeCard || !activeColumnId) return;
-    
-    const form = e.target as HTMLFormElement;
-    const formData = new FormData(form);
-    
-    const title = formData.get("title") as string;
-    const description = formData.get("description") as string;
-    const value = parseFloat(formData.get("value") as string);
-    const priority = formData.get("priority") as "low" | "medium" | "high";
-    
-    const updatedCard: KanbanCardItem = {
-      ...activeCard,
-      title,
-      description,
-      value: isNaN(value) ? 0 : value,
-      priority,
-    };
+  const handleUpdateCard = (updatedCard: KanbanCardItem) => {
+    if (!activeColumnId) return;
     
     const newColumns = columns.map(col => {
       if (col.id === activeColumnId) {
         return {
           ...col,
           cards: col.cards.map(card => 
-            card.id === activeCard.id ? updatedCard : card
+            card.id === updatedCard.id ? updatedCard : card
           )
         };
       }
@@ -119,7 +80,7 @@ export function useSalesFunnel(initialColumns: KanbanColumnItem[]) {
     
     toast({
       title: "Lead atualizado com sucesso",
-      description: `As informações de ${title} foram atualizadas`,
+      description: `As informações de ${updatedCard.title} foram atualizadas`,
     });
   };
 
@@ -172,7 +133,7 @@ export function useSalesFunnel(initialColumns: KanbanColumnItem[]) {
     valuePotentialData,
     handleAddCard,
     handleAddNewLead,
-    handleSaveNewCard,
+    handleSaveNewLead,
     handleEditCard,
     handleUpdateCard,
     handleDeleteCard

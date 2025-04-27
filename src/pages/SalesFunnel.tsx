@@ -1,10 +1,11 @@
+
 import React from "react";
 import { useState } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FunnelHeader } from "@/components/sales-funnel/FunnelHeader";
 import { FunnelAnalytics } from "@/components/sales-funnel/FunnelAnalytics";
-import { NewLeadDialog } from "@/components/sales-funnel/NewLeadDialog";
+import NewLeadDialog from "@/components/sales-funnel/NewLeadDialog";
 import { EditLeadDialog } from "@/components/sales-funnel/EditLeadDialog";
 import { SalesFunnelBoard } from "@/components/sales-funnel/SalesFunnelBoard";
 import { useSalesFunnel } from "@/hooks/useSalesFunnel";
@@ -151,7 +152,7 @@ const SalesFunnel = () => {
     valuePotentialData,
     handleAddCard,
     handleAddNewLead,
-    handleSaveNewCard,
+    handleSaveNewLead,
     handleEditCard,
     handleUpdateCard,
     handleDeleteCard
@@ -167,7 +168,7 @@ const SalesFunnel = () => {
       
       <SalesFunnelBoard columns={columns} setColumns={setColumns} onAddCard={handleAddCard} onEditCard={handleEditCard} onDeleteCard={handleDeleteCard} />
       
-      <NewLeadDialog open={newCardOpen} onOpenChange={setNewCardOpen} activeColumnId={activeColumnId} onSave={handleSaveNewCard} />
+      <NewLeadDialog open={newCardOpen} onOpenChange={setNewCardOpen} activeColumnId={activeColumnId} onSave={handleSaveNewLead} />
       
       <EditLeadDialog open={editCardOpen} onOpenChange={setEditCardOpen} activeCard={activeCard} onUpdate={handleUpdateCard} />
     </div>

@@ -20,12 +20,14 @@ interface NewClientDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSave?: (data: any) => void;
+  onAddClient?: (data: any) => void;
 }
 
 const NewClientDialog = ({
   open,
   onOpenChange,
   onSave,
+  onAddClient,
 }: NewClientDialogProps) => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -86,6 +88,10 @@ const NewClientDialog = ({
     
     if (onSave) {
       onSave(newClient);
+    }
+
+    if (onAddClient) {
+      onAddClient(newClient);
     }
     
     toast({
