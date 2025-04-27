@@ -1,11 +1,8 @@
-
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
-
 const NotificationSettings = () => {
-  return (
-    <Card>
+  return <Card>
       <CardHeader>
         <CardTitle>Preferências de Notificação</CardTitle>
       </CardHeader>
@@ -50,8 +47,6 @@ const NotificationSettings = () => {
           <Switch />
         </div>
       </CardContent>
-    </Card>
-  );
+    </Card>;
 };
-
 export default NotificationSettings;
