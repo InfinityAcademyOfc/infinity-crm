@@ -1,56 +1,12 @@
-
 import { useState } from "react";
-import { 
-  Plus, 
-  ArrowUp, 
-  ArrowDown, 
-  Calendar, 
-  DollarSign, 
-  MoreHorizontal,
-  Tag,
-  FileText,
-  Trash2,
-  Filter
-} from "lucide-react";
+import { Plus, ArrowUp, ArrowDown, Calendar, DollarSign, MoreHorizontal, Tag, FileText, Trash2, Filter } from "lucide-react";
 import { SectionHeader, ActionButton } from "@/components/ui/section-header";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -61,33 +17,29 @@ import { mockTransactions } from "@/data/mockData";
 import { formatCurrency, formatDate } from "@/lib/formatters";
 import FinanceReports from "@/components/finance/FinanceReports";
 import { Transaction, TransactionType } from "@/types/finance";
-
 const FinanceManagement = () => {
   const [transactions, setTransactions] = useState<Transaction[]>(mockTransactions as Transaction[]);
   const [newTransactionOpen, setNewTransactionOpen] = useState(false);
   const [transactionType, setTransactionType] = useState<TransactionType>("income");
   const [activeTab, setActiveTab] = useState("transactions");
-  const { toast } = useToast();
-  
+  const {
+    toast
+  } = useToast();
   const incomes = transactions.filter(t => t.type === "income");
   const expenses = transactions.filter(t => t.type === "expense");
-  
   const totalIncome = incomes.reduce((sum, t) => sum + t.amount, 0);
   const totalExpense = expenses.reduce((sum, t) => sum + t.amount, 0);
   const balance = totalIncome - totalExpense;
-  
   const handleAddTransaction = (e: React.FormEvent) => {
     e.preventDefault();
     const form = e.target as HTMLFormElement;
     const formData = new FormData(form);
-    
     const description = formData.get("description") as string;
     const amount = parseFloat(formData.get("amount") as string);
     const category = formData.get("category") as string;
     const date = formData.get("date") as string;
     const client = formData.get("client") as string;
     const notes = formData.get("notes") as string;
-    
     if (!description || isNaN(amount) || !category || !date) {
       toast({
         title: "Campos obrigatórios",
@@ -96,7 +48,6 @@ const FinanceManagement = () => {
       });
       return;
     }
-    
     const newTransaction: Transaction = {
       id: (transactions.length + 1).toString(),
       type: transactionType,
@@ -108,67 +59,44 @@ const FinanceManagement = () => {
       status: "completed",
       notes: notes || ""
     };
-    
     setTransactions([newTransaction, ...transactions]);
     setNewTransactionOpen(false);
     form.reset();
-    
     toast({
       title: `${transactionType === "income" ? "Receita" : "Despesa"} adicionada`,
-      description: `${description} foi adicionada com sucesso`,
+      description: `${description} foi adicionada com sucesso`
     });
   };
-  
   const handleDeleteTransaction = (id: string) => {
     setTransactions(transactions.filter(t => t.id !== id));
-    
     toast({
       title: "Transação removida",
-      description: "A transação foi removida com sucesso",
+      description: "A transação foi removida com sucesso"
     });
   };
-  
+
   // Function to handle exit confirmation for dialog
   const [confirmExitOpen, setConfirmExitOpen] = useState(false);
-  
   const handleDialogClose = () => {
     setConfirmExitOpen(true);
   };
-  
   const confirmExit = () => {
     setConfirmExitOpen(false);
     setNewTransactionOpen(false);
   };
-  
-  return (
-    <div className="space-y-6">
-      <SectionHeader 
-        title="Financeiro" 
-        description="Gestão de receitas e despesas"
-        actions={
-          <>
-            <ActionButton
-              icon={<FileText size={16} />}
-              label="Relatórios"
-              onClick={() => {
-                setActiveTab("reports");
-              }}
-              variant={activeTab === "reports" ? "default" : "outline"}
-            />
-            <ActionButton
-              icon={<Plus size={16} />}
-              label="Nova Transação"
-              onClick={() => {
-                setTransactionType("income");
-                setNewTransactionOpen(true);
-              }}
-            />
-          </>
-        }
-      />
+  return <div className="space-y-6">
+      <SectionHeader title="Financeiro" description="Gestão de receitas e despesas" actions={<>
+            <ActionButton icon={<FileText size={16} />} label="Relatórios" onClick={() => {
+        setActiveTab("reports");
+      }} variant={activeTab === "reports" ? "default" : "outline"} />
+            <ActionButton icon={<Plus size={16} />} label="Nova Transação" onClick={() => {
+        setTransactionType("income");
+        setNewTransactionOpen(true);
+      }} />
+          </>} />
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full max-w-md grid-cols-2">
+        <TabsList className="grid w-full max-w-md grid-cols-2 mx-0 my-0 px-[2px] py-0">
           <TabsTrigger value="transactions">Lançamentos</TabsTrigger>
           <TabsTrigger value="reports">Relatórios</TabsTrigger>
         </TabsList>
@@ -260,16 +188,11 @@ const FinanceManagement = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {transactions.map((transaction) => (
-                        <TableRow key={transaction.id}>
+                      {transactions.map(transaction => <TableRow key={transaction.id}>
                           <TableCell>
                             <div className="flex items-center gap-2">
                               <div className={`p-2 rounded-full ${transaction.type === "income" ? "bg-green-100" : "bg-red-100"}`}>
-                                {transaction.type === "income" ? (
-                                  <ArrowUp size={16} className="text-green-600" />
-                                ) : (
-                                  <ArrowDown size={16} className="text-red-600" />
-                                )}
+                                {transaction.type === "income" ? <ArrowUp size={16} className="text-green-600" /> : <ArrowDown size={16} className="text-red-600" />}
                               </div>
                               <div>
                                 <div className="font-medium">{transaction.description}</div>
@@ -316,18 +239,14 @@ const FinanceManagement = () => {
                                   Alterar Categoria
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem 
-                                  className="text-red-600 focus:text-red-600 gap-2 cursor-pointer"
-                                  onClick={() => handleDeleteTransaction(transaction.id)}
-                                >
+                                <DropdownMenuItem className="text-red-600 focus:text-red-600 gap-2 cursor-pointer" onClick={() => handleDeleteTransaction(transaction.id)}>
                                   <Trash2 size={14} />
                                   Excluir
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </TableCell>
-                        </TableRow>
-                      ))}
+                        </TableRow>)}
                     </TableBody>
                   </Table>
                 </div>
@@ -346,16 +265,13 @@ const FinanceManagement = () => {
       </Tabs>
       
       {/* Dialog for adding new transaction */}
-      <Dialog 
-        open={newTransactionOpen} 
-        onOpenChange={(open) => {
-          if (!open) {
-            handleDialogClose();
-          } else {
-            setNewTransactionOpen(true);
-          }
-        }}
-      >
+      <Dialog open={newTransactionOpen} onOpenChange={open => {
+      if (!open) {
+        handleDialogClose();
+      } else {
+        setNewTransactionOpen(true);
+      }
+    }}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Nova Transação</DialogTitle>
@@ -364,7 +280,7 @@ const FinanceManagement = () => {
             </DialogDescription>
           </DialogHeader>
           
-          <Tabs value={transactionType} onValueChange={(v) => setTransactionType(v as "income" | "expense")}>
+          <Tabs value={transactionType} onValueChange={v => setTransactionType(v as "income" | "expense")}>
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="income" className="gap-2">
                 <ArrowUp size={16} className="text-green-600" />
@@ -380,37 +296,18 @@ const FinanceManagement = () => {
               <div className="grid gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="description">Descrição*</Label>
-                  <Input
-                    id="description"
-                    name="description"
-                    placeholder={`Ex: ${transactionType === "income" ? "Pagamento de Cliente" : "Aluguel"}`}
-                    required
-                  />
+                  <Input id="description" name="description" placeholder={`Ex: ${transactionType === "income" ? "Pagamento de Cliente" : "Aluguel"}`} required />
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-2">
                     <Label htmlFor="amount">Valor (R$)*</Label>
-                    <Input
-                      id="amount"
-                      name="amount"
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      placeholder="0,00"
-                      required
-                    />
+                    <Input id="amount" name="amount" type="number" min="0" step="0.01" placeholder="0,00" required />
                   </div>
                   
                   <div className="grid gap-2">
                     <Label htmlFor="date">Data*</Label>
-                    <Input
-                      id="date"
-                      name="date"
-                      type="date"
-                      defaultValue={new Date().toISOString().split('T')[0]}
-                      required
-                    />
+                    <Input id="date" name="date" type="date" defaultValue={new Date().toISOString().split('T')[0]} required />
                   </div>
                 </div>
                 
@@ -422,29 +319,24 @@ const FinanceManagement = () => {
                         <SelectValue placeholder="Selecione..." />
                       </SelectTrigger>
                       <SelectContent>
-                        {transactionType === "income" ? (
-                          <>
+                        {transactionType === "income" ? <>
                             <SelectItem value="Vendas">Vendas</SelectItem>
                             <SelectItem value="Serviços">Serviços</SelectItem>
                             <SelectItem value="Consultoria">Consultoria</SelectItem>
                             <SelectItem value="Recorrente">Recorrente</SelectItem>
                             <SelectItem value="Outros">Outros</SelectItem>
-                          </>
-                        ) : (
-                          <>
+                          </> : <>
                             <SelectItem value="Pessoal">Pessoal</SelectItem>
                             <SelectItem value="Infraestrutura">Infraestrutura</SelectItem>
                             <SelectItem value="Marketing">Marketing</SelectItem>
                             <SelectItem value="Software">Software</SelectItem>
                             <SelectItem value="Outros">Outros</SelectItem>
-                          </>
-                        )}
+                          </>}
                       </SelectContent>
                     </Select>
                   </div>
                   
-                  {transactionType === "income" && (
-                    <div className="grid gap-2">
+                  {transactionType === "income" && <div className="grid gap-2">
                       <Label htmlFor="client">Cliente</Label>
                       <Select name="client">
                         <SelectTrigger>
@@ -457,18 +349,12 @@ const FinanceManagement = () => {
                           <SelectItem value="Outro">Outro</SelectItem>
                         </SelectContent>
                       </Select>
-                    </div>
-                  )}
+                    </div>}
                 </div>
                 
                 <div className="grid gap-2">
                   <Label htmlFor="notes">Observações</Label>
-                  <Textarea
-                    id="notes"
-                    name="notes"
-                    placeholder="Informações adicionais sobre a transação..."
-                    rows={3}
-                  />
+                  <Textarea id="notes" name="notes" placeholder="Informações adicionais sobre a transação..." rows={3} />
                 </div>
               </div>
               
@@ -495,25 +381,15 @@ const FinanceManagement = () => {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="sm:justify-between">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setConfirmExitOpen(false)}
-            >
+            <Button type="button" variant="outline" onClick={() => setConfirmExitOpen(false)}>
               Não, continuar editando
             </Button>
-            <Button
-              type="button"
-              variant="destructive"
-              onClick={confirmExit}
-            >
+            <Button type="button" variant="destructive" onClick={confirmExit}>
               Sim, sair
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
-  );
+    </div>;
 };
-
 export default FinanceManagement;
