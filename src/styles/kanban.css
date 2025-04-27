@@ -21,20 +21,19 @@
   }
 
   .kanban-column {
-    @apply rounded-lg min-h-[500px] w-full transition-all duration-300 flex-shrink-0;
+    @apply rounded-lg p-3 min-h-[500px] w-full transition-all duration-300 flex-shrink-0;
     box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.05);
   }
   
   /* Light theme kanban column */
   :root .kanban-column {
-    @apply bg-gray-100/90 border border-gray-300/70 shadow-lg;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    @apply bg-gray-200 border border-gray-300/70 shadow-lg;
   }
   
   /* Dark theme kanban column */
   .dark .kanban-column {
-    @apply bg-gray-800/90 border border-gray-700/50 shadow-xl backdrop-blur-sm;
-    box-shadow: 0 0 15px rgba(100, 100, 255, 0.1);
+    @apply bg-gray-800 border border-gray-700/50 shadow-xl backdrop-blur-sm;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.05);
     background-image: linear-gradient(to bottom, 
       rgba(60, 60, 70, 0.6) 0%, 
       rgba(50, 50, 60, 0.6) 50%, 
@@ -43,7 +42,7 @@
   }
 
   .kanban-card {
-    @apply rounded-md p-3 mb-2.5 transition-all w-full relative;
+    @apply rounded-md p-3 mb-2.5 transition-all w-full;
   }
   
   /* Light theme kanban card */
@@ -64,10 +63,6 @@
   
   /* Apply the custom scrollbar to the kanban board */
   .kanban-board {
-    @apply custom-scrollbar;
-  }
-  
-  .kanban-container {
     @apply custom-scrollbar;
   }
   
@@ -107,19 +102,18 @@
   
   /* Light theme modern kanban */
   :root .kanban-column-modern {
-    @apply p-2 rounded-xl min-h-[480px] border-gray-300/50 shadow-lg;
-    background: linear-gradient(to bottom, rgba(245, 246, 250, 0.9), rgba(240, 242, 245, 0.9));
+    @apply p-2 rounded-xl min-h-[480px] bg-gray-200 border-gray-300/50 shadow-lg;
   }
   
   /* Dark theme modern kanban */
   .dark .kanban-column-modern {
-    @apply p-2 rounded-xl min-h-[480px] border-gray-600/30 shadow-xl backdrop-blur-sm;
+    @apply p-2 rounded-xl min-h-[480px] border-gray-600/30 shadow-xl bg-gray-800/70 backdrop-blur-sm;
     background-image: linear-gradient(to bottom, 
       rgba(50, 50, 60, 0.5) 0%, 
       rgba(40, 40, 50, 0.5) 50%, 
       rgba(30, 30, 40, 0.5) 51%, 
       rgba(35, 35, 45, 0.5) 100%);
-    box-shadow: 0 0 15px rgba(100, 100, 255, 0.15);
+    box-shadow: 0 0 15px rgba(150, 150, 255, 0.1);
   }
   
   /* Light theme modern kanban card */
@@ -142,12 +136,11 @@
 
   /* Neon effect for dark mode */
   .dark .kanban-card:hover {
-    box-shadow: 0 0 12px rgba(150, 150, 255, 0.2);
-    border-color: rgba(150, 150, 255, 0.3);
+    box-shadow: 0 0 12px rgba(150, 150, 255, 0.15);
   }
   
   .dark .kanban-column {
-    box-shadow: 0 0 16px rgba(100, 100, 255, 0.15);
+    box-shadow: 0 0 16px rgba(150, 150, 255, 0.07);
   }
   
   /* Card info display */
@@ -161,25 +154,5 @@
   
   .card-value {
     @apply font-medium;
-  }
-
-  /* Kanban column header styling */
-  .kanban-column-header {
-    @apply font-semibold border-b border-gray-200/50 dark:border-gray-700/50 mb-2;
-  }
-
-  /* Clean card appearance */
-  .kanban-card {
-    @apply transition-all duration-200;
-  }
-
-  /* Card hover with subtle animation */
-  .kanban-card:hover {
-    @apply transform translate-y-[-2px] duration-300;
-  }
-  
-  /* Enhanced column badges */
-  .kanban-column-badge {
-    @apply bg-primary/20 text-primary-foreground dark:bg-primary/30;
   }
 }

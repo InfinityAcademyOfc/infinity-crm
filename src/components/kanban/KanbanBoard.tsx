@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useKanbanBoard } from "@/hooks/useKanbanBoard";
@@ -61,20 +62,17 @@ const KanbanBoard = ({
     handleEditColumn
   } = useKanbanBoard(columns, onColumnUpdate);
 
+  // New refs and state for drag-to-pan functionality
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [startPosition, setStartPosition] = useState({ x: 0, y: 0 });
   const [scrollPosition, setScrollPosition] = useState({ x: 0, y: 0 });
   const { toast } = useToast();
 
+  // Get unique assignees from all cards
   const assignees = getUniqueAssignees(columns);
 
-  const [originalColumns, setOriginalColumns] = useState<KanbanColumnItem[]>([]);
-  
-  useEffect(() => {
-    setOriginalColumns(columns);
-  }, []);
-
+  // Adapter for handleDragStart to work with string ID instead of KanbanCardItem object
   const handleDragStart = (cardId: string, columnId: string) => {
     const column = columns.find(col => col.id === columnId);
     if (!column) return;
@@ -103,19 +101,12 @@ const KanbanBoard = ({
 
   const handleEditColumnEvent = () => {
     handleEditColumn(columns, setColumns);
-    
-    toast({
-      title: "Coluna atualizada",
-      description: "As alterações foram aplicadas com sucesso",
-      duration: 2000
-    });
   };
 
+  // New event handlers for drag-to-pan functionality
   const handleMouseDown = (e: React.MouseEvent) => {
-    if ((e.target as HTMLElement).closest('[data-draggable="true"]') || 
-        (e.target as HTMLElement).closest('button') ||
-        (e.target as HTMLElement).closest('a') ||
-        (e.target as HTMLElement).closest('input')) {
+    // Only start drag if it's not on a kanban card (check for data-draggable attribute)
+    if ((e.target as HTMLElement).closest('[data-draggable="true"]')) {
       return;
     }
     
@@ -125,38 +116,27 @@ const KanbanBoard = ({
       x: containerRef.current?.scrollLeft || 0,
       y: containerRef.current?.scrollTop || 0,
     });
-    
-    if (containerRef.current) {
-      containerRef.current.style.cursor = 'grabbing';
-    }
-    
-    document.body.style.userSelect = 'none';
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!isDragging || !containerRef.current) return;
     
+    // Calculate the delta from the start position
     const deltaX = startPosition.x - e.clientX;
     const deltaY = startPosition.y - e.clientY;
     
+    // Apply the scroll
     containerRef.current.scrollLeft = scrollPosition.x + deltaX;
     containerRef.current.scrollTop = scrollPosition.y + deltaY;
   };
 
   const handleMouseUp = () => {
     setIsDragging(false);
-    
-    if (containerRef.current) {
-      containerRef.current.style.cursor = 'grab';
-    }
-    document.body.style.userSelect = '';
   };
 
+  // Same for touch events
   const handleTouchStart = (e: React.TouchEvent) => {
-    if ((e.target as HTMLElement).closest('[data-draggable="true"]') || 
-        (e.target as HTMLElement).closest('button') ||
-        (e.target as HTMLElement).closest('a') ||
-        (e.target as HTMLElement).closest('input')) {
+    if ((e.target as HTMLElement).closest('[data-draggable="true"]')) {
       return;
     }
     
@@ -166,26 +146,25 @@ const KanbanBoard = ({
       x: containerRef.current?.scrollLeft || 0,
       y: containerRef.current?.scrollTop || 0,
     });
-    
-    e.preventDefault();
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!isDragging || !containerRef.current) return;
     
+    // Calculate the delta from the start position
     const deltaX = startPosition.x - e.touches[0].clientX;
     const deltaY = startPosition.y - e.touches[0].clientY;
     
+    // Apply the scroll
     containerRef.current.scrollLeft = scrollPosition.x + deltaX;
     containerRef.current.scrollTop = scrollPosition.y + deltaY;
-    
-    e.preventDefault();
   };
 
   const handleTouchEnd = () => {
     setIsDragging(false);
   };
   
+  // For move and duplicate card functionality
   const [moveCardDialogOpen, setMoveCardDialogOpen] = useState(false);
   const [cardToMove, setCardToMove] = useState<{cardId: string, columnId: string} | null>(null);
   const [moveAction, setMoveAction] = useState<'move' | 'duplicate'>('move');
@@ -199,19 +178,20 @@ const KanbanBoard = ({
   const handleMoveCard = (targetColumnId: string) => {
     if (!cardToMove) return;
     
-    const currentColumns = [...columns];
-    
     const { cardId, columnId } = cardToMove;
     
-    const sourceColumn = currentColumns.find(col => col.id === columnId);
+    // Find source column and card
+    const sourceColumn = columns.find(col => col.id === columnId);
     if (!sourceColumn) return;
     
     const cardIndex = sourceColumn.cards.findIndex(card => card.id === cardId);
     if (cardIndex === -1) return;
     
-    const card = {...sourceColumn.cards[cardIndex]};
+    const card = sourceColumn.cards[cardIndex];
     
-    const updatedColumns = currentColumns.map(col => {
+    // Update columns based on action type
+    const updatedColumns = columns.map(col => {
+      // Add card to target column
       if (col.id === targetColumnId) {
         return {
           ...col,
@@ -219,6 +199,7 @@ const KanbanBoard = ({
         };
       }
       
+      // If moving (not duplicating), remove from source column
       if (moveAction === 'move' && col.id === columnId) {
         return {
           ...col,
@@ -237,14 +218,16 @@ const KanbanBoard = ({
     toast({
       title: `Card ${actionText}`,
       description: `O card foi ${actionText} com sucesso.`,
-      duration: 2000
     });
   };
 
+  // Filter columns based on assignee
   const filteredColumns = filterColumnsByAssignee(columns, filterByAssignee);
 
+  // Calculate responsive column width
   const columnWidth = getResponsiveColumnWidth(filteredColumns, zoomLevel, isExpanded);
   
+  // Calculate container height
   const containerHeight = getContainerHeight(isExpanded);
 
   return (
@@ -263,7 +246,7 @@ const KanbanBoard = ({
 
       <div 
         ref={containerRef}
-        className="kanban-container overflow-auto pb-4 custom-scrollbar"
+        className="kanban-container overflow-x-auto pb-4"
         style={{ 
           height: containerHeight,
           cursor: isDragging ? 'grabbing' : 'grab',
@@ -276,7 +259,6 @@ const KanbanBoard = ({
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        onTouchCancel={handleTouchEnd}
       >
         <KanbanColumnList 
           columns={columns}
@@ -297,6 +279,7 @@ const KanbanBoard = ({
         />
       </div>
 
+      {/* Add Column Dialog */}
       <KanbanColumnDialog 
         isOpen={isAddColumnOpen}
         onOpenChange={setIsAddColumnOpen}
@@ -308,6 +291,7 @@ const KanbanBoard = ({
         onSave={handleAddColumnEvent}
       />
 
+      {/* Edit Column Dialog */}
       <KanbanColumnDialog 
         isOpen={isEditColumnOpen}
         onOpenChange={setIsEditColumnOpen}
@@ -320,6 +304,7 @@ const KanbanBoard = ({
         isEdit={true}
       />
 
+      {/* Move/Duplicate Card Dialog */}
       <KanbanColumnDialog 
         isOpen={moveCardDialogOpen}
         onOpenChange={setMoveCardDialogOpen}
