@@ -6,12 +6,16 @@ import { useToast } from "@/hooks/use-toast";
 
 export interface Activity {
   id: string;
-  action: string;
-  target: string;
+  type: string;
+  title: string;
   time: string;
-  user: string;
+  relatedTo: string;
+  status: string;
+  priority: string;
+  action?: string;
+  target?: string;
+  user?: string;
   avatar?: string;
-  status?: string;
 }
 
 interface ActivitiesSectionProps {
@@ -25,14 +29,15 @@ const ActivitiesSection = ({ activities }: ActivitiesSectionProps) => {
     if (!activities || activities.length === 0) return;
     
     // Prepare CSV content
-    const headers = ["ID", "Ação", "Alvo", "Hora", "Usuário", "Status"];
+    const headers = ["ID", "Tipo", "Título", "Hora", "Relacionado", "Status", "Prioridade"];
     const rows = activities.map(activity => [
       activity.id,
-      activity.action,
-      activity.target,
+      activity.type,
+      activity.title,
       activity.time,
-      activity.user,
-      activity.status || ""
+      activity.relatedTo,
+      activity.status,
+      activity.priority
     ]);
     
     // Combine headers and rows
@@ -81,10 +86,10 @@ const ActivitiesSection = ({ activities }: ActivitiesSectionProps) => {
               <div key={activity.id} className="flex items-center">
                 <div className="space-y-1">
                   <p className="text-sm font-medium leading-none">
-                    {activity.user} <span className="text-muted-foreground">realizou</span> {activity.action}
+                    {activity.title}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    {activity.target} • {activity.time}
+                    {activity.relatedTo} • {activity.time}
                   </p>
                 </div>
                 {activity.status && (
