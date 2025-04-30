@@ -9,7 +9,7 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
-  "dev:whatsapp": "node backend/whatsapp/server.js"
+    "dev:whatsapp": "node backend/whatsapp/server.js"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

@@ -9,6 +9,45 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      chatbots: {
+        Row: {
+          active: boolean | null
+          created_at: string | null
+          delay_seconds: number | null
+          id: string
+          media_url: string | null
+          response_content: string | null
+          response_type: string | null
+          trigger_type: string
+          trigger_value: string | null
+          user_id: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string | null
+          delay_seconds?: number | null
+          id?: string
+          media_url?: string | null
+          response_content?: string | null
+          response_type?: string | null
+          trigger_type: string
+          trigger_value?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string | null
+          delay_seconds?: number | null
+          id?: string
+          media_url?: string | null
+          response_content?: string | null
+          response_type?: string | null
+          trigger_type?: string
+          trigger_value?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       companies: {
         Row: {
           created_at: string | null
@@ -33,6 +72,140 @@ export type Database = {
           name?: string
           owner_id?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      config: {
+        Row: {
+          created_at: string | null
+          delay_seconds: number | null
+          first_msg_daily: boolean | null
+          id: string
+          keyword_trigger: Json | null
+          user_id: string | null
+          welcome_message: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          delay_seconds?: number | null
+          first_msg_daily?: boolean | null
+          id?: string
+          keyword_trigger?: Json | null
+          user_id?: string | null
+          welcome_message?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          delay_seconds?: number | null
+          first_msg_daily?: boolean | null
+          id?: string
+          keyword_trigger?: Json | null
+          user_id?: string | null
+          welcome_message?: string | null
+        }
+        Relationships: []
+      }
+      contacts: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          id: string
+          list_id: string | null
+          name: string
+          phone: string
+          tags: string[] | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          list_id?: string | null
+          name: string
+          phone: string
+          tags?: string[] | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          list_id?: string | null
+          name?: string
+          phone?: string
+          tags?: string[] | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contacts_list_id_fkey"
+            columns: ["list_id"]
+            isOneToOne: false
+            referencedRelation: "lists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lists: {
+        Row: {
+          contact_ids: string[] | null
+          created_at: string | null
+          description: string | null
+          filters: Json | null
+          id: string
+          name: string | null
+          user_id: string | null
+        }
+        Insert: {
+          contact_ids?: string[] | null
+          created_at?: string | null
+          description?: string | null
+          filters?: Json | null
+          id?: string
+          name?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          contact_ids?: string[] | null
+          created_at?: string | null
+          description?: string | null
+          filters?: Json | null
+          id?: string
+          name?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      media: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string | null
+          size_kb: number | null
+          type: string | null
+          url: string | null
+          used_in: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name?: string | null
+          size_kb?: number | null
+          type?: string | null
+          url?: string | null
+          used_in?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string | null
+          size_kb?: number | null
+          type?: string | null
+          url?: string | null
+          used_in?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -77,6 +250,297 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      schedules: {
+        Row: {
+          contact_id: string | null
+          created_at: string | null
+          failed: boolean | null
+          id: string
+          list_id: string | null
+          media_url: string | null
+          message: string
+          scheduled_at: string
+          sent: boolean | null
+          type: string | null
+          user_id: string | null
+        }
+        Insert: {
+          contact_id?: string | null
+          created_at?: string | null
+          failed?: boolean | null
+          id?: string
+          list_id?: string | null
+          media_url?: string | null
+          message: string
+          scheduled_at: string
+          sent?: boolean | null
+          type?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          contact_id?: string | null
+          created_at?: string | null
+          failed?: boolean | null
+          id?: string
+          list_id?: string | null
+          media_url?: string | null
+          message?: string
+          scheduled_at?: string
+          sent?: boolean | null
+          type?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "schedules_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "schedules_list_id_fkey"
+            columns: ["list_id"]
+            isOneToOne: false
+            referencedRelation: "lists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_autoresponders: {
+        Row: {
+          active: boolean | null
+          created_at: string | null
+          delay_seconds: number | null
+          id: string
+          keyword: string | null
+          media_url: string | null
+          response: string | null
+          session_id: string | null
+          trigger_type: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string | null
+          delay_seconds?: number | null
+          id?: string
+          keyword?: string | null
+          media_url?: string | null
+          response?: string | null
+          session_id?: string | null
+          trigger_type?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string | null
+          delay_seconds?: number | null
+          id?: string
+          keyword?: string | null
+          media_url?: string | null
+          response?: string | null
+          session_id?: string | null
+          trigger_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_autoresponders_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_broadcasts: {
+        Row: {
+          created_at: string | null
+          id: string
+          media_url: string | null
+          message: string | null
+          profile_id: string | null
+          scheduled_for: string | null
+          status: string | null
+          title: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          media_url?: string | null
+          message?: string | null
+          profile_id?: string | null
+          scheduled_for?: string | null
+          status?: string | null
+          title?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          media_url?: string | null
+          message?: string | null
+          profile_id?: string | null
+          scheduled_for?: string | null
+          status?: string | null
+          title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_broadcasts_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_contacts: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string | null
+          phone_number: string | null
+          profile_id: string | null
+          tags: string[] | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name?: string | null
+          phone_number?: string | null
+          profile_id?: string | null
+          tags?: string[] | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string | null
+          phone_number?: string | null
+          profile_id?: string | null
+          tags?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_contacts_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_flows: {
+        Row: {
+          active: boolean | null
+          created_at: string | null
+          flow_json: Json | null
+          id: string
+          name: string | null
+          profile_id: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string | null
+          flow_json?: Json | null
+          id?: string
+          name?: string | null
+          profile_id?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string | null
+          flow_json?: Json | null
+          id?: string
+          name?: string | null
+          profile_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_flows_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_messages: {
+        Row: {
+          direction: string | null
+          id: string
+          message: string | null
+          message_type: string | null
+          receiver: string | null
+          sender: string | null
+          session_id: string | null
+          timestamp: string | null
+        }
+        Insert: {
+          direction?: string | null
+          id?: string
+          message?: string | null
+          message_type?: string | null
+          receiver?: string | null
+          sender?: string | null
+          session_id?: string | null
+          timestamp?: string | null
+        }
+        Update: {
+          direction?: string | null
+          id?: string
+          message?: string | null
+          message_type?: string | null
+          receiver?: string | null
+          sender?: string | null
+          session_id?: string | null
+          timestamp?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_messages_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_sessions: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_connected: boolean | null
+          phone_number: string | null
+          profile_id: string | null
+          qr_code: string | null
+          session_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_connected?: boolean | null
+          phone_number?: string | null
+          profile_id?: string | null
+          qr_code?: string | null
+          session_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_connected?: boolean | null
+          phone_number?: string | null
+          profile_id?: string | null
+          qr_code?: string | null
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_sessions_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
