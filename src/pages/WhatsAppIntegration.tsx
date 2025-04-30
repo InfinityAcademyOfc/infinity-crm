@@ -5,7 +5,7 @@ import { useSessions } from "@/hooks/useSessions";
 import { Badge } from "@/components/ui/badge";
 import { Loader } from "lucide-react";
 
-const WhatsappIntegration = () => {
+const WhatsAppIntegration = () => {
   const { sessions, loading } = useSessions();
   const [showModal, setShowModal] = useState(false);
   const [selectedSessionId, setSelectedSessionId] = useState("");
@@ -65,4 +65,4 @@ const WhatsappIntegration = () => {
   );
 };
 
-export default WhatsappIntegration;
+export default WhatsAppIntegration;
