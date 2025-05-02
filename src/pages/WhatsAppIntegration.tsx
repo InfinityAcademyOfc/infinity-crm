@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import QRCodeModal from "@/components/whatsapp/QRCodeModal";
@@ -6,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Loader } from "lucide-react";
 
 const WhatsAppIntegration = () => {
-  const { sessions, loading } = useSessions();
+  const { sessions, loading, error } = useSessions();
   const [showModal, setShowModal] = useState(false);
   const [selectedSessionId, setSelectedSessionId] = useState("");
 
@@ -27,6 +28,10 @@ const WhatsAppIntegration = () => {
         <div className="flex items-center gap-2 text-muted-foreground">
           <Loader className="animate-spin" size={20} />
           Carregando sessões...
+        </div>
+      ) : error ? (
+        <div className="text-destructive">
+          Erro ao carregar sessões. Por favor, tente novamente.
         </div>
       ) : sessions.length === 0 ? (
         <p className="text-muted-foreground">Nenhuma sessão conectada.</p>
