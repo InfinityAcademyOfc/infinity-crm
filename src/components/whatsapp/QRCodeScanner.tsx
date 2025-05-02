@@ -10,15 +10,22 @@ import { Button } from "@/components/ui/button";
 interface QRCodeScannerProps {
   sessionId: string;
   onSuccess?: () => void;
+  onLogin?: () => void; // Added this prop
 }
 
-const QRCodeScanner = ({ sessionId, onSuccess }: QRCodeScannerProps) => {
+const QRCodeScanner = ({ sessionId, onSuccess, onLogin }: QRCodeScannerProps) => {
   const { loading, qrCodeData, error, refetch } = useQRCode(sessionId);
   const [retryCount, setRetryCount] = useState(0);
 
   const handleRetry = () => {
     setRetryCount(prev => prev + 1);
     refetch?.();
+  };
+
+  // If onLogin is provided, it can be called when needed
+  const handleSuccess = () => {
+    onSuccess?.();
+    onLogin?.(); // Call onLogin if provided
   };
 
   if (error) {
