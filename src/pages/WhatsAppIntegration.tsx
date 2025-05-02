@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import QRCodeModal from "@/components/whatsapp/QRCodeModal";
 import { useSessions } from "@/hooks/useSessions";
 import { Badge } from "@/components/ui/badge";
-import { Loader, AlertCircle } from "lucide-react";
+import { Loader } from "lucide-react";
 
 const WhatsAppIntegration = () => {
   const { sessions, loading, error } = useSessions();
@@ -30,8 +30,7 @@ const WhatsAppIntegration = () => {
           Carregando sessões...
         </div>
       ) : error ? (
-        <div className="text-destructive flex items-center gap-2">
-          <AlertCircle size={20} />
+        <div className="text-destructive">
           Erro ao carregar sessões. Por favor, tente novamente.
         </div>
       ) : sessions.length === 0 ? (
