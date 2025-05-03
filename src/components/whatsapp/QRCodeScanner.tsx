@@ -1,13 +1,12 @@
-
-import QRCodeLoading from "./ui/QRCodeLoading";
-import QRCodeInstructions from "./ui/QRCodeInstructions";
-import QRCodeDisplay from "./ui/QRCodeDisplay";
-import { useQRCode } from "@/hooks/useQRCode";
 import { useEffect } from "react";
+import QRCodeLoading from "./QRCodeLoading";
+import QRCodeInstructions from "./QRCodeInstructions";
+import QRCodeDisplay from "./QRCodeDisplay";
+import { useQRCode } from "@/hooks/useQRCode";
 
 interface QRCodeScannerProps {
   sessionId: string;
-  onLogin?: () => void; // Added onLogin as an optional prop
+  onLogin?: () => void; // Compatível com o Lovable
 }
 
 const QRCodeScanner = ({ sessionId, onLogin }: QRCodeScannerProps) => {
@@ -23,14 +22,26 @@ const QRCodeScanner = ({ sessionId, onLogin }: QRCodeScannerProps) => {
     <div className="flex flex-col items-center justify-center p-4">
       {loading ? (
         <QRCodeLoading />
-      ) : (
+      ) : status === "qr" && qrCodeData ? (
         <>
           <QRCodeInstructions />
           <QRCodeDisplay qrCodeData={qrCodeData} />
           <p className="text-sm text-center text-muted-foreground mt-4">
-            O código QR será atualizado automaticamente
+            O código QR será atualizado automaticamente a cada 10 segundos.
           </p>
         </>
+      ) : status === "connected" ? (
+        <p className="text-center text-green-600 font-medium mt-4">
+          Dispositivo conectado com sucesso!
+        </p>
+      ) : status === "error" ? (
+        <p className="text-center text-red-500 font-medium mt-4">
+          Ocorreu um erro ao carregar o QR Code.
+        </p>
+      ) : (
+        <p className="text-center text-muted-foreground mt-4">
+          Aguardando sessão iniciar...
+        </p>
       )}
     </div>
   );
