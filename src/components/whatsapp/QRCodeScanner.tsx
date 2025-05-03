@@ -1,7 +1,7 @@
 import { useEffect } from "react";
-import QRCodeLoading from "./QRCodeLoading";
-import QRCodeInstructions from "./QRCodeInstructions";
-import QRCodeDisplay from "./QRCodeDisplay";
+import QRCodeLoading from "@/components/whatsapp/ui/QRCodeLoading";
+import QRCodeInstructions from "@/components/whatsapp/ui/QRCodeInstructions";
+import QRCodeDisplay from "@/components/whatsapp/ui/QRCodeDisplay";
 import { useQRCode } from "@/hooks/useQRCode";
 
 interface QRCodeScannerProps {
