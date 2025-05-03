@@ -12,7 +12,9 @@ const QRCodeDisplay = ({ qrCodeData }: QRCodeDisplayProps) => {
           src={qrCodeData}
           alt="QR Code WhatsApp Web"
           className="w-64 h-64"
-        />
+          loading="lazy"
+          />
+
       </div>
       <div className="flex items-center">
         <span className="text-sm text-[#4fce5d] font-medium">
