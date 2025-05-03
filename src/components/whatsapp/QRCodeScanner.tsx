@@ -6,7 +6,7 @@ import { useQRCode } from "@/hooks/useQRCode";
 
 interface QRCodeScannerProps {
   sessionId: string;
-  onLogin?: () => void; // Compatível com o Lovable
+  onLogin?: () => void;
 }
 
 const QRCodeScanner = ({ sessionId, onLogin }: QRCodeScannerProps) => {
@@ -16,6 +16,8 @@ const QRCodeScanner = ({ sessionId, onLogin }: QRCodeScannerProps) => {
     console.log("QRCode Data:", qrCodeData);
     console.log("Status:", status);
   }, [qrCodeData, status]);
+
+  useEffect(() => {
     if (status === "connected" && onLogin) {
       onLogin();
     }
