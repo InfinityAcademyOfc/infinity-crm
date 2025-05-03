@@ -1,34 +1,22 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import QRCodeModal from "@/components/whatsapp/QRCodeModal";
 import { useSessions } from "@/hooks/useSessions";
 import { Badge } from "@/components/ui/badge";
 import { Loader } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
 
 const WhatsAppIntegration = () => {
-  const { sessions, loading, error } = useSessions();
+  const { sessions, loading } = useSessions();
   const [showModal, setShowModal] = useState(false);
   const [selectedSessionId, setSelectedSessionId] = useState("");
-  const { toast } = useToast();
 
   const handleConnectClick = (sessionId: string) => {
     setSelectedSessionId(sessionId);
     setShowModal(true);
   };
 
-  // Se ocorrer um erro, mostrar uma mensagem
-  if (error) {
-    toast({
-      title: "Erro ao carregar sessões",
-      description: error.message,
-      variant: "destructive",
-    });
-  }
-
   return (
-    <div className="p-6 animate-fade-in">
+    <div className="p-6">
       <h2 className="text-2xl font-bold mb-4">Integração com WhatsApp</h2>
 
       <Button variant="outline" className="mb-6" onClick={() => handleConnectClick("nova-sessao")}>

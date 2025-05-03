@@ -5,7 +5,7 @@ import { Loader2 } from 'lucide-react';
 const LoadingScreen = ({ minimal = false }: { minimal?: boolean }) => {
   if (minimal) {
     return (
-      <div className="flex items-center justify-center p-4 min-h-[200px] bg-background">
+      <div className="flex items-center justify-center p-4 min-h-[200px]">
         <div className="flex flex-col items-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
           <span className="mt-2 text-sm text-muted-foreground">Carregando...</span>
@@ -20,7 +20,7 @@ const LoadingScreen = ({ minimal = false }: { minimal?: boolean }) => {
       <p className="mt-6 text-lg font-medium">Carregando Infinity CRM...</p>
       <p className="mt-2 text-sm text-muted-foreground">Preparando sua experiência personalizada</p>
       
-      <div className="mt-8 w-64 h-1 bg-muted rounded-full overflow-hidden">
+      <div className="mt-8 w-64 h-1 bg-background rounded-full overflow-hidden border">
         <div className="h-full bg-primary animate-progress-bar"></div>
       </div>
     </div>
