@@ -2,13 +2,21 @@ import QRCodeLoading from "./ui/QRCodeLoading";
 import QRCodeInstructions from "./ui/QRCodeInstructions";
 import QRCodeDisplay from "./ui/QRCodeDisplay";
 import { useQRCode } from "@/hooks/useQRCode";
+import { useEffect } from "react";
 
 interface QRCodeScannerProps {
   sessionId: string;
+  onLogin?: () => void; // opcional, para integrar com eventos de conexão
 }
 
-const QRCodeScanner = ({ sessionId }: QRCodeScannerProps) => {
-  const { loading, qrCodeData } = useQRCode(sessionId);
+const QRCodeScanner = ({ sessionId, onLogin }: QRCodeScannerProps) => {
+  const { loading, qrCodeData, status } = useQRCode(sessionId);
+
+  useEffect(() => {
+    if (status === "connected" && onLogin) {
+      onLogin();
+    }
+  }, [status, onLogin]);
 
   return (
     <div className="flex flex-col items-center justify-center p-4">
