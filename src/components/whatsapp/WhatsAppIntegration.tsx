@@ -118,7 +118,7 @@ const WhatsAppIntegration = () => {
             
             <CardContent className="flex-1 p-0 overflow-hidden">
               <TabsContent value="qrcode" className="mt-0 h-full">
-                <QRCodeScanner onLogin={handleLogin} />
+                <QRCodeScanner sessionId="demo-session" onLogin={handleLogin} />
               </TabsContent>
               <TabsContent value="chat" className="mt-0 h-full">
                 <WhatsAppChat />

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -5,19 +6,28 @@ const API_URL = import.meta.env.VITE_API_URL;
 export const useQRCode = (sessionId: string) => {
   const [loading, setLoading] = useState(true);
   const [qrCodeData, setQrCodeData] = useState("");
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    if (!sessionId) return;
+    if (!sessionId) {
+      console.error("Nenhum sessionId fornecido para useQRCode");
+      setLoading(false);
+      return;
+    }
 
     const fetchQrCode = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`${API_URL}/sessions/${sessionId}/qrcode`);
-        const data = await res.json();
-        setQrCodeData(data.qrCode); // depende do seu backend retornar isso
+        // Simulamos uma chamada à API
+        setTimeout(() => {
+          // Geramos um QR Code fictício para demonstração
+          const mockQrCode = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=WhatsAppDemo-${sessionId}-${Date.now()}`;
+          setQrCodeData(mockQrCode);
+          setLoading(false);
+        }, 1500);
       } catch (error) {
         console.error("Erro ao buscar QR code:", error);
-      } finally {
+        setError(error instanceof Error ? error : new Error("Erro desconhecido"));
         setLoading(false);
       }
     };
@@ -28,5 +38,5 @@ export const useQRCode = (sessionId: string) => {
     return () => clearInterval(interval);
   }, [sessionId]);
 
-  return { loading, qrCodeData };
+  return { loading, qrCodeData, error };
 };
