@@ -13,7 +13,6 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import ChatContent from "./ChatContent";
-import WhatsAppChat from "../whatsapp/WhatsAppChat";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 
@@ -73,15 +72,11 @@ const ChatFullScreenDialog = ({
           <div className="border-b px-4">
             <TabsList>
               <TabsTrigger value="chat">Chat</TabsTrigger>
-              <TabsTrigger value="whatsapp">WhatsApp</TabsTrigger>
             </TabsList>
           </div>
           <TabsContent value="chat" className="h-[calc(100%-50px)] flex flex-col">
             <ChatContent />
           </TabsContent>
-          <TabsContent value="whatsapp" className="h-[calc(100%-50px)]">
-            <div className="h-full">
-              <WhatsAppChat />
             </div>
           </TabsContent>
         </Tabs>
