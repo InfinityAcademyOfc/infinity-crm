@@ -4,29 +4,51 @@ const API_URL = import.meta.env.VITE_API_URL;
 
 export const useQRCode = (sessionId: string) => {
   const [loading, setLoading] = useState(true);
-  const [qrCodeData, setQrCodeData] = useState("");
+  const [qrCodeData, setQrCodeData] = useState<string | null>(null);
+  const [status, setStatus] = useState<"not_started" | "qr" | "connected" | "disconnected" | "error">("not_started");
 
   useEffect(() => {
     if (!sessionId) return;
 
+    let intervalId: NodeJS.Timeout;
+    let firstTimeoutId: NodeJS.Timeout;
+
     const fetchQrCode = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`${API_URL}/sessions/${sessionId}/qrcode`);
-        const data = await res.json();
-        setQrCodeData(data.qrCode); // depende do seu backend retornar isso
+
+        const statusRes = await fetch(`${API_URL}/sessions/${sessionId}/status`);
+        const statusData = await statusRes.json();
+        setStatus(statusData.status);
+
+        if (statusData.status === "qr") {
+          const qrRes = await fetch(`${API_URL}/sessions/${sessionId}/qrcode`);
+          const qrData = await qrRes.json();
+          setQrCodeData(qrData.qrCode || null);
+        } else {
+          setQrCodeData(null);
+        }
       } catch (error) {
-        console.error("Erro ao buscar QR code:", error);
+        console.error("Erro ao buscar status/QR da sessão:", error);
+        setStatus("error");
+        setQrCodeData(null);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchQrCode();
+    // Primeira chamada após 5s
+    firstTimeoutId = setTimeout(() => {
+      fetchQrCode();
+      // Depois atualiza a cada 10s
+      intervalId = setInterval(fetchQrCode, 10000);
+    }, 5000);
 
-    const interval = setInterval(fetchQrCode, 30000); // atualiza a cada 30s
-    return () => clearInterval(interval);
+    return () => {
+      clearTimeout(firstTimeoutId);
+      clearInterval(intervalId);
+    };
   }, [sessionId]);
 
-  return { loading, qrCodeData };
+  return { loading, qrCodeData, status };
 };
