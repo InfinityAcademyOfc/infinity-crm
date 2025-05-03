@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { QrCode, Smartphone, CheckCircle, MessageCircle } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -66,33 +67,15 @@ const WhatsAppIntegration = () => {
     });
   };
 
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <div className="flex flex-col md:flex-row justify-between items-center mb-6">
-          <Skeleton className="h-8 w-32" />
-          <Skeleton className="h-8 w-24 mt-4 md:mt-0" />
-        </div>
-        <Card className="h-[600px]">
-          <CardHeader className="pb-2">
-            <Skeleton className="h-10 w-full" />
-          </CardHeader>
-          <CardContent className="flex-1 p-0">
-            <Skeleton className="h-[530px] w-full" />
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  const isConnected = status === "connected";
-
+  // Always render something even while loading
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-center mb-6">
         <div></div>
         <div className="mt-4 md:mt-0 flex items-center gap-4">
-          {isConnected ? (
+          {isLoading ? (
+            <Skeleton className="h-8 w-32" />
+          ) : status === "connected" ? (
             <div className="flex items-center gap-2 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 px-3 py-1 rounded-full">
               <CheckCircle size={14} />
               <span className="text-sm font-medium">Conectado</span>
@@ -104,7 +87,7 @@ const WhatsAppIntegration = () => {
             </div>
           )}
 
-          {isConnected && (
+          {!isLoading && status === "connected" && (
             <Button variant="destructive" onClick={handleLogout} size="sm">
               Desconectar
             </Button>
@@ -120,7 +103,7 @@ const WhatsAppIntegration = () => {
                 <QrCode className="mr-2 h-4 w-4" />
                 QR Code
               </TabsTrigger>
-              <TabsTrigger value="chat" disabled={!isConnected}>
+              <TabsTrigger value="chat" disabled={!isLoading && status !== "connected"}>
                 <MessageCircle className="mr-2 h-4 w-4" />
                 Conversas
               </TabsTrigger>
@@ -128,11 +111,23 @@ const WhatsAppIntegration = () => {
 
             <CardContent className="flex-1 p-0 overflow-hidden">
               <TabsContent value="qrcode" className="mt-0 h-full">
-                <QRCodeScanner sessionId={sessionId} onLogin={handleLogin} />
+                {isLoading ? (
+                  <div className="flex items-center justify-center h-full">
+                    <Skeleton className="h-[500px] w-full" />
+                  </div>
+                ) : (
+                  <QRCodeScanner sessionId={sessionId} onLogin={handleLogin} />
+                )}
               </TabsContent>
 
               <TabsContent value="chat" className="mt-0 h-full">
-                <WhatsAppConversations sessionId={sessionId} />
+                {isLoading ? (
+                  <div className="flex items-center justify-center h-full">
+                    <Skeleton className="h-[500px] w-full" />
+                  </div>
+                ) : (
+                  <WhatsAppConversations sessionId={sessionId} />
+                )}
               </TabsContent>
             </CardContent>
           </Tabs>

@@ -20,8 +20,8 @@ const LoadingScreen = ({ minimal = false }: { minimal?: boolean }) => {
       <p className="mt-6 text-lg font-medium">Carregando Infinity CRM...</p>
       <p className="mt-2 text-sm text-muted-foreground">Preparando sua experiência personalizada</p>
       
-      <div className="mt-8 w-64 h-1 bg-muted rounded-full overflow-hidden border">
-        <div className="h-full bg-primary animate-progress-bar"></div>
+      <div className="mt-8 w-64 h-1 bg-muted rounded-full overflow-hidden">
+        <div className="h-full bg-primary animate-progress-indeterminate"></div>
       </div>
     </div>
   );

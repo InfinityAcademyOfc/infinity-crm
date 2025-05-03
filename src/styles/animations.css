@@ -1,5 +1,3 @@
-
-
 @tailwind utilities;
 
 @layer utilities {
@@ -13,6 +11,9 @@
     );
     background-size: 200% 100%;
   }
+  .animate-progress-indeterminate {
+    animation: progress-indeterminate 2s infinite linear;
+  }
 }
 
 @keyframes progress {
@@ -21,6 +22,21 @@
   }
   100% {
     background-position: 0% 50%;
+  }
+}
+
+@keyframes progress-indeterminate {
+  0% {
+    transform: translateX(-100%);
+    width: 50%;
+  }
+  50% {
+    transform: translateX(0%);
+    width: 50%;
+  }
+  100% {
+    transform: translateX(100%);
+    width: 50%;
   }
 }
 
@@ -90,6 +106,7 @@
   .fade-in,
   .slide-up,
   .animate-progress-bar,
+  .animate-progress-indeterminate,
   .dragging,
   .cursor-blink,
   .collaboration-highlight {

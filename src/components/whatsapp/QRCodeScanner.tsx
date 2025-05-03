@@ -1,3 +1,4 @@
+
 import QRCodeLoading from "./ui/QRCodeLoading";
 import QRCodeInstructions from "./ui/QRCodeInstructions";
 import QRCodeDisplay from "./ui/QRCodeDisplay";
@@ -6,7 +7,7 @@ import { useEffect } from "react";
 
 interface QRCodeScannerProps {
   sessionId: string;
-  onLogin?: () => void; // opcional, para integrar com eventos de conexão
+  onLogin?: () => void; // Added onLogin as an optional prop
 }
 
 const QRCodeScanner = ({ sessionId, onLogin }: QRCodeScannerProps) => {

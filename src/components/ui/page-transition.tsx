@@ -14,14 +14,14 @@ const PageTransition = ({ children }: PageTransitionProps) => {
     setIsTransitioning(true);
     const timer = setTimeout(() => {
       setIsTransitioning(false);
-    }, 200); // Reduzido de 300ms para 200ms para transições mais rápidas
+    }, 150); // Reduced to 150ms for faster transitions
     
     return () => clearTimeout(timer);
   }, [location.pathname]);
 
   return (
     <div
-      className={`transition-opacity duration-200 ease-in-out ${
+      className={`transition-all duration-150 ease-in-out ${
         isTransitioning ? 'opacity-0' : 'opacity-100'
       }`}
     >
