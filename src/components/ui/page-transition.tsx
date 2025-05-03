@@ -14,20 +14,18 @@ const PageTransition = ({ children }: PageTransitionProps) => {
     setIsTransitioning(true);
     const timer = setTimeout(() => {
       setIsTransitioning(false);
-    }, 300);
+    }, 200); // Reduzido de 300ms para 200ms para transições mais rápidas
     
     return () => clearTimeout(timer);
   }, [location.pathname]);
 
   return (
     <div
-      className={`transition-opacity duration-300 ease-in-out ${
+      className={`transition-opacity duration-200 ease-in-out ${
         isTransitioning ? 'opacity-0' : 'opacity-100'
       }`}
     >
-      <div className={`animate-fade-in`}>
-        {children}
-      </div>
+      {children}
     </div>
   );
 };

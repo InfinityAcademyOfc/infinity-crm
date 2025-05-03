@@ -513,6 +513,8 @@ export type Database = {
           profile_id: string | null
           qr_code: string | null
           session_id: string
+          status: string | null
+          updated_at: string | null
         }
         Insert: {
           created_at?: string | null
@@ -522,6 +524,8 @@ export type Database = {
           profile_id?: string | null
           qr_code?: string | null
           session_id: string
+          status?: string | null
+          updated_at?: string | null
         }
         Update: {
           created_at?: string | null
@@ -531,6 +535,8 @@ export type Database = {
           profile_id?: string | null
           qr_code?: string | null
           session_id?: string
+          status?: string | null
+          updated_at?: string | null
         }
         Relationships: [
           {
