@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
@@ -26,24 +25,21 @@ export const useQRCode = (sessionId: string) => {
         }
 
         const statusRes = await fetch(`${API_URL}/sessions/${sessionId}/status`);
-        if (!statusRes.ok) {
-          throw new Error(`Failed to fetch status: ${statusRes.status}`);
-        }
+        if (!statusRes.ok) throw new Error(`Failed to fetch status: ${statusRes.status}`);
         
         const statusData = await statusRes.json();
         setStatus(statusData.status);
 
         if (statusData.status === "qr") {
           const qrRes = await fetch(`${API_URL}/sessions/${sessionId}/qrcode`);
-          if (!qrRes.ok) {
-            throw new Error(`Failed to fetch QR code: ${qrRes.status}`);
-          }
+          if (!qrRes.ok) throw new Error(`Failed to fetch QR code: ${qrRes.status}`);
           
           const qrData = await qrRes.json();
-          setQrCodeData(qrData.qr || null);
+          setQrCodeData(qrData.qrCode || null); // <-- aqui estava `qr`, corrigi para `qrCode`
         } else {
           setQrCodeData(null);
         }
+
       } catch (error) {
         console.error("Erro ao buscar status/QR da sessão:", error);
         setStatus("error");
@@ -53,10 +49,9 @@ export const useQRCode = (sessionId: string) => {
       }
     };
 
-    // Primeira chamada após 2s (reduzido de 5s)
+    // Primeira chamada após 2s
     firstTimeoutId = setTimeout(() => {
       fetchQrCode();
-      // Depois atualiza a cada 10s
       intervalId = setInterval(fetchQrCode, 10000);
     }, 2000);
 
