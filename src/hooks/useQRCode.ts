@@ -40,7 +40,7 @@ export const useQRCode = (sessionId: string) => {
           }
           
           const qrData = await qrRes.json();
-          setQrCodeData(qrData.qrCode || null);
+          setQrCodeData(qrData.qr || null);
         } else {
           setQrCodeData(null);
         }
