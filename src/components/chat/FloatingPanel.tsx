@@ -12,7 +12,6 @@ import { ResizablePanelGroup, ResizablePanel } from "@/components/ui/resizable";
 import * as ResizablePrimitive from "react-resizable-panels";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import ChatContent from "./ChatContent";
-import WhatsAppChat from "../whatsapp/WhatsAppChat";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
