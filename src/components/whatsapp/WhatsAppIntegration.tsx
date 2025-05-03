@@ -1,14 +1,15 @@
 import { useEffect, useState } from "react";
-import { QrCode, Smartphone, CheckCircle } from "lucide-react";
+import { QrCode, Smartphone, CheckCircle, MessageCircle } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import QRCodeScanner from "./QRCodeScanner";
+import WhatsAppConversations from "./WhatsAppConversations";
 import { Skeleton } from "@/components/ui/skeleton";
 import axios from "axios";
 
-const sessionId = "teste"; // Pode ser dinâmico futuramente
+const sessionId = "teste"; // pode ser dinâmico no futuro
 
 const WhatsAppIntegration = () => {
   const [status, setStatus] = useState<"not_started" | "qr" | "connected" | "disconnected" | "error">("not_started");
@@ -21,6 +22,9 @@ const WhatsAppIntegration = () => {
       try {
         const res = await axios.get(`${import.meta.env.VITE_API_URL}/sessions/${sessionId}/status`);
         setStatus(res.data.status);
+        if (res.data.status === "connected") {
+          setActiveTab("chat");
+        }
       } catch (err) {
         console.error("Erro ao verificar status da sessão:", err);
         setStatus("error");
@@ -30,7 +34,7 @@ const WhatsAppIntegration = () => {
     };
 
     fetchStatus();
-    const interval = setInterval(fetchStatus, 5000); // Atualiza a cada 5s
+    const interval = setInterval(fetchStatus, 5000);
     return () => clearInterval(interval);
   }, []);
 
@@ -55,7 +59,7 @@ const WhatsAppIntegration = () => {
 
   const handleLogin = () => {
     setStatus("connected");
-    setActiveTab("qrcode");
+    setActiveTab("chat");
     toast({
       title: "Sessão conectada",
       description: "Você está conectado ao WhatsApp."
@@ -116,11 +120,19 @@ const WhatsAppIntegration = () => {
                 <QrCode className="mr-2 h-4 w-4" />
                 QR Code
               </TabsTrigger>
+              <TabsTrigger value="chat" disabled={!isConnected}>
+                <MessageCircle className="mr-2 h-4 w-4" />
+                Conversas
+              </TabsTrigger>
             </TabsList>
 
             <CardContent className="flex-1 p-0 overflow-hidden">
               <TabsContent value="qrcode" className="mt-0 h-full">
                 <QRCodeScanner sessionId={sessionId} onLogin={handleLogin} />
+              </TabsContent>
+
+              <TabsContent value="chat" className="mt-0 h-full">
+                <WhatsAppConversations sessionId={sessionId} />
               </TabsContent>
             </CardContent>
           </Tabs>
