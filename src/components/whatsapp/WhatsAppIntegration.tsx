@@ -1,46 +1,64 @@
-
-import { useState, useEffect } from "react";
-import { QrCode, Smartphone, CheckCircle, MessageCircle, Clock, Settings } from "lucide-react";
+import { useEffect, useState } from "react";
+import { QrCode, Smartphone, CheckCircle } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import QRCodeScanner from "./QRCodeScanner";
-import WhatsAppChat from "./WhatsAppChat";
-import WhatsAppSettings from "./WhatsAppSettings";
-import WhatsAppAutomation from "./WhatsAppAutomation";
 import { Skeleton } from "@/components/ui/skeleton";
+import axios from "axios";
+
+const sessionId = "teste"; // Pode ser dinâmico futuramente
 
 const WhatsAppIntegration = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [activeTab, setActiveTab] = useState("qrcode");
+  const [status, setStatus] = useState<"not_started" | "qr" | "connected" | "disconnected" | "error">("not_started");
   const [isLoading, setIsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("qrcode");
   const { toast } = useToast();
 
-  // Simulate loading state
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 800);
+    const fetchStatus = async () => {
+      try {
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/sessions/${sessionId}/status`);
+        setStatus(res.data.status);
+      } catch (err) {
+        console.error("Erro ao verificar status da sessão:", err);
+        setStatus("error");
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-    return () => clearTimeout(timer);
+    fetchStatus();
+    const interval = setInterval(fetchStatus, 5000); // Atualiza a cada 5s
+    return () => clearInterval(interval);
   }, []);
 
-  const handleLogin = () => {
-    setIsLoggedIn(true);
-    setActiveTab("chat");
-    toast({
-      title: "WhatsApp conectado",
-      description: "Sua conta do WhatsApp foi conectada com sucesso."
-    });
+  const handleLogout = async () => {
+    try {
+      await axios.post(`${import.meta.env.VITE_API_URL}/sessions/${sessionId}/logout`);
+      setStatus("not_started");
+      setActiveTab("qrcode");
+      toast({
+        title: "Sessão desconectada",
+        description: "Você foi desconectado do WhatsApp com sucesso."
+      });
+    } catch (err) {
+      console.error("Erro ao desconectar:", err);
+      toast({
+        title: "Erro ao desconectar",
+        description: "Não foi possível desconectar do WhatsApp.",
+        variant: "destructive"
+      });
+    }
   };
 
-  const handleLogout = () => {
-    setIsLoggedIn(false);
+  const handleLogin = () => {
+    setStatus("connected");
     setActiveTab("qrcode");
     toast({
-      title: "WhatsApp desconectado",
-      description: "Sua conta do WhatsApp foi desconectada."
+      title: "Sessão conectada",
+      description: "Você está conectado ao WhatsApp."
     });
   };
 
@@ -63,30 +81,26 @@ const WhatsAppIntegration = () => {
     );
   }
 
+  const isConnected = status === "connected";
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-center mb-6">
-        <div>
-          
-          
-        </div>
-        
+        <div></div>
         <div className="mt-4 md:mt-0 flex items-center gap-4">
-          {isLoggedIn && (
+          {isConnected ? (
             <div className="flex items-center gap-2 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 px-3 py-1 rounded-full">
               <CheckCircle size={14} />
               <span className="text-sm font-medium">Conectado</span>
             </div>
-          )}
-          
-          {!isLoggedIn && (
+          ) : (
             <div className="flex items-center gap-2 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400 px-3 py-1 rounded-full">
               <Smartphone size={14} />
-              <span className="text-sm font-medium">Não Conectado</span>
+              <span className="text-sm font-medium">Não conectado</span>
             </div>
           )}
-          
-          {isLoggedIn && (
+
+          {isConnected && (
             <Button variant="destructive" onClick={handleLogout} size="sm">
               Desconectar
             </Button>
@@ -96,38 +110,17 @@ const WhatsAppIntegration = () => {
 
       <Card className="h-[600px] flex flex-col">
         <CardHeader className="pb-2">
-          <Tabs defaultValue={activeTab} value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="w-full">
-              <TabsTrigger value="qrcode" disabled={isLoggedIn}>
+              <TabsTrigger value="qrcode">
                 <QrCode className="mr-2 h-4 w-4" />
                 QR Code
               </TabsTrigger>
-              <TabsTrigger value="chat" disabled={!isLoggedIn}>
-                <MessageCircle className="mr-2 h-4 w-4" />
-                Conversas
-              </TabsTrigger>
-              <TabsTrigger value="automation" disabled={!isLoggedIn}>
-                <Clock className="mr-2 h-4 w-4" />
-                Automações
-              </TabsTrigger>
-              <TabsTrigger value="settings" disabled={!isLoggedIn}>
-                <Settings className="mr-2 h-4 w-4" />
-                Configurações
-              </TabsTrigger>
             </TabsList>
-            
+
             <CardContent className="flex-1 p-0 overflow-hidden">
               <TabsContent value="qrcode" className="mt-0 h-full">
-                <QRCodeScanner onLogin={handleLogin} />
-              </TabsContent>
-              <TabsContent value="chat" className="mt-0 h-full">
-                <WhatsAppChat />
-              </TabsContent>
-              <TabsContent value="automation" className="mt-0 h-full">
-                <WhatsAppAutomation />
-              </TabsContent>
-              <TabsContent value="settings" className="mt-0 h-full">
-                <WhatsAppSettings />
+                <QRCodeScanner sessionId={sessionId} onLogin={handleLogin} />
               </TabsContent>
             </CardContent>
           </Tabs>
