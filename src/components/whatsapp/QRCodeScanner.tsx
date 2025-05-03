@@ -4,6 +4,8 @@ import QRCodeInstructions from "@/components/whatsapp/ui/QRCodeInstructions";
 import QRCodeDisplay from "@/components/whatsapp/ui/QRCodeDisplay";
 import { useQRCode } from "@/hooks/useQRCode";
 
+const API_URL = import.meta.env.VITE_API_URL || "";
+
 interface QRCodeScannerProps {
   sessionId: string;
   onLogin?: () => void;
@@ -12,11 +14,22 @@ interface QRCodeScannerProps {
 const QRCodeScanner = ({ sessionId, onLogin }: QRCodeScannerProps) => {
   const { loading, qrCodeData, status } = useQRCode(sessionId);
 
+  // Iniciar sessão automaticamente ao montar
   useEffect(() => {
-    console.log("QRCode Data:", qrCodeData);
-    console.log("Status:", status);
-  }, [qrCodeData, status]);
+    const start = async () => {
+      try {
+        await fetch(`${API_URL}/sessions/${sessionId}/start`, {
+          method: "POST",
+        });
+      } catch (error) {
+        console.error("Erro ao iniciar sessão:", error);
+      }
+    };
 
+    if (sessionId) start();
+  }, [sessionId]);
+
+  // Disparar callback de login quando conectado
   useEffect(() => {
     if (status === "connected" && onLogin) {
       onLogin();
