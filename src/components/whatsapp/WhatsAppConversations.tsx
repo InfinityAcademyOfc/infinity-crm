@@ -1,3 +1,4 @@
+
 // src/components/whatsapp/WhatsAppConversations.tsx
 
 import { useEffect, useState } from "react";
@@ -34,9 +35,12 @@ const WhatsAppConversations = ({ sessionId }: WhatsAppConversationsProps) => {
         .eq("session_id", sessionId)
         .order("created_at", { ascending: false });
 
-      if (!error && data.length) {
-        const uniqueNumbers = Array.from(new Set(data.map((m) => m.number)));
-        setSelectedNumber(uniqueNumbers[0]);
+      if (!error && data && data.length > 0) {
+        // Fix: Ensure we're handling the type correctly
+        const uniqueNumbers = Array.from(new Set(data.map((m) => m.number as string)));
+        if (uniqueNumbers.length > 0) {
+          setSelectedNumber(uniqueNumbers[0]);
+        }
       }
     };
 

@@ -8,7 +8,6 @@ import { useToast } from "@/hooks/use-toast";
 import QRCodeScanner from "./QRCodeScanner";
 import WhatsAppConversations from "./WhatsAppConversations";
 import { Skeleton } from "@/components/ui/skeleton";
-import axios from "axios";
 
 const sessionId = "teste"; // pode ser dinâmico no futuro
 
@@ -21,9 +20,22 @@ const WhatsAppIntegration = () => {
   useEffect(() => {
     const fetchStatus = async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/sessions/${sessionId}/status`);
-        setStatus(res.data.status);
-        if (res.data.status === "connected") {
+        const apiUrl = import.meta.env.VITE_API_URL;
+        if (!apiUrl) {
+          console.error("API URL não definida");
+          setStatus("error");
+          setIsLoading(false);
+          return;
+        }
+
+        const res = await fetch(`${apiUrl}/sessions/${sessionId}/status`);
+        if (!res.ok) {
+          throw new Error(`Falha ao buscar status: ${res.status}`);
+        }
+        
+        const data = await res.json();
+        setStatus(data.status);
+        if (data.status === "connected") {
           setActiveTab("chat");
         }
       } catch (err) {
@@ -41,7 +53,19 @@ const WhatsAppIntegration = () => {
 
   const handleLogout = async () => {
     try {
-      await axios.post(`${import.meta.env.VITE_API_URL}/sessions/${sessionId}/logout`);
+      const apiUrl = import.meta.env.VITE_API_URL;
+      if (!apiUrl) {
+        throw new Error("API URL não definida");
+      }
+
+      const res = await fetch(`${apiUrl}/sessions/${sessionId}/logout`, {
+        method: 'POST'
+      });
+      
+      if (!res.ok) {
+        throw new Error(`Falha ao fazer logout: ${res.status}`);
+      }
+      
       setStatus("not_started");
       setActiveTab("qrcode");
       toast({
