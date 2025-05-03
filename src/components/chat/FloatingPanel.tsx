@@ -131,10 +131,8 @@ const FloatingPanel = ({
                 <div className="p-4 text-center text-sm text-muted-foreground">
                   Contatos externos (clientes, fornecedores e parceiros)
                 </div>
-              </TabsContent>
-              
-              <TabsContent value="whatsapp" className="h-full m-0">
-                <WhatsAppChat />
+              </TabsCont
+
               </TabsContent>
             </ScrollArea>
           </Tabs>
