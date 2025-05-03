@@ -13,6 +13,9 @@ const QRCodeScanner = ({ sessionId, onLogin }: QRCodeScannerProps) => {
   const { loading, qrCodeData, status } = useQRCode(sessionId);
 
   useEffect(() => {
+    console.log("QRCode Data:", qrCodeData);
+    console.log("Status:", status);
+  }, [qrCodeData, status]);
     if (status === "connected" && onLogin) {
       onLogin();
     }
