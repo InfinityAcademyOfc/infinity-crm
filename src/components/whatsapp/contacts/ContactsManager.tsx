@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,8 +17,8 @@ import {
   Plus, 
   Edit, 
   Trash2, 
-  FileText, 
-  Import,
+  FileExport, 
+  FileImport, 
   Filter,
   Tag
 } from "lucide-react";
@@ -189,10 +190,10 @@ const ContactsManager = () => {
               <Tag size={16} className="mr-2" /> Tags
             </Button>
             <Button variant="outline" size="sm">
-              <Import size={16} className="mr-2" /> Importar
+              <FileImport size={16} className="mr-2" /> Importar
             </Button>
             <Button variant="outline" size="sm">
-              <FileText size={16} className="mr-2" /> Exportar
+              <FileExport size={16} className="mr-2" /> Exportar
             </Button>
             <Button size="sm" onClick={handleAddContact}>
               <Plus size={16} className="mr-2" /> Adicionar Contato
