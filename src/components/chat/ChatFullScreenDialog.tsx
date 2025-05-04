@@ -77,6 +77,8 @@ const ChatFullScreenDialog = ({
           <TabsContent value="chat" className="h-[calc(100%-50px)] flex flex-col">
             <ChatContent />
           </TabsContent>
+            </div>
+          </TabsContent>
         </Tabs>
       </DialogContent>
     </Dialog>
