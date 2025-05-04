@@ -52,7 +52,7 @@ export const useQRCode = (sessionId: string) => {
     // Primeira chamada após 2s
     firstTimeoutId = setTimeout(() => {
       fetchQrCode();
-      intervalId = setInterval(fetchQrCode, 10000);
+      intervalId = setInterval(fetchQrCode, 15000);
     }, 2000);
 
     return () => {
