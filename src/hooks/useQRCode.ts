@@ -49,11 +49,13 @@ export const useQRCode = (sessionId: string) => {
       }
     };
 
-    // Primeira chamada após 2s
+    // Primeira chamada após 5 segundos
     firstTimeoutId = setTimeout(() => {
-      fetchQrCode();
+      fetchQrCode(); // Primeiro QR em 5s
+
+      // Depois inicia atualização a cada 15s
       intervalId = setInterval(fetchQrCode, 15000);
-    }, 2000);
+    }, 5000);
 
     return () => {
       clearTimeout(firstTimeoutId);
