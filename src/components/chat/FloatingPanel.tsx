@@ -131,8 +131,6 @@ const FloatingPanel = ({
                 <div className="p-4 text-center text-sm text-muted-foreground">
                   Contatos externos (clientes, fornecedores e parceiros)
                 </div>
-              </TabsCont
-
               </TabsContent>
             </ScrollArea>
           </Tabs>
