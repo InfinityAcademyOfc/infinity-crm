@@ -21,17 +21,13 @@ import ScheduleManager from "./schedules/ScheduleManager";
 import WhatsAppConfig from "./config/WhatsAppConfig";
 import AutomationsManager from "./automations/AutomationsManager";
 
-interface WhatsAppMenuLayoutProps {
-  sessionId?: string;
-}
-
-const WhatsAppMenuLayout = ({ sessionId = "teste" }: WhatsAppMenuLayoutProps) => {
+const WhatsAppMenuLayout = () => {
   const [activeTab, setActiveTab] = useState("conversations");
 
   const renderTabContent = () => {
     switch (activeTab) {
       case "conversations":
-        return <WhatsAppConversations sessionId={sessionId} />;
+        return <WhatsAppConversations sessionId="teste" />;
       case "contacts":
         return <ContactsManager />;
       case "lists":
@@ -47,7 +43,7 @@ const WhatsAppMenuLayout = ({ sessionId = "teste" }: WhatsAppMenuLayoutProps) =>
       case "settings":
         return <WhatsAppConfig />;
       default:
-        return <WhatsAppConversations sessionId={sessionId} />;
+        return <WhatsAppConversations sessionId="teste" />;
     }
   };
 

@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import QRCodeLoading from "@/components/whatsapp/ui/QRCodeLoading";
 import QRCodeInstructions from "@/components/whatsapp/ui/QRCodeInstructions";
