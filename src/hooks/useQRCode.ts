@@ -36,7 +36,8 @@ export const useQRCode = (sessionId: string) => {
           if (!qrRes.ok) throw new Error(`Failed to fetch QR code: ${qrRes.status}`);
           
           const qrData = await qrRes.json();
-          setQrCodeData(qrData.qr || qrData.qrCode || null);
+          console.log("QR Code response:", qrData);
+          setQrCodeData(qrData.qr || qrData.qrCode || qrData.code || null);
         } else {
           setQrCodeData(null);
         }
