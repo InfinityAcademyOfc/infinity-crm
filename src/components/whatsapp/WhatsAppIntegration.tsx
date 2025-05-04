@@ -1,20 +1,21 @@
 
 import { useEffect, useState } from "react";
 import { QrCode, Smartphone, CheckCircle, MessageCircle } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import QRCodeScanner from "./QRCodeScanner";
+import WhatsAppConversations from "./WhatsAppConversations";
 import { Skeleton } from "@/components/ui/skeleton";
-import WhatsAppMenuLayout from "./WhatsAppMenuLayout";
+
+const sessionId = "teste"; // pode ser dinâmico no futuro
 
 const WhatsAppIntegration = () => {
   const [status, setStatus] = useState<"not_started" | "qr" | "connected" | "disconnected" | "error">("not_started");
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("qrcode");
   const { toast } = useToast();
-  const sessionId =  "teste"; // pode ser dinâmico no futuro
 
   useEffect(() => {
     const fetchStatus = async () => {
@@ -90,12 +91,11 @@ const WhatsAppIntegration = () => {
     });
   };
 
+  // Always render something even while loading
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-center mb-6">
-        <div className="flex items-center gap-2">
-          <h2 className="text-2xl font-bold">Integração WhatsApp</h2>
-        </div>
+        <div></div>
         <div className="mt-4 md:mt-0 flex items-center gap-4">
           {isLoading ? (
             <Skeleton className="h-8 w-32" />
@@ -119,33 +119,43 @@ const WhatsAppIntegration = () => {
         </div>
       </div>
 
-      <Card>
-        {isLoading ? (
-          <div className="flex items-center justify-center h-[600px]">
-            <Skeleton className="h-[500px] w-full" />
-          </div>
-        ) : status === "connected" ? (
-          <CardContent className="p-0">
-            <WhatsAppMenuLayout />
-          </CardContent>
-        ) : (
-          <CardContent className="p-0 h-[600px] flex flex-col">
-            <div className="p-4 border-b">
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="w-full">
-                  <TabsTrigger value="qrcode">
-                    <QrCode className="mr-2 h-4 w-4" />
-                    QR Code
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
-            </div>
-            
-            <div className="flex-1 overflow-hidden">
-              <QRCodeScanner sessionId={sessionId} onLogin={handleLogin} />
-            </div>
-          </CardContent>
-        )}
+      <Card className="h-[600px] flex flex-col">
+        <CardHeader className="pb-2">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="w-full">
+              <TabsTrigger value="qrcode">
+                <QrCode className="mr-2 h-4 w-4" />
+                QR Code
+              </TabsTrigger>
+              <TabsTrigger value="chat" disabled={!isLoading && status !== "connected"}>
+                <MessageCircle className="mr-2 h-4 w-4" />
+                Conversas
+              </TabsTrigger>
+            </TabsList>
+
+            <CardContent className="flex-1 p-0 overflow-hidden">
+              <TabsContent value="qrcode" className="mt-0 h-full">
+                {isLoading ? (
+                  <div className="flex items-center justify-center h-full">
+                    <Skeleton className="h-[500px] w-full" />
+                  </div>
+                ) : (
+                  <QRCodeScanner sessionId={sessionId} onLogin={handleLogin} />
+                )}
+              </TabsContent>
+
+              <TabsContent value="chat" className="mt-0 h-full">
+                {isLoading ? (
+                  <div className="flex items-center justify-center h-full">
+                    <Skeleton className="h-[500px] w-full" />
+                  </div>
+                ) : (
+                  <WhatsAppConversations sessionId={sessionId} />
+                )}
+              </TabsContent>
+            </CardContent>
+          </Tabs>
+        </CardHeader>
       </Card>
     </div>
   );
