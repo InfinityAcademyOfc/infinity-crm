@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from "react";
-import { QrCode, Smartphone, CheckCircle, MessageCircle } from "lucide-react";
+import { QrCode, Smartphone, CheckCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -14,7 +14,7 @@ const WhatsAppIntegration = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("qrcode");
   const { toast } = useToast();
-  const sessionId =  "teste"; // pode ser dinâmico no futuro
+  const sessionId = "teste"; // pode ser dinâmico no futuro
 
   useEffect(() => {
     const fetchStatus = async () => {

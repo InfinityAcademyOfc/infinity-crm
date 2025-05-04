@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
@@ -35,7 +36,7 @@ export const useQRCode = (sessionId: string) => {
           if (!qrRes.ok) throw new Error(`Failed to fetch QR code: ${qrRes.status}`);
           
           const qrData = await qrRes.json();
-          setQrCodeData(qrData.qr || null); // <-- aqui estava `qr`, corrigi para `qrCode`
+          setQrCodeData(qrData.qr || null);
         } else {
           setQrCodeData(null);
         }
