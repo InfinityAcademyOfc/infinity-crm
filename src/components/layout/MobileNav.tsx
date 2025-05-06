@@ -52,13 +52,13 @@ export function MobileNav({ open, setOpen }: MobileNavProps) {
   if (!open) return null;
   
   return (
-    <div className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm">
-      <div className="fixed inset-y-0 left-0 w-full max-w-xs bg-background border-r border-border h-full overflow-y-auto p-6">
+    <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm">
+      <div className="fixed inset-y-0 left-0 w-full max-w-xs bg-card border-r border-border h-full overflow-y-auto p-6 shadow-xl animate-in slide-in-from-left">
         <div className="flex items-center justify-between mb-6">
           <h3 className="font-semibold text-lg">Menu</h3>
           <Button variant="ghost" size="icon" onClick={() => setOpen(false)}>
             <X className="h-5 w-5" />
-            <span className="sr-only">Close menu</span>
+            <span className="sr-only">Fechar menu</span>
           </Button>
         </div>
         

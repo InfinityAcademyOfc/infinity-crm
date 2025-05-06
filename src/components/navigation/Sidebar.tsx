@@ -4,6 +4,7 @@ import { useLocation } from "react-router-dom";
 import { LayoutDashboard, Filter, Users, DollarSign, Package, Upload, ClipboardList, UserCog, Video, Settings, MessageCircle, Zap } from "lucide-react";
 import NavSection from "./NavSection";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface SidebarProps {
   open: boolean;
@@ -89,26 +90,19 @@ const Sidebar = ({
 }: SidebarProps) => {
   const location = useLocation();
   const sidebarRef = useRef<HTMLDivElement>(null);
-  const isMobile = window.innerWidth < 768;
+  const isMobile = useIsMobile();
   
-  useEffect(() => {
-    if (isMobile) {
-      setOpen(false);
-    }
-  }, [location.pathname, isMobile, setOpen]);
-
   return (
     <div 
       ref={sidebarRef} 
       className={cn(
-        "h-full bg-background/95 backdrop-blur-md border-r shadow-lg",
+        "h-full bg-card/95 backdrop-blur-md border-r shadow-lg",
         "flex flex-col overflow-hidden transition-all duration-300 ease-in-out",
-        isMobile ? 
-          open ? "w-64 translate-x-0" : "w-0 -translate-x-full" 
-          : 
-          open ? "w-64" : "w-16",
+        "w-full",
+        isMobile ? "max-w-[280px]" : (open ? "max-w-[260px]" : "max-w-[70px]"),
         "dark:bg-gray-900/90 dark:border-gray-800",
-        "bg-gradient-to-b from-background/95 to-background/98"
+        "bg-gradient-to-b from-background/95 to-background/98",
+        "sidebar-neon-border"
       )}
     >
       <div className="flex-1 overflow-y-auto p-4 py-[30px] pt-14">

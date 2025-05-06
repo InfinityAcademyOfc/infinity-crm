@@ -1,10 +1,11 @@
+
 @tailwind base;
 
 @layer base {
   :root {
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
+    --card: 210 20% 98%;
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
@@ -123,22 +124,55 @@
       linear-gradient(135deg, rgba(246, 246, 246, 0.9) 0%, rgba(240, 240, 252, 0.9) 100%),
       radial-gradient(at 30% 20%, hsla(var(--theme-gradient-color, 273, 80%, 60%), 0.05) 0px, transparent 70%),
       radial-gradient(at 70% 60%, hsla(var(--theme-gradient-color, 273, 80%, 60%), 0.04) 0px, transparent 60%);
-    background-color: #f0f0f3;
+    background-color: #f8f9fa;
     background-attachment: fixed;
   }
   
+  /* Light mode improvements for better contrast */
   .light .card,
-  .light .kanban-column,
-  .light button,
   .light .dropdown-content,
+  .light .select,
+  .light .popover,
+  .light .modal,
+  .light .dialog {
+    @apply bg-card shadow-md border-gray-200;
+  }
+  
   .light .sidebar {
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+    @apply bg-card/80 backdrop-blur-md;
+  }
+  
+  .light button.btn-secondary {
+    @apply bg-secondary text-secondary-foreground hover:bg-secondary/90;
+  }
+  
+  .light .form-input,
+  .light .form-select,
+  .light .form-textarea {
+    @apply bg-muted/50 border-gray-300;
+  }
+  
+  .light .hover-card {
+    @apply shadow-lg border-gray-200 bg-card;
   }
   
   .dark body {
     background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='rgba(147, 112, 219, .05)' fill-rule='evenodd'/%3E%3C/svg%3E"), linear-gradient(135deg, rgba(20, 20, 30, 1) 0%, rgba(30, 30, 45, 1) 100%);
     background-attachment: fixed;
   }
+}
+
+/* Component specific styles for light theme */
+.light .kanban-column {
+  @apply bg-gray-50 border shadow-sm;
+}
+
+.light .card-highlight {
+  @apply bg-white border-l-4 shadow-sm;
+}
+
+.light .stat-card {
+  @apply bg-gradient-to-br from-white to-gray-50 shadow-sm border;
 }
 
 /* Neon effects for dark theme */
@@ -203,4 +237,30 @@
 /* Text with neon glow */
 .dark .neon-text {
   text-shadow: var(--neon-text-glow);
+}
+
+/* Add card elevation styles for light theme */
+.light .card-elevated {
+  @apply bg-white border border-gray-200 shadow-md;
+}
+
+.light .card-subtle {
+  @apply bg-gray-50 border border-gray-100 shadow-sm;
+}
+
+.light .dropdown-menu {
+  @apply bg-white border border-gray-200 shadow-lg;
+}
+
+.light .form-control {
+  @apply bg-gray-50 border-gray-300;
+}
+
+/* Add theme-colored buttons */
+.btn-theme {
+  @apply bg-primary text-primary-foreground hover:bg-primary/90;
+}
+
+.btn-theme-outline {
+  @apply border-primary text-primary hover:bg-primary/10;
 }

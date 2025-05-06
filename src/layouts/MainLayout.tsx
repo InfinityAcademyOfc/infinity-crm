@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, Suspense } from "react";
 import { Outlet } from "react-router-dom";
 import Sidebar from "@/components/navigation/Sidebar";
@@ -9,39 +10,52 @@ import { cn } from "@/lib/utils";
 import { ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import LoadingScreen from "@/components/ui/loading-screen";
+import { useIsMobile } from "@/hooks/use-mobile";
+
 const MainLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
+  const isMobile = useIsMobile();
+  
+  // Automatically close sidebar on mobile
   useEffect(() => {
-    const handleResize = () => {
-      const mobile = window.innerWidth < 768;
-      setIsMobileView(mobile);
-      if (mobile && sidebarOpen) {
-        setSidebarOpen(false);
-      }
-    };
-    window.addEventListener("resize", handleResize);
-    handleResize(); // Call on initial render
-    return () => window.removeEventListener("resize", handleResize);
-  }, [sidebarOpen]);
-  return <SidebarProvider>
+    if (isMobile) {
+      setSidebarOpen(false);
+    } else {
+      setSidebarOpen(true);
+    }
+  }, [isMobile]);
+
+  return (
+    <SidebarProvider>
       <div className="flex h-screen overflow-hidden bg-background">
         {/* Mobile overlay when sidebar is open */}
-        {isMobileView && sidebarOpen && <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-30" onClick={() => setSidebarOpen(false)} />}
+        {isMobile && sidebarOpen && (
+          <div 
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-30" 
+            onClick={() => setSidebarOpen(false)} 
+            aria-hidden="true"
+          />
+        )}
 
         {/* Sidebar container */}
-        <div className={cn("transition-all duration-300 ease-in-out", isMobileView ? "fixed top-0 bottom-0 z-50" // Mobile: fixed position, high z-index (above TopNav)
-      : "relative flex-shrink-0",
-      // Desktop: always visible
-      sidebarOpen ? "w-64" : isMobileView ? "w-0 -translate-x-full" // Mobile: completely hidden when closed
-      : "w-16" // Desktop: minimalist view when closed
-      )}>
+        <div 
+          className={cn(
+            "transition-all duration-300 ease-in-out",
+            isMobile ? (
+              "fixed top-0 bottom-0 left-0 z-40",
+              sidebarOpen ? "translate-x-0" : "-translate-x-full"
+            ) : (
+              "relative flex-shrink-0",
+              sidebarOpen ? "w-64" : "w-16" // Desktop: minimalist view when closed
+            )
+          )}
+        >
           <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} />
         </div>
 
-        {/* Main content area */}
-        <div className={cn("flex flex-col flex-1 w-full overflow-hidden")}>
-          <TopNav />
+        {/* Main content area - don't move when sidebar opens */}
+        <div className="flex flex-col flex-1 w-full overflow-hidden">
+          <TopNav openSidebar={() => setSidebarOpen(true)} isSidebarOpen={sidebarOpen} toggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
           
           <main className="flex-1 overflow-auto">
             <div className="container p-4 md:p-6 px-0">
@@ -54,21 +68,31 @@ const MainLayout = () => {
           </main>
         </div>
 
-        {/* Floating collapse button - moves with sidebar in mobile */}
-        <div className={cn("fixed z-[51] transition-all duration-300",
-      // z-index higher than sidebar
-      isMobileView ? sidebarOpen ? "left-[15.5rem] bottom-28" // Position when sidebar is open on mobile
-      : "left-4 bottom-28" // Position when sidebar is closed on mobile
-      : sidebarOpen ? "left-60 bottom-28" // Position when sidebar is open on desktop
-      : "left-12 bottom-28" // Position when sidebar is minimized on desktop
-      )}>
-          <Button variant="default" size="icon" className="rounded-full h-9 w-9 shadow-md bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_0_15px_rgba(130,80,223,0.4)]" onClick={() => setSidebarOpen(!sidebarOpen)}>
+        {/* Floating collapse button - always visible */}
+        <div 
+          className={cn(
+            "fixed z-50 transition-all duration-300",
+            isMobile ? (
+              "bottom-28 left-4"
+            ) : (
+              sidebarOpen ? "left-60 bottom-28" : "left-12 bottom-28"
+            )
+          )}
+        >
+          <Button 
+            variant="default" 
+            size="icon" 
+            className="rounded-full h-9 w-9 shadow-md bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_0_15px_rgba(130,80,223,0.4)]"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+          >
             <ChevronLeft className={cn("h-4 w-4 transition-transform", !sidebarOpen && "rotate-180")} />
           </Button>
         </div>
 
         <UnifiedChatButton />
       </div>
-    </SidebarProvider>;
+    </SidebarProvider>
+  );
 };
+
 export default MainLayout;

@@ -58,6 +58,7 @@ const ThemeToggle = () => {
           variant="ghost" 
           size="icon" 
           className="relative text-foreground"
+          aria-label="Alterar tema"
         >
           {isDark ? <Moon size={18} /> : <Sun size={18} />}
         </Button>
@@ -75,7 +76,7 @@ const ThemeToggle = () => {
                 key={themeOption.value}
                 variant={theme === themeOption.value ? "default" : "outline"}
                 size="sm"
-                className="w-full justify-center"
+                className="w-full justify-start"
                 onClick={() => handleThemeChange(themeOption.value as ThemeType)}
               >
                 {themeOption.icon}
@@ -93,6 +94,7 @@ const ThemeToggle = () => {
                 className={`w-8 h-8 rounded-full ${accentOption.color} border border-gray-300 dark:border-gray-600 cursor-pointer flex items-center justify-center transition-transform hover:scale-110 ${accent === accentOption.value ? 'ring-2 ring-offset-2 ring-offset-background ring-foreground' : ''}`}
                 onClick={() => handleAccentChange(accentOption.value as AccentType)}
                 type="button"
+                aria-label={`Cor ${accentOption.name}`}
               >
                 {accent === accentOption.value && (
                   <Check size={14} className="text-white" />

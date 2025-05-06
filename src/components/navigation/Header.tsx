@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import { Bell } from "lucide-react";
+import { Bell, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UserMenu } from "@/components/auth/UserMenu";
 import ThemeToggle from "@/components/theme/ThemeToggle";
@@ -43,13 +43,24 @@ const Header = ({ openSidebar, isSidebarOpen, toggleSidebar }: HeaderProps) => {
   }, [location]);
   
   return (
-    <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-30">
       <div className="flex h-16 items-center px-4 md:px-6">
         <Button
           variant="ghost"
           size="icon"
-          className="mr-2"
+          className="mr-2 md:hidden"
+          onClick={openSidebar}
+          aria-label="Abrir menu"
+        >
+          <Menu className="h-5 w-5" />
+        </Button>
+
+        <Button
+          variant="ghost"
+          size="icon"
+          className="mr-2 hidden md:flex"
           onClick={toggleSidebar}
+          aria-label={isSidebarOpen ? "Recolher menu" : "Expandir menu"}
         >
           {isSidebarOpen ? (
             <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -71,7 +82,7 @@ const Header = ({ openSidebar, isSidebarOpen, toggleSidebar }: HeaderProps) => {
           <Button
             variant="ghost"
             size="icon"
-            aria-label="Notifications"
+            aria-label="Notificações"
             className="relative"
           >
             <Bell className="h-5 w-5" />
