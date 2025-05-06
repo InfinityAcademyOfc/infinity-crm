@@ -88,14 +88,18 @@ const MainLayout = () => {
 
         {/* Mobile sidebar toggle - visible only on mobile */}
         {isMobileView && (
-          <div className="fixed z-[51] left-4 bottom-28">
+          <div className={cn(
+            "fixed z-[51] transition-all duration-300 ease-in-out",
+            mobileOpen ? "left-[calc(80%-1.5rem)]" : "left-4",
+            "bottom-28"
+          )}>
             <Button 
               variant="default" 
               size="icon" 
               className="rounded-full h-9 w-9 shadow-md bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_0_15px_rgba(130,80,223,0.4)]" 
-              onClick={() => setMobileOpen(true)}
+              onClick={() => setMobileOpen(!mobileOpen)}
             >
-              <ChevronLeft className="h-4 w-4 rotate-180" />
+              <ChevronLeft className={cn("h-4 w-4 transition-transform", !mobileOpen && "rotate-180")} />
             </Button>
           </div>
         )}

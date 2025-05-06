@@ -10,8 +10,12 @@ import {
   Calendar, 
   ListOrdered, 
   Zap,
-  AlertCircle
+  AlertCircle,
+  Smartphone,
+  LogOut
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 import WhatsAppConversations from "./WhatsAppConversations";
 import ContactsManager from "./contacts/ContactsManager";
 import ListsManager from "./lists/ListsManager";
@@ -21,22 +25,51 @@ import ScheduleManager from "./schedules/ScheduleManager";
 import WhatsAppConfig from "./config/WhatsAppConfig";
 import AutomationsManager from "./automations/AutomationsManager";
 import { useQRCode } from "@/hooks/useQRCode";
+import QRCodeModal from "./QRCodeModal";
 
 interface WhatsAppMenuLayoutProps {
   sessionId?: string;
+  onShowQrCode?: () => void;
+  onLogout?: () => void;
 }
 
-const WhatsAppMenuLayout = ({ sessionId = "teste" }: WhatsAppMenuLayoutProps) => {
+const WhatsAppMenuLayout = ({ 
+  sessionId = "teste",
+  onShowQrCode,
+  onLogout
+}: WhatsAppMenuLayoutProps) => {
   const [activeTab, setActiveTab] = useState("conversations");
   const { status } = useQRCode(sessionId);
+  const [showQrModal, setShowQrModal] = useState(false);
+  const { toast } = useToast();
   
   useEffect(() => {
     // Log status for debugging
     console.log("WhatsAppMenuLayout status:", status);
   }, [status]);
 
-  const renderTabContent = () => {
-    // If not connected, show waiting message
+  const handleDisconnect = () => {
+    if (onLogout) {
+      onLogout();
+      toast({
+        title: "WhatsApp desconectado",
+        description: "Sua sessão do WhatsApp foi desconectada com sucesso."
+      });
+    }
+  };
+
+  const handleNewConnection = () => {
+    setShowQrModal(true);
+  };
+
+  const handleLogin = () => {
+    toast({
+      title: "WhatsApp Conectado",
+      description: "Novo número conectado com sucesso!"
+    });
+  };
+
+  const renderContent = () => {
     if (status !== "connected") {
       return (
         <div className="flex flex-col items-center justify-center h-64 p-8 text-center">
@@ -44,9 +77,17 @@ const WhatsAppMenuLayout = ({ sessionId = "teste" }: WhatsAppMenuLayoutProps) =>
           <p className="text-muted-foreground text-lg">
             Aguardando conexão com o WhatsApp para acessar seus contatos e mensagens...
           </p>
-          <p className="mt-2 text-sm text-muted-foreground">
+          <p className="mt-2 text-sm text-muted-foreground mb-6">
             Escaneie o QR Code para continuar.
           </p>
+          <Button 
+            variant="outline" 
+            className="flex items-center gap-2" 
+            onClick={onShowQrCode}
+          >
+            <Smartphone size={16} />
+            Conectar WhatsApp
+          </Button>
         </div>
       );
     }
@@ -75,6 +116,40 @@ const WhatsAppMenuLayout = ({ sessionId = "teste" }: WhatsAppMenuLayoutProps) =>
 
   return (
     <div className="w-full">
+      <div className="flex items-center justify-between mb-6 px-1">
+        <div className="flex items-center gap-2">
+          {status === "connected" && (
+            <div className="flex items-center gap-2 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 px-3 py-1 rounded-full">
+              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+              <span className="text-sm font-medium">Conectado</span>
+            </div>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex items-center gap-1"
+            onClick={handleNewConnection}
+          >
+            <Smartphone size={14} />
+            Novo número
+          </Button>
+          
+          {status === "connected" && (
+            <Button 
+              variant="outline" 
+              size="sm"
+              className="text-red-500 border-red-200 hover:bg-red-50 dark:hover:bg-red-950 flex items-center gap-1"
+              onClick={handleDisconnect}
+            >
+              <LogOut size={14} />
+              Desconectar
+            </Button>
+          )}
+        </div>
+      </div>
+      
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="mb-4 border-b overflow-x-auto">
           <TabsList className="h-auto p-0 bg-transparent w-full justify-start">
@@ -120,8 +195,15 @@ const WhatsAppMenuLayout = ({ sessionId = "teste" }: WhatsAppMenuLayoutProps) =>
           </TabsList>
         </div>
         
-        {renderTabContent()}
+        {renderContent()}
       </Tabs>
+      
+      <QRCodeModal
+        open={showQrModal}
+        onOpenChange={setShowQrModal}
+        sessionId="novo-numero"
+        onLogin={handleLogin}
+      />
     </div>
   );
 };
