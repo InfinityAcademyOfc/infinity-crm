@@ -9,7 +9,7 @@ const WelcomeCard = ({
   userName
 }: WelcomeCardProps) => {
   return <Card className="bg-gradient-to-r from-primary/20 to-blue-600/20 border-none shadow-lg transition-all duration-300 hover:shadow-xl">
-      <CardContent className="p-6 flex flex-col md:flex-row justify-between items-center px-0">
+      <CardContent className="p-6 flex flex-col md:flex-row justify-between items-center mx-0 px-0">
         <div className="animate-slide-in">
           <h2 className="text-2xl font-semibold mb-2 px-[10px]">
             Olá {userName}, bem vindo!

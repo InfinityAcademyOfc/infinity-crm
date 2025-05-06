@@ -1,7 +1,5 @@
-
 import React, { Suspense } from "react";
 import { ChartSkeleton } from "./DashboardSkeletons";
-
 interface DashboardLayoutProps {
   welcomeSection: React.ReactNode;
   funnelSection: React.ReactNode; // This is now empty but we'll keep it for compatibility
@@ -9,15 +7,13 @@ interface DashboardLayoutProps {
   salesAndFinanceSection: React.ReactNode;
   activitiesSection: React.ReactNode;
 }
-
 const DashboardLayout = ({
   welcomeSection,
   integratedFunnelSection,
   salesAndFinanceSection,
-  activitiesSection,
+  activitiesSection
 }: DashboardLayoutProps) => {
-  return (
-    <div className="space-y-6 animate-fade-in">
+  return <div className="space-y-6 animate-fade-in px-[5px]">
       {/* Welcome Message Card */}
       {welcomeSection}
       
@@ -39,8 +35,6 @@ const DashboardLayout = ({
           {activitiesSection}
         </Suspense>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default DashboardLayout;
