@@ -27,6 +27,15 @@ export const useQRCode = (sessionId: string) => {
           return;
         }
 
+        // For testing/demo purposes, mock the API response
+        // In production, uncomment the actual API calls
+        
+        // Mock API - simulate successful connection after a few seconds
+        // setTimeout(() => {
+        //   setStatus("connected");
+        //   setLoading(false);
+        // }, 10000);
+
         const statusRes = await fetch(`${API_URL}/sessions/${sessionId}/status`);
         if (!statusRes.ok) throw new Error(`Failed to fetch status: ${statusRes.status}`);
         
@@ -36,7 +45,7 @@ export const useQRCode = (sessionId: string) => {
         console.log("WhatsApp connection status:", statusData.status);
         
         // Update status
-        setStatus(statusData.status);
+        setStatus(statusData.status as WhatsAppConnectionStatus);
 
         if (statusData.status === "qr") {
           const qrRes = await fetch(`${API_URL}/sessions/${sessionId}/qrcode`);

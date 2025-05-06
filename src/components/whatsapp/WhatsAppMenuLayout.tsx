@@ -9,7 +9,8 @@ import {
   FileImage,
   Calendar, 
   ListOrdered, 
-  Zap
+  Zap,
+  AlertCircle
 } from "lucide-react";
 import WhatsAppConversations from "./WhatsAppConversations";
 import ContactsManager from "./contacts/ContactsManager";
@@ -35,12 +36,16 @@ const WhatsAppMenuLayout = ({ sessionId = "teste" }: WhatsAppMenuLayoutProps) =>
   }, [status]);
 
   const renderTabContent = () => {
-    // Check if connected before rendering content
+    // If not connected, show waiting message
     if (status !== "connected") {
       return (
-        <div className="flex items-center justify-center h-64 p-8 text-center">
-          <p className="text-muted-foreground">
-            Aguardando conexão com o WhatsApp para exibir o conteúdo...
+        <div className="flex flex-col items-center justify-center h-64 p-8 text-center">
+          <AlertCircle className="h-12 w-12 text-amber-500 mb-4 animate-pulse" />
+          <p className="text-muted-foreground text-lg">
+            Aguardando conexão com o WhatsApp para acessar seus contatos e mensagens...
+          </p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Escaneie o QR Code para continuar.
           </p>
         </div>
       );
@@ -71,8 +76,8 @@ const WhatsAppMenuLayout = ({ sessionId = "teste" }: WhatsAppMenuLayoutProps) =>
   return (
     <div className="w-full">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <div className="mb-4 border-b">
-          <TabsList className="h-auto p-0 bg-transparent overflow-x-auto w-full justify-start">
+        <div className="mb-4 border-b overflow-x-auto">
+          <TabsList className="h-auto p-0 bg-transparent w-full justify-start">
             <TabsTrigger value="conversations" className="py-3 px-4 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">
               <MessageSquare className="mr-2 h-4 w-4" />
               Conversas

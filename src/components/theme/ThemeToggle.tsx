@@ -59,10 +59,10 @@ const ThemeToggle = () => {
           size="icon" 
           className="relative text-foreground"
         >
-          {isDark ? <Moon size={18} /> : <Sun size={18} />}
+          <Palette size={18} />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56 bg-background border-border">
+      <DropdownMenuContent align="end" className="w-56 bg-background border-border shadow-lg">
         <DropdownMenuLabel>Tema e Personalização</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <div className="p-2">

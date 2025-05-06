@@ -506,10 +506,12 @@ export type Database = {
       }
       whatsapp_sessions: {
         Row: {
+          connected_at: string | null
           created_at: string | null
           id: string
           is_connected: boolean | null
-          phone_number: string | null
+          name: string | null
+          phone: string | null
           profile_id: string | null
           qr_code: string | null
           session_id: string
@@ -517,10 +519,12 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          connected_at?: string | null
           created_at?: string | null
           id?: string
           is_connected?: boolean | null
-          phone_number?: string | null
+          name?: string | null
+          phone?: string | null
           profile_id?: string | null
           qr_code?: string | null
           session_id: string
@@ -528,10 +532,12 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          connected_at?: string | null
           created_at?: string | null
           id?: string
           is_connected?: boolean | null
-          phone_number?: string | null
+          name?: string | null
+          phone?: string | null
           profile_id?: string | null
           qr_code?: string | null
           session_id?: string

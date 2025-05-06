@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import QRCodeScanner from "./QRCodeScanner";
+import QRCodeModal from "./QRCodeModal";
 import { Skeleton } from "@/components/ui/skeleton";
 import WhatsAppMenuLayout from "./WhatsAppMenuLayout";
 import { WhatsAppConnectionStatus } from "@/hooks/useQRCode";
@@ -14,6 +15,8 @@ const WhatsAppIntegration = () => {
   const [status, setStatus] = useState<WhatsAppConnectionStatus>("not_started");
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("qrcode");
+  const [showQrModal, setShowQrModal] = useState(false);
+  const [newSessionId, setNewSessionId] = useState("nova-sessao");
   const { toast } = useToast();
   const sessionId = "teste"; // pode ser dinâmico no futuro
 
@@ -35,12 +38,7 @@ const WhatsAppIntegration = () => {
         
         const data = await res.json();
         console.log("WhatsApp status fetch:", data.status);
-        setStatus(data.status);
-        
-        // If connected, automatically switch to chat tab
-        if (data.status === "connected") {
-          setActiveTab("chat");
-        }
+        setStatus(data.status as WhatsAppConnectionStatus);
       } catch (err) {
         console.error("Erro ao verificar status da sessão:", err);
         setStatus("error");
@@ -85,6 +83,11 @@ const WhatsAppIntegration = () => {
     }
   };
 
+  const handleConnectClick = (sessionId: string) => {
+    setNewSessionId(sessionId);
+    setShowQrModal(true);
+  };
+
   const handleLogin = () => {
     setStatus("connected");
     setActiveTab("chat");
@@ -104,22 +107,37 @@ const WhatsAppIntegration = () => {
           {isLoading ? (
             <Skeleton className="h-8 w-32" />
           ) : status === "connected" ? (
-            <div className="flex items-center gap-2 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 px-3 py-1 rounded-full">
-              <CheckCircle size={14} />
-              <span className="text-sm font-medium">Conectado</span>
-            </div>
+            <>
+              <div className="flex items-center gap-2 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 px-3 py-1 rounded-full">
+                <CheckCircle size={14} />
+                <span className="text-sm font-medium">Conectado</span>
+              </div>
+              <Button variant="destructive" onClick={handleLogout} size="sm">
+                Desconectar
+              </Button>
+            </>
           ) : (
-            <div className="flex items-center gap-2 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400 px-3 py-1 rounded-full">
-              <Smartphone size={14} />
-              <span className="text-sm font-medium">Não conectado</span>
-            </div>
+            <>
+              <div className="flex items-center gap-2 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400 px-3 py-1 rounded-full">
+                <Smartphone size={14} />
+                <span className="text-sm font-medium">Não conectado</span>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => handleConnectClick("nova-sessao")}
+              >
+                Conectar
+              </Button>
+            </>
           )}
-
-          {!isLoading && status === "connected" && (
-            <Button variant="destructive" onClick={handleLogout} size="sm">
-              Desconectar
-            </Button>
-          )}
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => handleConnectClick("novo-numero")}
+          >
+            + Novo número
+          </Button>
         </div>
       </div>
 
@@ -131,7 +149,7 @@ const WhatsAppIntegration = () => {
         ) : (
           <CardContent className="p-0">
             {status === "connected" ? (
-              <WhatsAppMenuLayout />
+              <WhatsAppMenuLayout sessionId={sessionId} />
             ) : (
               <div className="h-[600px] flex flex-col">
                 <div className="p-4 border-b">
@@ -141,18 +159,35 @@ const WhatsAppIntegration = () => {
                         <QrCode className="mr-2 h-4 w-4" />
                         QR Code
                       </TabsTrigger>
+                      <TabsTrigger value="chat">
+                        <Smartphone className="mr-2 h-4 w-4" />
+                        WhatsApp
+                      </TabsTrigger>
                     </TabsList>
                   </Tabs>
                 </div>
                 
                 <div className="flex-1 overflow-hidden">
-                  <QRCodeScanner sessionId={sessionId} onLogin={handleLogin} />
+                  {activeTab === "qrcode" ? (
+                    <QRCodeScanner sessionId={sessionId} onLogin={handleLogin} />
+                  ) : (
+                    <div className="p-6">
+                      <WhatsAppMenuLayout sessionId={sessionId} />
+                    </div>
+                  )}
                 </div>
               </div>
             )}
           </CardContent>
         )}
       </Card>
+
+      <QRCodeModal
+        open={showQrModal}
+        onOpenChange={setShowQrModal}
+        sessionId={newSessionId}
+        onLogin={handleLogin}
+      />
     </div>
   );
 };

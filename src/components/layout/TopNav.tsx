@@ -4,6 +4,8 @@ import ThemeToggle from "@/components/theme/ThemeToggle";
 import { UserMenu } from "@/components/auth/UserMenu";
 import NotificationsDropdown from "@/components/layout/NotificationsDropdown";
 import { useLocation } from "react-router-dom";
+import { Menu } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 // Module name data with optional subtitle
 const moduleData: Record<string, {
@@ -60,7 +62,12 @@ const moduleData: Record<string, {
   }
 };
 
-export function TopNav() {
+interface TopNavProps {
+  openMobileNav?: () => void;
+  isMobileView?: boolean;
+}
+
+export function TopNav({ openMobileNav, isMobileView }: TopNavProps) {
   const location = useLocation();
   
   // Determine best match for path
@@ -71,8 +78,19 @@ export function TopNav() {
   const moduleInfo = moduleData[modulePath] || { name: "", subtitle: "" };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/50">
+    <header className="sticky top-0 z-30 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/50">
       <div className="container flex h-14 items-center px-[10px]">
+        {isMobileView && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="mr-2"
+            onClick={openMobileNav}
+          >
+            <Menu className="h-5 w-5" />
+            <span className="sr-only">Open menu</span>
+          </Button>
+        )}
         <div className="flex flex-col items-start justify-center flex-1 py-1">
           {moduleInfo.name && <span className="text-sm font-bold">{moduleInfo.name}</span>}
           {moduleInfo.subtitle && <span className="text-muted-foreground text-xs font-normal">{moduleInfo.subtitle}</span>}

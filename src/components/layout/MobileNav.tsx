@@ -1,5 +1,5 @@
 
-import { X } from "lucide-react";
+import { X, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { NavLink } from "react-router-dom";
 import NavSection from "@/components/navigation/NavSection";
@@ -51,10 +51,22 @@ const systemItems = [
 export function MobileNav({ open, setOpen }: MobileNavProps) {
   if (!open) return null;
   
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    // Only close when clicking directly on the backdrop, not its children
+    if (e.target === e.currentTarget) {
+      setOpen(false);
+    }
+  };
+  
   return (
-    <div className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm">
-      <div className="fixed inset-y-0 left-0 w-full max-w-xs bg-background border-r border-border h-full overflow-y-auto p-6">
-        <div className="flex items-center justify-between mb-6">
+    <div 
+      className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm md:hidden"
+      onClick={handleBackdropClick}
+    >
+      <div 
+        className="fixed inset-y-0 left-0 z-50 w-80 max-w-[80%] bg-background border-r border-border h-full overflow-y-auto shadow-xl transition-transform duration-300 transform translate-x-0"
+      >
+        <div className="flex items-center justify-between p-4 border-b">
           <h3 className="font-semibold text-lg">Menu</h3>
           <Button variant="ghost" size="icon" onClick={() => setOpen(false)}>
             <X className="h-5 w-5" />
@@ -62,7 +74,7 @@ export function MobileNav({ open, setOpen }: MobileNavProps) {
           </Button>
         </div>
         
-        <div className="space-y-6">
+        <div className="p-4 space-y-6">
           <NavSection 
             title="Menu Principal" 
             items={mainMenuItems} 
@@ -91,6 +103,18 @@ export function MobileNav({ open, setOpen }: MobileNavProps) {
             onItemClick={() => setOpen(false)}
           />
         </div>
+      </div>
+      
+      {/* Floating toggle button outside sidebar */}
+      <div className="fixed z-[51] left-[calc(80%-10px)] top-1/2 -translate-y-1/2 transform">
+        <Button
+          variant="default"
+          size="icon"
+          className="rounded-full h-8 w-8 shadow-md bg-primary text-primary-foreground"
+          onClick={() => setOpen(false)}
+        >
+          <ChevronRight className="h-4 w-4" />
+        </Button>
       </div>
     </div>
   );
