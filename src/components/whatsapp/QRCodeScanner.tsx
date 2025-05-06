@@ -4,6 +4,7 @@ import QRCodeLoading from "@/components/whatsapp/ui/QRCodeLoading";
 import QRCodeInstructions from "@/components/whatsapp/ui/QRCodeInstructions";
 import QRCodeDisplay from "@/components/whatsapp/ui/QRCodeDisplay";
 import { useQRCode } from "@/hooks/useQRCode";
+import { useToast } from "@/hooks/use-toast";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -14,6 +15,7 @@ interface QRCodeScannerProps {
 
 const QRCodeScanner = ({ sessionId, onLogin }: QRCodeScannerProps) => {
   const { loading, qrCodeData, status } = useQRCode(sessionId);
+  const { toast } = useToast();
 
   // Iniciar sessão automaticamente ao montar
   useEffect(() => {
@@ -33,9 +35,16 @@ const QRCodeScanner = ({ sessionId, onLogin }: QRCodeScannerProps) => {
   // Disparar callback de login quando conectado
   useEffect(() => {
     if (status === "connected" && onLogin) {
+      // Notify with toast
+      toast({
+        title: "WhatsApp Conectado",
+        description: "Seu dispositivo foi conectado com sucesso ao WhatsApp.",
+        variant: "default",
+      });
+      // Call the callback
       onLogin();
     }
-  }, [status, onLogin]);
+  }, [status, onLogin, toast]);
 
   return (
     <div className="flex flex-col items-center justify-center p-4">

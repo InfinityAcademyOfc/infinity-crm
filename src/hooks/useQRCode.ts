@@ -3,10 +3,12 @@ import { useState, useEffect } from "react";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
+export type WhatsAppConnectionStatus = "not_started" | "qr" | "connected" | "disconnected" | "error";
+
 export const useQRCode = (sessionId: string) => {
   const [loading, setLoading] = useState(true);
   const [qrCodeData, setQrCodeData] = useState<string | null>(null);
-  const [status, setStatus] = useState<"not_started" | "qr" | "connected" | "disconnected" | "error">("not_started");
+  const [status, setStatus] = useState<WhatsAppConnectionStatus>("not_started");
 
   useEffect(() => {
     if (!sessionId) return;
@@ -29,6 +31,11 @@ export const useQRCode = (sessionId: string) => {
         if (!statusRes.ok) throw new Error(`Failed to fetch status: ${statusRes.status}`);
         
         const statusData = await statusRes.json();
+        
+        // Log status for debugging
+        console.log("WhatsApp connection status:", statusData.status);
+        
+        // Update status
         setStatus(statusData.status);
 
         if (statusData.status === "qr") {
@@ -51,13 +58,13 @@ export const useQRCode = (sessionId: string) => {
       }
     };
 
-    // Primeira chamada após 5 segundos
+    // Primeira chamada após 2 segundos
     firstTimeoutId = setTimeout(() => {
-      fetchQrCode(); // Primeiro QR em 5s
+      fetchQrCode(); // Primeiro QR em 2s
 
-      // Depois inicia atualização a cada 15s
-      intervalId = setInterval(fetchQrCode, 15000);
-    }, 5000);
+      // Depois inicia atualização a cada 10s
+      intervalId = setInterval(fetchQrCode, 10000);
+    }, 2000);
 
     return () => {
       clearTimeout(firstTimeoutId);

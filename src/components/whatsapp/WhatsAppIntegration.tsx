@@ -8,9 +8,10 @@ import { useToast } from "@/hooks/use-toast";
 import QRCodeScanner from "./QRCodeScanner";
 import { Skeleton } from "@/components/ui/skeleton";
 import WhatsAppMenuLayout from "./WhatsAppMenuLayout";
+import { WhatsAppConnectionStatus } from "@/hooks/useQRCode";
 
 const WhatsAppIntegration = () => {
-  const [status, setStatus] = useState<"not_started" | "qr" | "connected" | "disconnected" | "error">("not_started");
+  const [status, setStatus] = useState<WhatsAppConnectionStatus>("not_started");
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("qrcode");
   const { toast } = useToast();
@@ -33,7 +34,10 @@ const WhatsAppIntegration = () => {
         }
         
         const data = await res.json();
+        console.log("WhatsApp status fetch:", data.status);
         setStatus(data.status);
+        
+        // If connected, automatically switch to chat tab
         if (data.status === "connected") {
           setActiveTab("chat");
         }
@@ -124,26 +128,28 @@ const WhatsAppIntegration = () => {
           <div className="flex items-center justify-center h-[600px]">
             <Skeleton className="h-[500px] w-full" />
           </div>
-        ) : status === "connected" ? (
-          <CardContent className="p-0">
-            <WhatsAppMenuLayout />
-          </CardContent>
         ) : (
-          <CardContent className="p-0 h-[600px] flex flex-col">
-            <div className="p-4 border-b">
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="w-full">
-                  <TabsTrigger value="qrcode">
-                    <QrCode className="mr-2 h-4 w-4" />
-                    QR Code
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
-            </div>
-            
-            <div className="flex-1 overflow-hidden">
-              <QRCodeScanner sessionId={sessionId} onLogin={handleLogin} />
-            </div>
+          <CardContent className="p-0">
+            {status === "connected" ? (
+              <WhatsAppMenuLayout />
+            ) : (
+              <div className="h-[600px] flex flex-col">
+                <div className="p-4 border-b">
+                  <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                    <TabsList className="w-full">
+                      <TabsTrigger value="qrcode">
+                        <QrCode className="mr-2 h-4 w-4" />
+                        QR Code
+                      </TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+                </div>
+                
+                <div className="flex-1 overflow-hidden">
+                  <QRCodeScanner sessionId={sessionId} onLogin={handleLogin} />
+                </div>
+              </div>
+            )}
           </CardContent>
         )}
       </Card>

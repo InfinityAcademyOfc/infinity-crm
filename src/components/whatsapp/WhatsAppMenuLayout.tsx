@@ -1,7 +1,6 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent } from "@/components/ui/card";
 import { 
   MessageSquare, 
   Users, 
@@ -20,6 +19,7 @@ import MediaManager from "./media/MediaManager";
 import ScheduleManager from "./schedules/ScheduleManager";
 import WhatsAppConfig from "./config/WhatsAppConfig";
 import AutomationsManager from "./automations/AutomationsManager";
+import { useQRCode } from "@/hooks/useQRCode";
 
 interface WhatsAppMenuLayoutProps {
   sessionId?: string;
@@ -27,8 +27,25 @@ interface WhatsAppMenuLayoutProps {
 
 const WhatsAppMenuLayout = ({ sessionId = "teste" }: WhatsAppMenuLayoutProps) => {
   const [activeTab, setActiveTab] = useState("conversations");
+  const { status } = useQRCode(sessionId);
+  
+  useEffect(() => {
+    // Log status for debugging
+    console.log("WhatsAppMenuLayout status:", status);
+  }, [status]);
 
   const renderTabContent = () => {
+    // Check if connected before rendering content
+    if (status !== "connected") {
+      return (
+        <div className="flex items-center justify-center h-64 p-8 text-center">
+          <p className="text-muted-foreground">
+            Aguardando conexão com o WhatsApp para exibir o conteúdo...
+          </p>
+        </div>
+      );
+    }
+    
     switch (activeTab) {
       case "conversations":
         return <WhatsAppConversations sessionId={sessionId} />;
