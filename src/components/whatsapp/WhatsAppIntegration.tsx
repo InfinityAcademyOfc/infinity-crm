@@ -12,7 +12,20 @@ const WhatsAppIntegration = () => {
   const [showQrModal, setShowQrModal] = useState(false);
   const [newSessionId, setNewSessionId] = useState("nova-sessao");
   const { toast } = useToast();
-  const sessionId = "nova-sessao"; // valor padrão ou dinâmico futuramente
+  const sessionId = "nova-sessao"; // ou qualquer ID dinâmico válido
+
+<WhatsAppMenuLayout 
+  sessionId={sessionId}
+  onShowQrCode={handleShowQrCode}
+  onLogout={handleLogout}
+/>
+
+<QRCodeModal
+  open={showQrModal}
+  onOpenChange={setShowQrModal}
+  sessionId={sessionId}
+  onLogin={handleLogin}
+/>
 
   useEffect(() => {
     const fetchStatus = async () => {
