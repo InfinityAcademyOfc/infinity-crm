@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { WhatsAppConnectionStatus } from "@/hooks/useQRCode";
-import QRCodeScanner from "./QRCodeScanner";
 import QRCodeModal from "./QRCodeModal";
 import WhatsAppMenuLayout from "./WhatsAppMenuLayout";
 
@@ -10,44 +9,25 @@ const WhatsAppIntegration = () => {
   const [status, setStatus] = useState<WhatsAppConnectionStatus>("not_started");
   const [isLoading, setIsLoading] = useState(true);
   const [showQrModal, setShowQrModal] = useState(false);
-  const [newSessionId, setNewSessionId] = useState("nova-sessao");
   const { toast } = useToast();
-  const sessionId = "nova-sessao"; // ou qualquer ID dinâmico válido
 
-<WhatsAppMenuLayout 
-  sessionId={sessionId}
-  onShowQrCode={handleShowQrCode}
-  onLogout={handleLogout}
-/>
+  const sessionId = "nova-sessao"; // pode tornar dinâmico no futuro
 
-<QRCodeModal
-  open={showQrModal}
-  onOpenChange={setShowQrModal}
-  sessionId={sessionId}
-  onLogin={handleLogin}
-/>
-
+  // Busca status do backend periodicamente
   useEffect(() => {
     const fetchStatus = async () => {
       try {
         const apiUrl = import.meta.env.VITE_API_URL;
-        if (!apiUrl) {
-          console.error("API URL não definida");
-          setStatus("error");
-          setIsLoading(false);
-          return;
-        }
+        if (!apiUrl) throw new Error("API URL não definida");
 
         const res = await fetch(`${apiUrl}/sessions/${sessionId}/status`);
-        if (!res.ok) {
-          throw new Error(`Falha ao buscar status: ${res.status}`);
-        }
+        if (!res.ok) throw new Error(`Erro ao buscar status: ${res.status}`);
 
         const data = await res.json();
-        console.log("WhatsApp status fetch:", data.status);
+        console.log("🔁 Status atualizado:", data.status);
         setStatus(data.status as WhatsAppConnectionStatus);
       } catch (err) {
-        console.error("Erro ao verificar status da sessão:", err);
+        console.error("Erro ao verificar status:", err);
         setStatus("error");
       } finally {
         setIsLoading(false);
@@ -55,66 +35,64 @@ const WhatsAppIntegration = () => {
     };
 
     fetchStatus();
-    const interval = setInterval(fetchStatus, 5000);
+    const interval = setInterval(fetchStatus, 7000); // atualiza a cada 7s
     return () => clearInterval(interval);
   }, [sessionId]);
 
+  // Desconectar sessão
   const handleLogout = async () => {
     try {
       const apiUrl = import.meta.env.VITE_API_URL;
-      if (!apiUrl) {
-        throw new Error("API URL não definida");
-      }
+      if (!apiUrl) throw new Error("API URL não definida");
 
       const res = await fetch(`${apiUrl}/sessions/${sessionId}/logout`, {
-        method: 'POST'
+        method: 'POST',
       });
-
-      if (!res.ok) {
-        throw new Error(`Falha ao fazer logout: ${res.status}`);
-      }
+      if (!res.ok) throw new Error("Erro ao desconectar");
 
       setStatus("not_started");
       toast({
-        title: "Sessão desconectada",
-        description: "Você foi desconectado do WhatsApp com sucesso."
+        title: "Desconectado",
+        description: "WhatsApp desconectado com sucesso.",
       });
     } catch (err) {
-      console.error("Erro ao desconectar:", err);
+      console.error(err);
       toast({
         title: "Erro ao desconectar",
-        description: "Não foi possível desconectar do WhatsApp.",
-        variant: "destructive"
+        description: "Falha ao desconectar do WhatsApp.",
+        variant: "destructive",
       });
     }
   };
 
+  // Mostra modal QR
   const handleShowQrCode = () => {
     setShowQrModal(true);
   };
 
+  // Ao logar com sucesso
   const handleLogin = () => {
     setStatus("connected");
+    setShowQrModal(false);
     toast({
-      title: "Sessão conectada",
-      description: "Você está conectado ao WhatsApp."
+      title: "Conectado",
+      description: "Dispositivo conectado com sucesso.",
     });
   };
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-center mb-6">
-        <div>
-          <h2 className="text-2xl font-bold">Integração WhatsApp</h2>
-        </div>
+        <h2 className="text-2xl font-bold">Integração com WhatsApp</h2>
       </div>
 
       <Card>
         <CardContent className="p-6">
-          <WhatsAppMenuLayout 
-            sessionId={sessionId} 
+          <WhatsAppMenuLayout
+            sessionId={sessionId}
             onShowQrCode={handleShowQrCode}
             onLogout={handleLogout}
+            status={status} // 🔥 Passa status para o layout
           />
         </CardContent>
       </Card>
@@ -122,7 +100,7 @@ const WhatsAppIntegration = () => {
       <QRCodeModal
         open={showQrModal}
         onOpenChange={setShowQrModal}
-        sessionId={sessionId} // corrigido para manter consistência
+        sessionId={sessionId}
         onLogin={handleLogin}
       />
     </div>
