@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   MessageSquare, 
@@ -42,6 +42,10 @@ const WhatsAppMenuLayout = ({
   const [activeTab, setActiveTab] = useState("conversations");
   const [showQrModal, setShowQrModal] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    console.log("📡 Status recebido no MenuLayout:", status);
+  }, [status]);
 
   const handleDisconnect = () => {
     if (onLogout) {
@@ -87,26 +91,47 @@ const WhatsAppMenuLayout = ({
       );
     }
 
-    switch (activeTab) {
-      case "conversations":
-        return <WhatsAppConversations sessionId={sessionId} />;
-      case "contacts":
-        return <ContactsManager />;
-      case "lists":
-        return <ListsManager />;
-      case "broadcasts":
-        return <BroadcastManager />;
-      case "schedules":
-        return <ScheduleManager />;
-      case "media":
-        return <MediaManager />;
-      case "automations":
-        return <AutomationsManager />;
-      case "settings":
-        return <WhatsAppConfig />;
-      default:
-        return <WhatsAppConversations sessionId={sessionId} />;
-    }
+    return (
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <div className="mb-4 border-b overflow-x-auto">
+          <TabsList className="h-auto p-0 bg-transparent w-full justify-start">
+            <TabsTrigger value="conversations" className="py-3 px-4 data-[state=active]:border-b-2 data-[state=active]:border-primary">
+              <MessageSquare className="mr-2 h-4 w-4" /> Conversas
+            </TabsTrigger>
+            <TabsTrigger value="contacts" className="py-3 px-4 data-[state=active]:border-b-2 data-[state=active]:border-primary">
+              <Users className="mr-2 h-4 w-4" /> Contatos
+            </TabsTrigger>
+            <TabsTrigger value="lists" className="py-3 px-4 data-[state=active]:border-b-2 data-[state=active]:border-primary">
+              <ListOrdered className="mr-2 h-4 w-4" /> Listas
+            </TabsTrigger>
+            <TabsTrigger value="broadcasts" className="py-3 px-4 data-[state=active]:border-b-2 data-[state=active]:border-primary">
+              <Send className="mr-2 h-4 w-4" /> Broadcast
+            </TabsTrigger>
+            <TabsTrigger value="schedules" className="py-3 px-4 data-[state=active]:border-b-2 data-[state=active]:border-primary">
+              <Calendar className="mr-2 h-4 w-4" /> Agendamentos
+            </TabsTrigger>
+            <TabsTrigger value="media" className="py-3 px-4 data-[state=active]:border-b-2 data-[state=active]:border-primary">
+              <FileImage className="mr-2 h-4 w-4" /> Mídia
+            </TabsTrigger>
+            <TabsTrigger value="automations" className="py-3 px-4 data-[state=active]:border-b-2 data-[state=active]:border-primary">
+              <Zap className="mr-2 h-4 w-4" /> Automações
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="py-3 px-4 data-[state=active]:border-b-2 data-[state=active]:border-primary">
+              <Settings className="mr-2 h-4 w-4" /> Configurações
+            </TabsTrigger>
+          </TabsList>
+        </div>
+
+        <TabsContent value="conversations"><WhatsAppConversations sessionId={sessionId} /></TabsContent>
+        <TabsContent value="contacts"><ContactsManager /></TabsContent>
+        <TabsContent value="lists"><ListsManager /></TabsContent>
+        <TabsContent value="broadcasts"><BroadcastManager /></TabsContent>
+        <TabsContent value="schedules"><ScheduleManager /></TabsContent>
+        <TabsContent value="media"><MediaManager /></TabsContent>
+        <TabsContent value="automations"><AutomationsManager /></TabsContent>
+        <TabsContent value="settings"><WhatsAppConfig /></TabsContent>
+      </Tabs>
+    );
   };
 
   return (
@@ -127,8 +152,7 @@ const WhatsAppMenuLayout = ({
             className="flex items-center gap-1"
             onClick={handleNewConnection}
           >
-            <Smartphone size={14} />
-            Novo número
+            <Smartphone size={14} /> Novo número
           </Button>
 
           {status === "connected" && (
@@ -138,58 +162,18 @@ const WhatsAppMenuLayout = ({
               className="text-red-500 border-red-200 hover:bg-red-50 dark:hover:bg-red-950 flex items-center gap-1"
               onClick={handleDisconnect}
             >
-              <LogOut size={14} />
-              Desconectar
+              <LogOut size={14} /> Desconectar
             </Button>
           )}
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <div className="mb-4 border-b overflow-x-auto">
-          <TabsList className="h-auto p-0 bg-transparent w-full justify-start">
-            <TabsTrigger value="conversations" className="py-3 px-4 data-[state=active]:border-b-2 data-[state=active]:border-primary">
-              <MessageSquare className="mr-2 h-4 w-4" />
-              Conversas
-            </TabsTrigger>
-            <TabsTrigger value="contacts" className="py-3 px-4 data-[state=active]:border-b-2 data-[state=active]:border-primary">
-              <Users className="mr-2 h-4 w-4" />
-              Contatos
-            </TabsTrigger>
-            <TabsTrigger value="lists" className="py-3 px-4 data-[state=active]:border-b-2 data-[state=active]:border-primary">
-              <ListOrdered className="mr-2 h-4 w-4" />
-              Listas
-            </TabsTrigger>
-            <TabsTrigger value="broadcasts" className="py-3 px-4 data-[state=active]:border-b-2 data-[state=active]:border-primary">
-              <Send className="mr-2 h-4 w-4" />
-              Broadcast
-            </TabsTrigger>
-            <TabsTrigger value="schedules" className="py-3 px-4 data-[state=active]:border-b-2 data-[state=active]:border-primary">
-              <Calendar className="mr-2 h-4 w-4" />
-              Agendamentos
-            </TabsTrigger>
-            <TabsTrigger value="media" className="py-3 px-4 data-[state=active]:border-b-2 data-[state=active]:border-primary">
-              <FileImage className="mr-2 h-4 w-4" />
-              Mídia
-            </TabsTrigger>
-            <TabsTrigger value="automations" className="py-3 px-4 data-[state=active]:border-b-2 data-[state=active]:border-primary">
-              <Zap className="mr-2 h-4 w-4" />
-              Automações
-            </TabsTrigger>
-            <TabsTrigger value="settings" className="py-3 px-4 data-[state=active]:border-b-2 data-[state=active]:border-primary">
-              <Settings className="mr-2 h-4 w-4" />
-              Configurações
-            </TabsTrigger>
-          </TabsList>
-        </div>
-
-        {renderContent()}
-      </Tabs>
+      {renderContent()}
 
       <QRCodeModal
         open={showQrModal}
         onOpenChange={setShowQrModal}
-        sessionId="novo-numero"
+        sessionId={sessionId || "novo-numero"}
         onLogin={handleLogin}
       />
     </div>
@@ -197,3 +181,4 @@ const WhatsAppMenuLayout = ({
 };
 
 export default WhatsAppMenuLayout;
+
