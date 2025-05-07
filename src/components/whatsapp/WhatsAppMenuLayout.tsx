@@ -29,6 +29,7 @@ import QRCodeModal from "./QRCodeModal";
 
 interface WhatsAppMenuLayoutProps {
   sessionId?: string;
+  status?: WhatsAppConnectionStatus;
   onShowQrCode?: () => void;
   onLogout?: () => void;
 }
