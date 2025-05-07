@@ -90,9 +90,9 @@ const WhatsAppIntegration = () => {
         <CardContent className="p-6">
           <WhatsAppMenuLayout
             sessionId={sessionId}
+            status={status} // <-- ESSENCIAL
             onShowQrCode={handleShowQrCode}
             onLogout={handleLogout}
-            status={status} // 🔥 Passa status para o layout
           />
         </CardContent>
       </Card>
