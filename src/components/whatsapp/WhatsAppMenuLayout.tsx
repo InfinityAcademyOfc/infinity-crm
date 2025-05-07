@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   MessageSquare, 
@@ -24,8 +23,8 @@ import MediaManager from "./media/MediaManager";
 import ScheduleManager from "./schedules/ScheduleManager";
 import WhatsAppConfig from "./config/WhatsAppConfig";
 import AutomationsManager from "./automations/AutomationsManager";
-import { useQRCode } from "@/hooks/useQRCode";
 import QRCodeModal from "./QRCodeModal";
+import { WhatsAppConnectionStatus } from "@/hooks/useQRCode";
 
 interface WhatsAppMenuLayoutProps {
   sessionId?: string;
@@ -36,18 +35,13 @@ interface WhatsAppMenuLayoutProps {
 
 const WhatsAppMenuLayout = ({ 
   sessionId = "teste",
+  status = "not_started",
   onShowQrCode,
   onLogout
 }: WhatsAppMenuLayoutProps) => {
   const [activeTab, setActiveTab] = useState("conversations");
-  const { status } = useQRCode(sessionId);
   const [showQrModal, setShowQrModal] = useState(false);
   const { toast } = useToast();
-  
-  useEffect(() => {
-    // Log status for debugging
-    console.log("WhatsAppMenuLayout status:", status);
-  }, [status]);
 
   const handleDisconnect = () => {
     if (onLogout) {
@@ -92,7 +86,7 @@ const WhatsAppMenuLayout = ({
         </div>
       );
     }
-    
+
     switch (activeTab) {
       case "conversations":
         return <WhatsAppConversations sessionId={sessionId} />;
@@ -136,7 +130,7 @@ const WhatsAppMenuLayout = ({
             <Smartphone size={14} />
             Novo número
           </Button>
-          
+
           {status === "connected" && (
             <Button 
               variant="outline" 
@@ -150,55 +144,48 @@ const WhatsAppMenuLayout = ({
           )}
         </div>
       </div>
-      
+
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="mb-4 border-b overflow-x-auto">
           <TabsList className="h-auto p-0 bg-transparent w-full justify-start">
-            <TabsTrigger value="conversations" className="py-3 px-4 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">
+            <TabsTrigger value="conversations" className="py-3 px-4 data-[state=active]:border-b-2 data-[state=active]:border-primary">
               <MessageSquare className="mr-2 h-4 w-4" />
               Conversas
             </TabsTrigger>
-            
-            <TabsTrigger value="contacts" className="py-3 px-4 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">
+            <TabsTrigger value="contacts" className="py-3 px-4 data-[state=active]:border-b-2 data-[state=active]:border-primary">
               <Users className="mr-2 h-4 w-4" />
               Contatos
             </TabsTrigger>
-            
-            <TabsTrigger value="lists" className="py-3 px-4 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">
+            <TabsTrigger value="lists" className="py-3 px-4 data-[state=active]:border-b-2 data-[state=active]:border-primary">
               <ListOrdered className="mr-2 h-4 w-4" />
               Listas
             </TabsTrigger>
-            
-            <TabsTrigger value="broadcasts" className="py-3 px-4 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">
+            <TabsTrigger value="broadcasts" className="py-3 px-4 data-[state=active]:border-b-2 data-[state=active]:border-primary">
               <Send className="mr-2 h-4 w-4" />
               Broadcast
             </TabsTrigger>
-            
-            <TabsTrigger value="schedules" className="py-3 px-4 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">
+            <TabsTrigger value="schedules" className="py-3 px-4 data-[state=active]:border-b-2 data-[state=active]:border-primary">
               <Calendar className="mr-2 h-4 w-4" />
               Agendamentos
             </TabsTrigger>
-            
-            <TabsTrigger value="media" className="py-3 px-4 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">
+            <TabsTrigger value="media" className="py-3 px-4 data-[state=active]:border-b-2 data-[state=active]:border-primary">
               <FileImage className="mr-2 h-4 w-4" />
               Mídia
             </TabsTrigger>
-            
-            <TabsTrigger value="automations" className="py-3 px-4 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">
+            <TabsTrigger value="automations" className="py-3 px-4 data-[state=active]:border-b-2 data-[state=active]:border-primary">
               <Zap className="mr-2 h-4 w-4" />
               Automações
             </TabsTrigger>
-            
-            <TabsTrigger value="settings" className="py-3 px-4 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">
+            <TabsTrigger value="settings" className="py-3 px-4 data-[state=active]:border-b-2 data-[state=active]:border-primary">
               <Settings className="mr-2 h-4 w-4" />
               Configurações
             </TabsTrigger>
           </TabsList>
         </div>
-        
+
         {renderContent()}
       </Tabs>
-      
+
       <QRCodeModal
         open={showQrModal}
         onOpenChange={setShowQrModal}
