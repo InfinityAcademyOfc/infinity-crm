@@ -30,7 +30,7 @@ const WhatsAppConversations = ({ sessionId }: WhatsAppConversationsProps) => {
   useEffect(() => {
     const loadNumbers = async () => {
       const { data, error } = await supabase
-        .from("messages")
+        .from("whatsapp_messages")
         .select("number")
         .eq("session_id", sessionId)
         .order("created_at", { ascending: false });
@@ -53,7 +53,7 @@ const WhatsAppConversations = ({ sessionId }: WhatsAppConversationsProps) => {
 
     const loadMessages = async () => {
       const { data } = await supabase
-        .from("messages")
+        .from("whatsapp_messages")
         .select("*")
         .eq("session_id", sessionId)
         .eq("number", selectedNumber)
@@ -66,13 +66,13 @@ const WhatsAppConversations = ({ sessionId }: WhatsAppConversationsProps) => {
 
     // Real-time listener
     const channel = supabase
-      .channel("realtime:messages")
+      .channel("realtime:whatsapp_messages")
       .on(
         "postgres_changes",
         {
           event: "INSERT",
           schema: "public",
-          table: "messages",
+          table: "whatsapp_messages",
           filter: `session_id=eq.${sessionId}`
         },
         (payload) => {
