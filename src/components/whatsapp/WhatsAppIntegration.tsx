@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -13,7 +12,7 @@ const WhatsAppIntegration = () => {
   const [showQrModal, setShowQrModal] = useState(false);
   const [newSessionId, setNewSessionId] = useState("nova-sessao");
   const { toast } = useToast();
-  const sessionId = "teste"; // pode ser dinâmico no futuro
+  const sessionId = "nova-sessao"; // valor padrão ou dinâmico futuramente
 
   useEffect(() => {
     const fetchStatus = async () => {
@@ -30,7 +29,7 @@ const WhatsAppIntegration = () => {
         if (!res.ok) {
           throw new Error(`Falha ao buscar status: ${res.status}`);
         }
-        
+
         const data = await res.json();
         console.log("WhatsApp status fetch:", data.status);
         setStatus(data.status as WhatsAppConnectionStatus);
@@ -45,7 +44,7 @@ const WhatsAppIntegration = () => {
     fetchStatus();
     const interval = setInterval(fetchStatus, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [sessionId]);
 
   const handleLogout = async () => {
     try {
@@ -57,11 +56,11 @@ const WhatsAppIntegration = () => {
       const res = await fetch(`${apiUrl}/sessions/${sessionId}/logout`, {
         method: 'POST'
       });
-      
+
       if (!res.ok) {
         throw new Error(`Falha ao fazer logout: ${res.status}`);
       }
-      
+
       setStatus("not_started");
       toast({
         title: "Sessão desconectada",
@@ -110,7 +109,7 @@ const WhatsAppIntegration = () => {
       <QRCodeModal
         open={showQrModal}
         onOpenChange={setShowQrModal}
-        sessionId={newSessionId}
+        sessionId={sessionId} // corrigido para manter consistência
         onLogin={handleLogin}
       />
     </div>
