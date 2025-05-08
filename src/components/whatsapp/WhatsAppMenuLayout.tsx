@@ -190,16 +190,7 @@ const WhatsAppMenuLayout = ({
         <Button variant="outline" size="sm" onClick={handleDisconnect}>
           <LogOut size={14} /> Desconectar
         </Button>
-        <Button variant="destructive" size="sm" onClick={handleDeleteSession}>
-          <Trash size={14} /> Apagar sessão
-        </Button>
-      </div>
-    )}
-
-          <Trash size={14} />
-          Apagar sessão
-        </Button>
-
+        
         )}
       </div>
     </div>
