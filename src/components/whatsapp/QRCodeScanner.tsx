@@ -24,6 +24,7 @@ const QRCodeScanner = ({ sessionId, onLogin }: QRCodeScannerProps) => {
         await fetch(`${API_URL}/sessions/${sessionId}/start`, {
           method: "POST",
         });
+
       } catch (error) {
         console.error("Erro ao iniciar sessão:", error);
       }
