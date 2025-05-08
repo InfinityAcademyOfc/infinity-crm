@@ -49,7 +49,7 @@ export const useQRCode = (sessionId: string) => {
 
         if (statusData.status === "qr") {
           const qrRes = await fetch(`${API_URL}/sessions/${sessionId}/qrcode`);
-          if (!qrRes.ok) throw new Error(`Failed to fetch QR code: ${qrRes.status}`);
+          if (!qrRes.ok) throw new Error(`Failed to fetch status: ${statusRes.status}`);
           
           const qrData = await qrRes.json();
           console.log("QR Code response:", qrData);
