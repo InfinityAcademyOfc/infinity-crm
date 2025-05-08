@@ -69,6 +69,35 @@ const WhatsAppMenuLayout = ({
     });
   };
 
+  const handleDeleteSession = async () => {
+  const confirm = window.confirm("Deseja realmente apagar esta sessão do WhatsApp?");
+  if (!confirm) return;
+
+  try {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/sessions/${sessionId}`, {
+      method: 'DELETE'
+    });
+
+    if (!res.ok) throw new Error("Erro ao apagar sessão");
+
+    toast({
+      title: "Sessão apagada",
+      description: "Todos os dados foram removidos com sucesso.",
+      variant: "default"
+    });
+
+    // Você pode forçar uma atualização do status ou redirecionar
+    location.reload(); // ou setStatus("not_started")
+  } catch (err) {
+    toast({
+      title: "Erro ao apagar",
+      description: "Não foi possível apagar a sessão.",
+      variant: "destructive"
+    });
+    console.error("Erro ao apagar sessão:", err);
+  }
+};
+  
   const renderContent = () => {
     if (status !== "connected") {
       return (
@@ -157,28 +186,23 @@ const WhatsAppMenuLayout = ({
           </Button>
 
           {status === "connected" && (
-            <Button 
-              variant="outline" 
-              size="sm"
-              className="text-red-500 border-red-200 hover:bg-red-50 dark:hover:bg-red-950 flex items-center gap-1"
-              onClick={handleDisconnect}
-            >
-              <LogOut size={14} /> Desconectar
-            </Button>
-
-      <Button 
-  variant="destructive" 
-  size="sm"
-  className="flex items-center gap-1"
-  onClick={handleDeleteSession}
->
-  <Trash size={14} />
-  Apagar sessão
-</Button>
-
-          )}
-        </div>
+      <div className="flex items-center gap-2">
+        <Button variant="outline" size="sm" onClick={handleDisconnect}>
+          <LogOut size={14} /> Desconectar
+        </Button>
+        <Button variant="destructive" size="sm" onClick={handleDeleteSession}>
+          <Trash size={14} /> Apagar sessão
+        </Button>
       </div>
+    )}
+
+          <Trash size={14} />
+          Apagar sessão
+        </Button>
+
+        )}
+      </div>
+    </div>
 
       {renderContent()}
 
