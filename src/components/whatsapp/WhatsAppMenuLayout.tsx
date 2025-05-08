@@ -11,7 +11,8 @@ import {
   Zap,
   AlertCircle,
   Smartphone,
-  LogOut
+  LogOut,
+  Trash
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -164,6 +165,17 @@ const WhatsAppMenuLayout = ({
             >
               <LogOut size={14} /> Desconectar
             </Button>
+
+      <Button 
+  variant="destructive" 
+  size="sm"
+  className="flex items-center gap-1"
+  onClick={handleDeleteSession}
+>
+  <Trash size={14} />
+  Apagar sessão
+</Button>
+
           )}
         </div>
       </div>
