@@ -1,38 +1,25 @@
+
 import React from "react";
 import {
   createBrowserRouter,
   RouterProvider,
   Navigate,
+  Outlet
 } from "react-router-dom";
 import { useAuth } from "./contexts/AuthContext";
 import MainLayout from "./layouts/MainLayout";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import Home from "./pages/Home";
-import Contacts from "./pages/Contacts";
-import Tasks from "./pages/Tasks";
-import Pricing from "./pages/Pricing";
-import About from "./pages/About";
 import Settings from "./pages/Settings";
-import Kanban from "./pages/Kanban";
-import Chat from "./pages/Chat";
 import UnifiedFloatingAction from "./components/chat/UnifiedFloatingAction";
 import WhatsAppDashboard from "./pages/WhatsAppDashboard";
-
-// Protected Route Component
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isAuthenticated } = useAuth();
-  if (!isAuthenticated) {
-    return <Navigate to="/login" />;
-  }
-  return <>{children}</>;
-};
+import ProtectedRoute from "./components/auth/ProtectedRoute";
 
 // Router Configuration
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <Home />,
+    element: <Navigate to="/login" />
   },
   {
     path: "/login",
@@ -43,53 +30,23 @@ const router = createBrowserRouter([
     element: <Register />,
   },
   {
-    path: "/pricing",
-    element: <Pricing />,
-  },
-  {
-    path: "/about",
-    element: <About />,
-  },
-  {
     path: "/app",
-    element: (
-      <ProtectedRoute>
-        <MainLayout />
-      </ProtectedRoute>
-    ),
+    element: <ProtectedRoute />,
     children: [
       {
-        path: "contacts",
-        element: <Contacts />,
-      },
-      {
-        path: "tasks",
-        element: <Tasks />,
+        path: "",
+        element: <Navigate to="/app/whatsapp" />
       },
       {
         path: "settings",
         element: <Settings />,
       },
-       {
-        path: "kanban",
-        element: <Kanban />,
-      },
       {
-        path: "chat",
-        element: <Chat />,
-      },
-    ],
-  },
-  {
-    path: "/app/whatsapp",
-    element: (
-      <ProtectedRoute>
-        <MainLayout>
-          <WhatsAppDashboard />
-        </MainLayout>
-      </ProtectedRoute>
-    ),
-  },
+        path: "whatsapp",
+        element: <WhatsAppDashboard />
+      }
+    ]
+  }
 ]);
 
 function App() {
