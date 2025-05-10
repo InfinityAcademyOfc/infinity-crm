@@ -50,6 +50,11 @@ const QRCodeScanner = ({ sessionId, onLogin }: QRCodeScannerProps) => {
     }
   }, [status, onLogin, toast]);
 
+  // Debug logging
+  useEffect(() => {
+    console.log("QR Code Scanner state:", { loading, status, qrCodeData: qrCodeData ? "Available" : "Not available" });
+  }, [loading, status, qrCodeData]);
+
   return (
     <div className="flex flex-col items-center justify-center p-4">
       {loading ? (

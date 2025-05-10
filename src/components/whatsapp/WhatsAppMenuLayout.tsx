@@ -13,7 +13,8 @@ import {
   AlertCircle,
   Smartphone,
   LogOut,
-  Trash
+  Trash2,
+  LayoutDashboard
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -107,12 +108,18 @@ const WhatsAppMenuLayout = ({
     <div className="w-full">
       <div className="flex items-center justify-between mb-6 px-1">
         <div className="flex items-center gap-2">
-          {status === "connected" && (
-            <div className="flex items-center gap-2 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 px-3 py-1 rounded-full">
-              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-              <span className="text-sm font-medium">Connected</span>
-            </div>
-          )}
+          <div className={`flex items-center gap-2 px-3 py-1 rounded-full ${
+            status === "connected" 
+              ? "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400" 
+              : "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400"
+          }`}>
+            <div className={`w-2 h-2 rounded-full ${
+              status === "connected" ? "bg-green-500 animate-pulse" : "bg-yellow-500 animate-pulse"
+            }`}></div>
+            <span className="text-sm font-medium">
+              {status === "connected" ? "Connected" : "Waiting for connection"}
+            </span>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <Button 
@@ -146,6 +153,9 @@ const WhatsAppMenuLayout = ({
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="mb-4 border-b overflow-x-auto">
           <TabsList className="h-auto p-0 bg-transparent w-full justify-start">
+            <TabsTrigger value="dashboard" className="py-3 px-4 data-[state=active]:border-b-2 data-[state=active]:border-primary">
+              <LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard
+            </TabsTrigger>
             <TabsTrigger value="conversations" className="py-3 px-4 data-[state=active]:border-b-2 data-[state=active]:border-primary">
               <MessageSquare className="mr-2 h-4 w-4" /> Conversations
             </TabsTrigger>
@@ -173,6 +183,47 @@ const WhatsAppMenuLayout = ({
           </TabsList>
         </div>
 
+        <TabsContent value="dashboard">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border shadow-sm">
+              <h3 className="text-lg font-medium mb-2">WhatsApp Status</h3>
+              <div className="flex flex-col space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Status:</span>
+                  <span className={status === "connected" ? "text-green-500 font-medium" : "text-yellow-500 font-medium"}>
+                    {status === "connected" ? "Connected" : "Waiting for connection"}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Session ID:</span>
+                  <span className="font-mono text-sm">{sessionId}</span>
+                </div>
+              </div>
+              <Button variant="outline" size="sm" className="w-full mt-4" onClick={handleNewConnection}>
+                <Smartphone size={14} className="mr-2" /> Connect New Number
+              </Button>
+            </div>
+            
+            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border shadow-sm">
+              <h3 className="text-lg font-medium mb-2">Quick Actions</h3>
+              <div className="grid grid-cols-2 gap-2">
+                <Button variant="outline" size="sm" className="justify-start" onClick={() => setActiveTab("broadcasts")}>
+                  <Send size={14} className="mr-2" /> New Broadcast
+                </Button>
+                <Button variant="outline" size="sm" className="justify-start" onClick={() => setActiveTab("automations")}>
+                  <Zap size={14} className="mr-2" /> New Automation
+                </Button>
+                <Button variant="outline" size="sm" className="justify-start" onClick={() => setActiveTab("contacts")}>
+                  <Users size={14} className="mr-2" /> Add Contact
+                </Button>
+                <Button variant="outline" size="sm" className="justify-start" onClick={() => setActiveTab("lists")}>
+                  <ListOrdered size={14} className="mr-2" /> New List
+                </Button>
+              </div>
+            </div>
+          </div>
+        </TabsContent>
+        
         <TabsContent value="conversations"><WhatsAppConversations sessionId={sessionId} /></TabsContent>
         <TabsContent value="contacts"><ContactsManager /></TabsContent>
         <TabsContent value="lists"><ListsManager /></TabsContent>
