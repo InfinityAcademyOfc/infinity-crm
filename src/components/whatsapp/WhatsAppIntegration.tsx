@@ -1,4 +1,6 @@
+
 import { useEffect, useState } from "react";
+import { Navigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { WhatsAppConnectionStatus } from "@/hooks/useQRCode";
@@ -10,6 +12,9 @@ const WhatsAppIntegration = () => {
   const [showQrModal, setShowQrModal] = useState(false);
   const { toast } = useToast();
   const sessionId = "nova-sessao"; // Fixed for now but can be made dynamic in the future
+
+  // In a production app, redirect to the new WhatsApp dashboard page
+  // return <Navigate to="/app/whatsapp-dashboard" replace />;
 
   // Update status periodically
   useEffect(() => {

@@ -13,7 +13,6 @@ import {
   AlertCircle,
   Smartphone,
   LogOut,
-  Trash2,
   LayoutDashboard
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -43,7 +42,7 @@ const WhatsAppMenuLayout = ({
   onShowQrCode,
   onLogout
 }: WhatsAppMenuLayoutProps) => {
-  const [activeTab, setActiveTab] = useState("conversations");
+  const [activeTab, setActiveTab] = useState("dashboard");
   const [showQrModal, setShowQrModal] = useState(false);
   const { toast } = useToast();
 
@@ -62,7 +61,11 @@ const WhatsAppMenuLayout = ({
   };
 
   const handleNewConnection = () => {
-    setShowQrModal(true);
+    if (onShowQrCode) {
+      onShowQrCode();
+    } else {
+      setShowQrModal(true);
+    }
   };
 
   const handleLogin = () => {
@@ -72,38 +75,6 @@ const WhatsAppMenuLayout = ({
     });
   };
 
-  const handleDeleteSession = async () => {
-    const confirm = window.confirm("Are you sure you want to delete this WhatsApp session?");
-    if (!confirm) return;
-
-    try {
-      const apiUrl = import.meta.env.VITE_API_URL || '';
-      if (!apiUrl) throw new Error("API URL is not defined");
-      
-      const res = await fetch(`${apiUrl}/sessions/${sessionId}`, {
-        method: 'DELETE'
-      });
-
-      if (!res.ok) throw new Error("Error deleting session");
-
-      toast({
-        title: "Session deleted",
-        description: "All data has been successfully removed.",
-        variant: "default"
-      });
-
-      // Force a status update or redirect
-      location.reload();
-    } catch (err) {
-      toast({
-        title: "Error deleting",
-        description: "Could not delete the session.",
-        variant: "destructive"
-      });
-      console.error("Error deleting session:", err);
-    }
-  };
-  
   return (
     <div className="w-full">
       <div className="flex items-center justify-between mb-6 px-1">
@@ -128,7 +99,7 @@ const WhatsAppMenuLayout = ({
             className="flex items-center gap-1"
             onClick={handleNewConnection}
           >
-            <Smartphone size={14} /> New number
+            <Smartphone size={14} /> Connect number
           </Button>
 
           {status === "connected" && (
@@ -144,7 +115,7 @@ const WhatsAppMenuLayout = ({
         <Alert variant="default" className="mb-4 bg-yellow-50 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800">
           <AlertCircle className="h-4 w-4 text-yellow-600 dark:text-yellow-500" />
           <AlertDescription className="text-yellow-700 dark:text-yellow-400">
-            Waiting for WhatsApp connection. Scan the QR Code or reconnect the number.
+            You're viewing the WhatsApp interface in preview mode. Connect a number to access all features.
           </AlertDescription>
         </Alert>
       )}
@@ -200,7 +171,7 @@ const WhatsAppMenuLayout = ({
                 </div>
               </div>
               <Button variant="outline" size="sm" className="w-full mt-4" onClick={handleNewConnection}>
-                <Smartphone size={14} className="mr-2" /> Connect New Number
+                <Smartphone size={14} className="mr-2" /> Connect Number
               </Button>
             </div>
             

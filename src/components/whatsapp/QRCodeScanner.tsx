@@ -64,7 +64,7 @@ const QRCodeScanner = ({ sessionId, onLogin }: QRCodeScannerProps) => {
           <QRCodeInstructions />
           <QRCodeDisplay qrCodeData={qrCodeData} />
           <p className="text-sm text-center text-muted-foreground mt-4">
-            The QR code will automatically update every 15 seconds.
+            The QR code will automatically update every 10 seconds.
           </p>
         </>
       ) : status === "connected" ? (
