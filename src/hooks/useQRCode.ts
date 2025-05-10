@@ -53,7 +53,7 @@ export const useQRCode = (sessionId: string) => {
           setQrCodeData(null);
         }
       } catch (error) {
-        console.error("Erro ao buscar status/QR da sessão:", error);
+        console.error("Error fetching session status/QR code:", error);
         setStatus("error");
         setQrCodeData(null);
       } finally {
@@ -61,8 +61,10 @@ export const useQRCode = (sessionId: string) => {
       }
     };
 
+    // Initial delay before starting to fetch
     firstTimeoutId = setTimeout(() => {
       fetchQrCode();
+      // Then set up interval for subsequent fetches
       intervalId = setInterval(fetchQrCode, 10000);
     }, 2000);
 

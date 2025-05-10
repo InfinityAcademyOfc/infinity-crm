@@ -17,29 +17,32 @@ const QRCodeScanner = ({ sessionId, onLogin }: QRCodeScannerProps) => {
   const { loading, qrCodeData, status } = useQRCode(sessionId);
   const { toast } = useToast();
 
-  // Iniciar sessão automaticamente ao montar
+  // Start session automatically when mounted
   useEffect(() => {
     const start = async () => {
       try {
-        await fetch(`${API_URL}/sessions/${sessionId}/start`, {
+        const response = await fetch(`${API_URL}/sessions/${sessionId}/start`, {
           method: "POST",
         });
 
+        if (!response.ok) {
+          console.error(`Error starting session: ${response.status}`);
+        }
       } catch (error) {
-        console.error("Erro ao iniciar sessão:", error);
+        console.error("Error starting session:", error);
       }
     };
 
     if (sessionId) start();
   }, [sessionId]);
 
-  // Disparar callback de login quando conectado
+  // Trigger login callback when connected
   useEffect(() => {
     if (status === "connected" && onLogin) {
       // Notify with toast
       toast({
-        title: "WhatsApp Conectado",
-        description: "Seu dispositivo foi conectado com sucesso ao WhatsApp.",
+        title: "WhatsApp Connected",
+        description: "Your device has been successfully connected to WhatsApp.",
         variant: "default",
       });
       // Call the callback
@@ -56,20 +59,20 @@ const QRCodeScanner = ({ sessionId, onLogin }: QRCodeScannerProps) => {
           <QRCodeInstructions />
           <QRCodeDisplay qrCodeData={qrCodeData} />
           <p className="text-sm text-center text-muted-foreground mt-4">
-            O código QR será atualizado automaticamente a cada 15 segundos.
+            The QR code will automatically update every 15 seconds.
           </p>
         </>
       ) : status === "connected" ? (
         <p className="text-center text-green-600 font-medium mt-4">
-          Dispositivo conectado com sucesso!
+          Device successfully connected!
         </p>
       ) : status === "error" ? (
         <p className="text-center text-red-500 font-medium mt-4">
-          Ocorreu um erro ao carregar o QR Code.
+          An error occurred while loading the QR Code.
         </p>
       ) : (
         <p className="text-center text-muted-foreground mt-4">
-          Aguardando sessão iniciar...
+          Waiting for session to start...
         </p>
       )}
     </div>
