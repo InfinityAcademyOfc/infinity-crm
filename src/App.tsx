@@ -6,7 +6,7 @@ import {
   Navigate,
   Outlet
 } from "react-router-dom";
-import { useAuth } from "./contexts/AuthContext";
+import { AuthProvider } from "./contexts/AuthContext";
 import MainLayout from "./layouts/MainLayout";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -51,10 +51,10 @@ const router = createBrowserRouter([
 
 function App() {
   return (
-    <>
+    <AuthProvider>
       <RouterProvider router={router} />
       <UnifiedFloatingAction />
-    </>
+    </AuthProvider>
   );
 }
 
