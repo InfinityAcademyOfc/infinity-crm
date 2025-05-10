@@ -47,15 +47,15 @@ const WhatsAppMenuLayout = ({
   const { toast } = useToast();
 
   useEffect(() => {
-    console.log("Connection status received in MenuLayout:", status);
+    console.log("📡 Status recebido no MenuLayout:", status);
   }, [status]);
 
   const handleDisconnect = () => {
     if (onLogout) {
       onLogout();
       toast({
-        title: "WhatsApp disconnected",
-        description: "Your WhatsApp session has been successfully disconnected."
+        title: "WhatsApp desconectado",
+        description: "Sua sessão do WhatsApp foi desconectada com sucesso."
       });
     }
   };
@@ -66,40 +66,37 @@ const WhatsAppMenuLayout = ({
 
   const handleLogin = () => {
     toast({
-      title: "WhatsApp Connected",
-      description: "New number connected successfully!"
+      title: "WhatsApp Conectado",
+      description: "Novo número conectado com sucesso!"
     });
   };
 
   const handleDeleteSession = async () => {
-    const confirm = window.confirm("Are you sure you want to delete this WhatsApp session?");
+    const confirm = window.confirm("Deseja realmente apagar esta sessão do WhatsApp?");
     if (!confirm) return;
 
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || '';
-      if (!apiUrl) throw new Error("API URL is not defined");
-      
-      const res = await fetch(`${apiUrl}/sessions/${sessionId}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/sessions/${sessionId}`, {
         method: 'DELETE'
       });
 
-      if (!res.ok) throw new Error("Error deleting session");
+      if (!res.ok) throw new Error("Erro ao apagar sessão");
 
       toast({
-        title: "Session deleted",
-        description: "All data has been successfully removed.",
+        title: "Sessão apagada",
+        description: "Todos os dados foram removidos com sucesso.",
         variant: "default"
       });
 
-      // Force a status update or redirect
-      location.reload();
+      // Você pode forçar uma atualização do status ou redirecionar
+      location.reload(); // ou setStatus("not_started")
     } catch (err) {
       toast({
-        title: "Error deleting",
-        description: "Could not delete the session.",
+        title: "Erro ao apagar",
+        description: "Não foi possível apagar a sessão.",
         variant: "destructive"
       });
-      console.error("Error deleting session:", err);
+      console.error("Erro ao apagar sessão:", err);
     }
   };
   
@@ -110,7 +107,7 @@ const WhatsAppMenuLayout = ({
           {status === "connected" && (
             <div className="flex items-center gap-2 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 px-3 py-1 rounded-full">
               <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-              <span className="text-sm font-medium">Connected</span>
+              <span className="text-sm font-medium">Conectado</span>
             </div>
           )}
         </div>
@@ -121,12 +118,12 @@ const WhatsAppMenuLayout = ({
             className="flex items-center gap-1"
             onClick={handleNewConnection}
           >
-            <Smartphone size={14} /> New number
+            <Smartphone size={14} /> Novo número
           </Button>
 
           {status === "connected" && (
             <Button variant="outline" size="sm" onClick={handleDisconnect}>
-              <LogOut size={14} /> Disconnect
+              <LogOut size={14} /> Desconectar
             </Button>
           )}
         </div>
@@ -137,7 +134,7 @@ const WhatsAppMenuLayout = ({
         <Alert variant="default" className="mb-4 bg-yellow-50 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800">
           <AlertCircle className="h-4 w-4 text-yellow-600 dark:text-yellow-500" />
           <AlertDescription className="text-yellow-700 dark:text-yellow-400">
-            Waiting for WhatsApp connection. Scan the QR Code or reconnect the number.
+            Aguardando conexão com o WhatsApp. Escaneie o QR Code ou reconecte o número.
           </AlertDescription>
         </Alert>
       )}
@@ -147,28 +144,28 @@ const WhatsAppMenuLayout = ({
         <div className="mb-4 border-b overflow-x-auto">
           <TabsList className="h-auto p-0 bg-transparent w-full justify-start">
             <TabsTrigger value="conversations" className="py-3 px-4 data-[state=active]:border-b-2 data-[state=active]:border-primary">
-              <MessageSquare className="mr-2 h-4 w-4" /> Conversations
+              <MessageSquare className="mr-2 h-4 w-4" /> Conversas
             </TabsTrigger>
             <TabsTrigger value="contacts" className="py-3 px-4 data-[state=active]:border-b-2 data-[state=active]:border-primary">
-              <Users className="mr-2 h-4 w-4" /> Contacts
+              <Users className="mr-2 h-4 w-4" /> Contatos
             </TabsTrigger>
             <TabsTrigger value="lists" className="py-3 px-4 data-[state=active]:border-b-2 data-[state=active]:border-primary">
-              <ListOrdered className="mr-2 h-4 w-4" /> Lists
+              <ListOrdered className="mr-2 h-4 w-4" /> Listas
             </TabsTrigger>
             <TabsTrigger value="broadcasts" className="py-3 px-4 data-[state=active]:border-b-2 data-[state=active]:border-primary">
               <Send className="mr-2 h-4 w-4" /> Broadcast
             </TabsTrigger>
             <TabsTrigger value="schedules" className="py-3 px-4 data-[state=active]:border-b-2 data-[state=active]:border-primary">
-              <Calendar className="mr-2 h-4 w-4" /> Schedules
+              <Calendar className="mr-2 h-4 w-4" /> Agendamentos
             </TabsTrigger>
             <TabsTrigger value="media" className="py-3 px-4 data-[state=active]:border-b-2 data-[state=active]:border-primary">
-              <FileImage className="mr-2 h-4 w-4" /> Media
+              <FileImage className="mr-2 h-4 w-4" /> Mídia
             </TabsTrigger>
             <TabsTrigger value="automations" className="py-3 px-4 data-[state=active]:border-b-2 data-[state=active]:border-primary">
-              <Zap className="mr-2 h-4 w-4" /> Automations
+              <Zap className="mr-2 h-4 w-4" /> Automações
             </TabsTrigger>
             <TabsTrigger value="settings" className="py-3 px-4 data-[state=active]:border-b-2 data-[state=active]:border-primary">
-              <Settings className="mr-2 h-4 w-4" /> Settings
+              <Settings className="mr-2 h-4 w-4" /> Configurações
             </TabsTrigger>
           </TabsList>
         </div>
@@ -186,7 +183,7 @@ const WhatsAppMenuLayout = ({
       <QRCodeModal
         open={showQrModal}
         onOpenChange={setShowQrModal}
-        sessionId={sessionId || "new-number"}
+        sessionId={sessionId || "novo-numero"}
         onLogin={handleLogin}
       />
     </div>
