@@ -76,14 +76,19 @@ const WhatsAppMenuLayout = ({
         </div>
       </div>
 
-      {status !== "connected" && (
-        <Alert variant="default" className="mb-4 bg-yellow-50 dark:bg-yellow-900/20">
-          <AlertCircle className="h-4 w-4 text-yellow-600" />
-          <AlertDescription>
-            Aguardando conexão. Escaneie o QR Code para ativar.
-          </AlertDescription>
-        </Alert>
-      )}
+      {status !== "connected" ? (
+      <Alert variant="default" className="mb-4 bg-yellow-50 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800">
+        <AlertCircle className="h-4 w-4 text-yellow-600 dark:text-yellow-500" />
+        <AlertDescription className="text-yellow-700 dark:text-yellow-400">
+          Nenhuma sessão conectada. Escaneie o QR Code ou conecte um número.
+        </AlertDescription>
+      </Alert>
+    ) : (
+  <div className="flex items-center gap-2 text-green-600">
+    <div className="w-2 h-2 bg-green-600 rounded-full animate-pulse" />
+    Sessão ativa!
+  </div>
+)}
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <div className="mb-2 border-b overflow-x-auto">
