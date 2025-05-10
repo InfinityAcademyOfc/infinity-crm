@@ -49,10 +49,17 @@ const router = createBrowserRouter([
   }
 ]);
 
+// Create a wrapper component to properly order the providers
+const AppWithProviders = () => {
+  return (
+    <RouterProvider router={router} />
+  );
+};
+
 function App() {
   return (
     <AuthProvider>
-      <RouterProvider router={router} />
+      <AppWithProviders />
       <UnifiedFloatingAction />
     </AuthProvider>
   );
