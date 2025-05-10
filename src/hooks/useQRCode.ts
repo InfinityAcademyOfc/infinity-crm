@@ -48,13 +48,7 @@ export const useQRCode = (sessionId: string) => {
 
           const qrData = await qrRes.json();
           console.log("QR Code response:", qrData);
-          
-          // Make sure we're getting the QR code data correctly
-          const qrValue = qrData.qr || qrData.qrCode || qrData.code || null;
-          setQrCodeData(qrValue);
-          
-          // Log the actual QR code data for debugging
-          console.log("QR Code data set:", qrValue);
+          setQrCodeData(qrData.qr || qrData.qrCode || qrData.code || null);
         } else {
           setQrCodeData(null);
         }

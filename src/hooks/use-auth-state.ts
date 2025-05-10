@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { hydrateUser } from "@/lib/hydrateUser";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 export const useAuthState = () => {
@@ -20,13 +21,15 @@ export const useAuthState = () => {
     loading: true,
   });
   
+  const navigate = useNavigate();
+
   useEffect(() => {
-    console.info("Initializing AuthContext");
+    console.info("Inicializando AuthContext");
     let isMounted = true;
     
     // Set up the auth state listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.info("Auth event:", event, session?.user?.id);
+      console.info("Evento de autenticação:", event, session?.user?.id);
       
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         if (session?.user && isMounted) {
@@ -44,13 +47,13 @@ export const useAuthState = () => {
                     loading: false
                   });
                 } catch (error) {
-                  console.error("Error hydrating user:", error);
+                  console.error("Erro na hidratação do usuário:", error);
                   setState({
                     user: session.user,
                     session,
                     profile: {
                       id: session.user.id,
-                      name: "User",
+                      name: "Usuário",
                       email: session.user.email,
                       role: "user",
                       status: "active"
@@ -63,13 +66,13 @@ export const useAuthState = () => {
             }, 0);
           } catch (error) {
             if (isMounted) {
-              console.error("Error hydrating user:", error);
+              console.error("Erro na hidratação do usuário:", error);
               setState({
                 user: session.user,
                 session,
                 profile: {
                   id: session.user.id,
-                  name: "User",
+                  name: "Usuário",
                   email: session.user.email,
                   role: "user",
                   status: "active"
@@ -83,10 +86,10 @@ export const useAuthState = () => {
       } else if (event === 'SIGNED_OUT') {
         if (isMounted) {
           setState({ user: null, session: null, profile: null, company: null, loading: false });
-          // Navigation handled at component level
+          navigate('/login', { replace: true });
         }
       } else if (event === 'INITIAL_SESSION') {
-        console.info("Existing session:", session);
+        console.info("Sessão existente:", session);
         if (session && isMounted) {
           try {
             // Use setTimeout to prevent deadlocks with Supabase auth
@@ -102,13 +105,13 @@ export const useAuthState = () => {
                     loading: false
                   });
                 } catch (error) {
-                  console.error("Error hydrating user:", error);
+                  console.error("Erro na hidratação do usuário:", error);
                   setState({
                     user: session.user,
                     session,
                     profile: {
                       id: session.user.id,
-                      name: "User",
+                      name: "Usuário",
                       email: session.user.email,
                       role: "user",
                       status: "active"
@@ -121,7 +124,7 @@ export const useAuthState = () => {
             }, 0);
           } catch (error) {
             if (isMounted) {
-              console.error("Error hydrating user:", error);
+              console.error("Erro na hidratação do usuário:", error);
               setState({
                 user: session.user,
                 session,
@@ -148,7 +151,7 @@ export const useAuthState = () => {
       isMounted = false;
       subscription.unsubscribe();
     };
-  }, []);
+  }, [navigate]);
 
   return state;
 };

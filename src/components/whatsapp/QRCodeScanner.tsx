@@ -50,11 +50,6 @@ const QRCodeScanner = ({ sessionId, onLogin }: QRCodeScannerProps) => {
     }
   }, [status, onLogin, toast]);
 
-  // Debug logging
-  useEffect(() => {
-    console.log("QR Code Scanner state:", { loading, status, qrCodeData: qrCodeData ? "Available" : "Not available" });
-  }, [loading, status, qrCodeData]);
-
   return (
     <div className="flex flex-col items-center justify-center p-4">
       {loading ? (
@@ -64,7 +59,7 @@ const QRCodeScanner = ({ sessionId, onLogin }: QRCodeScannerProps) => {
           <QRCodeInstructions />
           <QRCodeDisplay qrCodeData={qrCodeData} />
           <p className="text-sm text-center text-muted-foreground mt-4">
-            The QR code will automatically update every 10 seconds.
+            The QR code will automatically update every 15 seconds.
           </p>
         </>
       ) : status === "connected" ? (
