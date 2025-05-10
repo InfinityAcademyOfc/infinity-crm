@@ -342,15 +342,7 @@ export type Database = {
           session_id?: string | null
           trigger_type?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "whatsapp_autoresponders_session_id_fkey"
-            columns: ["session_id"]
-            isOneToOne: false
-            referencedRelation: "whatsapp_sessions"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       whatsapp_broadcasts: {
         Row: {
@@ -465,44 +457,30 @@ export type Database = {
       }
       whatsapp_messages: {
         Row: {
-          direction: string | null
+          created_at: string | null
+          from_me: boolean | null
           id: string
           message: string | null
-          message_type: string | null
-          receiver: string | null
-          sender: string | null
-          session_id: string | null
-          timestamp: string | null
+          number: string
+          session_id: string
         }
         Insert: {
-          direction?: string | null
+          created_at?: string | null
+          from_me?: boolean | null
           id?: string
           message?: string | null
-          message_type?: string | null
-          receiver?: string | null
-          sender?: string | null
-          session_id?: string | null
-          timestamp?: string | null
+          number: string
+          session_id: string
         }
         Update: {
-          direction?: string | null
+          created_at?: string | null
+          from_me?: boolean | null
           id?: string
           message?: string | null
-          message_type?: string | null
-          receiver?: string | null
-          sender?: string | null
-          session_id?: string | null
-          timestamp?: string | null
+          number?: string
+          session_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "whatsapp_messages_session_id_fkey"
-            columns: ["session_id"]
-            isOneToOne: false
-            referencedRelation: "whatsapp_sessions"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       whatsapp_sessions: {
         Row: {
@@ -544,15 +522,7 @@ export type Database = {
           status?: string | null
           updated_at?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "whatsapp_sessions_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
     }
     Views: {

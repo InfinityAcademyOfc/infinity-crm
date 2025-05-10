@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
@@ -16,6 +17,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import WhatsAppConversations from "./WhatsAppConversations";
 import ContactsManager from "./contacts/ContactsManager";
 import ListsManager from "./lists/ListsManager";
@@ -70,58 +72,74 @@ const WhatsAppMenuLayout = ({
   };
 
   const handleDeleteSession = async () => {
-  const confirm = window.confirm("Deseja realmente apagar esta sessão do WhatsApp?");
-  if (!confirm) return;
+    const confirm = window.confirm("Deseja realmente apagar esta sessão do WhatsApp?");
+    if (!confirm) return;
 
-  try {
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/sessions/${sessionId}`, {
-      method: 'DELETE'
-    });
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/sessions/${sessionId}`, {
+        method: 'DELETE'
+      });
 
-    if (!res.ok) throw new Error("Erro ao apagar sessão");
+      if (!res.ok) throw new Error("Erro ao apagar sessão");
 
-    toast({
-      title: "Sessão apagada",
-      description: "Todos os dados foram removidos com sucesso.",
-      variant: "default"
-    });
+      toast({
+        title: "Sessão apagada",
+        description: "Todos os dados foram removidos com sucesso.",
+        variant: "default"
+      });
 
-    // Você pode forçar uma atualização do status ou redirecionar
-    location.reload(); // ou setStatus("not_started")
-  } catch (err) {
-    toast({
-      title: "Erro ao apagar",
-      description: "Não foi possível apagar a sessão.",
-      variant: "destructive"
-    });
-    console.error("Erro ao apagar sessão:", err);
-  }
-};
+      // Você pode forçar uma atualização do status ou redirecionar
+      location.reload(); // ou setStatus("not_started")
+    } catch (err) {
+      toast({
+        title: "Erro ao apagar",
+        description: "Não foi possível apagar a sessão.",
+        variant: "destructive"
+      });
+      console.error("Erro ao apagar sessão:", err);
+    }
+  };
   
-  const renderContent = () => {
-    if (status !== "connected") {
-      return (
-        <div className="flex flex-col items-center justify-center h-64 p-8 text-center">
-          <AlertCircle className="h-12 w-12 text-amber-500 mb-4 animate-pulse" />
-          <p className="text-muted-foreground text-lg">
-            Aguardando conexão com o WhatsApp para acessar seus contatos e mensagens...
-          </p>
-          <p className="mt-2 text-sm text-muted-foreground mb-6">
-            Escaneie o QR Code para continuar.
-          </p>
+  return (
+    <div className="w-full">
+      <div className="flex items-center justify-between mb-6 px-1">
+        <div className="flex items-center gap-2">
+          {status === "connected" && (
+            <div className="flex items-center gap-2 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 px-3 py-1 rounded-full">
+              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+              <span className="text-sm font-medium">Conectado</span>
+            </div>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
           <Button 
             variant="outline" 
-            className="flex items-center gap-2" 
-            onClick={onShowQrCode}
+            size="sm" 
+            className="flex items-center gap-1"
+            onClick={handleNewConnection}
           >
-            <Smartphone size={16} />
-            Conectar WhatsApp
+            <Smartphone size={14} /> Novo número
           </Button>
-        </div>
-      );
-    }
 
-    return (
+          {status === "connected" && (
+            <Button variant="outline" size="sm" onClick={handleDisconnect}>
+              <LogOut size={14} /> Desconectar
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* Alert notification when not connected */}
+      {status !== "connected" && (
+        <Alert variant="default" className="mb-4 bg-yellow-50 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800">
+          <AlertCircle className="h-4 w-4 text-yellow-600 dark:text-yellow-500" />
+          <AlertDescription className="text-yellow-700 dark:text-yellow-400">
+            Aguardando conexão com o WhatsApp. Escaneie o QR Code ou reconecte o número.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Always render tabs - regardless of connection status */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="mb-4 border-b overflow-x-auto">
           <TabsList className="h-auto p-0 bg-transparent w-full justify-start">
@@ -161,41 +179,6 @@ const WhatsAppMenuLayout = ({
         <TabsContent value="automations"><AutomationsManager /></TabsContent>
         <TabsContent value="settings"><WhatsAppConfig /></TabsContent>
       </Tabs>
-    );
-  };
-
-  return (
-    <div className="w-full">
-      <div className="flex items-center justify-between mb-6 px-1">
-        <div className="flex items-center gap-2">
-          {status === "connected" && (
-            <div className="flex items-center gap-2 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 px-3 py-1 rounded-full">
-              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-              <span className="text-sm font-medium">Conectado</span>
-            </div>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="flex items-center gap-1"
-            onClick={handleNewConnection}
-          >
-            <Smartphone size={14} /> Novo número
-          </Button>
-
-          {status === "connected" && (
-      <div className="flex items-center gap-2">
-        <Button variant="outline" size="sm" onClick={handleDisconnect}>
-          <LogOut size={14} /> Desconectar
-        </Button>
-        
-        )}
-      </div>
-    </div>
-
-      {renderContent()}
 
       <QRCodeModal
         open={showQrModal}
@@ -208,4 +191,3 @@ const WhatsAppMenuLayout = ({
 };
 
 export default WhatsAppMenuLayout;
-
