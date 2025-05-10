@@ -10,7 +10,19 @@ const WhatsAppIntegration = () => {
   const [status, setStatus] = useState<WhatsAppConnectionStatus>("not_started","connected");
   const [showQrModal, setShowQrModal] = useState(false);
   const { toast } = useToast();
-  const sessionId = "nova-sessao";
+  const [sessionId, setSessionId] = useState(() => {
+  // tenta recuperar do localStorage ou define um padrão
+  return localStorage.getItem("wa-session-id") || "sessao-padrao";
+<input
+  value={sessionId}
+  onChange={(e) => {
+    const value = e.target.value;
+    setSessionId(value);
+    localStorage.setItem("wa-session-id", value);
+  }}
+  placeholder="Digite o nome da sessão"
+/>
+});
 
   useEffect(() => {
     const fetchStatus = async () => {
