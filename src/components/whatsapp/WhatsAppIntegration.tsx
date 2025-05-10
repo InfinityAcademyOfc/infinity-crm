@@ -7,7 +7,7 @@ import QRCodeModal from "./QRCodeModal";
 import WhatsAppMenuLayout from "./WhatsAppMenuLayout";
 
 const WhatsAppIntegration = () => {
-  const [status, setStatus] = useState<WhatsAppConnectionStatus>("not_started");
+  const [status, setStatus] = useState<WhatsAppConnectionStatus>("not_started","connected");
   const [showQrModal, setShowQrModal] = useState(false);
   const { toast } = useToast();
   const sessionId = "nova-sessao";
