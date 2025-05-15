@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { WhatsAppConnectionStatus } from "@/hooks/useQRCode";
@@ -31,28 +31,87 @@ export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [contacts, setContacts] = useState<WhatsAppContact[]>([]);
   const [messages, setMessages] = useState<WhatsAppMessage[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
+  const [apiAvailable, setApiAvailable] = useState(true);
+  const [retryAttempts, setRetryAttempts] = useState(0);
+  const mountedRef = useRef(true);
+  const fetchTimerRef = useRef<number | null>(null);
   const { toast } = useToast();
+  
+  // Track component mount status to prevent state updates after unmount
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      if (fetchTimerRef.current !== null) {
+        window.clearTimeout(fetchTimerRef.current);
+        fetchTimerRef.current = null;
+      }
+    };
+  }, []);
 
-  // Refresh sessions
+  // Refresh sessions with exponential backoff and retry limits
   const refreshSessions = async () => {
+    if (!mountedRef.current) return;
+    
     try {
       setLoadingSessions(true);
       const data = await fetchSessions();
-      setSessions(data);
+      
+      if (mountedRef.current) {
+        setSessions(data);
+        setApiAvailable(true);
+        setRetryAttempts(0);
+      }
     } catch (error) {
       console.error("Error fetching sessions:", error);
-      toast({
-        title: "Error",
-        description: "Could not fetch WhatsApp sessions",
-        variant: "destructive",
-      });
+      
+      if (!mountedRef.current) return;
+      
+      setApiAvailable(false);
+      
+      // Limit retry attempts to prevent excessive API calls
+      if (retryAttempts < 3) {
+        // Implement exponential backoff (1s, 2s, 4s)
+        const backoffTime = Math.pow(2, retryAttempts) * 1000;
+        
+        toast({
+          title: "Não foi possível conectar ao servidor",
+          description: `Tentativa ${retryAttempts + 1}/3. Nova tentativa em ${backoffTime/1000}s.`,
+          variant: "destructive",
+        });
+        
+        // Schedule retry with backoff
+        fetchTimerRef.current = window.setTimeout(() => {
+          if (mountedRef.current) {
+            setRetryAttempts(prev => prev + 1);
+            refreshSessions();
+          }
+        }, backoffTime);
+      } else if (mountedRef.current) {
+        toast({
+          title: "Erro de conexão",
+          description: "Servidor WhatsApp indisponível no momento. Tente novamente mais tarde.",
+          variant: "destructive",
+        });
+      }
     } finally {
-      setLoadingSessions(false);
+      if (mountedRef.current) {
+        setLoadingSessions(false);
+      }
     }
   };
 
   // Connect to a session
   const connectSession = async (sessionId: string) => {
+    if (!apiAvailable) {
+      toast({
+        title: "Servidor indisponível",
+        description: "Não foi possível conectar ao servidor WhatsApp.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     try {
       await connectWhatsAppSession(sessionId);
       setCurrentSession(sessionId);
@@ -61,8 +120,8 @@ export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     } catch (error) {
       console.error("Error connecting session:", error);
       toast({
-        title: "Error",
-        description: "Could not connect WhatsApp session",
+        title: "Erro",
+        description: "Não foi possível conectar a sessão WhatsApp",
         variant: "destructive",
       });
     }
@@ -70,19 +129,28 @@ export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // Disconnect from a session
   const disconnectSession = async (sessionId: string) => {
+    if (!apiAvailable) {
+      toast({
+        title: "Servidor indisponível",
+        description: "Não foi possível desconectar do servidor WhatsApp.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     try {
       await disconnectWhatsAppSession(sessionId);
       setConnectionStatus("not_started");
       toast({ 
-        title: "Disconnected", 
-        description: "WhatsApp session ended." 
+        title: "Desconectado", 
+        description: "Sessão WhatsApp encerrada." 
       });
       await refreshSessions();
     } catch (error) {
       console.error("Error disconnecting session:", error);
       toast({
-        title: "Error",
-        description: "Could not disconnect WhatsApp session",
+        title: "Erro",
+        description: "Não foi possível desconectar a sessão WhatsApp",
         variant: "destructive",
       });
     }
@@ -90,7 +158,7 @@ export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // Send a message
   const sendMessage = async (message: string) => {
-    if (!currentSession || !selectedContact || !message.trim()) return;
+    if (!currentSession || !selectedContact || !message.trim() || !apiAvailable) return;
 
     try {
       await sendWhatsAppMessage(
@@ -102,8 +170,8 @@ export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     } catch (error) {
       console.error("Error sending message:", error);
       toast({
-        title: "Error",
-        description: "Could not send message",
+        title: "Erro",
+        description: "Não foi possível enviar mensagem",
         variant: "destructive",
       });
     }
@@ -120,9 +188,23 @@ export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // Update the connection status
   const updateConnectionStatus = async (sessionId: string) => {
-    if (!sessionId) return;
-    const status = await fetchConnectionStatus(sessionId);
-    setConnectionStatus(status);
+    if (!sessionId || !apiAvailable) return;
+    
+    try {
+      const status = await fetchConnectionStatus(sessionId);
+      if (mountedRef.current) {
+        setConnectionStatus(status);
+      }
+    } catch (error) {
+      console.error("Error updating connection status:", error);
+    }
+  };
+
+  // Manual retry connection
+  const retryConnection = () => {
+    setRetryAttempts(0);
+    setApiAvailable(true);
+    refreshSessions();
   };
 
   // Set up realtime listener for new messages
@@ -142,6 +224,7 @@ export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         (payload) => {
           const newMsg = payload.new as WhatsAppMessage;
           if (
+            mountedRef.current && 
             selectedContact && 
             (newMsg.number === selectedContact.number || newMsg.number === selectedContact.phone)
           ) {
@@ -158,57 +241,82 @@ export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // Load session status periodically
   useEffect(() => {
-    if (!currentSession) return;
+    if (!currentSession || !apiAvailable) return;
     
+    // Initial update
     updateConnectionStatus(currentSession);
-    const interval = setInterval(() => updateConnectionStatus(currentSession), 10000);
+    
+    // Set up interval for updates
+    const interval = setInterval(() => {
+      if (mountedRef.current) {
+        updateConnectionStatus(currentSession);
+      }
+    }, 10000);
     
     return () => clearInterval(interval);
-  }, [currentSession]);
+  }, [currentSession, apiAvailable]);
 
   // Load messages when contact is selected
   useEffect(() => {
     const fetchMessages = async () => {
-      if (!currentSession || !selectedContact) return;
+      if (!currentSession || !selectedContact || !apiAvailable) return;
       
       try {
-        setLoadingMessages(true);
+        if (mountedRef.current) {
+          setLoadingMessages(true);
+        }
+        
         const data = await loadMessages(
           currentSession, 
           selectedContact.number || selectedContact.phone || ''
         );
-        setMessages(data);
+        
+        if (mountedRef.current) {
+          setMessages(data);
+        }
       } catch (error) {
         console.error("Error loading messages:", error);
       } finally {
-        setLoadingMessages(false);
+        if (mountedRef.current) {
+          setLoadingMessages(false);
+        }
       }
     };
     
     fetchMessages();
-  }, [currentSession, selectedContact]);
+  }, [currentSession, selectedContact, apiAvailable]);
 
   // Load contacts when session changes
   useEffect(() => {
     const fetchContacts = async () => {
-      if (!currentSession) return;
+      if (!currentSession || !apiAvailable) return;
+      
       try {
         const contactsData = await loadContacts(currentSession);
-        setContacts(contactsData);
+        if (mountedRef.current) {
+          setContacts(contactsData);
+        }
       } catch (error) {
         console.error("Error loading contacts:", error);
       }
     };
     
     fetchContacts();
-  }, [currentSession]);
+  }, [currentSession, apiAvailable]);
 
   // Initial sessions load
   useEffect(() => {
     refreshSessions();
-    const interval = setInterval(refreshSessions, 30000);
+    
+    // Set up periodic refresh
+    const interval = setInterval(() => {
+      if (mountedRef.current && apiAvailable) {
+        refreshSessions();
+      }
+    }, 30000);
+    
     return () => clearInterval(interval);
-  }, []);
+  }, [apiAvailable]);
 
   // Create the context value object explicitly matching the interface
   const contextValue: WhatsAppContextType = {
@@ -231,6 +339,18 @@ export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   return (
     <WhatsAppContext.Provider value={contextValue}>
+      {!apiAvailable && retryAttempts >= 3 && (
+        <div className="fixed bottom-4 right-4 z-50 bg-destructive text-white p-4 rounded-lg shadow-lg max-w-md">
+          <h4 className="font-bold mb-2">Servidor WhatsApp indisponível</h4>
+          <p className="mb-2 text-sm">O servidor de WhatsApp está indisponível no momento. Algumas funcionalidades podem estar limitadas.</p>
+          <button
+            onClick={retryConnection}
+            className="bg-white text-destructive px-4 py-1 rounded text-sm font-medium hover:bg-gray-100"
+          >
+            Tentar novamente
+          </button>
+        </div>
+      )}
       {children}
     </WhatsAppContext.Provider>
   );

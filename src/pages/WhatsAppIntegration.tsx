@@ -3,22 +3,15 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import QRCodeModal from "@/components/whatsapp/QRCodeModal";
 import { Badge } from "@/components/ui/badge";
-import { Loader, Smartphone, Plus, RefreshCw } from "lucide-react";
-import { WhatsAppProvider, useWhatsApp } from "@/contexts/WhatsAppContext";
+import { Loader, Smartphone, Plus, RefreshCw, AlertTriangle } from "lucide-react";
+import { useWhatsApp } from "@/contexts/whatsapp";
 import WhatsAppMenuLayout from "@/components/whatsapp/WhatsAppMenuLayout";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { useToast } from "@/hooks/use-toast";
 
-// Main wrapper that provides WhatsApp context
-const WhatsAppIntegrationPage = () => {
-  return (
-    <WhatsAppProvider>
-      <WhatsAppIntegrationContent />
-    </WhatsAppProvider>
-  );
-};
-
-// Inner component that consumes WhatsApp context
+// Main content component
 const WhatsAppIntegrationContent = () => {
   const { 
     currentSession, 
@@ -30,8 +23,10 @@ const WhatsAppIntegrationContent = () => {
     createNewSession
   } = useWhatsApp();
   
+  const { toast } = useToast();
   const [showModal, setShowModal] = useState(false);
   const [selectedSessionId, setSelectedSessionId] = useState("");
+  const [apiError, setApiError] = useState(false);
 
   const handleConnectClick = (sessionId: string) => {
     setSelectedSessionId(sessionId);
@@ -43,12 +38,37 @@ const WhatsAppIntegrationContent = () => {
     handleConnectClick(newSessionId);
   };
   
+  const handleRefresh = () => {
+    try {
+      refreshSessions();
+      setApiError(false);
+    } catch (error) {
+      console.error("Error refreshing sessions:", error);
+      setApiError(true);
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar as sessões",
+        variant: "destructive",
+      });
+    }
+  };
+  
   // Select current session or first available one
   useEffect(() => {
     if (!currentSession && sessions.length > 0) {
       setCurrentSession(sessions[0].id);
     }
   }, [sessions, currentSession, setCurrentSession]);
+
+  // Check API errors from session loading
+  useEffect(() => {
+    if (sessions.length === 0 && !loadingSessions) {
+      // If no sessions and not loading, may indicate API error
+      setApiError(true);
+    } else {
+      setApiError(false);
+    }
+  }, [sessions, loadingSessions]);
 
   return (
     <div className="p-6 space-y-6">
@@ -62,7 +82,7 @@ const WhatsAppIntegrationContent = () => {
           <Button 
             variant="outline" 
             size="sm" 
-            onClick={() => refreshSessions()}
+            onClick={handleRefresh}
             className="flex items-center gap-1"
           >
             <RefreshCw size={14} />
@@ -80,6 +100,24 @@ const WhatsAppIntegrationContent = () => {
           </Button>
         </div>
       </div>
+
+      {apiError && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Problema de conexão</AlertTitle>
+          <AlertDescription>
+            Não foi possível conectar ao servidor WhatsApp. Verifique sua conexão e tente novamente.
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleRefresh}
+              className="mt-2"
+            >
+              Tentar novamente
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
 
       {loadingSessions ? (
         <div className="flex items-center gap-2 text-muted-foreground">
@@ -171,6 +209,13 @@ const WhatsAppIntegrationContent = () => {
         onLogin={() => refreshSessions()}
       />
     </div>
+  );
+};
+
+// Wrapper component
+const WhatsAppIntegrationPage = () => {
+  return (
+    <WhatsAppIntegrationContent />
   );
 };
 

@@ -26,26 +26,24 @@ export const loadContacts = async (sessionId: string): Promise<WhatsAppContact[]
       
     if (contactError) throw contactError;
     
-    // Create a map of phone number to contact name
-    // Add explicit type annotation to fix the infinite type instantiation error
+    // Create a map of phone number to contact name with explicit type
     const contactMap = new Map<string, string>();
     
-    // Use explicit type annotation for contact parameter
+    // Use explicit type for contact parameter
     (contactData || []).forEach((contact: { name: string, phone: string }) => {
       contactMap.set(contact.phone, contact.name);
     });
     
-    // Create contacts list with explicit typing
-    const contactsList: WhatsAppContact[] = uniqueNumbers.map((number: string) => ({
+    // Create contacts list with proper typing
+    return uniqueNumbers.map((number: string) => ({
       id: number,
       number,
       name: contactMap.get(number) || number,
       phone: number
     }));
     
-    return contactsList;
   } catch (error) {
-    console.error("Error loading messages:", error);
+    console.error("Error loading contacts:", error);
     return [];
   }
 };
