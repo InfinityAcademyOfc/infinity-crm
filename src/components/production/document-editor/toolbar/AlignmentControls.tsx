@@ -1,53 +1,51 @@
 
 import React from 'react';
-import { AlignLeft, AlignCenter, AlignRight, AlignJustify } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { AlignLeft, AlignCenter, AlignRight, AlignJustify } from 'lucide-react';
 
 interface AlignmentControlsProps {
-  handleFormatAction: (action: string) => void;
-  currentAlignment?: string;
+  textAlignment: string;
+  onUpdateFormatting: (property: string, value: string) => void;
 }
 
-const AlignmentControls: React.FC<AlignmentControlsProps> = ({ 
-  handleFormatAction,
-  currentAlignment = 'left'
+export const AlignmentControls: React.FC<AlignmentControlsProps> = ({
+  textAlignment,
+  onUpdateFormatting
 }) => {
   return (
     <>
       <Button 
-        variant={currentAlignment === 'left' ? "default" : "ghost"} 
-        size="icon" 
-        onClick={() => handleFormatAction('align-left')} 
-        title="Align Left"
+        variant={textAlignment === 'left' ? 'secondary' : 'ghost'} 
+        size="sm" 
+        className="h-8 w-8 p-0"
+        onClick={() => onUpdateFormatting('textAlignment', 'left')}
       >
         <AlignLeft size={16} />
       </Button>
       <Button 
-        variant={currentAlignment === 'center' ? "default" : "ghost"} 
-        size="icon" 
-        onClick={() => handleFormatAction('align-center')} 
-        title="Align Center"
+        variant={textAlignment === 'center' ? 'secondary' : 'ghost'} 
+        size="sm" 
+        className="h-8 w-8 p-0"
+        onClick={() => onUpdateFormatting('textAlignment', 'center')}
       >
         <AlignCenter size={16} />
       </Button>
       <Button 
-        variant={currentAlignment === 'right' ? "default" : "ghost"} 
-        size="icon" 
-        onClick={() => handleFormatAction('align-right')} 
-        title="Align Right"
+        variant={textAlignment === 'right' ? 'secondary' : 'ghost'} 
+        size="sm" 
+        className="h-8 w-8 p-0"
+        onClick={() => onUpdateFormatting('textAlignment', 'right')}
       >
         <AlignRight size={16} />
       </Button>
       <Button 
-        variant={currentAlignment === 'justify' ? "default" : "ghost"} 
-        size="icon" 
-        onClick={() => handleFormatAction('align-justify')} 
-        title="Justify"
+        variant={textAlignment === 'justify' ? 'secondary' : 'ghost'} 
+        size="sm" 
+        className="h-8 w-8 p-0"
+        onClick={() => onUpdateFormatting('textAlignment', 'justify')}
       >
         <AlignJustify size={16} />
       </Button>
     </>
   );
 };
-
-export default AlignmentControls;

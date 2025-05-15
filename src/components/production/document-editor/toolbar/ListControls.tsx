@@ -1,94 +1,39 @@
 
 import React from 'react';
-import { List, ListOrdered, ListChecks, ListTodo } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { List, ListOrdered, CheckSquare } from 'lucide-react';
 
 interface ListControlsProps {
-  handleFormatAction: (action: string) => void;
+  onFormatAction: (command: string, value?: string) => void;
 }
 
-const ListControls: React.FC<ListControlsProps> = ({ handleFormatAction }) => {
+export const ListControls: React.FC<ListControlsProps> = ({ onFormatAction }) => {
   return (
     <>
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={() => handleFormatAction('bullet-list')} 
-              aria-label="Bullet List"
-            >
-              <List size={16} />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Bullet List</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={() => handleFormatAction('numbered-list')} 
-              aria-label="Numbered List"
-            >
-              <ListOrdered size={16} />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Numbered List</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={() => handleFormatAction('check-list')} 
-              aria-label="Check List"
-            >
-              <ListChecks size={16} />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Check List</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-      
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={() => handleFormatAction('todo-list')} 
-              aria-label="Todo List"
-            >
-              <ListTodo size={16} />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Todo List</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <Button 
+        variant="ghost" 
+        size="sm" 
+        className="h-8 w-8 p-0" 
+        onClick={() => onFormatAction('insertUnorderedList')}
+      >
+        <List size={16} />
+      </Button>
+      <Button 
+        variant="ghost" 
+        size="sm" 
+        className="h-8 w-8 p-0" 
+        onClick={() => onFormatAction('insertOrderedList')}
+      >
+        <ListOrdered size={16} />
+      </Button>
+      <Button 
+        variant="ghost" 
+        size="sm" 
+        className="h-8 w-8 p-0" 
+        onClick={() => onFormatAction('insertHTML', '<div class="task-item"><input type="checkbox"> <span contenteditable="true">Task item</span></div>')}
+      >
+        <CheckSquare size={16} />
+      </Button>
     </>
   );
 };
-
-export default ListControls;

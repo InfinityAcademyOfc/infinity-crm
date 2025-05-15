@@ -1,83 +1,85 @@
 
 import React from 'react';
-import { Palette, HighlighterIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
+import { 
   DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuTrigger,
-  DropdownMenuItem,
+  DropdownMenuContent,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent
 } from '@/components/ui/dropdown-menu';
 
 interface ColorControlsProps {
-  handleFormatAction: (action: string) => void;
-  currentTextColor?: string;
-  currentBackgroundColor?: string;
+  textColor: string;
+  backgroundColor: string;
+  onUpdateFormatting: (property: string, value: string) => void;
 }
 
-const ColorControls: React.FC<ColorControlsProps> = ({ 
-  handleFormatAction, 
-  currentTextColor = 'default',
-  currentBackgroundColor = 'default' 
-}) => {
-  const colors = ['default', 'gray', 'red', 'orange', 'yellow', 'green', 'blue', 'purple', 'pink', 'black', 'white'];
+const colors = [
+  { label: 'Black', value: '#000000' },
+  { label: 'Gray', value: '#6B7280' },
+  { label: 'Red', value: '#EF4444' },
+  { label: 'Yellow', value: '#F59E0B' },
+  { label: 'Green', value: '#10B981' },
+  { label: 'Blue', value: '#3B82F6' },
+  { label: 'Purple', value: '#8B5CF6' }
+];
 
+const backgrounds = [
+  { label: 'White', value: '#FFFFFF' },
+  { label: 'Light Gray', value: '#F3F4F6' },
+  { label: 'Light Yellow', value: '#FEF3C7' },
+  { label: 'Light Green', value: '#D1FAE5' },
+  { label: 'Light Blue', value: '#DBEAFE' },
+  { label: 'Light Purple', value: '#EDE9FE' }
+];
+
+export const ColorControls: React.FC<ColorControlsProps> = ({
+  textColor,
+  backgroundColor,
+  onUpdateFormatting
+}) => {
   return (
-    <>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" title="Text Color" style={{color: currentTextColor !== 'default' ? currentTextColor : undefined}}>
-            <Palette size={16} />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent>
-          <DropdownMenuGroup>
-            {colors.map(color => (
-              <DropdownMenuItem 
-                key={color} 
-                onClick={() => handleFormatAction(`color-${color}`)}
-                className="flex items-center gap-2"
-              >
-                <div className={`w-4 h-4 rounded-full ${color === 'default' ? 'bg-black dark:bg-white' : ''}`} 
-                     style={{backgroundColor: color !== 'default' ? color : undefined}}></div>
-                <span className="capitalize">{color}</span>
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuGroup>
-        </DropdownMenuContent>
-      </DropdownMenu>
-      
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" title="Highlight Color">
-            <HighlighterIcon size={16} className="relative" />
-            {currentBackgroundColor !== 'default' && currentBackgroundColor !== 'transparent' && (
-              <span 
-                className="absolute bottom-1 right-1 w-2 h-2 rounded-full" 
-                style={{backgroundColor: currentBackgroundColor}}
-              ></span>
-            )}
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent>
-          <DropdownMenuGroup>
-            {colors.map(color => (
-              <DropdownMenuItem 
-                key={color} 
-                onClick={() => handleFormatAction(`bg-${color}`)}
-                className="flex items-center gap-2"
-              >
-                <div className={`w-4 h-4 rounded-full ${color === 'default' ? 'bg-transparent border border-gray-200' : ''}`}
-                     style={{backgroundColor: color !== 'default' ? `${color}40` : undefined}}></div>
-                <span className="capitalize">{color}</span>
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuGroup>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+          <div className="w-4 h-4 rounded-full" style={{ backgroundColor: textColor }}></div>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent>
+        <DropdownMenuSub>
+          <DropdownMenuSubTrigger>Text Color</DropdownMenuSubTrigger>
+          <DropdownMenuSubContent>
+            <div className="grid grid-cols-4 gap-1 p-1">
+              {colors.map((color) => (
+                <div
+                  key={color.value}
+                  className="w-6 h-6 rounded cursor-pointer hover:scale-110 transition-transform"
+                  style={{ backgroundColor: color.value }}
+                  onClick={() => onUpdateFormatting('textColor', color.value)}
+                />
+              ))}
+            </div>
+          </DropdownMenuSubContent>
+        </DropdownMenuSub>
+        
+        <DropdownMenuSub>
+          <DropdownMenuSubTrigger>Background Color</DropdownMenuSubTrigger>
+          <DropdownMenuSubContent>
+            <div className="grid grid-cols-4 gap-1 p-1">
+              {backgrounds.map((bg) => (
+                <div
+                  key={bg.value}
+                  className="w-6 h-6 rounded cursor-pointer hover:scale-110 transition-transform"
+                  style={{ backgroundColor: bg.value }}
+                  onClick={() => onUpdateFormatting('backgroundColor', bg.value)}
+                />
+              ))}
+            </div>
+          </DropdownMenuSubContent>
+        </DropdownMenuSub>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 };
-
-export default ColorControls;

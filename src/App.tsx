@@ -13,8 +13,8 @@ import WhatsAppIntegrationPage from './pages/WhatsAppIntegration';
 import UnifiedChatButton from './components/chat/UnifiedChatButton';
 import { Toaster } from "@/components/ui/toaster";
 
-// Import WhatsAppProvider
-import { WhatsAppProvider } from './contexts/WhatsAppContext';
+// Import WhatsAppProvider from the new location
+import { WhatsAppProvider } from './contexts/whatsapp';
 
 const queryClient = new QueryClient();
 
