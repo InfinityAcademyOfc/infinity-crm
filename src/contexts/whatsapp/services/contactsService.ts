@@ -2,16 +2,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { WhatsAppContact } from "../types";
 
-// Explicitly define interface types for record structures
-interface MessageRecord {
-  number: string;
-}
-
-interface ContactRecord {
-  name: string;
-  phone: string;
-}
-
 export const loadContacts = async (sessionId: string): Promise<WhatsAppContact[]> => {
   if (!sessionId) return [];
   
@@ -29,11 +19,10 @@ export const loadContacts = async (sessionId: string): Promise<WhatsAppContact[]
     const uniqueNumbers: string[] = [];
     const seenNumbers = new Set<string>();
     
-    // Safely process message data with simple iteration
+    // Process message data with simple iteration and explicit type checking
     if (Array.isArray(messageData)) {
       for (let i = 0; i < messageData.length; i++) {
         const item = messageData[i];
-        // Simple type check
         if (item && typeof item.number === 'string' && !seenNumbers.has(item.number)) {
           seenNumbers.add(item.number);
           uniqueNumbers.push(item.number);
@@ -49,20 +38,20 @@ export const loadContacts = async (sessionId: string): Promise<WhatsAppContact[]
       
     if (contactError) throw contactError;
     
-    // Use a simple object with explicitly defined keys/values
+    // Create a simple dictionary with string keys and values
     const phoneToName: Record<string, string> = {};
     
-    // Process contact data with simple iteration
+    // Process contact data with simple loops instead of higher-order functions
     if (Array.isArray(contactData)) {
       for (let i = 0; i < contactData.length; i++) {
-        const item = contactData[i];
-        if (item && typeof item.phone === 'string' && typeof item.name === 'string') {
-          phoneToName[item.phone] = item.name;
+        const contact = contactData[i];
+        if (contact && typeof contact.phone === 'string' && typeof contact.name === 'string') {
+          phoneToName[contact.phone] = contact.name;
         }
       }
     }
     
-    // Build contacts array with simple iteration to avoid complex mapping
+    // Build contacts array with explicit construction and simple iteration
     const contacts: WhatsAppContact[] = [];
     for (let i = 0; i < uniqueNumbers.length; i++) {
       const number = uniqueNumbers[i];
