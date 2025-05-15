@@ -39,4 +39,7 @@ export interface WhatsAppContextType {
   disconnectSession: (sessionId: string) => Promise<void>;
   sendMessage: (message: string) => Promise<void>;
   createNewSession: () => string;
+  offlineMode: boolean;
+  toggleOfflineMode: (value: boolean) => void;
+  retryConnection: () => void;
 }

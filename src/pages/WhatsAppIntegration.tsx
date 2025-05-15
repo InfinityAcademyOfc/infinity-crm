@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import QRCodeModal from "@/components/whatsapp/QRCodeModal";
 import { Badge } from "@/components/ui/badge";
-import { Loader, Smartphone, Plus, RefreshCw, AlertTriangle } from "lucide-react";
+import { Loader, Smartphone, Plus, RefreshCw, AlertTriangle, WifiOff } from "lucide-react";
 import { useWhatsApp } from "@/contexts/whatsapp";
 import WhatsAppMenuLayout from "@/components/whatsapp/WhatsAppMenuLayout";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -20,7 +20,10 @@ const WhatsAppIntegrationContent = () => {
     loadingSessions,
     connectionStatus,
     refreshSessions,
-    createNewSession
+    createNewSession,
+    offlineMode,
+    toggleOfflineMode,
+    retryConnection
   } = useWhatsApp();
   
   const { toast } = useToast();
@@ -29,11 +32,29 @@ const WhatsAppIntegrationContent = () => {
   const [apiError, setApiError] = useState(false);
 
   const handleConnectClick = (sessionId: string) => {
+    if (offlineMode) {
+      toast({
+        title: "Modo offline ativo",
+        description: "Desative o modo offline para conectar ao WhatsApp",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setSelectedSessionId(sessionId);
     setShowModal(true);
   };
   
   const handleCreateSession = () => {
+    if (offlineMode) {
+      toast({
+        title: "Modo offline ativo",
+        description: "Desative o modo offline para criar uma nova sessão",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     const newSessionId = createNewSession();
     handleConnectClick(newSessionId);
   };
@@ -60,16 +81,6 @@ const WhatsAppIntegrationContent = () => {
     }
   }, [sessions, currentSession, setCurrentSession]);
 
-  // Check API errors from session loading
-  useEffect(() => {
-    if (sessions.length === 0 && !loadingSessions) {
-      // If no sessions and not loading, may indicate API error
-      setApiError(true);
-    } else {
-      setApiError(false);
-    }
-  }, [sessions, loadingSessions]);
-
   return (
     <div className="p-6 space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-center gap-4">
@@ -79,10 +90,23 @@ const WhatsAppIntegrationContent = () => {
         </div>
         
         <div className="flex items-center gap-2">
+          {offlineMode && (
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => toggleOfflineMode(false)} 
+              className="flex items-center gap-1 bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-200"
+            >
+              <WifiOff size={14} />
+              Desativar modo offline
+            </Button>
+          )}
+          
           <Button 
             variant="outline" 
             size="sm" 
             onClick={handleRefresh}
+            disabled={offlineMode}
             className="flex items-center gap-1"
           >
             <RefreshCw size={14} />
@@ -93,6 +117,7 @@ const WhatsAppIntegrationContent = () => {
             variant="default" 
             size="sm"
             onClick={handleCreateSession}
+            disabled={offlineMode}
             className="flex items-center gap-1"
           >
             <Plus size={14} />
@@ -101,20 +126,53 @@ const WhatsAppIntegrationContent = () => {
         </div>
       </div>
 
-      {apiError && (
+      {offlineMode && (
+        <Alert variant="warning" className="bg-amber-50 text-amber-800 border-amber-200">
+          <WifiOff className="h-4 w-4" />
+          <AlertTitle>Modo offline ativo</AlertTitle>
+          <AlertDescription>
+            O sistema está operando no modo offline. Algumas funcionalidades estão desativadas.
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => {
+                toggleOfflineMode(false);
+                retryConnection();
+              }}
+              className="mt-2 bg-amber-100 border-amber-300 hover:bg-amber-200 text-amber-800"
+            >
+              Reconectar ao servidor
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {apiError && !offlineMode && (
         <Alert variant="destructive" className="mb-4">
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Problema de conexão</AlertTitle>
           <AlertDescription>
             Não foi possível conectar ao servidor WhatsApp. Verifique sua conexão e tente novamente.
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleRefresh}
-              className="mt-2"
-            >
-              Tentar novamente
-            </Button>
+            <div className="flex gap-2 mt-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => {
+                  retryConnection();
+                  handleRefresh();
+                }}
+              >
+                Tentar novamente
+              </Button>
+              
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => toggleOfflineMode(true)}
+              >
+                Ativar modo offline
+              </Button>
+            </div>
           </AlertDescription>
         </Alert>
       )}
@@ -129,14 +187,18 @@ const WhatsAppIntegrationContent = () => {
           <CardHeader>
             <CardTitle>Bem-vindo ao Infinity WhatsApp</CardTitle>
             <CardDescription>
-              Você ainda não tem nenhuma sessão conectada.
+              {offlineMode 
+                ? "Modo offline ativo. Ative a conexão com o servidor para gerenciar suas sessões."
+                : "Você ainda não tem nenhuma sessão conectada."}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button onClick={handleCreateSession}>
-              <Plus size={16} className="mr-2" />
-              Conectar seu primeiro número
-            </Button>
+            {!offlineMode && (
+              <Button onClick={handleCreateSession}>
+                <Plus size={16} className="mr-2" />
+                Conectar seu primeiro número
+              </Button>
+            )}
           </CardContent>
         </Card>
       ) : (
@@ -160,6 +222,7 @@ const WhatsAppIntegrationContent = () => {
                     size="sm"
                     className="mt-2"
                     onClick={() => handleConnectClick(session.id)}
+                    disabled={offlineMode}
                   >
                     {session.status !== "CONNECTED" ? (
                       <>

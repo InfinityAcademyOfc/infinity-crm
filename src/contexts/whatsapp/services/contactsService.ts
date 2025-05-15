@@ -2,6 +2,16 @@
 import { supabase } from "@/integrations/supabase/client";
 import { WhatsAppContact } from "../types";
 
+// Define explicit interfaces for our data structures
+interface MessageRecord {
+  number: string;
+}
+
+interface ContactRecord {
+  name: string;
+  phone: string;
+}
+
 export const loadContacts = async (sessionId: string): Promise<WhatsAppContact[]> => {
   if (!sessionId) return [];
   
@@ -15,8 +25,9 @@ export const loadContacts = async (sessionId: string): Promise<WhatsAppContact[]
       
     if (messageError) throw messageError;
     
-    // Extract unique numbers
-    const uniqueNumbers = Array.from(new Set((messageData || []).map(m => m.number)));
+    // Extract unique numbers - use explicit typing
+    const numbers: string[] = messageData?.map((msg: MessageRecord) => msg.number) || [];
+    const uniqueNumbers: string[] = Array.from(new Set(numbers));
     
     // Fetch contact names if available
     const { data: contactData, error: contactError } = await supabase
@@ -26,21 +37,23 @@ export const loadContacts = async (sessionId: string): Promise<WhatsAppContact[]
       
     if (contactError) throw contactError;
     
-    // Create a map of phone number to contact name with explicit type annotation
+    // Create a map of phone number to contact name
     const contactMap = new Map<string, string>();
     
-    // Use explicit typing for the contact parameter
-    (contactData || []).forEach((contact: { name: string; phone: string }) => {
+    // Safely iterate with proper typing
+    (contactData || []).forEach((contact: ContactRecord) => {
       contactMap.set(contact.phone, contact.name);
     });
     
     // Create contacts list with proper typing
-    return uniqueNumbers.map((number: string) => ({
+    const contacts: WhatsAppContact[] = uniqueNumbers.map((number: string) => ({
       id: number,
       number,
       name: contactMap.get(number) || number,
       phone: number
     }));
+    
+    return contacts;
     
   } catch (error) {
     console.error("Error loading contacts:", error);

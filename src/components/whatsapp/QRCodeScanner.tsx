@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, AlertTriangle } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { connectWhatsAppSession, resetCircuitBreaker } from "@/contexts/whatsapp/services/sessionService";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -20,23 +21,23 @@ const QRCodeScanner = ({ sessionId, onLogin }: QRCodeScannerProps) => {
   const { loading, qrCodeData, status } = useQRCode(sessionId);
   const [connectionError, setConnectionError] = useState(false);
   const { toast } = useToast();
+  const [attemptingConnection, setAttemptingConnection] = useState(false);
 
   // Initialize session when component mounts
   useEffect(() => {
     const start = async () => {
+      if (attemptingConnection) return; // Prevent parallel attempts
+      
       try {
         if (!sessionId || !API_URL) {
           setConnectionError(true);
           return;
         }
         
+        setAttemptingConnection(true);
         console.log("Starting WhatsApp session:", sessionId);
-        const response = await fetch(`${API_URL}/sessions/${sessionId}/start`, { method: "POST" });
         
-        if (!response.ok) {
-          setConnectionError(true);
-          throw new Error(`Failed to start session: ${response.status}`);
-        }
+        await connectWhatsAppSession(sessionId);
         
         setConnectionError(false);
       } catch (error) {
@@ -47,13 +48,15 @@ const QRCodeScanner = ({ sessionId, onLogin }: QRCodeScannerProps) => {
           description: "Não foi possível iniciar a sessão do WhatsApp",
           variant: "destructive"
         });
+      } finally {
+        setAttemptingConnection(false);
       }
     };
     
-    if (sessionId && status !== "connected") {
+    if (sessionId && status !== "connected" && !connectionError) {
       start();
     }
-  }, [sessionId, status, toast]);
+  }, [sessionId, status, toast, connectionError, attemptingConnection]);
 
   // Notify when connection is successful
   useEffect(() => {
@@ -75,7 +78,12 @@ const QRCodeScanner = ({ sessionId, onLogin }: QRCodeScannerProps) => {
         return;
       }
       
+      // Reset circuit breaker before attempting
+      resetCircuitBreaker();
+      
+      setAttemptingConnection(true);
       const response = await fetch(`${API_URL}/sessions/${sessionId}/restart`, { method: "POST" });
+      setAttemptingConnection(false);
       
       if (!response.ok) {
         setConnectionError(true);
@@ -88,6 +96,7 @@ const QRCodeScanner = ({ sessionId, onLogin }: QRCodeScannerProps) => {
         description: "Um novo código QR foi solicitado.",
       });
     } catch (error) {
+      setAttemptingConnection(false);
       console.error("Error refreshing QR code:", error);
       setConnectionError(true);
       toast({
@@ -108,8 +117,16 @@ const QRCodeScanner = ({ sessionId, onLogin }: QRCodeScannerProps) => {
             Não foi possível conectar ao servidor WhatsApp. Verifique sua conexão e tente novamente.
           </AlertDescription>
         </Alert>
-        <Button variant="outline" onClick={handleRefresh} className="mt-4">
-          <RefreshCw size={16} className="mr-2" /> Tentar novamente
+        <Button variant="outline" onClick={handleRefresh} className="mt-4" disabled={attemptingConnection}>
+          {attemptingConnection ? (
+            <>
+              <RefreshCw size={16} className="mr-2 animate-spin" /> Tentando...
+            </>
+          ) : (
+            <>
+              <RefreshCw size={16} className="mr-2" /> Tentar novamente
+            </>
+          )}
         </Button>
       </div>
     );

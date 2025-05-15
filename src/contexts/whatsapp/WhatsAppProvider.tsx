@@ -14,11 +14,16 @@ import {
   fetchConnectionStatus,
   connectWhatsAppSession,
   disconnectWhatsAppSession,
-  sendWhatsAppMessage
+  sendWhatsAppMessage,
+  resetCircuitBreaker,
+  validateApiConnection
 } from "./services/sessionService";
 import { loadContacts } from "./services/contactsService";
 import { loadMessages } from "./services/messagesService";
 import { WhatsAppContext } from "./WhatsAppContext";
+
+// Key for storing offline mode preference
+const OFFLINE_MODE_KEY = "wa-offline-mode";
 
 export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentSession, setCurrentSession] = useState<string | null>(() => {
@@ -32,7 +37,12 @@ export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [messages, setMessages] = useState<WhatsAppMessage[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [apiAvailable, setApiAvailable] = useState(true);
-  const [retryAttempts, setRetryAttempts] = useState(0);
+  const [offlineMode, setOfflineMode] = useState<boolean>(() => {
+    return localStorage.getItem(OFFLINE_MODE_KEY) === "true";
+  });
+  const [lastApiError, setLastApiError] = useState<string | null>(null);
+  const [errorNotified, setErrorNotified] = useState(false);
+  
   const mountedRef = useRef(true);
   const fetchTimerRef = useRef<number | null>(null);
   const { toast } = useToast();
@@ -49,18 +59,78 @@ export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     };
   }, []);
 
-  // Refresh sessions with exponential backoff and retry limits
+  // Toggle offline mode
+  const toggleOfflineMode = (value: boolean) => {
+    setOfflineMode(value);
+    localStorage.setItem(OFFLINE_MODE_KEY, value.toString());
+    
+    if (!value) {
+      // When turning offline mode off, try to reconnect
+      resetCircuitBreaker();
+      refreshSessions();
+    }
+  };
+
+  // Initial API availability check
+  useEffect(() => {
+    const checkApiAvailability = async () => {
+      if (offlineMode) return;
+      
+      const isAvailable = await validateApiConnection();
+      if (mountedRef.current) {
+        setApiAvailable(isAvailable);
+        
+        if (!isAvailable && !errorNotified) {
+          toast({
+            title: "Servidor WhatsApp indisponível",
+            description: "O sistema funcionará no modo offline. Algumas funcionalidades estarão limitadas.",
+            variant: "destructive",
+          });
+          setErrorNotified(true);
+        }
+      }
+    };
+    
+    checkApiAvailability();
+    
+    // Check API availability periodically but not too frequently
+    const interval = setInterval(checkApiAvailability, 60000); // Every minute
+    
+    return () => clearInterval(interval);
+  }, [toast, offlineMode, errorNotified]);
+
+  // Refresh sessions with error management
   const refreshSessions = async () => {
-    if (!mountedRef.current) return;
+    if (!mountedRef.current || offlineMode) return;
     
     try {
       setLoadingSessions(true);
+      
+      // Validate API is available first
+      const apiCheck = await validateApiConnection();
+      if (!apiCheck) {
+        if (mountedRef.current) {
+          setApiAvailable(false);
+          if (!errorNotified) {
+            toast({
+              title: "Servidor WhatsApp indisponível",
+              description: "O sistema funcionará no modo offline. Algumas funcionalidades estarão limitadas.",
+              variant: "destructive",
+            });
+            setErrorNotified(true);
+          }
+          setLoadingSessions(false);
+        }
+        return;
+      }
+      
       const data = await fetchSessions();
       
       if (mountedRef.current) {
         setSessions(data);
         setApiAvailable(true);
-        setRetryAttempts(0);
+        setLastApiError(null);
+        setErrorNotified(false);
       }
     } catch (error) {
       console.error("Error fetching sessions:", error);
@@ -68,31 +138,16 @@ export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       if (!mountedRef.current) return;
       
       setApiAvailable(false);
+      setLastApiError(error instanceof Error ? error.message : "Unknown error");
       
-      // Limit retry attempts to prevent excessive API calls
-      if (retryAttempts < 3) {
-        // Implement exponential backoff (1s, 2s, 4s)
-        const backoffTime = Math.pow(2, retryAttempts) * 1000;
-        
-        toast({
-          title: "Não foi possível conectar ao servidor",
-          description: `Tentativa ${retryAttempts + 1}/3. Nova tentativa em ${backoffTime/1000}s.`,
-          variant: "destructive",
-        });
-        
-        // Schedule retry with backoff
-        fetchTimerRef.current = window.setTimeout(() => {
-          if (mountedRef.current) {
-            setRetryAttempts(prev => prev + 1);
-            refreshSessions();
-          }
-        }, backoffTime);
-      } else if (mountedRef.current) {
+      // Only show error toast once
+      if (!errorNotified) {
         toast({
           title: "Erro de conexão",
-          description: "Servidor WhatsApp indisponível no momento. Tente novamente mais tarde.",
+          description: "Servidor WhatsApp indisponível no momento. Modo offline ativado.",
           variant: "destructive",
         });
+        setErrorNotified(true);
       }
     } finally {
       if (mountedRef.current) {
@@ -103,10 +158,10 @@ export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // Connect to a session
   const connectSession = async (sessionId: string) => {
-    if (!apiAvailable) {
+    if (offlineMode || !apiAvailable) {
       toast({
-        title: "Servidor indisponível",
-        description: "Não foi possível conectar ao servidor WhatsApp.",
+        title: "Modo offline ativo",
+        description: "Desative o modo offline para conectar ao WhatsApp.",
         variant: "destructive",
       });
       return;
@@ -129,10 +184,10 @@ export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // Disconnect from a session
   const disconnectSession = async (sessionId: string) => {
-    if (!apiAvailable) {
+    if (offlineMode || !apiAvailable) {
       toast({
-        title: "Servidor indisponível",
-        description: "Não foi possível desconectar do servidor WhatsApp.",
+        title: "Modo offline ativo",
+        description: "Desative o modo offline para desconectar do WhatsApp.",
         variant: "destructive",
       });
       return;
@@ -158,7 +213,16 @@ export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // Send a message
   const sendMessage = async (message: string) => {
-    if (!currentSession || !selectedContact || !message.trim() || !apiAvailable) return;
+    if (!currentSession || !selectedContact || !message.trim() || offlineMode || !apiAvailable) {
+      if (offlineMode || !apiAvailable) {
+        toast({
+          title: "Modo offline ativo",
+          description: "Não é possível enviar mensagens no modo offline.",
+          variant: "destructive",
+        });
+      }
+      return;
+    }
 
     try {
       await sendWhatsAppMessage(
@@ -188,7 +252,7 @@ export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // Update the connection status
   const updateConnectionStatus = async (sessionId: string) => {
-    if (!sessionId || !apiAvailable) return;
+    if (!sessionId || offlineMode || !apiAvailable) return;
     
     try {
       const status = await fetchConnectionStatus(sessionId);
@@ -202,8 +266,10 @@ export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // Manual retry connection
   const retryConnection = () => {
-    setRetryAttempts(0);
+    resetCircuitBreaker();
     setApiAvailable(true);
+    setErrorNotified(false);
+    setLastApiError(null);
     refreshSessions();
   };
 
@@ -241,25 +307,25 @@ export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // Load session status periodically
   useEffect(() => {
-    if (!currentSession || !apiAvailable) return;
+    if (!currentSession || offlineMode || !apiAvailable) return;
     
     // Initial update
     updateConnectionStatus(currentSession);
     
     // Set up interval for updates
     const interval = setInterval(() => {
-      if (mountedRef.current) {
+      if (mountedRef.current && !offlineMode && apiAvailable) {
         updateConnectionStatus(currentSession);
       }
     }, 10000);
     
     return () => clearInterval(interval);
-  }, [currentSession, apiAvailable]);
+  }, [currentSession, apiAvailable, offlineMode]);
 
   // Load messages when contact is selected
   useEffect(() => {
     const fetchMessages = async () => {
-      if (!currentSession || !selectedContact || !apiAvailable) return;
+      if (!currentSession || !selectedContact) return;
       
       try {
         if (mountedRef.current) {
@@ -284,12 +350,12 @@ export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     };
     
     fetchMessages();
-  }, [currentSession, selectedContact, apiAvailable]);
+  }, [currentSession, selectedContact]);
 
   // Load contacts when session changes
   useEffect(() => {
     const fetchContacts = async () => {
-      if (!currentSession || !apiAvailable) return;
+      if (!currentSession) return;
       
       try {
         const contactsData = await loadContacts(currentSession);
@@ -302,21 +368,23 @@ export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     };
     
     fetchContacts();
-  }, [currentSession, apiAvailable]);
+  }, [currentSession]);
 
   // Initial sessions load
   useEffect(() => {
-    refreshSessions();
-    
-    // Set up periodic refresh
-    const interval = setInterval(() => {
-      if (mountedRef.current && apiAvailable) {
-        refreshSessions();
-      }
-    }, 30000);
-    
-    return () => clearInterval(interval);
-  }, [apiAvailable]);
+    if (!offlineMode) {
+      refreshSessions();
+      
+      // Set up periodic refresh with much less frequency to avoid overwhelming
+      const interval = setInterval(() => {
+        if (mountedRef.current && !offlineMode && apiAvailable) {
+          refreshSessions();
+        }
+      }, 60000); // Once per minute instead of every 30 seconds
+      
+      return () => clearInterval(interval);
+    }
+  }, [apiAvailable, offlineMode]);
 
   // Create the context value object explicitly matching the interface
   const contextValue: WhatsAppContextType = {
@@ -335,19 +403,41 @@ export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     disconnectSession,
     sendMessage,
     createNewSession,
+    offlineMode,
+    toggleOfflineMode,
+    retryConnection,
   };
 
   return (
     <WhatsAppContext.Provider value={contextValue}>
-      {!apiAvailable && retryAttempts >= 3 && (
+      {!apiAvailable && !offlineMode && (
         <div className="fixed bottom-4 right-4 z-50 bg-destructive text-white p-4 rounded-lg shadow-lg max-w-md">
           <h4 className="font-bold mb-2">Servidor WhatsApp indisponível</h4>
           <p className="mb-2 text-sm">O servidor de WhatsApp está indisponível no momento. Algumas funcionalidades podem estar limitadas.</p>
-          <button
-            onClick={retryConnection}
-            className="bg-white text-destructive px-4 py-1 rounded text-sm font-medium hover:bg-gray-100"
+          <div className="flex space-x-2">
+            <button
+              onClick={retryConnection}
+              className="bg-white text-destructive px-4 py-1 rounded text-sm font-medium hover:bg-gray-100"
+            >
+              Tentar novamente
+            </button>
+            <button
+              onClick={() => toggleOfflineMode(true)}
+              className="bg-transparent border border-white text-white px-4 py-1 rounded text-sm font-medium hover:bg-white/10"
+            >
+              Modo offline
+            </button>
+          </div>
+        </div>
+      )}
+      {offlineMode && (
+        <div className="fixed top-16 left-0 right-0 z-50 bg-amber-500 text-white px-4 py-2 text-center text-sm shadow-lg mx-auto max-w-max rounded-lg">
+          <span className="font-medium">Modo offline ativado</span>
+          <button 
+            onClick={() => toggleOfflineMode(false)}
+            className="ml-2 underline text-white hover:text-white/80"
           >
-            Tentar novamente
+            Desativar
           </button>
         </div>
       )}
