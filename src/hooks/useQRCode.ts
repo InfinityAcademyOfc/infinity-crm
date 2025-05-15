@@ -2,13 +2,13 @@
 import { useEffect, useRef, useState } from "react";
 
 // Define the type here so it can be exported and reused
-export type WhatsAppConnectionStatus = "loading" | "not_started" | "qr" | "connected" | "error";
+export type WhatsAppConnectionStatus = "connected" | "not_started" | "qr" | "error" | "disconnected";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
 export function useQRCode(sessionId: string) {
   const [qrCodeData, setQrCodeData] = useState<string | null>(null);
-  const [status, setStatus] = useState<WhatsAppConnectionStatus>("loading");
+  const [status, setStatus] = useState<WhatsAppConnectionStatus>("not_started");
   const [loading, setLoading] = useState<boolean>(true);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const mountedRef = useRef<boolean>(true);

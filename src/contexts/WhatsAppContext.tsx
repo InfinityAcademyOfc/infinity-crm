@@ -1,10 +1,10 @@
+
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { WhatsAppConnectionStatus } from "@/hooks/useQRCode";
 
 // Tipos
-export type WhatsAppConnectionStatus = 'connected' | 'disconnected' | 'qr' | 'error' | 'not_started';
-
 export type WhatsAppSession = {
   id: string;
   name?: string;
@@ -222,14 +222,21 @@ export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       )
       .subscribe();
 
-    return () => supabase.removeChannel(channel);
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [currentSession, selectedContact]);
 
   // Atualizar status de conexão periodicamente
   useEffect(() => {
     if (!currentSession) return;
+    
     fetchConnectionStatus(currentSession);
-    const interval = setInterval(() => fetchConnectionStatus(currentSession), 10000);
+    
+    const interval = setInterval(() => {
+      fetchConnectionStatus(currentSession);
+    }, 10000);
+    
     return () => clearInterval(interval);
   }, [currentSession]);
 
