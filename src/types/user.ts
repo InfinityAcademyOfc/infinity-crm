@@ -1,16 +1,33 @@
 
+import { Database } from "@/integrations/supabase/types";
+
 export interface UserProfile {
   id: string;
-  name: string;
-  email: string;
-  phone?: string;
-  role: string;
-  department?: string;
-  avatar?: string;
-  status: string;
-  company_id?: string;
+  name?: string | null;
+  email?: string | null;
+  avatar_url?: string | null;
+  role?: string;
+  status?: string;
+  company_id?: string | null;
   created_at?: string;
   updated_at?: string;
 }
 
-export type UserRole = 'admin' | 'user';
+// Type for client-side use, with user preferences and settings
+export interface ExtendedProfile extends UserProfile {
+  preferences?: {
+    theme?: string;
+    notifications?: boolean;
+    language?: string;
+  };
+  last_active?: string;
+  display_name?: string;
+}
+
+// Type specifically for form handling
+export interface ProfileFormData {
+  name: string;
+  email: string;
+  avatar_url?: string;
+  display_name?: string;
+}
