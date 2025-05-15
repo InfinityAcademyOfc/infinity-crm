@@ -31,6 +31,13 @@ export const useQRCode = (sessionId: string) => {
     if (!sessionId) return;
 
     const fetchQrCode = async () => {
+      if (!API_URL || !sessionId) {
+        setStatus("error");
+        setQrCodeData(null);
+        setLoading(false);
+        return;
+      }
+
       if (!mountedRef.current) return;
       
       try {
