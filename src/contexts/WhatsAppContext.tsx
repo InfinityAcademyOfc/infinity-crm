@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { WhatsAppConnectionStatus } from "@/hooks/useQRCode";
@@ -45,7 +46,7 @@ interface WhatsAppContextType {
   createNewSession: () => string;
 }
 
-// Create context with explicit undefined type to avoid type inference issues
+// Create context with undefined initial value
 const WhatsAppContext = createContext<WhatsAppContextType | undefined>(undefined);
 
 const API_URL = import.meta.env.VITE_API_URL || "";
