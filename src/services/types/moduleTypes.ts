@@ -9,6 +9,13 @@ export interface Lead {
   source: string;
   createdAt: string;
   updatedAt: string;
+  title: string;
+  description?: string;
+  value?: number;
+  assigned_to?: string;
+  due_date?: string;
+  priority: string;
+  company_id: string;
 }
 
 export interface Client {
@@ -21,6 +28,13 @@ export interface Client {
   source: string;
   createdAt: string;
   updatedAt: string;
+  contact?: string;
+  segment?: string;
+  street?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  company_id: string;
 }
 
 export interface Task {
@@ -35,6 +49,11 @@ export interface Task {
   updatedAt: string;
   client?: string;
   completion?: number;
+  assigned_to?: string;
+  client_id?: string;
+  start_date?: string;
+  end_date?: string;
+  company_id: string;
 }
 
 export interface Product {
@@ -45,6 +64,7 @@ export interface Product {
   category: string;
   createdAt: string;
   updatedAt: string;
+  company_id: string;
 }
 
 export interface ModuleSyncState {
@@ -73,4 +93,10 @@ export interface ModuleSyncState {
   updateTask: (taskId: string, updates: Partial<Task>) => void;
   assignClientToTask: (taskId: string, clientId: string) => void;
   syncAllModules: () => void;
+  
+  // Fetch methods
+  fetchLeads: (companyId: string) => Promise<Lead[]>;
+  fetchClients: (companyId: string) => Promise<Client[]>;
+  fetchTasks: (companyId: string) => Promise<Task[]>;
+  fetchProducts: (companyId: string) => Promise<Product[]>;
 }

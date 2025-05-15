@@ -145,12 +145,14 @@ export const convertLeadToClientAction = (set: any, get: any, leadId: string) =>
     const newClient: Client = {
       id: `client-${Date.now()}`,
       name: lead.name,
-      email: lead.email,
-      phone: lead.phone,
-      company_id: lead.company_id,
+      email: lead.email || "",
+      phone: lead.phone || "",
+      company: "",
+      source: lead.source || "",
       status: 'active',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      company_id: lead.company_id
     };
     
     // Remove the lead from leads

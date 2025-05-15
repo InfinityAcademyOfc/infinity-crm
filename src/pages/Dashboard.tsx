@@ -1,4 +1,3 @@
-
 import React, { Suspense, lazy, useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { mockSalesData, mockFunnelData, mockTodayActivities } from "@/data/mockData";
@@ -22,7 +21,7 @@ const Dashboard = () => {
   const [isLoaded, setIsLoaded] = useState(false);
   
   // Module sync state
-  const { leads, clients, tasks, products, syncAllModules, fetchLeads, fetchClients, fetchTasks, fetchProducts } = useModuleSync();
+  const { leads, clients, tasks, products, syncAllModules } = useModuleSync();
   
   // New state for filtered sales data
   const [filteredSalesData, setFilteredSalesData] = useState<any[]>([]);
@@ -39,20 +38,14 @@ const Dashboard = () => {
     // Função para buscar dados do Supabase
     const fetchData = async () => {
       try {
-        // Buscar leads
-        const leadsData = await fetchLeads(company.id);
+        // Use updateDashboardData instead of individual fetch methods
+        await updateDashboardData(company.id);
         
-        // Buscar clientes
-        const clientsData = await fetchClients(company.id);
-        
-        // Buscar tarefas
-        const tasksData = await fetchTasks(company.id);
-        
-        // Buscar produtos
-        const productsData = await fetchProducts(company.id);
+        // Get the latest state
+        const { leads: currentLeads } = useModuleSync.getState();
         
         // Converter leads para formato de vendas para o gráfico
-        const leadSalesData = leadsData.map((lead: Lead) => ({
+        const leadSalesData = currentLeads.map((lead: Lead) => ({
           name: new Date(lead.created_at).toLocaleDateString('pt-BR', { month: 'short' }),
           value: lead.value || 0,
           leads: 1
@@ -85,7 +78,7 @@ const Dashboard = () => {
     };
     
     fetchData();
-  }, [company, fetchLeads, fetchClients, fetchTasks, fetchProducts]);
+  }, [company]);
   
   // Filter sales data based on selected period, collaborator and product
   useEffect(() => {

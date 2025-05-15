@@ -15,4 +15,5 @@ export interface Client {
   company_id: string;
   created_at: string;
   updated_at: string;
+  company?: string; // Legacy field, keeping for compatibility
 }

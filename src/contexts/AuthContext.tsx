@@ -18,7 +18,7 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   profile: UserProfile | null;
   company: Company | null;
-  refreshUserData: () => Promise<void>;
+  refreshUserData: () => Promise<{profile: UserProfile | null, company: Company | null}>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -92,7 +92,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { hydrateUser } = await import('@/lib/hydrateUser');
       const hydrationResult = await hydrateUser();
       
-      // Não atualiza o estado diretamente, apenas retorna os dados
+      // Return the hydration result instead of just returning void
       return hydrationResult;
     } catch (error) {
       console.error("Erro ao atualizar dados do usuário:", error);
@@ -101,7 +101,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const value = {
+  const value: AuthContextType = {
     user,
     session,
     loading,

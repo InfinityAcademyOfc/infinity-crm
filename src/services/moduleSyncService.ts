@@ -140,8 +140,11 @@ export const updateDashboardData = async (companyId: string) => {
     toast.success(`Dashboard atualizado`, {
       description: `Dados atualizados com sucesso`,
     });
+    
+    return { leads, clients, tasks, products };
   } catch (error) {
     console.error("Erro ao atualizar dados do dashboard:", error);
     toast.error("Erro ao atualizar dados do dashboard");
+    throw error;
   }
 };
