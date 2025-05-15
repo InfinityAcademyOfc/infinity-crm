@@ -1,143 +1,139 @@
 
-import { useState, useEffect } from 'react';
-import { useThemeManager } from './useThemeManager';
+import { useCallback, useEffect, useState } from 'react';
 
-// Tipos
 export type FunnelType = 'sales' | 'ltv' | 'production';
 
-export type FunnelStage = {
+export interface FunnelStage {
   name: string;
   value: number;
-  efficiency?: number;
+  conversion?: number;
   leakage?: number;
-};
+}
 
-export type FunnelData = {
+export interface FunnelData {
   stages: FunnelStage[];
   conversionRate: number;
-  status: 'improving' | 'stable' | 'declining';
-};
+}
 
-export type FunnelDataMap = Record<FunnelType, FunnelData>;
+interface FunnelDataState {
+  sales: FunnelData;
+  ltv: FunnelData;
+  production: FunnelData;
+}
 
-// Dados mockados para os diferentes tipos de funil
-const mockFunnelData: FunnelDataMap = {
-  sales: {
-    stages: [
-      { name: 'Leads', value: 1200, efficiency: 65, leakage: 35 },
-      { name: 'Qualificados', value: 780, efficiency: 78, leakage: 22 },
-      { name: 'Reuniões', value: 610, efficiency: 54, leakage: 46 },
-      { name: 'Propostas', value: 320, efficiency: 62, leakage: 38 },
-      { name: 'Fechamentos', value: 200, efficiency: 85, leakage: 15 },
-    ],
-    conversionRate: 16.7,
-    status: 'improving'
-  },
-  ltv: {
-    stages: [
-      { name: 'Novos', value: 850, efficiency: 90, leakage: 10 },
-      { name: '3 meses', value: 765, efficiency: 88, leakage: 12 },
-      { name: '6 meses', value: 670, efficiency: 76, leakage: 24 },
-      { name: '1 ano', value: 510, efficiency: 80, leakage: 20 },
-      { name: '2+ anos', value: 408, efficiency: 95, leakage: 5 },
-    ],
-    conversionRate: 48,
-    status: 'stable'
-  },
-  production: {
-    stages: [
-      { name: 'Pedidos', value: 320, efficiency: 100, leakage: 0 },
-      { name: 'Produção', value: 320, efficiency: 94, leakage: 6 },
-      { name: 'QA', value: 300, efficiency: 93, leakage: 7 },
-      { name: 'Entrega', value: 280, efficiency: 98, leakage: 2 },
-      { name: 'Instalação', value: 275, efficiency: 100, leakage: 0 },
-    ],
-    conversionRate: 85.9,
-    status: 'stable'
-  }
-};
-
-// Função para obter as cores para cada tipo de funil com base no tema
 export const getColorsByType = (type: FunnelType, isDark: boolean) => {
-  const darkModeColors = {
+  const colorMaps = {
     sales: {
-      primary: '#4361ee',
-      secondary: '#3a0ca3',
-      efficiency: '#22c55e',
-      leakage: '#ef4444'
+      primary: isDark ? '#4361ee' : '#3b82f6',
+      secondary: isDark ? '#3a0ca3' : '#2563eb',
+      efficiency: isDark ? '#22c55e' : '#16a34a',
+      leakage: isDark ? '#ef4444' : '#dc2626',
     },
     ltv: {
-      primary: '#7209b7',
-      secondary: '#9d4edd',
-      efficiency: '#14b8a6',
-      leakage: '#f43f5e'
+      primary: isDark ? '#7209b7' : '#8b5cf6',
+      secondary: isDark ? '#560bad' : '#7c3aed',
+      efficiency: isDark ? '#22c55e' : '#16a34a',
+      leakage: isDark ? '#ef4444' : '#dc2626',
     },
     production: {
-      primary: '#4cc9f0',
-      secondary: '#0096c7',
-      efficiency: '#06b6d4',
-      leakage: '#f97316'
-    }
+      primary: isDark ? '#4cc9f0' : '#06b6d4',
+      secondary: isDark ? '#0096c7' : '#0891b2',
+      efficiency: isDark ? '#22c55e' : '#16a34a',
+      leakage: isDark ? '#ef4444' : '#dc2626',
+    },
   };
 
-  const lightModeColors = {
-    sales: {
-      primary: '#4361ee',
-      secondary: '#5e60ce',
-      efficiency: '#22c55e',
-      leakage: '#ef4444'
-    },
-    ltv: {
-      primary: '#7209b7',
-      secondary: '#9d4edd',
-      efficiency: '#14b8a6',
-      leakage: '#f43f5e'
-    },
-    production: {
-      primary: '#4cc9f0',
-      secondary: '#0096c7',
-      efficiency: '#06b6d4',
-      leakage: '#f97316'
-    }
-  };
-
-  return isDark ? darkModeColors : lightModeColors;
+  return colorMaps;
 };
 
-// Hook personalizado para gerenciar os dados do funil
 export const useFunnelData = () => {
   const [activeTab, setActiveTab] = useState<FunnelType>('sales');
-  const [funnelData, setFunnelData] = useState<FunnelDataMap>(mockFunnelData);
-  const { isDark } = useThemeManager();
+  const [funnelData, setFunnelData] = useState<FunnelDataState>({
+    sales: {
+      stages: [],
+      conversionRate: 0,
+    },
+    ltv: {
+      stages: [],
+      conversionRate: 0,
+    },
+    production: {
+      stages: [],
+      conversionRate: 0,
+    },
+  });
+  
+  const [isDark, setIsDark] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Simulando uma API call para buscar dados - em uma app real, isso seria uma chamada à API
-    const fetchFunnelData = async () => {
-      try {
-        // Simula o tempo de resposta de uma API
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        // No mundo real, aqui você buscaria dados da sua API
-        // Para fins de demonstração, usamos nossos dados mockados
-        setFunnelData(mockFunnelData);
-      } catch (error) {
-        console.error("Erro ao carregar dados do funil:", error);
-        // Em caso de erro, inicialize com dados vazios mas válidos
-        setFunnelData({
-          sales: { stages: [], conversionRate: 0, status: 'stable' },
-          ltv: { stages: [], conversionRate: 0, status: 'stable' },
-          production: { stages: [], conversionRate: 0, status: 'stable' }
-        });
-      }
-    };
+    const isDarkMode = document.documentElement.classList.contains('dark');
+    setIsDark(isDarkMode);
+    
+    const matchMedia = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = (e: MediaQueryListEvent) => setIsDark(e.matches);
+    matchMedia.addEventListener('change', handleChange);
 
-    fetchFunnelData();
+    return () => matchMedia.removeEventListener('change', handleChange);
   }, []);
+
+  const fetchFunnelData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+
+      // Simulate fetching data
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      setFunnelData({
+        sales: {
+          stages: [
+            { name: 'Leads', value: 240, conversion: 75, leakage: 25 },
+            { name: 'Qualified', value: 180, conversion: 66, leakage: 34 },
+            { name: 'Meetings', value: 120, conversion: 83, leakage: 17 },
+            { name: 'Proposals', value: 100, conversion: 60, leakage: 40 },
+            { name: 'Closed', value: 60, conversion: 100, leakage: 0 },
+          ],
+          conversionRate: 25
+        },
+        ltv: {
+          stages: [
+            { name: 'First Sale', value: 200, conversion: 65, leakage: 35 },
+            { name: 'Repeated', value: 130, conversion: 77, leakage: 23 },
+            { name: 'Upsell', value: 100, conversion: 50, leakage: 50 },
+            { name: 'Loyal', value: 50, conversion: 100, leakage: 0 }
+          ],
+          conversionRate: 25
+        },
+        production: {
+          stages: [
+            { name: 'Planning', value: 180, conversion: 89, leakage: 11 },
+            { name: 'Execution', value: 160, conversion: 75, leakage: 25 },
+            { name: 'Review', value: 120, conversion: 92, leakage: 8 },
+            { name: 'Delivery', value: 110, conversion: 100, leakage: 0 }
+          ],
+          conversionRate: 61
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching funnel data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchFunnelData();
+    
+    // Refresh data every 5 minutes
+    const interval = setInterval(fetchFunnelData, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [fetchFunnelData]);
 
   return {
     activeTab,
     setActiveTab,
     funnelData,
-    isDark
+    isDark,
+    isLoading
   };
 };

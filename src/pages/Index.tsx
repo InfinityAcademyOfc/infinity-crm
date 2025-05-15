@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { Suspense } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import GlassHeader from '@/components/landing/GlassHeader';
@@ -10,6 +10,25 @@ import TestimonialCarousel from '@/components/landing/TestimonialCarousel';
 import GradientCTA from '@/components/landing/GradientCTA';
 import FAQ from '@/components/landing/FAQ';
 import PricingPlans from '@/components/landing/PricingPlans';
+import { Skeleton } from '@/components/ui/skeleton';
+
+// Create loading placeholders
+const SectionSkeleton = () => (
+  <div className="py-20">
+    <div className="container mx-auto px-4">
+      <div className="flex flex-col items-center space-y-4">
+        <Skeleton className="h-8 w-1/3 mb-4" />
+        <Skeleton className="h-4 w-2/3 mb-2" />
+        <Skeleton className="h-4 w-1/2 mb-8" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
+          {[1, 2, 3].map(i => (
+            <Skeleton key={i} className="h-64 w-full rounded-lg" />
+          ))}
+        </div>
+      </div>
+    </div>
+  </div>
+);
 
 const Index = () => {
   const { user, loading } = useAuth();
@@ -35,7 +54,9 @@ const Index = () => {
       <main className="flex-1 pt-16">
         {/* Hero Section */}
         <section id="hero">
-          <AnimatedHero />
+          <Suspense fallback={<SectionSkeleton />}>
+            <AnimatedHero />
+          </Suspense>
         </section>
         
         {/* Features Section */}
@@ -58,13 +79,17 @@ const Index = () => {
               </p>
             </div>
             
-            <FeaturesGrid />
+            <Suspense fallback={<SectionSkeleton />}>
+              <FeaturesGrid />
+            </Suspense>
           </div>
         </section>
         
         {/* Pricing Section */}
         <section id="pricing">
-          <PricingPlans />
+          <Suspense fallback={<SectionSkeleton />}>
+            <PricingPlans />
+          </Suspense>
         </section>
         
         {/* Video Showcase Section */}
@@ -86,7 +111,9 @@ const Index = () => {
               </p>
             </div>
             
-            <VideoShowcase />
+            <Suspense fallback={<SectionSkeleton />}>
+              <VideoShowcase />
+            </Suspense>
           </div>
         </section>
         
@@ -109,7 +136,9 @@ const Index = () => {
               </p>
             </div>
             
-            <TestimonialCarousel />
+            <Suspense fallback={<SectionSkeleton />}>
+              <TestimonialCarousel />
+            </Suspense>
           </div>
         </section>
         
@@ -132,13 +161,17 @@ const Index = () => {
               </p>
             </div>
             
-            <FAQ />
+            <Suspense fallback={<SectionSkeleton />}>
+              <FAQ />
+            </Suspense>
           </div>
         </section>
         
         {/* CTA Section */}
         <section id="cta">
-          <GradientCTA />
+          <Suspense fallback={<SectionSkeleton />}>
+            <GradientCTA />
+          </Suspense>
         </section>
       </main>
       

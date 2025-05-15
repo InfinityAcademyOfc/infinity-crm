@@ -1,4 +1,4 @@
-import React, { useEffect, lazy, Suspense } from 'react';
+import React, { useEffect, lazy, Suspense, startTransition } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -117,7 +117,10 @@ const NotFound = lazy(() =>
     .then(module => ({ default: module.default }))
 );
 
-const WaitingArea = React.lazy(() => import('@/pages/WaitingArea'));
+const WaitingArea = lazy(() => 
+  import('@/pages/WaitingArea')
+    .then(module => ({ default: module.default }))
+);
 
 // Custom route change handler for animations
 const RouteChangeHandler = () => {
@@ -151,6 +154,12 @@ function App() {
     return <LoadingScreen />;
   }
 
+  const handleNavigation = (callback: () => void) => {
+    startTransition(() => {
+      callback();
+    });
+  };
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
@@ -161,10 +170,10 @@ function App() {
           <AuthProvider>
             <Routes>
               {/* Public Routes */}
-              <Route path="/" element={<Index />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/waiting" element={<WaitingArea />} />
+              <Route path="/" element={<Suspense fallback={<LoadingScreen />}><Index /></Suspense>} />
+              <Route path="/login" element={<Suspense fallback={<LoadingScreen />}><Login /></Suspense>} />
+              <Route path="/register" element={<Suspense fallback={<LoadingScreen />}><Register /></Suspense>} />
+              <Route path="/waiting" element={<Suspense fallback={<LoadingScreen />}><WaitingArea /></Suspense>} />
               
               {/* Protected Routes */}
               <Route element={<ProtectedRoute />}>
