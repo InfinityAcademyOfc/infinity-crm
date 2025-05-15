@@ -24,20 +24,20 @@ import ScheduleManager from "./schedules/ScheduleManager";
 import WhatsAppConfig from "./config/WhatsAppConfig";
 import AutomationsManager from "./automations/AutomationsManager";
 import { WhatsAppConnectionStatus } from "@/hooks/useQRCode";
+import { useWhatsApp } from "@/contexts/WhatsAppContext";
 
 interface WhatsAppMenuLayoutProps {
   sessionId: string;
   status?: WhatsAppConnectionStatus;
-  onLogout?: () => void;
 }
 
 const WhatsAppMenuLayout = ({
   sessionId,
   status = "not_started",
-  onLogout
 }: WhatsAppMenuLayoutProps) => {
   const [activeTab, setActiveTab] = useState("conversations");
   const { toast } = useToast();
+  const { disconnectSession } = useWhatsApp();
 
   if (!sessionId) {
     return (
@@ -46,6 +46,10 @@ const WhatsAppMenuLayout = ({
       </div>
     );
   }
+  
+  const handleLogout = () => {
+    disconnectSession(sessionId);
+  };
 
   return (
     <div className="w-full flex flex-col h-full">
@@ -118,9 +122,9 @@ const WhatsAppMenuLayout = ({
         </Tabs>
       </div>
 
-      {status === "connected" && onLogout && (
+      {status === "connected" && (
         <div className="flex justify-end p-2 bg-muted border-t">
-          <Button variant="outline" size="sm" onClick={onLogout}>
+          <Button variant="outline" size="sm" onClick={handleLogout}>
             <LogOut size={14} className="mr-2" /> Desconectar
           </Button>
         </div>

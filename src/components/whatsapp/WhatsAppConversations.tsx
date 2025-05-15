@@ -1,162 +1,44 @@
 
-import { useEffect, useState, useRef } from "react";
-import { supabase } from "@/lib/supabase";
+import { useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, PaperclipIcon, Smile, Mic, Plus } from "lucide-react";
+import { Send, PaperclipIcon, Smile, Mic, Plus, Search, MessageSquare } from "lucide-react";
+import { useWhatsApp } from "@/contexts/WhatsAppContext";
+import { useState } from "react";
 
-interface Message {
-  id: string;
-  session_id: string;
-  number: string;
-  message: string;
-  from_me: boolean;
-  created_at: string;
-}
-
-interface WhatsAppConversationsProps {
-  sessionId: string;
-}
-
-const WhatsAppConversations = ({ sessionId }: WhatsAppConversationsProps) => {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [selectedNumber, setSelectedNumber] = useState<string | null>(null);
+const WhatsAppConversations = ({ sessionId }: { sessionId: string }) => {
+  const { 
+    contacts, 
+    messages, 
+    selectedContact, 
+    setSelectedContact,
+    loadingMessages,
+    sendMessage
+  } = useWhatsApp();
+  
   const [input, setInput] = useState("");
-  const [contacts, setContacts] = useState<{number: string, name?: string}[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Load contacts and conversation numbers
+  // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
-    const loadNumbersAndContacts = async () => {
-      try {
-        // Fetch messages to get unique numbers
-        const { data: messageData, error: messageError } = await supabase
-          .from("whatsapp_messages")
-          .select("number")
-          .eq("session_id", sessionId)
-          .order("created_at", { ascending: false });
-          
-        if (messageError) throw messageError;
-        
-        // Extract unique numbers from messages
-        const uniqueNumbers = Array.from(new Set((messageData || []).map(m => m.number)));
-        
-        // Fetch contacts to get names
-        const { data: contactData, error: contactError } = await supabase
-          .from("contacts")
-          .select("name, phone")
-          .eq("session_id", sessionId);
-          
-        if (contactError) throw contactError;
-        
-        // Create a map of phone number to contact name
-        const contactMap = new Map();
-        (contactData || []).forEach(contact => {
-          contactMap.set(contact.phone, contact.name);
-        });
-        
-        // Create contacts list with names where available
-        const contactsList = uniqueNumbers.map(number => ({
-          number,
-          name: contactMap.get(number)
-        }));
-        
-        setContacts(contactsList);
-        
-        // Select the first number if available
-        if (uniqueNumbers.length > 0 && !selectedNumber) {
-          setSelectedNumber(uniqueNumbers[0]);
-        }
-      } catch (error) {
-        console.error("Error loading contacts and numbers:", error);
-      }
-    };
-    
-    if (sessionId) {
-      loadNumbersAndContacts();
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [sessionId, selectedNumber]);
+  }, [messages]);
 
-  // Load messages for selected number
-  useEffect(() => {
-    if (!selectedNumber || !sessionId) return;
+  // Filter contacts based on search
+  const filteredContacts = contacts.filter(contact => {
+    const contactName = contact.name || contact.number || contact.phone || '';
+    const query = searchQuery.toLowerCase();
+    return contactName.toLowerCase().includes(query);
+  });
 
-    const loadMessages = async () => {
-      try {
-        const { data, error } = await supabase
-          .from("whatsapp_messages")
-          .select("*")
-          .eq("session_id", sessionId)
-          .eq("number", selectedNumber)
-          .order("created_at");
-
-        if (error) throw error;
-        setMessages(data || []);
-        
-        // Scroll to bottom
-        setTimeout(() => {
-          if (scrollRef.current) {
-            scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-          }
-        }, 100);
-      } catch (error) {
-        console.error("Error loading messages:", error);
-      }
-    };
-
-    loadMessages();
-
-    // Listener for realtime updates
-    const channel = supabase
-      .channel("realtime-messages")
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "whatsapp_messages",
-          filter: `session_id=eq.${sessionId}`
-        },
-        (payload) => {
-          const newMsg = payload.new as Message;
-          if (newMsg.number === selectedNumber) {
-            setMessages((prev) => [...prev, newMsg]);
-            // Scroll to bottom
-            setTimeout(() => {
-              if (scrollRef.current) {
-                scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-              }
-            }, 100);
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [sessionId, selectedNumber]);
-
-  const sendMessage = async () => {
-    if (!input.trim() || !selectedNumber) return;
-
-    try {
-      // Send message to backend API
-      await fetch(`${import.meta.env.VITE_API_URL}/messages/send`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          sessionId,
-          number: selectedNumber,
-          message: input.trim()
-        })
-      });
-
-      setInput("");
-    } catch (error) {
-      console.error("Error sending message:", error);
-    }
+  const handleSendMessage = () => {
+    if (!input.trim()) return;
+    sendMessage(input);
+    setInput("");
   };
 
   return (
@@ -164,40 +46,45 @@ const WhatsAppConversations = ({ sessionId }: WhatsAppConversationsProps) => {
       <div className="w-80 border-r bg-muted/30">
         <div className="p-3 border-b">
           <Input
-            placeholder="Pesquisar ou começar nova conversa"
+            placeholder="Pesquisar conversa..."
             className="bg-muted"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            prefix={<Search className="text-muted-foreground" size={16} />}
           />
         </div>
         <ScrollArea className="h-[calc(100%-56px)]">
           <div className="space-y-1 p-2">
-            {contacts.length === 0 ? (
+            {filteredContacts.length === 0 ? (
               <div className="py-4 text-center text-muted-foreground">
-                Nenhuma conversa encontrada
+                {searchQuery ? "Nenhuma conversa encontrada" : "Nenhuma conversa iniciada"}
               </div>
             ) : (
-              contacts.map((contact) => (
+              filteredContacts.map((contact) => (
                 <div
-                  key={contact.number}
-                  onClick={() => setSelectedNumber(contact.number)}
+                  key={contact.id}
+                  onClick={() => setSelectedContact(contact)}
                   className={`cursor-pointer p-3 rounded-md ${
-                    selectedNumber === contact.number
+                    selectedContact?.id === contact.id
                       ? "bg-primary/10 border-l-4 border-primary"
                       : "hover:bg-muted"
                   }`}
                 >
                   <div className="flex items-center gap-3">
                     <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-medium">
-                      {contact.name?.charAt(0).toUpperCase() || contact.number.charAt(0)}
+                      {(contact.name || contact.number || contact.phone || "")?.charAt(0).toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-center">
                         <h4 className="font-medium truncate">
-                          {contact.name || contact.number}
+                          {contact.name || contact.number || contact.phone}
                         </h4>
-                        <span className="text-xs text-muted-foreground">10:30</span>
+                        <span className="text-xs text-muted-foreground">
+                          {/* Time would go here if we had it in the data */}
+                        </span>
                       </div>
                       <p className="text-sm text-muted-foreground truncate">
-                        Última mensagem...
+                        {/* Last message preview would go here */}
                       </p>
                     </div>
                   </div>
@@ -209,28 +96,32 @@ const WhatsAppConversations = ({ sessionId }: WhatsAppConversationsProps) => {
       </div>
 
       <div className="flex flex-col flex-1 overflow-hidden">
-        {selectedNumber ? (
+        {selectedContact ? (
           <>
             <div className="p-3 border-b bg-muted/30 flex items-center gap-3">
               <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-medium">
-                {contacts.find(c => c.number === selectedNumber)?.name?.charAt(0).toUpperCase() || selectedNumber.charAt(0)}
+                {(selectedContact.name || selectedContact.number || selectedContact.phone || "")?.charAt(0).toUpperCase()}
               </div>
               <div>
                 <h4 className="font-medium">
-                  {contacts.find(c => c.number === selectedNumber)?.name || selectedNumber}
+                  {selectedContact.name || selectedContact.number || selectedContact.phone}
                 </h4>
                 <p className="text-xs text-muted-foreground">online</p>
               </div>
             </div>
             
             <ScrollArea ref={scrollRef} className="flex-1 p-4">
-              <div className="space-y-3">
-                {messages.length === 0 ? (
-                  <div className="py-8 text-center text-muted-foreground">
-                    Nenhuma mensagem. Envie uma mensagem para começar.
-                  </div>
-                ) : (
-                  messages.map((msg) => (
+              {loadingMessages ? (
+                <div className="flex justify-center py-4">
+                  <Loader size={24} className="animate-spin text-muted-foreground" />
+                </div>
+              ) : messages.length === 0 ? (
+                <div className="py-8 text-center text-muted-foreground">
+                  Nenhuma mensagem. Envie uma mensagem para começar.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {messages.map((msg) => (
                     <div
                       key={msg.id}
                       className={`max-w-[70%] p-3 rounded-lg ${
@@ -247,9 +138,9 @@ const WhatsAppConversations = ({ sessionId }: WhatsAppConversationsProps) => {
                         })}
                       </div>
                     </div>
-                  ))
-                )}
-              </div>
+                  ))}
+                </div>
+              )}
             </ScrollArea>
             
             <div className="p-3 border-t bg-muted/10 flex items-center gap-2">
@@ -266,12 +157,12 @@ const WhatsAppConversations = ({ sessionId }: WhatsAppConversationsProps) => {
                 className="flex-1"
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
-                    sendMessage();
+                    handleSendMessage();
                   }
                 }}
               />
               <Button
-                onClick={sendMessage}
+                onClick={handleSendMessage}
                 disabled={!input.trim()}
                 variant="ghost"
                 size="icon"
@@ -299,8 +190,5 @@ const WhatsAppConversations = ({ sessionId }: WhatsAppConversationsProps) => {
     </div>
   );
 };
-
-// Missing import
-import { MessageSquare } from "lucide-react";
 
 export default WhatsAppConversations;
