@@ -3,11 +3,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { WhatsAppConnectionStatus } from "@/hooks/useQRCode";
 
-// Types
+// Tipos
 export type WhatsAppSession = {
   id: string;
   name?: string;
-  status: "CONNECTED" | "DISCONNECTED" | string;
+  status: WhatsAppConnectionStatus; // 'connected' | 'disconnected' | 'qr' | 'error' | 'not_started'
 };
 
 export type WhatsAppContact = {
@@ -26,7 +26,6 @@ export type WhatsAppMessage = {
   created_at: string;
 };
 
-// Define the context type without nested references
 interface WhatsAppContextType {
   currentSession: string | null;
   setCurrentSession: (sessionId: string | null) => void;
@@ -69,7 +68,11 @@ export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setSessions(data);
     } catch (error) {
       console.error("refreshSessions error:", error);
-      // Removed toast notification about session errors
+      toast({
+        title: "Erro",
+        description: "Erro ao buscar sessões do WhatsApp",
+        variant: "destructive",
+      });
     } finally {
       setLoadingSessions(false);
     }
@@ -84,7 +87,6 @@ export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     } catch (error) {
       console.error("fetchConnectionStatus error:", error);
       setConnectionStatus("error");
-      // Removed toast notification about connection errors
     }
   };
 
@@ -119,7 +121,6 @@ export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setContacts(contactsList);
     } catch (error) {
       console.error("loadContacts error:", error);
-      // Removed toast notification
     }
   };
 
@@ -137,7 +138,11 @@ export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setMessages(data || []);
     } catch (error) {
       console.error("loadMessages error:", error);
-      // Removed toast notification
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar mensagens",
+        variant: "destructive",
+      });
     } finally {
       setLoadingMessages(false);
     }
@@ -151,7 +156,11 @@ export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       await fetchConnectionStatus(sessionId);
     } catch (error) {
       console.error("connectSession error:", error);
-      // Removed toast notification
+      toast({
+        title: "Erro",
+        description: "Não foi possível conectar à sessão do WhatsApp",
+        variant: "destructive",
+      });
     }
   };
 
@@ -166,7 +175,11 @@ export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       await refreshSessions();
     } catch (error) {
       console.error("disconnectSession error:", error);
-      // Removed toast notification
+      toast({
+        title: "Erro",
+        description: "Erro ao desconectar sessão",
+        variant: "destructive",
+      });
     }
   };
 
@@ -184,7 +197,11 @@ export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       });
     } catch (error) {
       console.error("sendMessage error:", error);
-      // Removed toast notification
+      toast({
+        title: "Erro",
+        description: "Erro ao enviar mensagem",
+        variant: "destructive",
+      });
     }
   };
 
@@ -196,7 +213,7 @@ export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return newSessionId;
   };
 
-  // Subscription for real-time messages
+  // Subscrição de mensagens em tempo real
   useEffect(() => {
     if (!currentSession) return;
 
@@ -219,10 +236,10 @@ export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       )
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    return () => supabase.removeChannel(channel);
   }, [currentSession, selectedContact]);
 
-  // Update connection status periodically
+  // Atualizar status de conexão periodicamente
   useEffect(() => {
     if (!currentSession) return;
     fetchConnectionStatus(currentSession);
@@ -230,19 +247,19 @@ export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return () => clearInterval(interval);
   }, [currentSession]);
 
-  // Load messages when contact changes
+  // Carregar mensagens quando o contato mudar
   useEffect(() => {
     if (currentSession && selectedContact) {
       loadMessages(currentSession, selectedContact.number || selectedContact.phone || '');
     }
   }, [selectedContact]);
 
-  // Load contacts when session changes
+  // Carregar contatos ao mudar sessão
   useEffect(() => {
     if (currentSession) loadContacts(currentSession);
   }, [currentSession]);
 
-  // Load sessions initially
+  // Carregar sessões inicialmente
   useEffect(() => {
     refreshSessions();
     const interval = setInterval(refreshSessions, 30000);
