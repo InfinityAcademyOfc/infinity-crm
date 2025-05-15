@@ -31,16 +31,8 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
-  // Render loader first to prevent conditional hook calls
-  if (loading) {
-    return <LoadingScreen />;
-  }
-
-  // Redirect if already authenticated
-  if (user) {
-    return <Navigate to="/app" replace />;
-  }
-
+  // Initialize form regardless of loading or authenticated state
+  // This ensures hooks are always called in the same order
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -53,7 +45,7 @@ const Login = () => {
     setIsSubmitting(true);
     try {
       await signIn(values.email, values.password);
-      // Forçar redirecionamento para o app
+      // Force redirect to app
       navigate('/app', { replace: true });
     } catch (error) {
       // Error handling done in the signIn function
@@ -61,6 +53,16 @@ const Login = () => {
       setIsSubmitting(false);
     }
   };
+
+  // Render loader after form initialization
+  if (loading) {
+    return <LoadingScreen />;
+  }
+
+  // Redirect if already authenticated (after form initialization)
+  if (user) {
+    return <Navigate to="/app" replace />;
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-black via-gray-900 to-black text-white overflow-hidden">

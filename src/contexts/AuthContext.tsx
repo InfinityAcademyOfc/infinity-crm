@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
@@ -47,9 +48,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   useEffect(() => {
+    let isMounted = true;
     // Set up the auth state listener
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        if (!isMounted) return;
+        
         setSession(session);
         setUser(session?.user ?? null);
         
@@ -61,7 +65,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
           // Check if the user is a collaborator and direct to waiting area if so
           if (session?.user) {
+            // Use setTimeout to prevent deadlock with Supabase auth
             setTimeout(async () => {
+              if (!isMounted) return;
+              
               try {
                 const hydrationResult = await hydrateUser();
                 setProfile(hydrationResult.profile);
@@ -81,6 +88,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
               }
             }, 0);
           }
+        } else if (event === 'INITIAL_SESSION') {
+          setLoading(false);
         }
       }
     );
@@ -88,25 +97,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     // Check for an existing session
     const initSession = async () => {
       const { data } = await supabase.auth.getSession();
+      
+      if (!isMounted) return;
+      
       setSession(data.session);
       setUser(data.session?.user ?? null);
       
       if (data.session?.user) {
-        try {
-          const hydrationResult = await hydrateUser();
-          setProfile(hydrationResult.profile);
-          setCompany(hydrationResult.company);
-        } catch (error) {
-          console.error("Error in initial hydration:", error);
-        }
+        // Use setTimeout to prevent deadlock with Supabase auth
+        setTimeout(async () => {
+          if (!isMounted) return;
+          
+          try {
+            const hydrationResult = await hydrateUser();
+            setProfile(hydrationResult.profile);
+            setCompany(hydrationResult.company);
+          } catch (error) {
+            console.error("Error in initial hydration:", error);
+          } finally {
+            setLoading(false);
+          }
+        }, 0);
+      } else {
+        setLoading(false);
       }
-      
-      setLoading(false);
     };
 
     initSession();
 
     return () => {
+      isMounted = false;
       authListener.subscription.unsubscribe();
     };
   }, [navigate]);
@@ -129,6 +149,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     } catch (error: any) {
       setError(error.message);
       toast.error(error.message);
+      throw error; // Re-throw to handle in the component
     } finally {
       setLoading(false);
     }
@@ -154,6 +175,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     } catch (error: any) {
       setError(error.message);
       toast.error(error.message);
+      throw error; // Re-throw to handle in the component
       return { user: null };
     } finally {
       setLoading(false);
@@ -168,6 +190,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     } catch (error: any) {
       setError(error.message);
       toast.error(error.message);
+      throw error;
     }
   };
 
