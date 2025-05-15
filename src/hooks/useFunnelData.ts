@@ -1,4 +1,3 @@
-
 import { useCallback, useEffect, useState } from 'react';
 
 export type FunnelType = 'sales' | 'ltv' | 'production';
@@ -13,6 +12,7 @@ export interface FunnelStage {
 export interface FunnelData {
   stages: FunnelStage[];
   conversionRate: number;
+  status?: 'improving' | 'declining' | 'stable';
 }
 
 interface FunnelDataState {
@@ -52,14 +52,17 @@ export const useFunnelData = () => {
     sales: {
       stages: [],
       conversionRate: 0,
+      status: 'stable'
     },
     ltv: {
       stages: [],
       conversionRate: 0,
+      status: 'stable'
     },
     production: {
       stages: [],
       conversionRate: 0,
+      status: 'stable'
     },
   });
   
@@ -93,7 +96,8 @@ export const useFunnelData = () => {
             { name: 'Proposals', value: 100, conversion: 60, leakage: 40 },
             { name: 'Closed', value: 60, conversion: 100, leakage: 0 },
           ],
-          conversionRate: 25
+          conversionRate: 25,
+          status: 'improving'
         },
         ltv: {
           stages: [
@@ -102,7 +106,8 @@ export const useFunnelData = () => {
             { name: 'Upsell', value: 100, conversion: 50, leakage: 50 },
             { name: 'Loyal', value: 50, conversion: 100, leakage: 0 }
           ],
-          conversionRate: 25
+          conversionRate: 25,
+          status: 'stable'
         },
         production: {
           stages: [
@@ -111,7 +116,8 @@ export const useFunnelData = () => {
             { name: 'Review', value: 120, conversion: 92, leakage: 8 },
             { name: 'Delivery', value: 110, conversion: 100, leakage: 0 }
           ],
-          conversionRate: 61
+          conversionRate: 61,
+          status: 'improving'
         }
       });
     } catch (error) {

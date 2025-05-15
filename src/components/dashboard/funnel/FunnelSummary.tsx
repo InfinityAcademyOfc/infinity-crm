@@ -23,6 +23,19 @@ const FunnelSummary = ({ type, data }: FunnelSummaryProps) => {
   const totalLeads = data.stages[0]?.value || 0;
   const conversions = data.stages[data.stages.length - 1]?.value || 0;
   const conversionRate = data.conversionRate || 0;
+  const status = data.status || 'stable';
+
+  // Obter o ícone de tendência baseado no status
+  const getTrendIcon = () => {
+    switch (status) {
+      case 'improving':
+        return TrendingUp;
+      case 'declining':
+        return TrendingDown;
+      default:
+        return Minus;
+    }
+  };
 
   // Métricas por tipo de funil
   const getMetrics = () => {
@@ -48,7 +61,7 @@ const FunnelSummary = ({ type, data }: FunnelSummaryProps) => {
           tertiary: {
             label: "Fechados",
             value: conversions,
-            icon: data.status === 'improving' ? TrendingUp : data.status === 'declining' ? TrendingDown : Minus,
+            icon: getTrendIcon(),
             bgClass: "bg-green-50 dark:bg-green-900/20",
             borderClass: "border border-green-200 dark:border-green-800",
             textClass: "text-green-700 dark:text-green-300"
@@ -75,7 +88,7 @@ const FunnelSummary = ({ type, data }: FunnelSummaryProps) => {
           tertiary: {
             label: "Longos",
             value: conversions,
-            icon: data.status === 'improving' ? TrendingUp : data.status === 'declining' ? TrendingDown : Minus,
+            icon: getTrendIcon(),
             bgClass: "bg-indigo-50 dark:bg-indigo-900/20",
             borderClass: "border border-indigo-200 dark:border-indigo-800",
             textClass: "text-indigo-700 dark:text-indigo-300"
@@ -102,7 +115,7 @@ const FunnelSummary = ({ type, data }: FunnelSummaryProps) => {
           tertiary: {
             label: "Concluídos",
             value: conversions,
-            icon: data.status === 'improving' ? TrendingUp : data.status === 'declining' ? TrendingDown : Minus,
+            icon: getTrendIcon(),
             bgClass: "bg-teal-50 dark:bg-teal-900/20",
             borderClass: "border border-teal-200 dark:border-teal-800",
             textClass: "text-teal-700 dark:text-teal-300"
