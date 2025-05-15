@@ -38,8 +38,9 @@ export async function hydrateUser() {
           name: "Usuário",
           email: sessionData.session.user.email,
           role: "user",
-          status: "active"
-        },
+          status: "active",
+          company_id: null
+        } as UserProfile,
         company: null
       };
     }
@@ -75,8 +76,9 @@ export async function hydrateUser() {
         name: "Usuário",
         email: sessionData.session.user.email,
         role: "user",
-        status: "active"
-      },
+        status: "active",
+        company_id: null
+      } as UserProfile,
       company
     };
   } catch (error) {
@@ -88,8 +90,9 @@ export async function hydrateUser() {
         name: "Usuário",
         email: sessionData.session.user.email,
         role: "user",
-        status: "active"
-      },
+        status: "active",
+        company_id: null
+      } as UserProfile,
       company: null
     };
   }

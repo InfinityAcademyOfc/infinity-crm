@@ -42,9 +42,10 @@ export const userService = {
 
   async updateAvatar(userId: string, avatarUrl: string): Promise<UserProfile | null> {
     try {
+      // Update both avatar and avatar_url fields for compatibility
       const { data, error } = await supabase
         .from('profiles')
-        .update({ avatar: avatarUrl })
+        .update({ avatar: avatarUrl, avatar_url: avatarUrl })
         .eq('id', userId)
         .select()
         .maybeSingle();

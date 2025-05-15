@@ -6,9 +6,11 @@ export interface UserProfile {
   name?: string | null;
   email?: string | null;
   avatar_url?: string | null;
+  avatar?: string | null; // Adding this for backward compatibility
   role?: string;
   status?: string;
   company_id?: string | null;
+  phone?: string | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -30,4 +32,5 @@ export interface ProfileFormData {
   email: string;
   avatar_url?: string;
   display_name?: string;
+  phone?: string;
 }

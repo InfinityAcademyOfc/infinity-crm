@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
@@ -7,21 +6,12 @@ import { User, Session } from '@supabase/supabase-js';
 import { registerUser } from '@/lib/registerUser';
 import { hydrateUser } from '@/lib/hydrateUser';
 import { Company } from '@/types/company';
-
-interface Profile {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  status: string;
-  company_id?: string;
-  avatar_url?: string;
-}
+import { UserProfile } from '@/types/user';
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
-  profile: Profile | null;
+  profile: UserProfile | null;
   company: Company | null;
   loading: boolean;
   error: string | null;
@@ -38,7 +28,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [company, setCompany] = useState<Company | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -79,6 +69,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
                 setLoading(false);
                 
                 const profileData = hydrationResult.profile;
+                // Make sure to check if company_id exists on profileData before using it
                 if (profileData?.role === 'user' && !profileData?.company_id) {
                   navigate('/waiting');
                 } else if (profileData?.role === 'admin' || (profileData?.role === 'user' && profileData?.company_id)) {

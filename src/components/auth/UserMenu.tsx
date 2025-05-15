@@ -38,12 +38,17 @@ export function UserMenu() {
     }
   };
 
+  // Get avatar from either avatar or avatar_url property
+  const getAvatarUrl = () => {
+    return profile?.avatar || profile?.avatar_url || user?.user_metadata?.avatar_url;
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-10 w-10 rounded-full">
           <Avatar>
-            <AvatarImage src={profile?.avatar || user?.user_metadata?.avatar_url} />
+            <AvatarImage src={getAvatarUrl()} />
             <AvatarFallback>{getUserInitials()}</AvatarFallback>
           </Avatar>
         </Button>

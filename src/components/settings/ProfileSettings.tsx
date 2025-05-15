@@ -34,8 +34,9 @@ const ProfileSettings = () => {
         phone: profile.phone || ""
       });
       
-      if (profile.avatar) {
-        setProfileImage(profile.avatar);
+      // Use either avatar or avatar_url
+      if (profile.avatar || profile.avatar_url) {
+        setProfileImage(profile.avatar || profile.avatar_url);
       }
     }
   }, [profile]);
@@ -99,11 +100,14 @@ const ProfileSettings = () => {
   };
 
   const handleRemoveImage = async () => {
-    if (!user?.id || !profile?.avatar) return;
+    if (!user?.id || !(profile?.avatar || profile?.avatar_url)) return;
     
     try {
       // Extract file name from URL
-      const urlParts = profile.avatar.split('/');
+      const avatarUrl = profile.avatar || profile.avatar_url;
+      if (!avatarUrl) return;
+      
+      const urlParts = avatarUrl.split('/');
       const fileName = urlParts[urlParts.length - 1];
       const filePath = `avatars/${fileName}`;
       
