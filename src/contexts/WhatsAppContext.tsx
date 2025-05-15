@@ -2,10 +2,9 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-// Define WhatsAppConnectionStatus type
+// Define basic types without circular references
 export type WhatsAppConnectionStatus = 'connected' | 'disconnected' | 'qr' | 'error' | 'not_started';
 
-// Define primitive types first
 export type WhatsAppContact = {
   id: string;
   name?: string;
@@ -28,19 +27,9 @@ export type WhatsAppSession = {
   status: WhatsAppConnectionStatus;
 };
 
-// Define context actions separately
-type WhatsAppContextActions = {
-  setCurrentSession: (sessionId: string | null) => void;
-  setSelectedContact: (contact: WhatsAppContact | null) => void;
-  refreshSessions: () => Promise<void>;
-  connectSession: (sessionId: string) => Promise<void>;
-  disconnectSession: (sessionId: string) => Promise<void>;
-  sendMessage: (message: string) => Promise<void>;
-  createNewSession: () => string;
-};
-
-// Define context state separately
-type WhatsAppContextState = {
+// Define the interface for the context value explicitly to avoid circular references
+interface WhatsAppContextValue {
+  // State
   currentSession: string | null;
   sessions: WhatsAppSession[];
   loadingSessions: boolean;
@@ -49,12 +38,19 @@ type WhatsAppContextState = {
   contacts: WhatsAppContact[];
   messages: WhatsAppMessage[];
   loadingMessages: boolean;
-};
+  
+  // Actions
+  setCurrentSession: (sessionId: string | null) => void;
+  setSelectedContact: (contact: WhatsAppContact | null) => void;
+  refreshSessions: () => Promise<void>;
+  connectSession: (sessionId: string) => Promise<void>;
+  disconnectSession: (sessionId: string) => Promise<void>;
+  sendMessage: (message: string) => Promise<void>;
+  createNewSession: () => string;
+}
 
-// Combine state and actions into final context type
-type WhatsAppContextType = WhatsAppContextState & WhatsAppContextActions;
-
-const WhatsAppContext = createContext<WhatsAppContextType | undefined>(undefined);
+// Create context with undefined as initial value
+const WhatsAppContext = createContext<WhatsAppContextValue | undefined>(undefined);
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -223,7 +219,7 @@ export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return newSessionId;
   };
 
-  // Subscrição de mensagens em tempo real
+  // Realtime message subscription
   useEffect(() => {
     if (!currentSession) return;
 
@@ -251,7 +247,7 @@ export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     };
   }, [currentSession, selectedContact]);
 
-  // Atualizar status de conexão periodicamente
+  // Status update interval
   useEffect(() => {
     if (!currentSession) return;
     
@@ -261,45 +257,46 @@ export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return () => clearInterval(interval);
   }, [currentSession]);
 
-  // Carregar mensagens quando o contato mudar
+  // Load messages when contact changes
   useEffect(() => {
     if (currentSession && selectedContact) {
       loadMessages(currentSession, selectedContact.number || selectedContact.phone || '');
     }
   }, [selectedContact]);
 
-  // Carregar contatos ao mudar sessão
+  // Load contacts when session changes
   useEffect(() => {
     if (currentSession) loadContacts(currentSession);
   }, [currentSession]);
 
-  // Carregar sessões inicialmente
+  // Initial sessions load
   useEffect(() => {
     refreshSessions();
     const interval = setInterval(refreshSessions, 30000);
     return () => clearInterval(interval);
   }, []);
 
+  // Define context value without circular references
+  const contextValue: WhatsAppContextValue = {
+    currentSession,
+    setCurrentSession,
+    sessions,
+    loadingSessions,
+    connectionStatus,
+    selectedContact,
+    setSelectedContact,
+    contacts,
+    messages,
+    loadingMessages,
+    refreshSessions,
+    connectSession,
+    disconnectSession,
+    sendMessage,
+    createNewSession,
+  };
+
   return (
-    <WhatsAppContext.Provider
-      value={{
-        currentSession,
-        setCurrentSession,
-        sessions,
-        loadingSessions,
-        connectionStatus,
-        selectedContact,
-        setSelectedContact,
-        contacts,
-        messages,
-        loadingMessages,
-        refreshSessions,
-        connectSession,
-        disconnectSession,
-        sendMessage,
-        createNewSession,
-      }}
-    >
+    <WhatsAppContext.Provider value={contextValue}>
       {children}
     </WhatsAppContext.Provider>
   );
