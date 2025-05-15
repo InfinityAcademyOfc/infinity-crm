@@ -304,26 +304,26 @@ export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return () => clearInterval(interval);
   }, []);
 
+  const contextValue: WhatsAppContextType = {
+    currentSession,
+    setCurrentSession,
+    sessions,
+    loadingSessions,
+    connectionStatus,
+    selectedContact,
+    setSelectedContact,
+    contacts,
+    messages,
+    loadingMessages,
+    refreshSessions,
+    connectSession,
+    disconnectSession,
+    sendMessage,
+    createNewSession,
+  };
+
   return (
-    <WhatsAppContext.Provider
-      value={{
-        currentSession,
-        setCurrentSession,
-        sessions,
-        loadingSessions,
-        connectionStatus,
-        selectedContact,
-        setSelectedContact,
-        contacts,
-        messages,
-        loadingMessages,
-        refreshSessions,
-        connectSession,
-        disconnectSession,
-        sendMessage,
-        createNewSession,
-      }}
-    >
+    <WhatsAppContext.Provider value={contextValue}>
       {children}
     </WhatsAppContext.Provider>
   );
