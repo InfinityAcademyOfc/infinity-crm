@@ -21,7 +21,8 @@ export const loadContacts = async (sessionId: string): Promise<WhatsAppContact[]
     
     // Process message data with simple iteration
     if (messageData && Array.isArray(messageData)) {
-      for (const item of messageData) {
+      for (let i = 0; i < messageData.length; i++) {
+        const item = messageData[i];
         if (item && typeof item.number === 'string' && !seenNumbers.has(item.number)) {
           seenNumbers.add(item.number);
           uniqueNumbers.push(item.number);
@@ -30,21 +31,21 @@ export const loadContacts = async (sessionId: string): Promise<WhatsAppContact[]
     }
     
     // Fetch contact names if available
-    const { data, error: contactError } = await supabase
+    const contactsResponse = await supabase
       .from("contacts")
       .select("name, phone")
       .eq("session_id", sessionId);
       
-    if (contactError) throw contactError;
+    if (contactsResponse.error) throw contactsResponse.error;
     
     // Create a simple map for name lookups
     const phoneToName: Record<string, string> = {};
     
     // Safely process contact data without complex type inference
-    if (data) {
-      // Use a simple loop to avoid complex type inference
-      for (let i = 0; i < data.length; i++) {
-        const contact = data[i];
+    const contactsData = contactsResponse.data;
+    if (contactsData && Array.isArray(contactsData)) {
+      for (let i = 0; i < contactsData.length; i++) {
+        const contact = contactsData[i];
         if (contact && 
             typeof contact.phone === 'string' && 
             typeof contact.name === 'string') {
@@ -55,7 +56,8 @@ export const loadContacts = async (sessionId: string): Promise<WhatsAppContact[]
     
     // Build contacts array with explicit typing
     const contacts: WhatsAppContact[] = [];
-    for (const number of uniqueNumbers) {
+    for (let i = 0; i < uniqueNumbers.length; i++) {
+      const number = uniqueNumbers[i];
       contacts.push({
         id: number,
         number: number,
