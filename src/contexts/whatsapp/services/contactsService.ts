@@ -26,11 +26,11 @@ export const loadContacts = async (sessionId: string): Promise<WhatsAppContact[]
       
     if (contactError) throw contactError;
     
-    // Create a map of phone number to contact name with explicit type
+    // Create a map of phone number to contact name with explicit type annotation
     const contactMap = new Map<string, string>();
     
-    // Use explicit type for contact parameter
-    (contactData || []).forEach((contact: { name: string, phone: string }) => {
+    // Use explicit typing for the contact parameter
+    (contactData || []).forEach((contact: { name: string; phone: string }) => {
       contactMap.set(contact.phone, contact.name);
     });
     
