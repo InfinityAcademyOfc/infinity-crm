@@ -8,6 +8,7 @@ import { registerUser } from '@/lib/registerUser';
 import { hydrateUser } from '@/lib/hydrateUser';
 import { Company, CompanyProfile } from '@/types/company';
 import { UserProfile } from '@/types/user';
+import { CompanySubscription, Plan } from '@/types/plan';
 
 interface AuthContextType {
   user: User | null;
@@ -15,6 +16,8 @@ interface AuthContextType {
   profile: UserProfile | null;
   companyProfile: CompanyProfile | null;
   company: Company | null;
+  subscription: CompanySubscription | null;
+  plan: Plan | null;
   loading: boolean;
   error: string | null;
   signIn: (email: string, password: string) => Promise<void>;
@@ -34,6 +37,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [companyProfile, setCompanyProfile] = useState<CompanyProfile | null>(null);
   const [company, setCompany] = useState<Company | null>(null);
+  const [subscription, setSubscription] = useState<CompanySubscription | null>(null);
+  const [plan, setPlan] = useState<Plan | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isCompanyAccount, setIsCompanyAccount] = useState(false);
@@ -47,6 +52,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       setProfile(hydrationResult.profile);
       setCompanyProfile(hydrationResult.companyProfile);
       setCompany(hydrationResult.company);
+      setSubscription(hydrationResult.subscription);
+      setPlan(hydrationResult.plan);
       setIsCompanyAccount(!!hydrationResult.companyProfile);
     } catch (error) {
       console.error("Error refreshing user data:", error);
@@ -68,6 +75,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           setProfile(null);
           setCompanyProfile(null);
           setCompany(null);
+          setSubscription(null);
+          setPlan(null);
           setIsCompanyAccount(false);
           setLoading(false);
           navigate('/');
@@ -82,6 +91,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
                 setProfile(hydrationResult.profile);
                 setCompanyProfile(hydrationResult.companyProfile);
                 setCompany(hydrationResult.company);
+                setSubscription(hydrationResult.subscription);
+                setPlan(hydrationResult.plan);
                 setIsCompanyAccount(!!hydrationResult.companyProfile);
                 setLoading(false);
                 
@@ -127,6 +138,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             setProfile(hydrationResult.profile);
             setCompanyProfile(hydrationResult.companyProfile);
             setCompany(hydrationResult.company);
+            setSubscription(hydrationResult.subscription);
+            setPlan(hydrationResult.plan);
             setIsCompanyAccount(!!hydrationResult.companyProfile);
           } catch (error) {
             console.error("Error in initial hydration:", error);
@@ -192,7 +205,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       setError(error.message);
       toast.error(error.message);
       throw error; // Re-throw to handle in the component
-      return { user: null };
     } finally {
       setLoading(false);
     }
@@ -218,6 +230,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         profile,
         companyProfile,
         company, 
+        subscription,
+        plan,
         loading, 
         error, 
         signIn, 

@@ -2,11 +2,14 @@
 import { supabase } from "@/integrations/supabase/client";
 import { UserProfile } from "@/types/user";
 import { Company, CompanyProfile } from "@/types/company";
+import { CompanySubscription, Plan } from "@/types/plan";
 
 interface HydrationResult {
   profile: UserProfile | null;
   companyProfile: CompanyProfile | null;
   company: Company | null;
+  subscription: CompanySubscription | null;
+  plan: Plan | null;
 }
 
 export async function hydrateUser(): Promise<HydrationResult> {
@@ -15,7 +18,13 @@ export async function hydrateUser(): Promise<HydrationResult> {
     
     if (!user) {
       console.error("No authenticated user found");
-      return { profile: null, companyProfile: null, company: null };
+      return { 
+        profile: null, 
+        companyProfile: null, 
+        company: null, 
+        subscription: null,
+        plan: null 
+      };
     }
     
     console.log("Hydrating user:", user.id);
@@ -24,6 +33,8 @@ export async function hydrateUser(): Promise<HydrationResult> {
     let profile: UserProfile | null = null;
     let companyProfile: CompanyProfile | null = null;
     let company: Company | null = null;
+    let subscription: CompanySubscription | null = null;
+    let plan: Plan | null = null;
     
     if (isCompany) {
       // Fetch company profile
@@ -53,6 +64,38 @@ export async function hydrateUser(): Promise<HydrationResult> {
           } else if (companyData) {
             company = companyData as Company;
             console.log("Company loaded:", company.name);
+            
+            // Fetch subscription if company exists
+            if (companyProfile.subscription_id) {
+              const { data: subscriptionData, error: subscriptionError } = await supabase
+                .from("company_subscriptions")
+                .select("*")
+                .eq("id", companyProfile.subscription_id)
+                .maybeSingle();
+              
+              if (subscriptionError) {
+                console.error("Error fetching subscription:", subscriptionError);
+              } else if (subscriptionData) {
+                subscription = subscriptionData as CompanySubscription;
+                console.log("Subscription loaded:", subscription.id);
+                
+                // Fetch plan if subscription exists
+                if (subscription.plan_id) {
+                  const { data: planData, error: planError } = await supabase
+                    .from("plans")
+                    .select("*")
+                    .eq("id", subscription.plan_id)
+                    .maybeSingle();
+                  
+                  if (planError) {
+                    console.error("Error fetching plan:", planError);
+                  } else if (planData) {
+                    plan = planData as Plan;
+                    console.log("Plan loaded:", plan.name);
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -84,12 +127,43 @@ export async function hydrateUser(): Promise<HydrationResult> {
           } else if (companyData) {
             company = companyData as Company;
             console.log("Company loaded:", company.name);
+            
+            // Fetch company subscription
+            const { data: subscriptionData, error: subscriptionError } = await supabase
+              .from("company_subscriptions")
+              .select("*")
+              .eq("company_id", company.id)
+              .eq("status", "active")
+              .maybeSingle();
+            
+            if (subscriptionError) {
+              console.error("Error fetching subscription:", subscriptionError);
+            } else if (subscriptionData) {
+              subscription = subscriptionData as CompanySubscription;
+              console.log("Subscription loaded:", subscription.id);
+              
+              // Fetch plan
+              if (subscription.plan_id) {
+                const { data: planData, error: planError } = await supabase
+                  .from("plans")
+                  .select("*")
+                  .eq("id", subscription.plan_id)
+                  .maybeSingle();
+                
+                if (planError) {
+                  console.error("Error fetching plan:", planError);
+                } else if (planData) {
+                  plan = planData as Plan;
+                  console.log("Plan loaded:", plan.name);
+                }
+              }
+            }
           }
         }
       }
     }
     
-    return { profile, companyProfile, company };
+    return { profile, companyProfile, company, subscription, plan };
   } catch (error) {
     console.error("Error hydrating user:", error);
     throw error;
