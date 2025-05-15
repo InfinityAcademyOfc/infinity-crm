@@ -1,13 +1,14 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { WhatsAppConnectionStatus } from "@/hooks/useQRCode";
 
 // Tipos
+export type WhatsAppConnectionStatus = 'connected' | 'disconnected' | 'qr' | 'error' | 'not_started';
+
 export type WhatsAppSession = {
   id: string;
   name?: string;
-  status: WhatsAppConnectionStatus; // 'connected' | 'disconnected' | 'qr' | 'error' | 'not_started'
+  status: string; // 'CONNECTED' | 'DISCONNECTED' etc.
 };
 
 export type WhatsAppContact = {
@@ -68,11 +69,7 @@ export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setSessions(data);
     } catch (error) {
       console.error("refreshSessions error:", error);
-      toast({
-        title: "Erro",
-        description: "Erro ao buscar sessões do WhatsApp",
-        variant: "destructive",
-      });
+      // Removemos notificações de erro sobre sessões
     } finally {
       setLoadingSessions(false);
     }
@@ -168,18 +165,11 @@ export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     try {
       await fetch(`${API_URL}/sessions/${sessionId}/logout`, { method: "POST" });
       setConnectionStatus("not_started");
-      toast({ 
-        title: "Desconectado", 
-        description: "Sessão do WhatsApp encerrada." 
-      });
+      // Removemos notificações sobre sessão
       await refreshSessions();
     } catch (error) {
       console.error("disconnectSession error:", error);
-      toast({
-        title: "Erro",
-        description: "Erro ao desconectar sessão",
-        variant: "destructive",
-      });
+      // Removemos notificações de erro sobre sessões
     }
   };
 
@@ -197,11 +187,7 @@ export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       });
     } catch (error) {
       console.error("sendMessage error:", error);
-      toast({
-        title: "Erro",
-        description: "Erro ao enviar mensagem",
-        variant: "destructive",
-      });
+      // Removemos notificações de erro sobre sessões
     }
   };
 
