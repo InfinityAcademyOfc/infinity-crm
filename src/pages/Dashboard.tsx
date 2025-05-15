@@ -1,3 +1,4 @@
+
 import React, { Suspense, lazy, useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { mockSalesData, mockFunnelData, mockTodayActivities } from "@/data/mockData";
@@ -45,7 +46,7 @@ const Dashboard = () => {
         const { leads: currentLeads } = useModuleSync.getState();
         
         // Converter leads para formato de vendas para o gráfico
-        const leadSalesData = currentLeads.map((lead: Lead) => ({
+        const leadSalesData = currentLeads.map((lead) => ({
           name: new Date(lead.created_at).toLocaleDateString('pt-BR', { month: 'short' }),
           value: lead.value || 0,
           leads: 1

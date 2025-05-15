@@ -12,6 +12,10 @@ import {
   assignClientToTaskAction,
   syncAllModulesAction
 } from './moduleActions';
+import { Lead } from '@/types/lead';
+import { Client } from '@/types/client';
+import { Task } from '@/types/task';
+import { Product } from '@/types/product';
 
 // Create the store
 export const useModuleSync = create<ModuleSyncState>((set, get) => ({
@@ -35,7 +39,7 @@ export const useModuleSync = create<ModuleSyncState>((set, get) => ({
   assignClientToTask: (taskId, clientId) => assignClientToTaskAction(set, get, taskId, clientId),
   syncAllModules: () => syncAllModulesAction(set, get),
   
-  fetchLeads: async (companyId: string) => {
+  fetchLeads: async (companyId: string): Promise<Lead[]> => {
     try {
       const { data, error } = await supabase
         .from('leads')
@@ -47,14 +51,14 @@ export const useModuleSync = create<ModuleSyncState>((set, get) => ({
         return [];
       }
       
-      return data || [];
+      return data as Lead[] || [];
     } catch (error) {
       console.error("Erro ao buscar leads:", error);
       return [];
     }
   },
   
-  fetchClients: async (companyId: string) => {
+  fetchClients: async (companyId: string): Promise<Client[]> => {
     try {
       const { data, error } = await supabase
         .from('clients')
@@ -66,14 +70,14 @@ export const useModuleSync = create<ModuleSyncState>((set, get) => ({
         return [];
       }
       
-      return data || [];
+      return data as Client[] || [];
     } catch (error) {
       console.error("Erro ao buscar clientes:", error);
       return [];
     }
   },
   
-  fetchTasks: async (companyId: string) => {
+  fetchTasks: async (companyId: string): Promise<Task[]> => {
     try {
       const { data, error } = await supabase
         .from('tasks')
@@ -85,14 +89,14 @@ export const useModuleSync = create<ModuleSyncState>((set, get) => ({
         return [];
       }
       
-      return data || [];
+      return data as Task[] || [];
     } catch (error) {
       console.error("Erro ao buscar tarefas:", error);
       return [];
     }
   },
   
-  fetchProducts: async (companyId: string) => {
+  fetchProducts: async (companyId: string): Promise<Product[]> => {
     try {
       const { data, error } = await supabase
         .from('products')
@@ -104,7 +108,7 @@ export const useModuleSync = create<ModuleSyncState>((set, get) => ({
         return [];
       }
       
-      return data || [];
+      return data as Product[] || [];
     } catch (error) {
       console.error("Erro ao buscar produtos:", error);
       return [];

@@ -3,12 +3,10 @@
 export interface Lead {
   id: string;
   name: string;
-  email: string;
-  phone: string;
+  email?: string;
+  phone?: string;
   status: string;
-  source: string;
-  createdAt: string;
-  updatedAt: string;
+  source?: string;
   title: string;
   description?: string;
   value?: number;
@@ -16,18 +14,18 @@ export interface Lead {
   due_date?: string;
   priority: string;
   company_id: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Client {
   id: string;
   name: string;
-  email: string;
-  phone: string;
-  company: string;
+  email?: string;
+  phone?: string;
+  company?: string;
   status: string;
-  source: string;
-  createdAt: string;
-  updatedAt: string;
+  source?: string;
   contact?: string;
   segment?: string;
   street?: string;
@@ -35,36 +33,40 @@ export interface Client {
   state?: string;
   zip?: string;
   company_id: string;
+  last_contact?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Task {
   id: string;
   title: string;
-  description: string;
-  assignee: string;
+  description?: string;
+  assignee?: string; // Compatibility field
   status: string;
-  priority: string;
-  dueDate: string;
-  createdAt: string;
-  updatedAt: string;
-  client?: string;
-  completion?: number;
+  priority?: string;
+  dueDate?: string; // Compatibility field
   assigned_to?: string;
   client_id?: string;
   start_date?: string;
   end_date?: string;
+  completion?: number;
   company_id: string;
+  client?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Product {
   id: string;
   name: string;
-  description: string;
-  price: number;
-  category: string;
-  createdAt: string;
-  updatedAt: string;
+  description?: string;
+  price?: number;
+  category?: string;
+  stock?: number;
   company_id: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface ModuleSyncState {
