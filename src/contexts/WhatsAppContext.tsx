@@ -1,10 +1,9 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { WhatsAppConnectionStatus } from "@/hooks/useQRCode";
 
 // Define types to avoid circular references
-export type WhatsAppConnectionStatus = "not_started" | "qr" | "connected" | "error";
-
 export type WhatsAppSession = {
   id: string;
   name?: string;
