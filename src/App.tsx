@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from "@/components/ui/theme-provider"
@@ -5,7 +6,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
 import Register from './pages/Register';
-import Waiting from './pages/Waiting';
+import WaitingArea from './pages/WaitingArea';
 import Pricing from './pages/Pricing';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import WhatsAppIntegrationPage from './pages/WhatsAppIntegration';
@@ -28,7 +29,7 @@ function App() {
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/pricing" element={<Pricing />} />
-                <Route path="/waiting" element={<Waiting />} />
+                <Route path="/waiting" element={<WaitingArea />} />
                 <Route path="/app" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                 <Route path="/whatsapp" element={<ProtectedRoute><WhatsAppIntegrationPage /></ProtectedRoute>} />
                 <Route path="/" element={<Navigate to="/app" />} />
