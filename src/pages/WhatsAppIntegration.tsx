@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import QRCodeModal from "@/components/whatsapp/QRCodeModal";
@@ -127,7 +126,7 @@ const WhatsAppIntegrationContent = () => {
       </div>
 
       {offlineMode && (
-        <Alert variant="warning" className="bg-amber-50 text-amber-800 border-amber-200">
+        <Alert variant="default" className="bg-amber-50 text-amber-800 border-amber-200">
           <WifiOff className="h-4 w-4" />
           <AlertTitle>Modo offline ativo</AlertTitle>
           <AlertDescription>

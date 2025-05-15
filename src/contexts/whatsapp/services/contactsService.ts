@@ -25,8 +25,9 @@ export const loadContacts = async (sessionId: string): Promise<WhatsAppContact[]
       
     if (messageError) throw messageError;
     
-    // Extract unique numbers - use explicit typing
-    const numbers: string[] = messageData?.map((msg: MessageRecord) => msg.number) || [];
+    // Extract unique numbers with explicit typing
+    const messageArray: MessageRecord[] = messageData || [];
+    const numbers: string[] = messageArray.map((msg: MessageRecord) => msg.number);
     const uniqueNumbers: string[] = Array.from(new Set(numbers));
     
     // Fetch contact names if available
@@ -40,12 +41,13 @@ export const loadContacts = async (sessionId: string): Promise<WhatsAppContact[]
     // Create a map of phone number to contact name
     const contactMap = new Map<string, string>();
     
-    // Safely iterate with proper typing
-    (contactData || []).forEach((contact: ContactRecord) => {
+    // Use explicitly typed contact array
+    const contactArray: ContactRecord[] = contactData || [];
+    contactArray.forEach((contact: ContactRecord) => {
       contactMap.set(contact.phone, contact.name);
     });
     
-    // Create contacts list with proper typing
+    // Create contacts list
     const contacts: WhatsAppContact[] = uniqueNumbers.map((number: string) => ({
       id: number,
       number,
