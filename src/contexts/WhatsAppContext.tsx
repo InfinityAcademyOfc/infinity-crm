@@ -1,14 +1,13 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { WhatsAppConnectionStatus } from "@/hooks/useQRCode";
 
-// Types
+// Tipos
 export type WhatsAppSession = {
   id: string;
   name?: string;
-  status: string; // 'CONNECTED' | 'DISCONNECTED' etc.
+  status: WhatsAppConnectionStatus; // 'connected' | 'disconnected' | 'qr' | 'error' | 'not_started'
 };
 
 export type WhatsAppContact = {
@@ -27,7 +26,6 @@ export type WhatsAppMessage = {
   created_at: string;
 };
 
-// Define the context type separately to avoid circular references
 interface WhatsAppContextType {
   currentSession: string | null;
   setCurrentSession: (sessionId: string | null) => void;
@@ -46,7 +44,6 @@ interface WhatsAppContextType {
   createNewSession: () => string;
 }
 
-// Create context with undefined initial value
 const WhatsAppContext = createContext<WhatsAppContextType | undefined>(undefined);
 
 const API_URL = import.meta.env.VITE_API_URL || "";
@@ -71,7 +68,11 @@ export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setSessions(data);
     } catch (error) {
       console.error("refreshSessions error:", error);
-      // Notifications removed as requested
+      toast({
+        title: "Erro",
+        description: "Erro ao buscar sessões do WhatsApp",
+        variant: "destructive",
+      });
     } finally {
       setLoadingSessions(false);
     }
@@ -167,11 +168,18 @@ export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     try {
       await fetch(`${API_URL}/sessions/${sessionId}/logout`, { method: "POST" });
       setConnectionStatus("not_started");
-      // Notifications removed as requested
+      toast({ 
+        title: "Desconectado", 
+        description: "Sessão do WhatsApp encerrada." 
+      });
       await refreshSessions();
     } catch (error) {
       console.error("disconnectSession error:", error);
-      // Notifications removed as requested
+      toast({
+        title: "Erro",
+        description: "Erro ao desconectar sessão",
+        variant: "destructive",
+      });
     }
   };
 
@@ -189,7 +197,11 @@ export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       });
     } catch (error) {
       console.error("sendMessage error:", error);
-      // Notifications removed as requested
+      toast({
+        title: "Erro",
+        description: "Erro ao enviar mensagem",
+        variant: "destructive",
+      });
     }
   };
 
@@ -201,7 +213,7 @@ export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return newSessionId;
   };
 
-  // Realtime message subscription
+  // Subscrição de mensagens em tempo real
   useEffect(() => {
     if (!currentSession) return;
 
@@ -224,37 +236,30 @@ export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       )
       .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => supabase.removeChannel(channel);
   }, [currentSession, selectedContact]);
 
-  // Update connection status periodically
+  // Atualizar status de conexão periodicamente
   useEffect(() => {
     if (!currentSession) return;
-    
     fetchConnectionStatus(currentSession);
-    
-    const interval = setInterval(() => {
-      fetchConnectionStatus(currentSession);
-    }, 10000);
-    
+    const interval = setInterval(() => fetchConnectionStatus(currentSession), 10000);
     return () => clearInterval(interval);
   }, [currentSession]);
 
-  // Load messages when contact changes
+  // Carregar mensagens quando o contato mudar
   useEffect(() => {
     if (currentSession && selectedContact) {
       loadMessages(currentSession, selectedContact.number || selectedContact.phone || '');
     }
   }, [selectedContact]);
 
-  // Load contacts when session changes
+  // Carregar contatos ao mudar sessão
   useEffect(() => {
     if (currentSession) loadContacts(currentSession);
   }, [currentSession]);
 
-  // Load sessions initially
+  // Carregar sessões inicialmente
   useEffect(() => {
     refreshSessions();
     const interval = setInterval(refreshSessions, 30000);
