@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { WhatsAppConnectionStatus } from "@/hooks/useQRCode";
 
-// Tipos
+// Types
 export type WhatsAppSession = {
   id: string;
   name?: string;
@@ -27,6 +27,7 @@ export type WhatsAppMessage = {
   created_at: string;
 };
 
+// Define the context type separately to avoid circular references
 interface WhatsAppContextType {
   currentSession: string | null;
   setCurrentSession: (sessionId: string | null) => void;
@@ -45,6 +46,7 @@ interface WhatsAppContextType {
   createNewSession: () => string;
 }
 
+// Create context with undefined initial value
 const WhatsAppContext = createContext<WhatsAppContextType | undefined>(undefined);
 
 const API_URL = import.meta.env.VITE_API_URL || "";
@@ -69,7 +71,7 @@ export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setSessions(data);
     } catch (error) {
       console.error("refreshSessions error:", error);
-      // Removemos notificações de erro sobre sessões
+      // Notifications removed as requested
     } finally {
       setLoadingSessions(false);
     }
@@ -165,11 +167,11 @@ export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     try {
       await fetch(`${API_URL}/sessions/${sessionId}/logout`, { method: "POST" });
       setConnectionStatus("not_started");
-      // Removemos notificações sobre sessão
+      // Notifications removed as requested
       await refreshSessions();
     } catch (error) {
       console.error("disconnectSession error:", error);
-      // Removemos notificações de erro sobre sessões
+      // Notifications removed as requested
     }
   };
 
@@ -187,7 +189,7 @@ export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       });
     } catch (error) {
       console.error("sendMessage error:", error);
-      // Removemos notificações de erro sobre sessões
+      // Notifications removed as requested
     }
   };
 
@@ -199,7 +201,7 @@ export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return newSessionId;
   };
 
-  // Subscrição de mensagens em tempo real
+  // Realtime message subscription
   useEffect(() => {
     if (!currentSession) return;
 
@@ -227,7 +229,7 @@ export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     };
   }, [currentSession, selectedContact]);
 
-  // Atualizar status de conexão periodicamente
+  // Update connection status periodically
   useEffect(() => {
     if (!currentSession) return;
     
@@ -240,19 +242,19 @@ export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return () => clearInterval(interval);
   }, [currentSession]);
 
-  // Carregar mensagens quando o contato mudar
+  // Load messages when contact changes
   useEffect(() => {
     if (currentSession && selectedContact) {
       loadMessages(currentSession, selectedContact.number || selectedContact.phone || '');
     }
   }, [selectedContact]);
 
-  // Carregar contatos ao mudar sessão
+  // Load contacts when session changes
   useEffect(() => {
     if (currentSession) loadContacts(currentSession);
   }, [currentSession]);
 
-  // Carregar sessões inicialmente
+  // Load sessions initially
   useEffect(() => {
     refreshSessions();
     const interval = setInterval(refreshSessions, 30000);
