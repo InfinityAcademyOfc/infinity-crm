@@ -26,6 +26,7 @@ export type WhatsAppMessage = {
   created_at: string;
 };
 
+// Define the context interface without using the type itself in function signatures
 interface WhatsAppContextType {
   currentSession: string | null;
   setCurrentSession: (sessionId: string | null) => void;
