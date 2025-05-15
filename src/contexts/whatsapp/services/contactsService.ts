@@ -19,7 +19,7 @@ export const loadContacts = async (sessionId: string): Promise<WhatsAppContact[]
     const uniqueNumbers: string[] = [];
     const seenNumbers = new Set<string>();
     
-    // Process message data with simple iteration and explicit type checking
+    // Process message data with simple iteration
     if (Array.isArray(messageData)) {
       for (let i = 0; i < messageData.length; i++) {
         const item = messageData[i];
@@ -38,29 +38,32 @@ export const loadContacts = async (sessionId: string): Promise<WhatsAppContact[]
       
     if (contactError) throw contactError;
     
-    // Create a simple dictionary with string keys and values
+    // Create a simple map for name lookups
     const phoneToName: Record<string, string> = {};
     
-    // Process contact data with simple loops instead of higher-order functions
+    // Process contact data with simple loops
     if (Array.isArray(contactData)) {
       for (let i = 0; i < contactData.length; i++) {
         const contact = contactData[i];
-        if (contact && typeof contact.phone === 'string' && typeof contact.name === 'string') {
+        if (contact && 
+            typeof contact.phone === 'string' && 
+            typeof contact.name === 'string') {
           phoneToName[contact.phone] = contact.name;
         }
       }
     }
     
-    // Build contacts array with explicit construction and simple iteration
+    // Build contacts array
     const contacts: WhatsAppContact[] = [];
     for (let i = 0; i < uniqueNumbers.length; i++) {
       const number = uniqueNumbers[i];
-      contacts.push({
+      const contact: WhatsAppContact = {
         id: number,
         number,
         name: phoneToName[number] || number,
         phone: number
-      });
+      };
+      contacts.push(contact);
     }
     
     return contacts;
