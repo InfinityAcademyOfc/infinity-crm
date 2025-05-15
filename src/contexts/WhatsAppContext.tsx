@@ -46,8 +46,8 @@ interface WhatsAppContextType {
   createNewSession: () => string;
 }
 
-// Create context with undefined initial value
-const WhatsAppContext = createContext<WhatsAppContextType | undefined>(undefined);
+// Create context with null initial value instead of undefined
+const WhatsAppContext = createContext<WhatsAppContextType | null>(null);
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
