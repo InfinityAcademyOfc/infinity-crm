@@ -29,7 +29,7 @@ export const loadContacts = async (sessionId: string): Promise<WhatsAppContact[]
       }
     }
     
-    // Fetch contact names if available - use explicit typing
+    // Fetch contact names if available
     const { data, error: contactError } = await supabase
       .from("contacts")
       .select("name, phone")
@@ -37,14 +37,17 @@ export const loadContacts = async (sessionId: string): Promise<WhatsAppContact[]
       
     if (contactError) throw contactError;
     
-    // Create a simple map for name lookups with explicit typing
+    // Create a simple map for name lookups
     const phoneToName: Record<string, string> = {};
     
-    // Process contact data with simple loops and explicit type handling
-    const contactData = data as Array<{ name?: string; phone?: string }> | null;
-    if (contactData && Array.isArray(contactData)) {
-      for (const contact of contactData) {
-        if (contact && typeof contact.phone === 'string' && typeof contact.name === 'string') {
+    // Safely process contact data without complex type inference
+    if (data) {
+      // Use a simple loop to avoid complex type inference
+      for (let i = 0; i < data.length; i++) {
+        const contact = data[i];
+        if (contact && 
+            typeof contact.phone === 'string' && 
+            typeof contact.name === 'string') {
           phoneToName[contact.phone] = contact.name;
         }
       }
