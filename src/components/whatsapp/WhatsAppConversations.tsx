@@ -20,36 +20,26 @@ const WhatsAppConversations = ({ sessionId }: { sessionId: string }) => {
   const [input, setInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Scroll to bottom when new messages arrive
+  // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
 
   // Filter contacts based on search
-  const filteredContacts = contacts?.filter(contact => {
-    const contactName = contact?.name || contact?.number || contact?.phone || '';
+  const filteredContacts = contacts.filter(contact => {
+    const contactName = contact.name || contact.number || contact.phone || '';
     const query = searchQuery.toLowerCase();
     return contactName.toLowerCase().includes(query);
-  }) || [];
+  });
 
   const handleSendMessage = () => {
     if (!input.trim()) return;
     sendMessage(input);
     setInput("");
   };
-
-  // Handle errors gracefully
-  if (!sessionId) {
-    return (
-      <div className="flex items-center justify-center h-full p-6 text-muted-foreground">
-        <p>Sessão inválida ou não selecionada</p>
-      </div>
-    );
-  }
 
   return (
     <div className="flex h-full border rounded-lg overflow-hidden">
@@ -89,7 +79,13 @@ const WhatsAppConversations = ({ sessionId }: { sessionId: string }) => {
                         <h4 className="font-medium truncate">
                           {contact.name || contact.number || contact.phone}
                         </h4>
+                        <span className="text-xs text-muted-foreground">
+                          {/* Time would go here if we had it in the data */}
+                        </span>
                       </div>
+                      <p className="text-sm text-muted-foreground truncate">
+                        {/* Last message preview would go here */}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -114,7 +110,7 @@ const WhatsAppConversations = ({ sessionId }: { sessionId: string }) => {
               </div>
             </div>
             
-            <div className="flex-1 overflow-auto p-4" ref={scrollRef}>
+            <ScrollArea ref={scrollRef} className="flex-1 p-4">
               {loadingMessages ? (
                 <div className="flex justify-center py-4">
                   <Loader size={24} className="animate-spin text-muted-foreground" />
@@ -143,10 +139,9 @@ const WhatsAppConversations = ({ sessionId }: { sessionId: string }) => {
                       </div>
                     </div>
                   ))}
-                  <div ref={messagesEndRef} />
                 </div>
               )}
-            </div>
+            </ScrollArea>
             
             <div className="p-3 border-t bg-muted/10 flex items-center gap-2">
               <Button variant="ghost" size="icon">

@@ -25,7 +25,6 @@ import WhatsAppConfig from "./config/WhatsAppConfig";
 import AutomationsManager from "./automations/AutomationsManager";
 import { WhatsAppConnectionStatus } from "@/hooks/useQRCode";
 import { useWhatsApp } from "@/contexts/WhatsAppContext";
-import { ErrorBoundary } from "@/components/ui/error-boundary";
 
 interface WhatsAppMenuLayoutProps {
   sessionId: string;
@@ -51,25 +50,6 @@ const WhatsAppMenuLayout = ({
   const handleLogout = () => {
     disconnectSession(sessionId);
   };
-
-  const renderTabContent = (tabId: string, Component: React.ComponentType<any>) => (
-    <ErrorBoundary
-      fallback={
-        <div className="flex flex-col items-center justify-center h-full p-8 text-muted-foreground">
-          <p className="text-lg font-medium mb-2">Algo deu errado</p>
-          <p className="mb-4">Ocorreu um erro ao carregar este componente.</p>
-          <Button 
-            variant="outline" 
-            onClick={() => window.location.reload()}
-          >
-            Recarregar
-          </Button>
-        </div>
-      }
-    >
-      <Component sessionId={sessionId} />
-    </ErrorBoundary>
-  );
 
   return (
     <div className="w-full flex flex-col h-full">
@@ -109,35 +89,35 @@ const WhatsAppMenuLayout = ({
       <div className="flex-1 overflow-hidden">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
           <TabsContent value="conversations" className="m-0 p-0 h-full">
-            {renderTabContent("conversations", WhatsAppConversations)}
+            <WhatsAppConversations sessionId={sessionId} />
           </TabsContent>
           
           <TabsContent value="contacts" className="m-0 p-0 h-full">
-            {renderTabContent("contacts", ContactsManager)}
+            <ContactsManager sessionId={sessionId} />
           </TabsContent>
           
           <TabsContent value="lists" className="m-0 p-0 h-full">
-            {renderTabContent("lists", ListsManager)}
+            <ListsManager sessionId={sessionId} />
           </TabsContent>
           
           <TabsContent value="broadcasts" className="m-0 p-0 h-full">
-            {renderTabContent("broadcasts", BroadcastManager)}
+            <BroadcastManager sessionId={sessionId} />
           </TabsContent>
           
           <TabsContent value="schedules" className="m-0 p-0 h-full">
-            {renderTabContent("schedules", ScheduleManager)}
+            <ScheduleManager sessionId={sessionId} />
           </TabsContent>
           
           <TabsContent value="media" className="m-0 p-0 h-full">
-            {renderTabContent("media", MediaManager)}
+            <MediaManager sessionId={sessionId} />
           </TabsContent>
           
           <TabsContent value="automations" className="m-0 p-0 h-full">
-            {renderTabContent("automations", AutomationsManager)}
+            <AutomationsManager sessionId={sessionId} />
           </TabsContent>
           
           <TabsContent value="settings" className="m-0 p-0 h-full">
-            {renderTabContent("settings", WhatsAppConfig)}
+            <WhatsAppConfig sessionId={sessionId} />
           </TabsContent>
         </Tabs>
       </div>
