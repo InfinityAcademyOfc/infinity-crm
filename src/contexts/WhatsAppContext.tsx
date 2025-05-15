@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { WhatsAppConnectionStatus } from "@/hooks/useQRCode";
 import { useToast } from "@/hooks/use-toast";
 
+// Define each type separately to avoid circular references
 type WhatsAppSession = {
   id: string;
   name?: string;
@@ -25,7 +26,7 @@ type WhatsAppMessage = {
   created_at: string;
 };
 
-// Fixed interface to avoid circular type dependency
+// Define context interface explicitly
 interface WhatsAppContextType {
   currentSession: string | null;
   setCurrentSession: (sessionId: string | null) => void;
@@ -44,6 +45,7 @@ interface WhatsAppContextType {
   createNewSession: () => string;
 }
 
+// Create context with explicit undefined type
 const WhatsAppContext = createContext<WhatsAppContextType | undefined>(undefined);
 
 const API_URL = import.meta.env.VITE_API_URL || "";
@@ -304,6 +306,7 @@ export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return () => clearInterval(interval);
   }, []);
 
+  // Create the context value object explicitly matching the interface
   const contextValue: WhatsAppContextType = {
     currentSession,
     setCurrentSession,
