@@ -8,7 +8,7 @@ import { WhatsAppConnectionStatus } from "@/hooks/useQRCode";
 export type WhatsAppSession = {
   id: string;
   name?: string;
-  status: WhatsAppConnectionStatus;
+  status: "CONNECTED" | "DISCONNECTED" | string;
 };
 
 export type WhatsAppContact = {
