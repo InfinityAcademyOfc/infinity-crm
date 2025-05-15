@@ -29,16 +29,16 @@ export const loadContacts = async (sessionId: string): Promise<WhatsAppContact[]
     const uniqueNumbers: string[] = [];
     const seenNumbers = new Set<string>();
     
-    // Safely process message data with explicit type assertions
+    // Safely process message data with simple iteration
     if (Array.isArray(messageData)) {
-      messageData.forEach((item: unknown) => {
-        // Type guard check for record structure
-        const record = item as MessageRecord;
-        if (record && typeof record.number === 'string' && !seenNumbers.has(record.number)) {
-          seenNumbers.add(record.number);
-          uniqueNumbers.push(record.number);
+      for (let i = 0; i < messageData.length; i++) {
+        const item = messageData[i];
+        // Simple type check
+        if (item && typeof item.number === 'string' && !seenNumbers.has(item.number)) {
+          seenNumbers.add(item.number);
+          uniqueNumbers.push(item.number);
         }
-      });
+      }
     }
     
     // Fetch contact names if available
@@ -49,29 +49,30 @@ export const loadContacts = async (sessionId: string): Promise<WhatsAppContact[]
       
     if (contactError) throw contactError;
     
-    // Use a simple object map with explicit string keys/values
-    const phoneToName: {[key: string]: string} = {};
+    // Use a simple object with explicitly defined keys/values
+    const phoneToName: Record<string, string> = {};
     
-    // Process contact data with explicit type assertions
+    // Process contact data with simple iteration
     if (Array.isArray(contactData)) {
-      contactData.forEach((item: unknown) => {
-        // Type guard check for contact structure
-        const contact = item as ContactRecord;
-        if (contact && typeof contact.phone === 'string' && typeof contact.name === 'string') {
-          phoneToName[contact.phone] = contact.name;
+      for (let i = 0; i < contactData.length; i++) {
+        const item = contactData[i];
+        if (item && typeof item.phone === 'string' && typeof item.name === 'string') {
+          phoneToName[item.phone] = item.name;
         }
-      });
+      }
     }
     
-    // Build the final contacts array with explicit construction
-    const contacts: WhatsAppContact[] = uniqueNumbers.map((number: string) => {
-      return {
+    // Build contacts array with simple iteration to avoid complex mapping
+    const contacts: WhatsAppContact[] = [];
+    for (let i = 0; i < uniqueNumbers.length; i++) {
+      const number = uniqueNumbers[i];
+      contacts.push({
         id: number,
         number,
         name: phoneToName[number] || number,
         phone: number
-      };
-    });
+      });
+    }
     
     return contacts;
     
