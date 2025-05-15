@@ -25,10 +25,19 @@ export const loadContacts = async (sessionId: string): Promise<WhatsAppContact[]
       
     if (messageError) throw messageError;
     
-    // Extract unique numbers with explicit typing
-    const messageArray: MessageRecord[] = messageData || [];
-    const numbers: string[] = messageArray.map((msg: MessageRecord) => msg.number);
-    const uniqueNumbers: string[] = Array.from(new Set(numbers));
+    // Convert data to simple array and then extract numbers
+    const messageRecords = (messageData || []) as MessageRecord[];
+    const numberSet = new Set<string>();
+    
+    // Add each number to the set to ensure uniqueness
+    for (const record of messageRecords) {
+      if (record.number) {
+        numberSet.add(record.number);
+      }
+    }
+    
+    // Convert set to array
+    const uniqueNumbers = Array.from(numberSet);
     
     // Fetch contact names if available
     const { data: contactData, error: contactError } = await supabase
@@ -41,19 +50,22 @@ export const loadContacts = async (sessionId: string): Promise<WhatsAppContact[]
     // Create a map of phone number to contact name
     const contactMap = new Map<string, string>();
     
-    // Use explicitly typed contact array
-    const contactArray: ContactRecord[] = contactData || [];
-    contactArray.forEach((contact: ContactRecord) => {
+    // Explicitly type and process contact data
+    const contactRecords = (contactData || []) as ContactRecord[];
+    for (const contact of contactRecords) {
       contactMap.set(contact.phone, contact.name);
-    });
+    }
     
-    // Create contacts list
-    const contacts: WhatsAppContact[] = uniqueNumbers.map((number: string) => ({
-      id: number,
-      number,
-      name: contactMap.get(number) || number,
-      phone: number
-    }));
+    // Create contacts list with explicit typing
+    const contacts: WhatsAppContact[] = [];
+    for (const number of uniqueNumbers) {
+      contacts.push({
+        id: number,
+        number,
+        name: contactMap.get(number) || number,
+        phone: number
+      });
+    }
     
     return contacts;
     
