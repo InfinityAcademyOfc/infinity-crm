@@ -3,9 +3,11 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { loginUser } from "@/lib/auth/authUtils";
+import { loginUser, logoutUser, registerUser } from "@/lib/auth/authUtils";
 import { useAuthState } from "@/hooks/use-auth-state";
 import LoadingScreen from "@/components/ui/loading-screen";
+import { UserProfile } from "@/types/user";
+import { Company } from "@/types/company";
 
 interface AuthContextType {
   user: User | null;
@@ -14,8 +16,9 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, name: string, isCompany: boolean) => Promise<void>;
   signOut: () => Promise<void>;
-  profile: any;
-  company: any;
+  profile: UserProfile | null;
+  company: Company | null;
+  refreshUserData: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -51,8 +54,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   async function signUp(email: string, password: string, name: string, isCompany: boolean) {
     try {
-      // Importar dinamicamente para evitar dependências cíclicas
-      const { registerUser } = await import('@/lib/auth/authUtils');
       const { user } = await registerUser(email, password, name, isCompany);
 
       if (user) {
@@ -78,13 +79,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   async function signOut() {
     try {
-      // Importar dinamicamente para evitar dependências cíclicas
-      const { logoutUser } = await import('@/lib/auth/authUtils');
       await logoutUser();
       navigate('/login', { replace: true });
     } catch (error) {
       console.error("Erro ao fazer logout:", error);
       toast.error("Erro ao encerrar sessão");
+    }
+  }
+
+  async function refreshUserData() {
+    try {
+      const { hydrateUser } = await import('@/lib/hydrateUser');
+      const hydrationResult = await hydrateUser();
+      
+      // Não atualiza o estado diretamente, apenas retorna os dados
+      return hydrationResult;
+    } catch (error) {
+      console.error("Erro ao atualizar dados do usuário:", error);
+      toast.error("Não foi possível atualizar os dados do usuário");
+      throw error;
     }
   }
 
@@ -96,7 +109,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signUp,
     signOut,
     profile,
-    company
+    company,
+    refreshUserData
   };
 
   return (
