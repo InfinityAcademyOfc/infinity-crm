@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 // Define WhatsAppConnectionStatus type
 export type WhatsAppConnectionStatus = 'connected' | 'disconnected' | 'qr' | 'error' | 'not_started';
 
-// Define basic types first without circular references
+// Define primitive types first
 export type WhatsAppContact = {
   id: string;
   name?: string;
@@ -28,24 +28,31 @@ export type WhatsAppSession = {
   status: WhatsAppConnectionStatus;
 };
 
-// Define the context type without self-references
-type WhatsAppContextType = {
-  currentSession: string | null;
+// Define context actions separately
+type WhatsAppContextActions = {
   setCurrentSession: (sessionId: string | null) => void;
-  sessions: WhatsAppSession[];
-  loadingSessions: boolean;
-  connectionStatus: WhatsAppConnectionStatus;
-  selectedContact: WhatsAppContact | null;
   setSelectedContact: (contact: WhatsAppContact | null) => void;
-  contacts: WhatsAppContact[];
-  messages: WhatsAppMessage[];
-  loadingMessages: boolean;
   refreshSessions: () => Promise<void>;
   connectSession: (sessionId: string) => Promise<void>;
   disconnectSession: (sessionId: string) => Promise<void>;
   sendMessage: (message: string) => Promise<void>;
   createNewSession: () => string;
 };
+
+// Define context state separately
+type WhatsAppContextState = {
+  currentSession: string | null;
+  sessions: WhatsAppSession[];
+  loadingSessions: boolean;
+  connectionStatus: WhatsAppConnectionStatus;
+  selectedContact: WhatsAppContact | null;
+  contacts: WhatsAppContact[];
+  messages: WhatsAppMessage[];
+  loadingMessages: boolean;
+};
+
+// Combine state and actions into final context type
+type WhatsAppContextType = WhatsAppContextState & WhatsAppContextActions;
 
 const WhatsAppContext = createContext<WhatsAppContextType | undefined>(undefined);
 
