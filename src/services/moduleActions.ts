@@ -150,8 +150,8 @@ export const convertLeadToClientAction = (set: any, get: any, leadId: string) =>
       company: "",
       source: lead.source || "",
       status: 'active',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      created_at: new Date().toISOString(),  // Fixed: using created_at instead of createdAt
+      updated_at: new Date().toISOString(),  // Fixed: using updated_at instead of updatedAt
       company_id: lead.company_id
     };
     
