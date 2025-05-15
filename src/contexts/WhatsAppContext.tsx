@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -6,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 // Define WhatsAppConnectionStatus type
 export type WhatsAppConnectionStatus = 'connected' | 'disconnected' | 'qr' | 'error' | 'not_started';
 
-// Separate types to avoid circular references
+// Define basic types first without circular references
 export type WhatsAppContact = {
   id: string;
   name?: string;
@@ -29,8 +28,8 @@ export type WhatsAppSession = {
   status: WhatsAppConnectionStatus;
 };
 
-// Define context interface separately to avoid deep instantiation
-interface WhatsAppContextType {
+// Define the context type without self-references
+type WhatsAppContextType = {
   currentSession: string | null;
   setCurrentSession: (sessionId: string | null) => void;
   sessions: WhatsAppSession[];
@@ -46,7 +45,7 @@ interface WhatsAppContextType {
   disconnectSession: (sessionId: string) => Promise<void>;
   sendMessage: (message: string) => Promise<void>;
   createNewSession: () => string;
-}
+};
 
 const WhatsAppContext = createContext<WhatsAppContextType | undefined>(undefined);
 
