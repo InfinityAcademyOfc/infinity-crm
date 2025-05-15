@@ -1,40 +1,130 @@
 
 import React from 'react';
+import { Heading1, Heading2, Heading3, Heading4, Heading5, Heading6 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { 
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem
-} from '@/components/ui/dropdown-menu';
-import { Heading1, Heading2, Heading3 } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 interface HeadingControlsProps {
-  onFormatAction: (command: string, value?: string) => void;
+  handleFormatAction: (action: string) => void;
 }
 
-export const HeadingControls: React.FC<HeadingControlsProps> = ({ onFormatAction }) => {
+const HeadingControls: React.FC<HeadingControlsProps> = ({ handleFormatAction }) => {
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="h-8">
-          <Heading1 size={16} />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent>
-        <DropdownMenuItem onClick={() => onFormatAction('formatBlock', '<h1>')}>
-          <Heading1 className="mr-2" size={16} /> Heading 1
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onFormatAction('formatBlock', '<h2>')}>
-          <Heading2 className="mr-2" size={16} /> Heading 2
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onFormatAction('formatBlock', '<h3>')}>
-          <Heading3 className="mr-2" size={16} /> Heading 3
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onFormatAction('formatBlock', '<p>')}>
-          Normal Text
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => handleFormatAction('h1')} 
+              aria-label="Heading 1"
+            >
+              <Heading1 size={16} />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Heading 1</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => handleFormatAction('h2')} 
+              aria-label="Heading 2"
+            >
+              <Heading2 size={16} />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Heading 2</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => handleFormatAction('h3')} 
+              aria-label="Heading 3"
+            >
+              <Heading3 size={16} />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Heading 3</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => handleFormatAction('h4')} 
+              aria-label="Heading 4"
+            >
+              <Heading4 size={16} />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Heading 4</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => handleFormatAction('h5')} 
+              aria-label="Heading 5"
+            >
+              <Heading5 size={16} />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Heading 5</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => handleFormatAction('h6')} 
+              aria-label="Heading 6"
+            >
+              <Heading6 size={16} />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Heading 6</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    </>
   );
 };
+
+export default HeadingControls;

@@ -1,173 +1,191 @@
 
-import React, { useState, useRef, useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Avatar } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Loader2 } from "lucide-react";
-import { format } from "date-fns";
+import { Send, PaperclipIcon, Smile, Mic, Plus, Search, MessageSquare } from "lucide-react";
 import { useWhatsApp } from "@/contexts/WhatsAppContext";
+import { useState } from "react";
 
-interface WhatsAppConversationsProps {
-  sessionId: string;
-}
-
-const WhatsAppConversations = ({ sessionId }: WhatsAppConversationsProps) => {
+const WhatsAppConversations = ({ sessionId }: { sessionId: string }) => {
   const { 
+    contacts, 
+    messages, 
     selectedContact, 
     setSelectedContact,
-    contacts,
-    messages,
     loadingMessages,
-    sendMessage 
+    sendMessage
   } = useWhatsApp();
   
-  const [messageText, setMessageText] = useState("");
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  
-  // Scroll to bottom when messages change
+  const [input, setInput] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
   }, [messages]);
-  
-  const handleSendMessage = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (messageText.trim()) {
-      sendMessage(messageText);
-      setMessageText("");
-    }
-  };
 
-  // Format timestamp for messages
-  const formatTimestamp = (timestamp: string) => {
-    try {
-      return format(new Date(timestamp), "HH:mm");
-    } catch (error) {
-      return "";
-    }
-  };
+  // Filter contacts based on search
+  const filteredContacts = contacts.filter(contact => {
+    const contactName = contact.name || contact.number || contact.phone || '';
+    const query = searchQuery.toLowerCase();
+    return contactName.toLowerCase().includes(query);
+  });
 
-  if (!selectedContact) {
-    return (
-      <div className="flex flex-col h-full">
-        <div className="border-b p-4">
-          <h2 className="font-medium">Conversas</h2>
-        </div>
-        
-        <div className="p-4">
-          <div className="border rounded-md p-6 text-center">
-            <h3 className="font-medium text-lg mb-2">Selecione um contato</h3>
-            <p className="text-muted-foreground text-sm">
-              Escolha um contato da lista para iniciar uma conversa
-            </p>
-          </div>
-        </div>
-        
-        <div className="flex-1 flex flex-col space-y-2 p-4">
-          {contacts.length === 0 ? (
-            <div className="text-center p-4">
-              <p className="text-muted-foreground">Nenhum contato encontrado.</p>
-            </div>
-          ) : (
-            contacts.map((contact) => (
-              <div
-                key={contact.id}
-                className="flex items-center space-x-4 p-2 rounded-md hover:bg-secondary cursor-pointer"
-                onClick={() => setSelectedContact(contact)}
-              >
-                <Avatar className="h-10 w-10">
-                  <div className="bg-primary/10 text-primary font-medium h-full w-full flex items-center justify-center">
-                    {contact.name?.charAt(0) || contact.number?.charAt(0) || "?"}
-                  </div>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">{contact.name || contact.number || "Desconhecido"}</p>
-                  <p className="text-sm text-muted-foreground truncate">
-                    {contact.number || contact.phone || ""}
-                  </p>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
-    );
-  }
+  const handleSendMessage = () => {
+    if (!input.trim()) return;
+    sendMessage(input);
+    setInput("");
+  };
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="border-b px-4 py-3 flex items-center">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="mr-2 md:hidden"
-          onClick={() => setSelectedContact(null)}
-        >
-          &larr;
-        </Button>
-        <Avatar className="h-9 w-9 mr-2">
-          <div className="bg-primary/10 text-primary font-medium h-full w-full flex items-center justify-center">
-            {selectedContact.name?.charAt(0) || selectedContact.number?.charAt(0) || "?"}
-          </div>
-        </Avatar>
-        <div>
-          <h2 className="font-medium leading-none">
-            {selectedContact.name || selectedContact.number || "Desconhecido"}
-          </h2>
-          <p className="text-xs text-muted-foreground">
-            {selectedContact.number || selectedContact.phone || ""}
-          </p>
+    <div className="flex h-full border rounded-lg overflow-hidden">
+      <div className="w-80 border-r bg-muted/30">
+        <div className="p-3 border-b">
+          <Input
+            placeholder="Pesquisar conversa..."
+            className="bg-muted"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            prefix={<Search className="text-muted-foreground" size={16} />}
+          />
         </div>
-      </div>
-
-      <ScrollArea className="flex-1 p-4">
-        <div className="space-y-4">
-          {loadingMessages ? (
-            <div className="flex justify-center my-4">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
-          ) : messages.length === 0 ? (
-            <div className="text-center p-8">
-              <p className="text-muted-foreground">Nenhuma mensagem no histórico.</p>
-              <p className="text-sm text-muted-foreground mt-1">Envie uma mensagem para iniciar a conversa</p>
-            </div>
-          ) : (
-            messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex ${message.from_me ? "justify-end" : "justify-start"}`}
-              >
+        <ScrollArea className="h-[calc(100%-56px)]">
+          <div className="space-y-1 p-2">
+            {filteredContacts.length === 0 ? (
+              <div className="py-4 text-center text-muted-foreground">
+                {searchQuery ? "Nenhuma conversa encontrada" : "Nenhuma conversa iniciada"}
+              </div>
+            ) : (
+              filteredContacts.map((contact) => (
                 <div
-                  className={`max-w-[80%] px-4 py-2 rounded-lg ${
-                    message.from_me
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-secondary text-secondary-foreground"
+                  key={contact.id}
+                  onClick={() => setSelectedContact(contact)}
+                  className={`cursor-pointer p-3 rounded-md ${
+                    selectedContact?.id === contact.id
+                      ? "bg-primary/10 border-l-4 border-primary"
+                      : "hover:bg-muted"
                   }`}
                 >
-                  <div>{message.message}</div>
-                  <div className={`text-xs mt-1 ${message.from_me ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
-                    {formatTimestamp(message.created_at)}
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-medium">
+                      {(contact.name || contact.number || contact.phone || "")?.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-center">
+                        <h4 className="font-medium truncate">
+                          {contact.name || contact.number || contact.phone}
+                        </h4>
+                        <span className="text-xs text-muted-foreground">
+                          {/* Time would go here if we had it in the data */}
+                        </span>
+                      </div>
+                      <p className="text-sm text-muted-foreground truncate">
+                        {/* Last message preview would go here */}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))
-          )}
-          <div ref={messagesEndRef} />
-        </div>
-      </ScrollArea>
+              ))
+            )}
+          </div>
+        </ScrollArea>
+      </div>
 
-      <div className="border-t p-4">
-        <form onSubmit={handleSendMessage} className="flex space-x-2">
-          <Input
-            value={messageText}
-            onChange={(e) => setMessageText(e.target.value)}
-            placeholder="Digite uma mensagem..."
-            className="flex-1"
-          />
-          <Button type="submit" size="icon">
-            <Send className="h-4 w-4" />
-          </Button>
-        </form>
+      <div className="flex flex-col flex-1 overflow-hidden">
+        {selectedContact ? (
+          <>
+            <div className="p-3 border-b bg-muted/30 flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-medium">
+                {(selectedContact.name || selectedContact.number || selectedContact.phone || "")?.charAt(0).toUpperCase()}
+              </div>
+              <div>
+                <h4 className="font-medium">
+                  {selectedContact.name || selectedContact.number || selectedContact.phone}
+                </h4>
+                <p className="text-xs text-muted-foreground">online</p>
+              </div>
+            </div>
+            
+            <ScrollArea ref={scrollRef} className="flex-1 p-4">
+              {loadingMessages ? (
+                <div className="flex justify-center py-4">
+                  <Loader size={24} className="animate-spin text-muted-foreground" />
+                </div>
+              ) : messages.length === 0 ? (
+                <div className="py-8 text-center text-muted-foreground">
+                  Nenhuma mensagem. Envie uma mensagem para começar.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {messages.map((msg) => (
+                    <div
+                      key={msg.id}
+                      className={`max-w-[70%] p-3 rounded-lg ${
+                        msg.from_me
+                          ? "ml-auto bg-primary text-primary-foreground"
+                          : "bg-muted"
+                      }`}
+                    >
+                      <p>{msg.message}</p>
+                      <div className="text-xs text-right mt-1 opacity-70">
+                        {new Date(msg.created_at).toLocaleTimeString([], {
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </ScrollArea>
+            
+            <div className="p-3 border-t bg-muted/10 flex items-center gap-2">
+              <Button variant="ghost" size="icon">
+                <Smile size={20} />
+              </Button>
+              <Button variant="ghost" size="icon">
+                <PaperclipIcon size={20} />
+              </Button>
+              <Input
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Digite uma mensagem"
+                className="flex-1"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    handleSendMessage();
+                  }
+                }}
+              />
+              <Button
+                onClick={handleSendMessage}
+                disabled={!input.trim()}
+                variant="ghost"
+                size="icon"
+                className={input.trim() ? "text-primary" : ""}
+              >
+                {input.trim() ? <Send size={20} /> : <Mic size={20} />}
+              </Button>
+            </div>
+          </>
+        ) : (
+          <div className="flex-1 flex flex-col items-center justify-center p-4 text-muted-foreground">
+            <div className="h-40 w-40 rounded-full bg-muted flex items-center justify-center mb-4">
+              <MessageSquare size={64} className="text-muted-foreground/50" />
+            </div>
+            <h3 className="text-lg font-medium mb-2">WhatsApp</h3>
+            <p className="text-center max-w-md mb-4">
+              Selecione uma conversa ou inicie uma nova para enviar mensagens.
+            </p>
+            <Button variant="outline">
+              <Plus size={16} className="mr-2" /> Nova Conversa
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );
