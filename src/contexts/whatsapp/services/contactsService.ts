@@ -2,7 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { WhatsAppContact } from "../types";
 
-// Define explicit interfaces for our data structures
+// Simple explicit interface definitions
 interface MessageRecord {
   number: string;
 }
@@ -25,14 +25,15 @@ export const loadContacts = async (sessionId: string): Promise<WhatsAppContact[]
       
     if (messageError) throw messageError;
     
-    // Process message data with primitive operations
+    // Use simple arrays and primitive types to avoid complex type inferences
     const uniqueNumbers: string[] = [];
     const seenNumbers = new Set<string>();
     
-    // Safely handle message data as a simple array
+    // Explicitly check if messageData is an array
     if (Array.isArray(messageData)) {
       for (let i = 0; i < messageData.length; i++) {
-        const record = messageData[i];
+        const record = messageData[i] as MessageRecord | null;
+        // Use basic type guards with typeof
         if (record && typeof record.number === 'string' && !seenNumbers.has(record.number)) {
           seenNumbers.add(record.number);
           uniqueNumbers.push(record.number);
@@ -48,32 +49,33 @@ export const loadContacts = async (sessionId: string): Promise<WhatsAppContact[]
       
     if (contactError) throw contactError;
     
-    // Create a simple lookup object with explicit typing
-    const nameByPhone: {[key: string]: string} = {};
+    // Use a simple object instead of Record<> type
+    const phoneToName: {[key: string]: string} = {};
     
-    // Safely handle contact data as a simple array
+    // Explicitly check if contactData is an array
     if (Array.isArray(contactData)) {
       for (let i = 0; i < contactData.length; i++) {
-        const contact = contactData[i];
+        const contact = contactData[i] as ContactRecord | null;
+        // Use basic type guards with typeof
         if (contact && typeof contact.phone === 'string' && typeof contact.name === 'string') {
-          nameByPhone[contact.phone] = contact.name;
+          phoneToName[contact.phone] = contact.name;
         }
       }
     }
     
-    // Create the final contacts list with explicit types
-    const finalContacts: WhatsAppContact[] = [];
+    // Build the final contacts array with explicit types
+    const resultContacts: WhatsAppContact[] = [];
     for (let i = 0; i < uniqueNumbers.length; i++) {
       const number = uniqueNumbers[i];
-      finalContacts.push({
+      resultContacts.push({
         id: number,
         number,
-        name: nameByPhone[number] || number,
+        name: phoneToName[number] || number,
         phone: number
       });
     }
     
-    return finalContacts;
+    return resultContacts;
     
   } catch (error) {
     console.error("Error loading contacts:", error);
