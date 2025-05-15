@@ -1,17 +1,17 @@
 
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { ThemeProvider } from "@/components/ui/theme-provider"
+import { ThemeProvider } from "./components/ui/theme-provider";
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import WaitingArea from './pages/WaitingArea';
 import Pricing from './pages/Pricing';
-import { QueryClient, QueryClientProvider } from 'react-query';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import WhatsAppIntegrationPage from './pages/WhatsAppIntegration';
 import UnifiedChatButton from './components/chat/UnifiedChatButton';
-import { Toaster } from "@/components/ui/toaster"
+import { Toaster } from "./components/ui/toaster";
 
 // Import WhatsAppProvider
 import { WhatsAppProvider } from './contexts/WhatsAppContext';
