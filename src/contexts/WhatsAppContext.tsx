@@ -26,7 +26,7 @@ type WhatsAppMessage = {
   created_at: string;
 };
 
-// Define context interface explicitly
+// Define context interface explicitly with primitive types
 interface WhatsAppContextType {
   currentSession: string | null;
   setCurrentSession: (sessionId: string | null) => void;
@@ -45,7 +45,7 @@ interface WhatsAppContextType {
   createNewSession: () => string;
 }
 
-// Create context with explicit undefined type
+// Create context with explicit undefined type to avoid type inference issues
 const WhatsAppContext = createContext<WhatsAppContextType | undefined>(undefined);
 
 const API_URL = import.meta.env.VITE_API_URL || "";
