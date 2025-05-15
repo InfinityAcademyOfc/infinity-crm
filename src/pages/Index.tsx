@@ -9,6 +9,7 @@ import VideoShowcase from '@/components/landing/VideoShowcase';
 import TestimonialCarousel from '@/components/landing/TestimonialCarousel';
 import GradientCTA from '@/components/landing/GradientCTA';
 import FAQ from '@/components/landing/FAQ';
+import PricingPlans from '@/components/landing/PricingPlans';
 
 const Index = () => {
   const { user, loading } = useAuth();
@@ -59,6 +60,11 @@ const Index = () => {
             
             <FeaturesGrid />
           </div>
+        </section>
+        
+        {/* Pricing Section */}
+        <section id="pricing">
+          <PricingPlans />
         </section>
         
         {/* Video Showcase Section */}

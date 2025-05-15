@@ -117,6 +117,8 @@ const NotFound = lazy(() =>
     .then(module => ({ default: module.default }))
 );
 
+const WaitingArea = React.lazy(() => import('@/pages/WaitingArea'));
+
 // Custom route change handler for animations
 const RouteChangeHandler = () => {
   const location = useLocation();
@@ -141,7 +143,7 @@ const queryClient = new QueryClient({
   }
 });
 
-const App = () => {
+function App() {
   // Use our theme manager hook
   const { isLoaded } = useThemeManager();
 
@@ -158,29 +160,13 @@ const App = () => {
           <Sonner />
           <AuthProvider>
             <Routes>
-              <Route path="/" element={
-                <Suspense fallback={<LoadingScreen />}>
-                  <PageTransition>
-                    <Index />
-                  </PageTransition>
-                </Suspense>
-              } />
-              <Route path="/login" element={
-                <Suspense fallback={<LoadingScreen />}>
-                  <PageTransition>
-                    <Login />
-                  </PageTransition>
-                </Suspense>
-              } />
-              <Route path="/register" element={
-                <Suspense fallback={<LoadingScreen />}>
-                  <PageTransition>
-                    <Register />
-                  </PageTransition>
-                </Suspense>
-              } />
+              {/* Public Routes */}
+              <Route path="/" element={<Index />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/waiting" element={<WaitingArea />} />
               
-              {/* Protected routes that require authentication */}
+              {/* Protected Routes */}
               <Route element={<ProtectedRoute />}>
                 <Route path="/app" element={<MainLayout />}>
                   <Route index element={
@@ -251,17 +237,13 @@ const App = () => {
                 </Route>
               </Route>
               
-              <Route path="*" element={
-                <Suspense fallback={<LoadingScreen />}>
-                  <NotFound />
-                </Suspense>
-              } />
+              <Route path="*" element={<NotFound />} />
             </Routes>
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
   );
-};
+}
 
 export default App;

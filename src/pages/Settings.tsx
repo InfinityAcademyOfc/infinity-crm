@@ -2,13 +2,14 @@
 import { useState } from "react";
 import { SectionHeader } from "@/components/ui/section-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User, Bell, Shield, Settings as SettingsIcon, Zap, PieChart } from "lucide-react";
+import { User, Bell, Shield, Settings as SettingsIcon, Zap, PieChart, CreditCard } from "lucide-react";
 import ProfileSettings from "@/components/settings/ProfileSettings";
 import NotificationSettings from "@/components/settings/NotificationSettings";
 import SecuritySettings from "@/components/settings/SecuritySettings";
 import SystemSettings from "@/components/settings/SystemSettings";
 import AutomationSettings from "@/components/settings/AutomationSettings";
 import DashboardSettings from "@/components/settings/DashboardSettings";
+import PlansSettings from "@/components/settings/PlansSettings";
 
 const Settings = () => {
   const [activeTab, setActiveTab] = useState("profile");
@@ -25,10 +26,14 @@ const Settings = () => {
         onValueChange={setActiveTab} 
         className="space-y-4"
       >
-        <TabsList className="grid grid-cols-3 md:grid-cols-6 max-w-4xl">
+        <TabsList className="grid grid-cols-3 md:grid-cols-7 max-w-5xl">
           <TabsTrigger value="profile" className="flex items-center gap-2">
             <User size={16} />
             <span className="hidden sm:inline">Perfil</span>
+          </TabsTrigger>
+          <TabsTrigger value="plans" className="flex items-center gap-2">
+            <CreditCard size={16} />
+            <span className="hidden sm:inline">Planos</span>
           </TabsTrigger>
           <TabsTrigger value="notifications" className="flex items-center gap-2">
             <Bell size={16} />
@@ -54,6 +59,10 @@ const Settings = () => {
         
         <TabsContent value="profile">
           <ProfileSettings />
+        </TabsContent>
+        
+        <TabsContent value="plans">
+          <PlansSettings />
         </TabsContent>
         
         <TabsContent value="notifications">

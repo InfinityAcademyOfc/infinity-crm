@@ -137,6 +137,54 @@ export type Database = {
         }
         Relationships: []
       }
+      company_subscriptions: {
+        Row: {
+          company_id: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          plan_id: string
+          started_at: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          plan_id: string
+          started_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          plan_id?: string
+          started_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_subscriptions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       config: {
         Row: {
           created_at: string | null
@@ -379,6 +427,80 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      plan_features: {
+        Row: {
+          created_at: string
+          description: string | null
+          feature_key: string
+          feature_value: string
+          id: string
+          plan_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          feature_key: string
+          feature_value: string
+          id?: string
+          plan_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          feature_key?: string
+          feature_value?: string
+          id?: string
+          plan_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_features_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plans: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          currency: string
+          description: string | null
+          id: string
+          name: string
+          price: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          name: string
+          price?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          name?: string
+          price?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       products: {
         Row: {

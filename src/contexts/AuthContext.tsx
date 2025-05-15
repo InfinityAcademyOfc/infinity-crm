@@ -1,129 +1,151 @@
 
-import React, { createContext, useContext, useState, useEffect } from "react";
-import { User, Session } from "@supabase/supabase-js";
-import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
-import { loginUser, logoutUser, registerUser } from "@/lib/auth/authUtils";
-import { useAuthState } from "@/hooks/use-auth-state";
-import LoadingScreen from "@/components/ui/loading-screen";
-import { UserProfile } from "@/types/user";
-import { Company } from "@/types/company";
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+import { User, Session } from '@supabase/supabase-js';
+import { registerUser } from '@/lib/registerUser';
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  error: string | null;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, name: string, isCompany: boolean) => Promise<void>;
+  signUp: (email: string, password: string, name: string, isCompany: boolean) => Promise<{ user: User | null, companyId?: string }>;
   signOut: () => Promise<void>;
-  profile: UserProfile | null;
-  company: Company | null;
-  refreshUserData: () => Promise<{profile: UserProfile | null, company: Company | null}>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const { user, session, profile, company, loading } = useAuthState();
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  async function signIn(email: string, password: string) {
-    try {
-      const { user, session } = await loginUser(email, password);
-      
-      if (user) {
-        toast.success("Login realizado com sucesso!");
-        navigate('/app', { replace: true });
-      }
-    } catch (error) {
-      console.error("Erro ao fazer login:", error);
-      let errorMessage = "Erro ao fazer login. Tente novamente.";
-      
-      if (error instanceof Error) {
-        if (error.message.includes("Invalid login credentials")) {
-          errorMessage = "Credenciais inválidas. Verifique seu email e senha.";
-        } else if (error.message.includes("Email not confirmed")) {
-          errorMessage = "Email não confirmado. Verifique sua caixa de entrada.";
+  useEffect(() => {
+    // Set up the auth state listener
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+
+        if (event === 'SIGNED_OUT') {
+          navigate('/');
+        } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          // Check if the user is a collaborator and direct to waiting area if so
+          if (session?.user) {
+            setTimeout(async () => {
+              const { data: profileData } = await supabase
+                .from('profiles')
+                .select('role, company_id')
+                .eq('id', session.user.id)
+                .maybeSingle();
+
+              if (profileData?.role === 'user' && !profileData?.company_id) {
+                navigate('/waiting');
+              } else if (profileData?.role === 'admin' || (profileData?.role === 'user' && profileData?.company_id)) {
+                navigate('/app');
+              }
+            }, 0);
+          }
         }
       }
-      
-      toast.error(errorMessage);
-      throw error;
-    }
-  }
+    );
 
-  async function signUp(email: string, password: string, name: string, isCompany: boolean) {
+    // Check for an existing session
+    const initSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      setSession(data.session);
+      setUser(data.session?.user ?? null);
+      setLoading(false);
+    };
+
+    initSession();
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, [navigate]);
+
+  const signIn = async (email: string, password: string) => {
     try {
-      const { user } = await registerUser(email, password, name, isCompany);
+      setLoading(true);
+      setError(null);
+      
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-      if (user) {
-        toast.success("Conta criada com sucesso! Você será redirecionado para o dashboard.");
-        navigate('/app', { replace: true });
+      if (error) {
+        throw error;
+      }
+
+      toast.success("Login realizado com sucesso!");
+    } catch (error: any) {
+      setError(error.message);
+      toast.error(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const signUp = async (email: string, password: string, name: string, isCompany: boolean) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const result = await registerUser({ email, password, name, isCompany });
+      
+      if (isCompany) {
+        return { 
+          user: result.user, 
+          companyId: result.companyId 
+        };
+      } else {
+        toast.success("Cadastro realizado! Aguardando convite de uma empresa.");
+        navigate('/waiting');
+        return { user: result.user };
       }
     } catch (error: any) {
-      console.error("Erro ao criar conta:", error);
-      let errorMessage = "Erro ao criar conta. Tente novamente.";
-      
-      if (error instanceof Error) {
-        if (error.message.includes("User already registered")) {
-          errorMessage = "Este email já está registrado. Tente fazer login.";
-        } else if (error.message.includes("Password should be")) {
-          errorMessage = "A senha não atende aos requisitos de segurança.";
-        }
-      }
-      
-      toast.error(errorMessage);
-      throw error;
+      setError(error.message);
+      toast.error(error.message);
+      return { user: null };
+    } finally {
+      setLoading(false);
     }
-  }
+  };
 
-  async function signOut() {
+  const signOut = async () => {
     try {
-      await logoutUser();
-      navigate('/login', { replace: true });
-    } catch (error) {
-      console.error("Erro ao fazer logout:", error);
-      toast.error("Erro ao encerrar sessão");
+      setError(null);
+      await supabase.auth.signOut();
+      toast.success("Logout realizado com sucesso!");
+    } catch (error: any) {
+      setError(error.message);
+      toast.error(error.message);
     }
-  }
-
-  async function refreshUserData() {
-    try {
-      const { hydrateUser } = await import('@/lib/hydrateUser');
-      const hydrationResult = await hydrateUser();
-      
-      // Return the hydration result instead of just returning void
-      return hydrationResult;
-    } catch (error) {
-      console.error("Erro ao atualizar dados do usuário:", error);
-      toast.error("Não foi possível atualizar os dados do usuário");
-      throw error;
-    }
-  }
-
-  const value: AuthContextType = {
-    user,
-    session,
-    loading,
-    signIn,
-    signUp,
-    signOut,
-    profile,
-    company,
-    refreshUserData
   };
 
   return (
-    <AuthContext.Provider value={value}>
-      {loading ? <LoadingScreen /> : children}
+    <AuthContext.Provider
+      value={{ user, session, loading, error, signIn, signUp, signOut }}
+    >
+      {children}
     </AuthContext.Provider>
   );
-}
+};
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
+    throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 };
