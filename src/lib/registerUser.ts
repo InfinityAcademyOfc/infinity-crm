@@ -18,14 +18,17 @@ export async function registerUser({ name, email, password, isCompany }: Registe
   }
 
   try {
-    console.log("Iniciando registro de usuário:", email);
+    console.log("Iniciando registro de usuário:", email, "Tipo:", isCompany ? "Empresa" : "Colaborador");
 
-    // Etapa 1: criar usuário no Supabase Auth
+    // Etapa 1: criar usuário no Supabase Auth com o flag is_company
     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { name }
+        data: { 
+          name,
+          is_company: isCompany
+        }
       }
     });
 
@@ -95,21 +98,20 @@ export async function registerUser({ name, email, password, isCompany }: Registe
 
       companyId = companyInsert?.id;
       console.log("Empresa criada com ID:", companyId);
-    }
+      
+      // Etapa 3: atualizar o perfil da empresa com o company_id
+      if (companyId) {
+        console.log("Atualizando perfil da empresa...");
+        const { error: profileUpdateError } = await supabase
+          .from("profiles_companies")
+          .update({ company_id: companyId })
+          .eq("id", userId);
 
-    // Etapa 4: atualizar profile com company_id + role
-    console.log("Atualizando perfil do usuário...");
-    const { error: profileUpdateError } = await supabase
-      .from("profiles")
-      .update({ 
-        company_id: companyId, 
-        role: isCompany ? "admin" : "user" 
-      })
-      .eq("id", userId);
-
-    if (profileUpdateError) {
-      console.error("Erro completo na atualização do perfil:", profileUpdateError);
-      throw new Error("Erro ao atualizar perfil: " + profileUpdateError.message);
+        if (profileUpdateError) {
+          console.error("Erro na atualização do perfil da empresa:", profileUpdateError);
+          throw new Error("Erro ao atualizar perfil da empresa: " + profileUpdateError.message);
+        }
+      }
     }
 
     console.log("Registro completo realizado com sucesso");

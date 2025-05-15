@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import { Eye, EyeOff, Building2, User } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import { Eye, EyeOff, Building2, User, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -44,12 +45,15 @@ enum RegistrationStep {
 
 export const RegisterForm = () => {
   const { signUp } = useAuth();
+  const [searchParams] = useSearchParams();
+  const initialPlanId = searchParams.get('plan');
+  
   const [userType, setUserType] = useState('company');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [registrationStep, setRegistrationStep] = useState<RegistrationStep>(RegistrationStep.FORM);
-  const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
+  const [selectedPlanId, setSelectedPlanId] = useState<string | null>(initialPlanId);
   const [createdCompanyId, setCreatedCompanyId] = useState<string | null>(null);
 
   const form = useForm<RegisterFormValues>({
@@ -67,7 +71,7 @@ export const RegisterForm = () => {
     setIsSubmitting(true);
     try {
       if (userType === 'company') {
-        // For company, go to plan selection
+        // Para empresa, criar o usuário e ir para seleção de plano
         const { user, companyId } = await signUp(
           values.email, 
           values.password, 
@@ -77,17 +81,22 @@ export const RegisterForm = () => {
         
         if (user && companyId) {
           setCreatedCompanyId(companyId);
-          setRegistrationStep(RegistrationStep.PLAN);
+          // Se já veio com um plano da URL, pular direto para checkout
+          if (selectedPlanId) {
+            setRegistrationStep(RegistrationStep.CHECKOUT);
+          } else {
+            setRegistrationStep(RegistrationStep.PLAN);
+          }
         }
       } else {
-        // For collaborator, register and go to waiting area
+        // Para colaborador, registrar e ir para área de espera
         await signUp(
           values.email, 
           values.password, 
           values.name, 
           userType === 'company'
         );
-        // The redirect will be handled by the AuthContext
+        // O redirecionamento será tratado pelo AuthContext
       }
     } catch (error) {
       console.error("Registration error:", error);
@@ -105,17 +114,26 @@ export const RegisterForm = () => {
     setRegistrationStep(RegistrationStep.PLAN);
   };
 
-  const handleCheckoutComplete = () => {
-    // The redirect will be handled by the checkout component
+  const handleSkipPayment = () => {
+    toast.info("Redirecionando para o CRM. Você pode atualizar seu plano mais tarde.");
+    // Redirecionamento para o CRM será tratado pelo AuthContext
   };
 
-  // Show different content based on registration step
+  // Mostrar diferentes conteúdos com base na etapa de registro
   if (registrationStep === RegistrationStep.PLAN) {
     return (
       <div className="space-y-6">
-        <div className="text-center mb-6">
-          <h2 className="text-2xl font-bold text-white">Escolha um plano</h2>
-          <p className="text-white/70">Selecione o plano que melhor atende às necessidades do seu negócio.</p>
+        <div className="flex items-center mb-6">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-white"
+            onClick={() => setRegistrationStep(RegistrationStep.FORM)}
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Voltar
+          </Button>
+          <h2 className="text-2xl font-bold text-white text-center flex-1">Escolha um plano</h2>
         </div>
         
         <PricingSection 
@@ -132,12 +150,36 @@ export const RegisterForm = () => {
     }
 
     return (
-      <Checkout 
-        planId={selectedPlanId} 
-        companyId={createdCompanyId} 
-        onBack={handleBackToPlans}
-        onComplete={handleCheckoutComplete}
-      />
+      <div className="space-y-6">
+        <div className="flex items-center mb-6">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-white"
+            onClick={handleBackToPlans}
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Voltar
+          </Button>
+          <h2 className="text-2xl font-bold text-white text-center flex-1">Finalizar assinatura</h2>
+        </div>
+        
+        <Checkout 
+          planId={selectedPlanId} 
+          companyId={createdCompanyId} 
+          onBack={handleBackToPlans}
+        />
+        
+        <div className="text-center mt-4">
+          <Button
+            variant="ghost" 
+            className="text-primary hover:text-primary/80"
+            onClick={handleSkipPayment}
+          >
+            Pular pagamento por enquanto
+          </Button>
+        </div>
+      </div>
     );
   }
 

@@ -1,5 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import PlanCard from './PlanCard';
 import { planService } from '@/services/api/planService';
 import { PlanWithFeatures } from '@/types/plan';
@@ -8,15 +9,18 @@ interface PricingSectionProps {
   onSelectPlan?: (planId: string) => void;
   selectedPlanId?: string;
   showButtons?: boolean;
+  showRegisterLink?: boolean;
 }
 
 const PricingSection: React.FC<PricingSectionProps> = ({ 
   onSelectPlan = () => {}, 
   selectedPlanId,
-  showButtons = true 
+  showButtons = true,
+  showRegisterLink = false
 }) => {
   const [plans, setPlans] = useState<PlanWithFeatures[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const loadPlans = async () => {
@@ -31,6 +35,14 @@ const PricingSection: React.FC<PricingSectionProps> = ({
 
     loadPlans();
   }, []);
+
+  const handleSelectPlan = (planId: string) => {
+    if (showRegisterLink) {
+      navigate(`/register?plan=${planId}`);
+    } else {
+      onSelectPlan(planId);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -52,7 +64,7 @@ const PricingSection: React.FC<PricingSectionProps> = ({
             key={plan.id}
             plan={plan}
             isPopular={plan.code === 'pro'}
-            onSelectPlan={onSelectPlan}
+            onSelectPlan={handleSelectPlan}
             isSelected={selectedPlanId === plan.id}
             showButton={showButtons}
           />

@@ -6,13 +6,14 @@ import { toast } from 'sonner';
 import { User, Session } from '@supabase/supabase-js';
 import { registerUser } from '@/lib/registerUser';
 import { hydrateUser } from '@/lib/hydrateUser';
-import { Company } from '@/types/company';
+import { Company, CompanyProfile } from '@/types/company';
 import { UserProfile } from '@/types/user';
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   profile: UserProfile | null;
+  companyProfile: CompanyProfile | null;
   company: Company | null;
   loading: boolean;
   error: string | null;
@@ -20,6 +21,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, name: string, isCompany: boolean) => Promise<{ user: User | null, companyId?: string }>;
   signOut: () => Promise<void>;
   refreshUserData: () => Promise<void>;
+  isCompanyAccount: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -30,9 +32,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [companyProfile, setCompanyProfile] = useState<CompanyProfile | null>(null);
   const [company, setCompany] = useState<Company | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isCompanyAccount, setIsCompanyAccount] = useState(false);
   const navigate = useNavigate();
 
   const refreshUserData = async () => {
@@ -41,7 +45,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       const hydrationResult = await hydrateUser();
       setProfile(hydrationResult.profile);
+      setCompanyProfile(hydrationResult.companyProfile);
       setCompany(hydrationResult.company);
+      setIsCompanyAccount(!!hydrationResult.companyProfile);
     } catch (error) {
       console.error("Error refreshing user data:", error);
     }
@@ -49,6 +55,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   useEffect(() => {
     let isMounted = true;
+    
     // Set up the auth state listener
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, session) => {
@@ -59,11 +66,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         
         if (event === 'SIGNED_OUT') {
           setProfile(null);
+          setCompanyProfile(null);
           setCompany(null);
+          setIsCompanyAccount(false);
           setLoading(false);
           navigate('/');
         } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-          // Check if the user is a collaborator and direct to waiting area if so
           if (session?.user) {
             // Use setTimeout to prevent deadlock with Supabase auth
             setTimeout(async () => {
@@ -72,14 +80,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
               try {
                 const hydrationResult = await hydrateUser();
                 setProfile(hydrationResult.profile);
+                setCompanyProfile(hydrationResult.companyProfile);
                 setCompany(hydrationResult.company);
+                setIsCompanyAccount(!!hydrationResult.companyProfile);
                 setLoading(false);
                 
-                const profileData = hydrationResult.profile;
-                // Make sure to check if company_id exists on profileData before using it
-                if (profileData?.role === 'user' && !profileData?.company_id) {
+                // Lógica para direcionar com base no tipo de conta
+                if (hydrationResult.companyProfile) {
+                  // É uma conta empresarial - vai para o CRM
+                  navigate('/app');
+                } else if (hydrationResult.profile?.role === 'user' && !hydrationResult.profile?.company_id) {
+                  // É um colaborador sem empresa associada - vai para área de espera
                   navigate('/waiting');
-                } else if (profileData?.role === 'admin' || (profileData?.role === 'user' && profileData?.company_id)) {
+                } else if (hydrationResult.profile?.role === 'user' && hydrationResult.profile?.company_id) {
+                  // É um colaborador com empresa associada - vai para o CRM
                   navigate('/app');
                 }
               } catch (error) {
@@ -111,7 +125,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           try {
             const hydrationResult = await hydrateUser();
             setProfile(hydrationResult.profile);
+            setCompanyProfile(hydrationResult.companyProfile);
             setCompany(hydrationResult.company);
+            setIsCompanyAccount(!!hydrationResult.companyProfile);
           } catch (error) {
             console.error("Error in initial hydration:", error);
           } finally {
@@ -199,14 +215,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       value={{ 
         user, 
         session, 
-        profile, 
+        profile,
+        companyProfile,
         company, 
         loading, 
         error, 
         signIn, 
         signUp, 
         signOut,
-        refreshUserData
+        refreshUserData,
+        isCompanyAccount
       }}
     >
       {children}

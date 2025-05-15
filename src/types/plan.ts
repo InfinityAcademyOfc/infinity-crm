@@ -1,4 +1,3 @@
-
 export interface Plan {
   id: string;
   name: string;
@@ -37,3 +36,47 @@ export type PlanWithFeatures = Plan & {
 };
 
 export type PlanCode = 'free' | 'basic' | 'pro' | 'enterprise';
+
+export type PlanFeatureValue = string | number | boolean;
+
+export interface PlanFeatureDisplay {
+  key: string;
+  name: string;
+  values: {
+    free: PlanFeatureValue;
+    basic: PlanFeatureValue;
+    pro: PlanFeatureValue;
+    enterprise: PlanFeatureValue;
+  };
+}
+
+export interface PlanDisplayData {
+  free: {
+    name: string;
+    price: number;
+    description: string;
+    features: Array<{key: string, value: PlanFeatureValue}>;
+    popular: boolean;
+  };
+  basic: {
+    name: string;
+    price: number;
+    description: string;
+    features: Array<{key: string, value: PlanFeatureValue}>;
+    popular: boolean;
+  };
+  pro: {
+    name: string;
+    price: number;
+    description: string;
+    features: Array<{key: string, value: PlanFeatureValue}>;
+    popular: boolean;
+  };
+  enterprise: {
+    name: string;
+    price: number;
+    description: string;
+    features: Array<{key: string, value: PlanFeatureValue}>;
+    popular: boolean;
+  };
+}

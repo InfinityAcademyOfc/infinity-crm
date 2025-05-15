@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Plan, PlanFeature, PlanWithFeatures, CompanySubscription } from "@/types/plan";
@@ -37,41 +36,81 @@ export const planService = {
 
   async getPlansWithFeatures(): Promise<PlanWithFeatures[]> {
     try {
-      // First get all plans
-      const plans = await this.getPlans();
-      
-      // Then fetch features for each plan
-      const plansWithFeatures = await Promise.all(
-        plans.map(async (plan) => {
-          const features = await this.getPlanFeatures(plan.id);
-          return {
-            ...plan,
-            features
-          };
-        })
-      );
+      // Buscar todos os planos
+      const { data: plans, error: plansError } = await supabase
+        .from('plans')
+        .select('*')
+        .order('price', { ascending: true })
+        .eq('active', true);
+
+      if (plansError) throw plansError;
+
+      // Buscar características para os planos
+      const plansWithFeatures: PlanWithFeatures[] = [];
+
+      for (const plan of plans) {
+        const { data: features, error: featuresError } = await supabase
+          .from('plan_features')
+          .select('*')
+          .eq('plan_id', plan.id);
+
+        if (featuresError) throw featuresError;
+        
+        plansWithFeatures.push({
+          ...plan,
+          features: features || []
+        });
+      }
 
       return plansWithFeatures;
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error fetching plans with features:", error);
-      toast.error("Erro ao carregar detalhes dos planos");
       return [];
     }
   },
 
-  async getCompanySubscription(companyId: string): Promise<CompanySubscription | null> {
+  async getPlanById(planId: string): Promise<PlanWithFeatures | null> {
+    try {
+      // Buscar um plano específico
+      const { data: plan, error: planError } = await supabase
+        .from('plans')
+        .select('*')
+        .eq('id', planId)
+        .single();
+
+      if (planError) throw planError;
+
+      // Buscar características do plano
+      const { data: features, error: featuresError } = await supabase
+        .from('plan_features')
+        .select('*')
+        .eq('plan_id', planId);
+
+      if (featuresError) throw featuresError;
+      
+      return {
+        ...plan,
+        features: features || []
+      };
+    } catch (error) {
+      console.error("Error fetching plan by ID:", error);
+      return null;
+    }
+  },
+
+  async getCompanySubscription(companyId: string) {
     try {
       const { data, error } = await supabase
         .from('company_subscriptions')
         .select('*')
         .eq('company_id', companyId)
+        .eq('status', 'active')
         .maybeSingle();
-
+      
       if (error) throw error;
       return data;
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error fetching company subscription:", error);
-      toast.error("Erro ao carregar assinatura da empresa");
       return null;
     }
   },

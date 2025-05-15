@@ -588,6 +588,57 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles_companies: {
+        Row: {
+          company_id: string | null
+          created_at: string
+          email: string
+          id: string
+          name: string
+          role: string
+          status: string
+          subscription_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string
+          email: string
+          id: string
+          name: string
+          role?: string
+          status?: string
+          subscription_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          role?: string
+          status?: string
+          subscription_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_companies_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_companies_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "company_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       schedules: {
         Row: {
           contact_id: string | null

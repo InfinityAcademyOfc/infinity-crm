@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,9 +9,10 @@ import PlanCard from '@/components/pricing/PlanCard';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowUpRight, CreditCard } from 'lucide-react';
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from 'sonner';
 
 const PlansSettings = () => {
-  const { user } = useAuth();
+  const { companyProfile, company } = useAuth();
   const [plans, setPlans] = useState<PlanWithFeatures[]>([]);
   const [currentPlan, setCurrentPlan] = useState<PlanWithFeatures | null>(null);
   const [companyId, setCompanyId] = useState<string | null>(null);
@@ -18,21 +20,14 @@ const PlansSettings = () => {
 
   useEffect(() => {
     const fetchCompanyInfo = async () => {
-      if (!user) return;
+      if (!companyProfile) return;
 
       try {
-        // Get user's profile to find company_id
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('company_id')
-          .eq('id', user.id)
-          .maybeSingle();
-        
-        if (profileData?.company_id) {
-          setCompanyId(profileData.company_id);
+        if (companyProfile.company_id) {
+          setCompanyId(companyProfile.company_id);
           
           // Get company's subscription
-          const subscription = await planService.getCompanySubscription(profileData.company_id);
+          const subscription = await planService.getCompanySubscription(companyProfile.company_id);
           
           if (subscription) {
             // Load all plans
@@ -44,6 +39,12 @@ const PlansSettings = () => {
             if (currentPlanData) {
               setCurrentPlan(currentPlanData);
             }
+          } else {
+            // Sem assinatura - carregar todos os planos de qualquer maneira
+            const allPlans = await planService.getPlansWithFeatures();
+            setPlans(allPlans);
+            // Plano gratuito como padrão se não houver assinatura
+            setCurrentPlan(allPlans.find(plan => plan.code === 'free') || null);
           }
         }
       } catch (error) {
@@ -54,11 +55,62 @@ const PlansSettings = () => {
     };
 
     fetchCompanyInfo();
-  }, [user]);
+  }, [companyProfile]);
 
-  const handleChangePlan = (planId: string) => {
-    // Implementation for changing plan would go here
-    console.log('Change to plan:', planId);
+  const handleChangePlan = async (planId: string) => {
+    if (!companyId || !companyProfile) return;
+    
+    try {
+      // Check if there's an existing subscription
+      const existingSubscription = await planService.getCompanySubscription(companyId);
+      
+      if (existingSubscription) {
+        // Update existing subscription
+        const { error } = await supabase
+          .from('company_subscriptions')
+          .update({
+            plan_id: planId,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', existingSubscription.id);
+          
+        if (error) throw error;
+      } else {
+        // Create new subscription
+        const { data, error } = await supabase
+          .from('company_subscriptions')
+          .insert({
+            company_id: companyId,
+            plan_id: planId,
+            status: 'active',
+            started_at: new Date().toISOString()
+          })
+          .select('id')
+          .single();
+          
+        if (error) throw error;
+        
+        // Update company profile with subscription ID
+        if (data) {
+          const { error: updateError } = await supabase
+            .from('profiles_companies')
+            .update({ subscription_id: data.id })
+            .eq('id', companyProfile.id);
+            
+          if (updateError) throw updateError;
+        }
+      }
+      
+      // Reload plans data
+      const newPlanData = await planService.getPlanById(planId);
+      if (newPlanData) {
+        setCurrentPlan(newPlanData);
+        toast.success(`Plano alterado para ${newPlanData.name} com sucesso!`);
+      }
+    } catch (error) {
+      console.error('Error changing plan:', error);
+      toast.error('Não foi possível alterar o plano. Tente novamente.');
+    }
   };
 
   if (isLoading) {

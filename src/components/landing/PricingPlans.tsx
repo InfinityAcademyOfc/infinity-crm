@@ -1,11 +1,10 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
 import PricingSection from '@/components/pricing/PricingSection';
 
 const PricingPlans = () => {
   return (
-    <div className="py-20 relative">
+    <div className="py-20 relative" id="planos">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary/5 via-transparent to-transparent"></div>
       
       <div className="container mx-auto px-4 relative">
@@ -23,15 +22,7 @@ const PricingPlans = () => {
           </p>
         </div>
         
-        <PricingSection showButtons={false} />
-        
-        <div className="text-center mt-12">
-          <Link to="/register">
-            <button className="bg-primary hover:bg-primary/90 text-white px-8 py-3 rounded-md font-medium transition-all">
-              Cadastre-se agora
-            </button>
-          </Link>
-        </div>
+        <PricingSection showButtons={true} showRegisterLink={true} />
       </div>
     </div>
   );

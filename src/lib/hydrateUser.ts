@@ -1,7 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { UserProfile } from "@/types/user";
-import { Company } from "@/types/company";
+import { Company, CompanyProfile } from "@/types/company";
 
 export async function hydrateUser() {
   console.log("Iniciando hidratação dos dados do usuário...");
@@ -20,9 +20,50 @@ export async function hydrateUser() {
     throw new Error("Usuário não autenticado!");
   }
 
-  console.log("Buscando perfil para o usuário:", userId);
+  console.log("Buscando perfis para o usuário:", userId);
 
   try {
+    // Primeiro verificamos se é uma conta empresarial (profiles_companies)
+    const { data: companyProfile, error: companyProfileError } = await supabase
+      .from("profiles_companies")
+      .select("*")
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (!companyProfileError && companyProfile) {
+      console.log("Perfil empresarial encontrado:", companyProfile);
+      
+      let company: Company | null = null;
+      if (companyProfile.company_id) {
+        console.log("Buscando empresa:", companyProfile.company_id);
+        try {
+          const { data: companyData, error: companyError } = await supabase
+            .from("companies")
+            .select("*")
+            .eq("id", companyProfile.company_id)
+            .maybeSingle();
+
+          if (companyError) {
+            console.error("Erro ao buscar empresa:", companyError);
+            console.log("Continuando sem dados da empresa");
+          } else {
+            console.log("Empresa encontrada:", companyData);
+            company = companyData;
+          }
+        } catch (companyError) {
+          console.error("Erro ao buscar empresa:", companyError);
+        }
+      }
+
+      console.log("Hidratação de dados concluída para conta empresarial");
+      return {
+        profile: null,
+        companyProfile,
+        company
+      };
+    }
+
+    // Se não for uma conta empresarial, busca no profiles (colaborador)
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("*")
@@ -41,11 +82,12 @@ export async function hydrateUser() {
           status: "active",
           company_id: null
         } as UserProfile,
+        companyProfile: null,
         company: null
       };
     }
 
-    console.log("Perfil encontrado:", profile);
+    console.log("Perfil colaborador encontrado:", profile);
 
     let company: Company | null = null;
     if (profile && profile.company_id) {
@@ -69,7 +111,7 @@ export async function hydrateUser() {
       }
     }
 
-    console.log("Hidratação de dados concluída");
+    console.log("Hidratação de dados concluída para colaborador");
     return {
       profile: profile || {
         id: userId,
@@ -79,6 +121,7 @@ export async function hydrateUser() {
         status: "active",
         company_id: null
       } as UserProfile,
+      companyProfile: null,
       company
     };
   } catch (error) {
@@ -93,6 +136,7 @@ export async function hydrateUser() {
         status: "active",
         company_id: null
       } as UserProfile,
+      companyProfile: null,
       company: null
     };
   }
