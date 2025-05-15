@@ -1,14 +1,13 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { WhatsAppConnectionStatus } from "@/hooks/useQRCode";
 
 // Tipos
-export type WhatsAppConnectionStatus = 'connected' | 'disconnected' | 'qr' | 'error' | 'not_started';
-
 export type WhatsAppSession = {
   id: string;
   name?: string;
-  status: string; // 'CONNECTED' | 'DISCONNECTED' etc.
+  status: WhatsAppConnectionStatus; // 'connected' | 'disconnected' | 'qr' | 'error' | 'not_started'
 };
 
 export type WhatsAppContact = {
@@ -69,7 +68,11 @@ export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setSessions(data);
     } catch (error) {
       console.error("refreshSessions error:", error);
-      // Removemos notificações de erro sobre sessões
+      toast({
+        title: "Erro",
+        description: "Erro ao buscar sessões do WhatsApp",
+        variant: "destructive",
+      });
     } finally {
       setLoadingSessions(false);
     }
@@ -165,11 +168,18 @@ export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     try {
       await fetch(`${API_URL}/sessions/${sessionId}/logout`, { method: "POST" });
       setConnectionStatus("not_started");
-      // Removemos notificações sobre sessão
+      toast({ 
+        title: "Desconectado", 
+        description: "Sessão do WhatsApp encerrada." 
+      });
       await refreshSessions();
     } catch (error) {
       console.error("disconnectSession error:", error);
-      // Removemos notificações de erro sobre sessões
+      toast({
+        title: "Erro",
+        description: "Erro ao desconectar sessão",
+        variant: "destructive",
+      });
     }
   };
 
@@ -187,7 +197,11 @@ export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       });
     } catch (error) {
       console.error("sendMessage error:", error);
-      // Removemos notificações de erro sobre sessões
+      toast({
+        title: "Erro",
+        description: "Erro ao enviar mensagem",
+        variant: "destructive",
+      });
     }
   };
 

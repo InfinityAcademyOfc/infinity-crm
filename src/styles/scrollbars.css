@@ -1,6 +1,6 @@
 
 ::-webkit-scrollbar {
-  width: 4px;
+  width: var(--sidebar-scrollbar-width, 4px);
   height: 4px;
 }
 
@@ -9,14 +9,14 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: rgba(156, 163, 175, 0.1);
+  background-color: rgba(156, 163, 175, 0.15);
   border-radius: 20px;
-  border: 0px solid transparent;
+  border: 1px solid transparent;
   background-clip: content-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(156, 163, 175, 0.2);
+  background-color: rgba(156, 163, 175, 0.25);
 }
 
 .dark ::-webkit-scrollbar-thumb {
@@ -79,4 +79,30 @@
     z-index: 40;
     backdrop-filter: blur(2px);
   }
+}
+
+/* Custom styling for sidebar specifically */
+.sidebar-scrollbar::-webkit-scrollbar {
+  width: var(--sidebar-scrollbar-width, 2px);
+}
+
+.sidebar-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(156, 163, 175, 0.05);
+}
+
+.sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(156, 163, 175, 0.1);
+}
+
+.dark .sidebar-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(156, 163, 175, 0.03);
+}
+
+.dark .sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(156, 163, 175, 0.05);
+}
+
+/* Root variables for minimal scrollbar */
+:root {
+  --sidebar-scrollbar-width: 2px;
 }
