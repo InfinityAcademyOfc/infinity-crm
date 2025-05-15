@@ -69,7 +69,7 @@ interface TopNavProps {
 
 export function TopNav({
   openMobileNav,
-  isMobileView
+  isMobileView = false
 }: TopNavProps) {
   const location = useLocation();
 

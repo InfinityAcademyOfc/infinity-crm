@@ -1,23 +1,24 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { WhatsAppConnectionStatus } from "@/hooks/useQRCode";
 import { useToast } from "@/hooks/use-toast";
 
-type WhatsAppSession = {
+// Define types to avoid circular references
+export type WhatsAppConnectionStatus = "not_started" | "qr" | "connected" | "error";
+
+export type WhatsAppSession = {
   id: string;
   name?: string;
   status: "CONNECTED" | "DISCONNECTED" | "QRCODE" | "ERROR";
 };
 
-type WhatsAppContact = {
+export type WhatsAppContact = {
   id: string;
   name?: string;
   phone?: string;
   number?: string;
 };
 
-type WhatsAppMessage = {
+export type WhatsAppMessage = {
   id: string;
   session_id: string;
   number: string;

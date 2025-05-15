@@ -3,7 +3,7 @@ import { useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, PaperclipIcon, Smile, Mic, Plus, Search, MessageSquare } from "lucide-react";
+import { Send, PaperclipIcon, Smile, Mic, Plus, Search, MessageSquare, Loader } from "lucide-react";
 import { useWhatsApp } from "@/contexts/WhatsAppContext";
 import { useState } from "react";
 
@@ -50,7 +50,7 @@ const WhatsAppConversations = ({ sessionId }: { sessionId: string }) => {
             className="bg-muted"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            prefix={<Search className="text-muted-foreground" size={16} />}
+            startAdornment={<Search className="text-muted-foreground" size={16} />}
           />
         </div>
         <ScrollArea className="h-[calc(100%-56px)]">
