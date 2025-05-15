@@ -1,0 +1,153 @@
+
+
+@tailwind components;
+
+@layer components {
+  .responsive-container {
+    @apply w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+  
+  .responsive-grid {
+    @apply grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4;
+  }
+  
+  .responsive-flex {
+    @apply flex flex-col sm:flex-row;
+  }
+  
+  .responsive-card {
+    @apply w-full flex-shrink-0 sm:max-w-sm;
+  }
+  
+  /* Mobile-first padding and margin classes */
+  .responsive-p {
+    @apply p-3 sm:p-4 md:p-5 lg:p-6;
+  }
+  
+  .responsive-m {
+    @apply m-2 sm:m-3 md:m-4 lg:m-5;
+  }
+  
+  /* Fluid typography */
+  .text-fluid-xs {
+    @apply text-xs sm:text-sm;
+  }
+  
+  .text-fluid-sm {
+    @apply text-sm sm:text-base;
+  }
+  
+  .text-fluid-base {
+    @apply text-base sm:text-lg md:text-xl;
+  }
+  
+  .text-fluid-lg {
+    @apply text-lg sm:text-xl md:text-2xl;
+  }
+  
+  .text-fluid-xl {
+    @apply text-xl sm:text-2xl md:text-3xl lg:text-4xl;
+  }
+  
+  /* Responsive padding for main content area */
+  .main-content {
+    @apply p-3 md:p-5 lg:p-6;
+  }
+  
+  /* Mobile-friendly button size adjustments */
+  .btn-responsive {
+    @apply px-2 py-1 text-sm sm:px-3 sm:py-2 sm:text-base;
+  }
+  
+  /* Responsive table layout for mobile */
+  .table-responsive {
+    @apply w-full overflow-x-auto;
+  }
+  
+  /* Mobile menu toggles */
+  .mobile-menu-toggle {
+    @apply block md:hidden;
+  }
+  
+  .desktop-only {
+    @apply hidden md:block;
+  }
+  
+  .mobile-only {
+    @apply block md:hidden;
+  }
+  
+  /* Enhanced responsive utilities */
+  .responsive-stack {
+    @apply flex flex-col lg:flex-row gap-4;
+  }
+  
+  .responsive-reverse {
+    @apply flex flex-col-reverse lg:flex-row gap-4;
+  }
+  
+  /* Card grid for dashboard */
+  .card-grid {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4;
+  }
+  
+  /* Form responsiveness */
+  .form-grid {
+    @apply grid grid-cols-1 md:grid-cols-2 gap-4;
+  }
+  
+  /* For equal height cards */
+  .card-equal-height {
+    @apply flex flex-col h-full;
+  }
+  
+  /* For scroll containment */
+  .scroll-container {
+    @apply overflow-auto max-h-[500px] md:max-h-[600px] lg:max-h-[700px];
+  }
+  
+  /* Responsive aspect ratios */
+  .aspect-video-responsive {
+    @apply aspect-video sm:aspect-auto md:aspect-[16/9];
+  }
+  
+  /* Fullscreen container */
+  .fullscreen-container {
+    @apply fixed inset-0 z-50 bg-background flex flex-col overflow-hidden;
+  }
+  
+  /* Sidebar collapsible */
+  .sidebar-collapsible {
+    @apply transition-all duration-300 ease-in-out;
+  }
+  
+  /* Responsive dialog */
+  .responsive-dialog {
+    @apply w-full max-w-full sm:max-w-lg md:max-w-xl lg:max-w-2xl;
+  }
+  
+  /* Responsive avatar sizes */
+  .avatar-responsive {
+    @apply w-8 h-8 sm:w-10 sm:h-10;
+  }
+  
+  /* Button stack for mobile */
+  .button-stack-responsive {
+    @apply flex flex-col sm:flex-row gap-2;
+  }
+  
+  /* Mobile sidebar overlay */
+  .mobile-sidebar-overlay {
+    @apply fixed inset-0 bg-black/50 z-20 md:hidden;
+  }
+  
+  /* Content shifting with sidebar */
+  .content-shift-with-sidebar {
+    @apply transition-all duration-300 ease-in-out;
+  }
+  
+  /* Transparent top bar */
+  .transparent-topbar {
+    @apply bg-background/50 backdrop-blur supports-[backdrop-filter]:bg-background/50;
+  }
+}
