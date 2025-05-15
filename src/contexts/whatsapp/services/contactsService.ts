@@ -25,19 +25,21 @@ export const loadContacts = async (sessionId: string): Promise<WhatsAppContact[]
       
     if (messageError) throw messageError;
     
-    // Convert data to simple array and then extract numbers
-    const messageRecords = (messageData || []) as MessageRecord[];
+    // Process message data without complex type operations
+    const uniqueNumbers: string[] = [];
     const numberSet = new Set<string>();
     
-    // Add each number to the set to ensure uniqueness
-    for (const record of messageRecords) {
-      if (record.number) {
-        numberSet.add(record.number);
+    // Use explicit type assertion and simple iteration
+    const messageRecords = messageData as unknown as MessageRecord[];
+    if (messageRecords) {
+      for (let i = 0; i < messageRecords.length; i++) {
+        const record = messageRecords[i];
+        if (record && record.number && !numberSet.has(record.number)) {
+          numberSet.add(record.number);
+          uniqueNumbers.push(record.number);
+        }
       }
     }
-    
-    // Convert set to array
-    const uniqueNumbers = Array.from(numberSet);
     
     // Fetch contact names if available
     const { data: contactData, error: contactError } = await supabase
@@ -47,22 +49,28 @@ export const loadContacts = async (sessionId: string): Promise<WhatsAppContact[]
       
     if (contactError) throw contactError;
     
-    // Create a map of phone number to contact name
-    const contactMap = new Map<string, string>();
+    // Create a map of phone number to contact name with simple loop approach
+    const contactMap: Record<string, string> = {};
     
-    // Explicitly type and process contact data
-    const contactRecords = (contactData || []) as ContactRecord[];
-    for (const contact of contactRecords) {
-      contactMap.set(contact.phone, contact.name);
+    // Use explicit type assertion and simple iteration
+    const contactRecords = contactData as unknown as ContactRecord[];
+    if (contactRecords) {
+      for (let i = 0; i < contactRecords.length; i++) {
+        const contact = contactRecords[i];
+        if (contact && contact.phone) {
+          contactMap[contact.phone] = contact.name;
+        }
+      }
     }
     
     // Create contacts list with explicit typing
     const contacts: WhatsAppContact[] = [];
-    for (const number of uniqueNumbers) {
+    for (let i = 0; i < uniqueNumbers.length; i++) {
+      const number = uniqueNumbers[i];
       contacts.push({
         id: number,
         number,
-        name: contactMap.get(number) || number,
+        name: contactMap[number] || number,
         phone: number
       });
     }
