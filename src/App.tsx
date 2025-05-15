@@ -12,8 +12,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import WhatsAppIntegrationPage from './pages/WhatsAppIntegration';
 import UnifiedChatButton from './components/chat/UnifiedChatButton';
 import { Toaster } from "@/components/ui/toaster";
-
-// Import WhatsAppProvider from the new location
 import { WhatsAppProvider } from './contexts/whatsapp';
 
 const queryClient = new QueryClient();

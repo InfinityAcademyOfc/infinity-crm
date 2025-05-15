@@ -27,20 +27,22 @@ export const loadContacts = async (sessionId: string): Promise<WhatsAppContact[]
     if (contactError) throw contactError;
     
     // Create a map of phone number to contact name
-    const contactMap = new Map();
-    (contactData || []).forEach(contact => {
+    const contactMap = new Map<string, string>();
+    (contactData || []).forEach((contact: { name: string, phone: string }) => {
       contactMap.set(contact.phone, contact.name);
     });
     
-    // Create contacts list
-    return uniqueNumbers.map(number => ({
+    // Create contacts list with explicit typing
+    const contactsList: WhatsAppContact[] = uniqueNumbers.map((number: string) => ({
       id: number,
       number,
       name: contactMap.get(number) || number,
       phone: number
     }));
+    
+    return contactsList;
   } catch (error) {
-    console.error("Error loading contacts:", error);
+    console.error("Error loading messages:", error);
     return [];
   }
 };

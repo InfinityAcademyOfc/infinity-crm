@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { WhatsAppConnectionStatus } from "@/hooks/useQRCode";
@@ -18,9 +18,7 @@ import {
 } from "./services/sessionService";
 import { loadContacts } from "./services/contactsService";
 import { loadMessages } from "./services/messagesService";
-
-// Create context with null initial value
-const WhatsAppContext = createContext<WhatsAppContextType | null>(null);
+import { WhatsAppContext } from "./WhatsAppContext";
 
 export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentSession, setCurrentSession] = useState<string | null>(() => {
@@ -112,7 +110,7 @@ export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   // Create a new session
-  const createNewSession = () => {
+  const createNewSession = (): string => {
     const newSessionId = `session_${Date.now()}`;
     setCurrentSession(newSessionId);
     localStorage.setItem("wa-session-id", newSessionId);
@@ -194,8 +192,12 @@ export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   useEffect(() => {
     const fetchContacts = async () => {
       if (!currentSession) return;
-      const data = await loadContacts(currentSession);
-      setContacts(data);
+      try {
+        const contactsData = await loadContacts(currentSession);
+        setContacts(contactsData);
+      } catch (error) {
+        console.error("Error loading contacts:", error);
+      }
     };
     
     fetchContacts();
