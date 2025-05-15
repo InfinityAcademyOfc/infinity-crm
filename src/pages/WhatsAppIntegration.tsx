@@ -110,20 +110,20 @@ const WhatsAppIntegrationContent = () => {
                   <div className="font-medium">
                     {session.name || `Sessão: ${session.id}`}
                   </div>
-                  <Badge variant={session.status === "CONNECTED" ? "default" : "outline"}>
-                    {session.status === "CONNECTED" ? "Conectado" : "Desconectado"}
+                  <Badge variant={session.status === "connected" ? "default" : "outline"}>
+                    {session.status === "connected" ? "Conectado" : "Desconectado"}
                   </Badge>
                 </div>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center justify-between">
                   <Button
-                    variant={session.status !== "CONNECTED" ? "default" : "outline"}
+                    variant={session.status !== "connected" ? "default" : "outline"}
                     size="sm"
                     className="mt-2"
                     onClick={() => handleConnectClick(session.id)}
                   >
-                    {session.status !== "CONNECTED" ? (
+                    {session.status !== "connected" ? (
                       <>
                         <Smartphone size={14} className="mr-1" />
                         Conectar
@@ -136,7 +136,7 @@ const WhatsAppIntegrationContent = () => {
                     )}
                   </Button>
                   
-                  {session.status === "CONNECTED" && currentSession !== session.id && (
+                  {session.status === "connected" && currentSession !== session.id && (
                     <Button
                       variant="ghost"
                       size="sm"

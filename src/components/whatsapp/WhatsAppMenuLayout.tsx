@@ -23,9 +23,8 @@ import MediaManager from "./media/MediaManager";
 import ScheduleManager from "./schedules/ScheduleManager";
 import WhatsAppConfig from "./config/WhatsAppConfig";
 import AutomationsManager from "./automations/AutomationsManager";
-import { WhatsAppConnectionStatus } from "@/hooks/useQRCode";
-import { useWhatsApp } from "@/contexts/WhatsAppContext";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
+import { useWhatsApp, WhatsAppConnectionStatus } from "@/contexts/WhatsAppContext";
 
 interface WhatsAppMenuLayoutProps {
   sessionId: string;

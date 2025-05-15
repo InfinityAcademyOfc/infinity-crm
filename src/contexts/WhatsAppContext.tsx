@@ -1,15 +1,12 @@
+
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { WhatsAppConnectionStatus } from "@/hooks/useQRCode";
 
-// Tipos
-export type WhatsAppSession = {
-  id: string;
-  name?: string;
-  status: WhatsAppConnectionStatus; // 'connected' | 'disconnected' | 'qr' | 'error' | 'not_started'
-};
+// Define WhatsAppConnectionStatus type
+export type WhatsAppConnectionStatus = 'connected' | 'disconnected' | 'qr' | 'error' | 'not_started';
 
+// Separate types to avoid circular references
 export type WhatsAppContact = {
   id: string;
   name?: string;
@@ -26,6 +23,13 @@ export type WhatsAppMessage = {
   created_at: string;
 };
 
+export type WhatsAppSession = {
+  id: string;
+  name?: string;
+  status: WhatsAppConnectionStatus;
+};
+
+// Define context interface separately to avoid deep instantiation
 interface WhatsAppContextType {
   currentSession: string | null;
   setCurrentSession: (sessionId: string | null) => void;
@@ -236,14 +240,18 @@ export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       )
       .subscribe();
 
-    return () => supabase.removeChannel(channel);
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [currentSession, selectedContact]);
 
   // Atualizar status de conexão periodicamente
   useEffect(() => {
     if (!currentSession) return;
+    
     fetchConnectionStatus(currentSession);
     const interval = setInterval(() => fetchConnectionStatus(currentSession), 10000);
+    
     return () => clearInterval(interval);
   }, [currentSession]);
 
