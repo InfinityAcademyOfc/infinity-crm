@@ -25,18 +25,18 @@ export const loadContacts = async (sessionId: string): Promise<WhatsAppContact[]
       
     if (messageError) throw messageError;
     
-    // Process message data with primitive types only
+    // Process message data with primitive operations
     const uniqueNumbers: string[] = [];
-    const numberSet = new Set<string>();
+    const seenNumbers = new Set<string>();
     
-    // Type safety: explicitly convert to array first then process
-    const messages = Array.isArray(messageData) ? messageData : [];
-    
-    for (let i = 0; i < messages.length; i++) {
-      const record = messages[i];
-      if (record && typeof record.number === 'string' && !numberSet.has(record.number)) {
-        numberSet.add(record.number);
-        uniqueNumbers.push(record.number);
+    // Safely handle message data as a simple array
+    if (Array.isArray(messageData)) {
+      for (let i = 0; i < messageData.length; i++) {
+        const record = messageData[i];
+        if (record && typeof record.number === 'string' && !seenNumbers.has(record.number)) {
+          seenNumbers.add(record.number);
+          uniqueNumbers.push(record.number);
+        }
       }
     }
     
@@ -48,32 +48,32 @@ export const loadContacts = async (sessionId: string): Promise<WhatsAppContact[]
       
     if (contactError) throw contactError;
     
-    // Create a simple object map for phone numbers to names
-    const contactMap: Record<string, string> = {};
+    // Create a simple lookup object with explicit typing
+    const nameByPhone: {[key: string]: string} = {};
     
-    // Type safety: explicitly convert to array first then process
-    const contacts = Array.isArray(contactData) ? contactData : [];
-    
-    for (let i = 0; i < contacts.length; i++) {
-      const contact = contacts[i];
-      if (contact && typeof contact.phone === 'string' && typeof contact.name === 'string') {
-        contactMap[contact.phone] = contact.name;
+    // Safely handle contact data as a simple array
+    if (Array.isArray(contactData)) {
+      for (let i = 0; i < contactData.length; i++) {
+        const contact = contactData[i];
+        if (contact && typeof contact.phone === 'string' && typeof contact.name === 'string') {
+          nameByPhone[contact.phone] = contact.name;
+        }
       }
     }
     
-    // Create contacts list using primitive operations
-    const result: WhatsAppContact[] = [];
+    // Create the final contacts list with explicit types
+    const finalContacts: WhatsAppContact[] = [];
     for (let i = 0; i < uniqueNumbers.length; i++) {
       const number = uniqueNumbers[i];
-      result.push({
+      finalContacts.push({
         id: number,
         number,
-        name: contactMap[number] || number,
+        name: nameByPhone[number] || number,
         phone: number
       });
     }
     
-    return result;
+    return finalContacts;
     
   } catch (error) {
     console.error("Error loading contacts:", error);
