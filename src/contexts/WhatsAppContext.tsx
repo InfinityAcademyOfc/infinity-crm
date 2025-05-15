@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { WhatsAppConnectionStatus } from "@/hooks/useQRCode";
@@ -26,6 +25,7 @@ type WhatsAppMessage = {
   created_at: string;
 };
 
+// Fixed interface to avoid circular type dependency
 interface WhatsAppContextType {
   currentSession: string | null;
   setCurrentSession: (sessionId: string | null) => void;
