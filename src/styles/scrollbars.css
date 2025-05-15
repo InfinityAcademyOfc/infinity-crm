@@ -1,0 +1,82 @@
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(156, 163, 175, 0.2);
+  border-radius: 20px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(156, 163, 175, 0.3);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background-color: rgba(156, 163, 175, 0.15);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(156, 163, 175, 0.25);
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+/* Mobile sidebar styles - fix to prevent double scrollbars */
+@media (max-width: 767px) {
+  body.sidebar-open {
+    overflow: hidden;
+  }
+  
+  .sidebar {
+    max-width: 100%;
+    width: 280px !important;
+    overflow-y: auto !important;
+    height: 100% !important;
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    z-index: 50;
+    transform: translateX(0);
+    transition: transform 0.3s ease;
+  }
+  
+  /* Ensure only one scrollbar in mobile sidebar */
+  .sidebar-content-container {
+    overflow-y: visible !important;
+    height: 100%;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .sidebar-content-container > * {
+    overflow-y: visible !important;
+  }
+  
+  /* For the backdrop */
+  .sidebar-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 40;
+    backdrop-filter: blur(2px);
+  }
+}

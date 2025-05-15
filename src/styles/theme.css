@@ -1,0 +1,271 @@
+
+@tailwind base;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 98%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: var(--theme-primary, 270 50% 60%);
+    --primary-foreground: 210 40% 98%;
+    --secondary: 260 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: var(--theme-accent, 270 50% 96.1%);
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: var(--theme-ring, 270 50% 60%);
+    --radius: 0.5rem;
+    --neon-glow: 0 0 0 rgba(0, 0, 0, 0);
+    --neon-text-glow: 0 0 0 rgba(0, 0, 0, 0);
+    color-scheme: light;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: var(--theme-primary, 273 80% 60%);
+    --primary-foreground: 210 40% 98%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: var(--theme-accent, 273 80% 60%);
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: var(--theme-ring, 273 80% 60%);
+    --neon-glow: 0 0 8px rgba(var(--theme-primary), 0.4), 0 0 20px rgba(var(--theme-primary), 0.2);
+    --neon-text-glow: 0 0 5px rgba(var(--theme-primary), 0.6);
+    color-scheme: dark;
+  }
+
+  [data-accent="blue"] {
+    --theme-primary: 210 100% 50%;
+    --theme-accent: 210 100% 50%;
+    --theme-ring: 210 100% 50%;
+    --theme-gradient-color: 210, 100%, 50%;
+  }
+
+  [data-accent="green"] {
+    --theme-primary: 142 72% 29%;
+    --theme-accent: 142 72% 29%;
+    --theme-ring: 142 72% 29%;
+    --theme-gradient-color: 142, 72%, 29%;
+  }
+
+  [data-accent="purple"] {
+    --theme-primary: 273 80% 60%;
+    --theme-accent: 273 80% 60%;
+    --theme-ring: 273 80% 60%;
+    --theme-gradient-color: 273, 80%, 60%;
+  }
+
+  [data-accent="red"] {
+    --theme-primary: 0 72% 50%;
+    --theme-accent: 0 72% 50%;
+    --theme-ring: 0 72% 50%;
+    --theme-gradient-color: 0, 72%, 50%;
+  }
+
+  [data-accent="orange"] {
+    --theme-primary: 25 95% 53%;
+    --theme-accent: 25 95% 53%;
+    --theme-ring: 25 95% 53%;
+    --theme-gradient-color: 25, 95%, 53%;
+  }
+
+  [data-accent="yellow"] {
+    --theme-primary: 45 93% 47%;
+    --theme-accent: 45 93% 47%;
+    --theme-ring: 45 93% 47%;
+    --theme-gradient-color: 45, 93%, 47%;
+  }
+
+  [data-accent="pink"] {
+    --theme-primary: 330 81% 60%;
+    --theme-accent: 330 81% 60%;
+    --theme-ring: 330 81% 60%;
+    --theme-gradient-color: 330, 81%, 60%;
+  }
+
+  [data-accent="indigo"] {
+    --theme-primary: 245 58% 51%;
+    --theme-accent: 245 58% 51%;
+    --theme-ring: 245 58% 51%;
+    --theme-gradient-color: 245, 58%, 51%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground transition-colors duration-300;
+  }
+  
+  /* Enhanced Light Mode with better contrast and theme-aware backgrounds */
+  .light body {
+    background-image: 
+      linear-gradient(135deg, rgba(250, 250, 250, 0.9) 0%, rgba(245, 245, 252, 0.9) 100%),
+      radial-gradient(at 30% 20%, hsla(var(--theme-gradient-color, 273, 80%, 60%), 0.08) 0px, transparent 70%),
+      radial-gradient(at 70% 60%, hsla(var(--theme-gradient-color, 273, 80%, 60%), 0.06) 0px, transparent 60%);
+    background-color: #f5f5f8;
+    background-attachment: fixed;
+  }
+  
+  /* Improve card contrast in light mode */
+  .light .card {
+    @apply bg-white border border-gray-200 shadow-sm hover:shadow transition-shadow duration-200;
+    background-image: linear-gradient(to bottom right, rgba(255, 255, 255, 1), rgba(250, 250, 252, 0.9));
+  }
+  
+  /* Improved differentiation for white elements in light mode */
+  .light .bg-background {
+    @apply bg-gray-50;
+  }
+  
+  .light .input,
+  .light .select,
+  .light .textarea {
+    @apply bg-white border-gray-300;
+  }
+  
+  /* Add subtle gradient to cards based on theme color */
+  .light .card {
+    background-image: linear-gradient(
+      to bottom right,
+      white,
+      rgba(var(--theme-gradient-color, 273, 80%, 60%), 0.03)
+    );
+    @apply border-gray-200;
+  }
+  
+  .light .dropdown-content,
+  .light .popover-content {
+    @apply bg-white border border-gray-200 shadow-lg;
+  }
+  
+  .light .button-primary {
+    @apply shadow-md;
+    box-shadow: 0 2px 10px -2px rgba(var(--theme-gradient-color, 273, 80%, 60%), 0.3);
+  }
+  
+  /* Improve differentiation between sections and elements */
+  .light .sidebar,
+  .light .tabs-content,
+  .light .form-section {
+    background-color: rgba(248, 248, 250, 0.8);
+    border-color: rgba(230, 230, 240, 0.8);
+  }
+  
+  /* Enhanced shadows for light mode interactions */
+  .light .card:hover,
+  .light button:hover:not(.no-shadow) {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.03);
+  }
+  
+  /* Dark mode styling (existing) */
+  .dark body {
+    background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='rgba(147, 112, 219, .05)' fill-rule='evenodd'/%3E%3C/svg%3E"), linear-gradient(135deg, rgba(20, 20, 30, 1) 0%, rgba(30, 30, 45, 1) 100%);
+    background-attachment: fixed;
+  }
+}
+
+/* Neon effects for dark theme */
+.dark button:not(.no-neon),
+.dark .card:not(.no-neon),
+.dark .sidebar-item:not(.no-neon) {
+  box-shadow: var(--neon-glow);
+  transition: all 0.3s ease;
+}
+
+.dark button:not(.no-neon):hover,
+.dark .active-button:not(.no-neon) {
+  box-shadow: 0 0 12px rgba(var(--theme-primary), 0.6), 0 0 24px rgba(var(--theme-primary), 0.3);
+}
+
+.dark .card:not(.no-neon):hover {
+  box-shadow: 0 0 15px rgba(var(--theme-primary), 0.3), 0 0 30px rgba(var(--theme-primary), 0.15);
+}
+
+/* Sidebar neon border effect */
+.dark .sidebar-neon-border {
+  position: relative;
+}
+
+.dark .sidebar-neon-border::after {
+  content: '';
+  position: absolute;
+  right: -1px;
+  top: 20%;
+  height: 60%;
+  width: 1px;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(var(--theme-primary), 0.7),
+    transparent
+  );
+  box-shadow: 0 0 8px 2px rgba(var(--theme-primary), 0.4);
+}
+
+/* Floor neon effect */
+.dark .neon-floor {
+  position: relative;
+}
+
+.dark .neon-floor::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 5%;
+  width: 90%;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(var(--theme-primary), 0.7),
+    transparent
+  );
+  box-shadow: 0 0 8px 2px rgba(var(--theme-primary), 0.4);
+}
+
+/* Text with neon glow */
+.dark .neon-text {
+  text-shadow: var(--neon-text-glow);
+}
+
+/* Enhanced theme-specific dropdown styling */
+.dropdown-menu-content {
+  @apply bg-background border border-border shadow-lg;
+}
+
+/* Custom themed component modifications */
+.themed-card {
+  @apply border-opacity-40 border-primary/20 transition-all duration-200;
+}
+
+.light .themed-card {
+  @apply hover:border-primary/40 hover:shadow-md;
+  background-image: linear-gradient(to bottom right, rgba(255, 255, 255, 1), rgba(var(--theme-primary), 0.03));
+}
+
+.dark .themed-card {
+  background-image: linear-gradient(to bottom right, rgba(var(--theme-primary), 0.1), transparent);
+}
