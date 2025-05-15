@@ -111,7 +111,7 @@ const Sidebar = ({
         "bg-gradient-to-b from-background/95 to-background/98"
       )}
     >
-      <div className="flex-1 overflow-y-auto p-4 py-[30px] pt-14 sidebar-scrollbar">
+      <div className="flex-1 overflow-y-auto p-4 py-[30px] pt-14">
         <NavSection 
           title="Menu Principal" 
           items={mainMenuItems} 
