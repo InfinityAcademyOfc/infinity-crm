@@ -1,3 +1,4 @@
+
 // Tipos básicos para o WhatsApp
 export type WhatsAppConnectionStatus = 'connected' | 'disconnected' | 'qr' | 'error' | 'not_started' | 'loading';
 

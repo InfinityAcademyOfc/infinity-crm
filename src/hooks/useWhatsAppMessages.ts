@@ -128,7 +128,8 @@ export function useWhatsAppMessages(currentSession: string | null): UseWhatsAppM
   // Load messages when contact changes
   useEffect(() => {
     if (currentSession && selectedContact) {
-      loadMessages(currentSession, selectedContact.number || selectedContact.phone || '');
+      const contactNumber = selectedContact.number || selectedContact.phone || '';
+      loadMessages(currentSession, contactNumber);
     }
   }, [selectedContact, currentSession]);
 
