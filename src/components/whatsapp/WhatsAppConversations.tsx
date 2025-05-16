@@ -18,6 +18,7 @@ export default function WhatsAppConversations() {
     sessionId,
     loadingMessages,
   } = useContext(WhatsAppContext);
+
   const [message, setMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -91,4 +92,3 @@ export default function WhatsAppConversations() {
     </div>
   );
 }
-
