@@ -39,6 +39,7 @@ const WhatsAppConversations = () => {
     }
   };
 
+  // Filter messages for the selected contact
   const filteredMessages = selectedContact 
     ? messages.filter(msg => 
         msg.number === selectedContact.phone || 

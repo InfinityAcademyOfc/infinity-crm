@@ -20,12 +20,14 @@ export function useWhatsAppMessages(): WhatsAppMessagesHookResult {
   const [messages, setMessages] = useState<WhatsAppMessage[]>([]);
   const [contacts, setContacts] = useState<WhatsAppContact[]>([]);
   const [selectedContact, setSelectedContact] = useState<WhatsAppContact | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Don't do anything if there's no sessionId
     if (!sessionId) {
       setIsLoading(false);
+      setError(null);
       return;
     }
 
@@ -48,9 +50,7 @@ export function useWhatsAppMessages(): WhatsAppMessagesHookResult {
 
         if (msgError || contactsError) {
           console.error("Error fetching data:", msgError || contactsError);
-          if (sessionId) {
-            toast.error("Erro ao carregar mensagens ou contatos");
-          }
+          // Only show toast if session is active and a real error occurred
           setError("Erro ao carregar dados");
           setIsLoading(false);
           return;

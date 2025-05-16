@@ -4,10 +4,10 @@ import { Button } from "@/components/ui/button";
 import QRCodeModal from "@/components/whatsapp/QRCodeModal";
 import { Badge } from "@/components/ui/badge";
 import { Loader, Smartphone, Plus, RefreshCw } from "lucide-react";
-import { WhatsAppProvider, useWhatsApp } from "@/contexts/WhatsAppContext";
 import WhatsAppMenuLayout from "@/components/whatsapp/WhatsAppMenuLayout";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useWhatsApp } from "@/contexts/WhatsAppContext";
 
 // Componente de sessão do WhatsApp
 const WhatsAppSessionCard = ({ 
@@ -16,7 +16,7 @@ const WhatsAppSessionCard = ({
   onConnect, 
   onSelect 
 }: { 
-  session: ReturnType<typeof useWhatsApp>["sessions"][0]; 
+  session: any; 
   isActive: boolean;
   onConnect: () => void;
   onSelect: () => void;
@@ -61,17 +61,8 @@ const WhatsAppSessionCard = ({
   );
 };
 
-// Wrapper principal que fornece o contexto do WhatsApp
+// Componente principal
 const WhatsAppIntegrationPage = () => {
-  return (
-    <WhatsAppProvider>
-      <WhatsAppIntegrationContent />
-    </WhatsAppProvider>
-  );
-};
-
-// Componente interno que consome o contexto do WhatsApp
-const WhatsAppIntegrationContent = () => {
   const { 
     currentSession, 
     setCurrentSession,

@@ -3,10 +3,11 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from "./components/ui/theme-provider";
 import { AuthProvider } from './contexts/AuthContext';
-import { WhatsAppProvider } from './contexts/WhatsAppContext';
 import { WhatsAppSessionProvider } from './contexts/WhatsAppSessionContext';
+import { WhatsAppProvider } from './contexts/WhatsAppContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from "./components/ui/toaster";
+import { Toaster as SonnerToaster } from "sonner";
 
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import MainLayout from "./layouts/MainLayout";
@@ -80,6 +81,7 @@ function App() {
                 </Routes>
 
                 <Toaster />
+                <SonnerToaster position="top-right" />
               </QueryClientProvider>
             </WhatsAppProvider>
           </WhatsAppSessionProvider>

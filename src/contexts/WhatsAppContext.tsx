@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext } from "react";
 import { useWhatsAppSessions } from "@/hooks/useWhatsAppSessions";
-import { useWhatsAppMessages, WhatsAppMessagesHookResult } from "@/hooks/useWhatsAppMessages";
+import { useWhatsAppMessages } from "@/hooks/useWhatsAppMessages";
 import { WhatsAppContextType } from "@/types/whatsapp";
 
 // Create context with a defined type

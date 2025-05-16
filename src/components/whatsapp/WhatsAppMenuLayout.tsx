@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   MessageSquare, 
@@ -49,6 +49,7 @@ const WhatsAppMenuLayout = ({
     disconnectSession(sessionId);
   };
 
+  // Define tab items for rendering
   const tabItems = [
     { id: "conversations", label: "Conversas", icon: <MessageSquare size={16} className="mr-1" /> },
     { id: "contacts", label: "Contatos", icon: <Users size={16} className="mr-1" /> },
@@ -65,17 +66,21 @@ const WhatsAppMenuLayout = ({
       <div className="bg-muted p-2 border-b sticky top-0 z-10">
         <ScrollArea className="w-full">
           <div className="min-w-max">
-            <TabsList className="w-full min-w-max flex">
-              {tabItems.map((item) => (
-                <TabsTrigger 
-                  key={item.id}
-                  value={item.id} 
-                  onClick={() => setActiveTab(item.id)}
-                >
-                  {item.icon} {item.label}
-                </TabsTrigger>
-              ))}
-            </TabsList>
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <div className="w-full min-w-max flex gap-1">
+                {tabItems.map((item) => (
+                  <Button 
+                    key={item.id}
+                    variant={activeTab === item.id ? "default" : "ghost"} 
+                    size="sm"
+                    onClick={() => setActiveTab(item.id)}
+                    className="flex items-center gap-1"
+                  >
+                    {item.icon} {item.label}
+                  </Button>
+                ))}
+              </div>
+            </Tabs>
           </div>
         </ScrollArea>
       </div>
