@@ -1,135 +1,65 @@
-
-import { useState } from "react";
-import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  MessageSquare, 
-  Users, 
-  Settings, 
-  Send, 
-  FileImage,
-  Calendar, 
-  ListOrdered, 
-  Zap, 
-  LogOut
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
+import React, { useState, useContext } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { MessageSquare, Users, Bot, Settings, LogOut } from "lucide-react";
 import WhatsAppConversations from "./WhatsAppConversations";
-import ContactsManager from "./contacts/ContactsManager";
-import ListsManager from "./lists/ListsManager";
-import BroadcastManager from "./broadcasts/BroadcastManager";
-import MediaManager from "./media/MediaManager";
-import ScheduleManager from "./schedules/ScheduleManager";
-import WhatsAppConfig from "./config/WhatsAppConfig";
-import AutomationsManager from "./automations/AutomationsManager";
-import { WhatsAppConnectionStatus } from "@/types/whatsapp";
-import { useWhatsApp } from "@/contexts/WhatsAppContext";
+import ContactsManager from "./ContactsManager";
+import ChatbotManager from "./ChatbotManager";
+import SettingsPanel from "./SettingsPanel";
+import { WhatsAppContext } from "@/contexts/WhatsAppContext";
+import { toast } from "sonner";
 
-interface WhatsAppMenuLayoutProps {
-  sessionId: string;
-  status?: WhatsAppConnectionStatus;
-}
+const tabItems = [
+  { id: "conversations", label: "Conversas", icon: MessageSquare },
+  { id: "contacts", label: "Contatos", icon: Users },
+  { id: "chatbot", label: "Chatbot", icon: Bot },
+  { id: "settings", label: "Configurações", icon: Settings },
+];
 
-const WhatsAppMenuLayout = ({
-  sessionId,
-  status = "not_started",
-}: WhatsAppMenuLayoutProps) => {
+export default function WhatsAppMenuLayout() {
   const [activeTab, setActiveTab] = useState("conversations");
-  const { disconnectSession } = useWhatsApp();
+  const { logout, sessionId } = useContext(WhatsAppContext);
 
-  if (!sessionId) {
-    return (
-      <div className="flex flex-col items-center justify-center p-6 text-muted-foreground">
-        <p>Aguardando seleção de sessão...</p>
-      </div>
-    );
-  }
-  
-  const handleLogout = () => {
-    disconnectSession(sessionId);
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast.success("Sessão encerrada com sucesso.");
+    } catch (error) {
+      toast.error("Erro ao encerrar sessão.");
+    }
   };
 
-  // Define tab items for rendering
-  const tabItems = [
-    { id: "conversations", label: "Conversas", icon: <MessageSquare size={16} className="mr-1" /> },
-    { id: "contacts", label: "Contatos", icon: <Users size={16} className="mr-1" /> },
-    { id: "lists", label: "Listas", icon: <ListOrdered size={16} className="mr-1" /> },
-    { id: "broadcasts", label: "Broadcast", icon: <Send size={16} className="mr-1" /> },
-    { id: "schedules", label: "Agendamentos", icon: <Calendar size={16} className="mr-1" /> },
-    { id: "media", label: "Mídia", icon: <FileImage size={16} className="mr-1" /> },
-    { id: "automations", label: "Automações", icon: <Zap size={16} className="mr-1" /> },
-    { id: "settings", label: "Config", icon: <Settings size={16} className="mr-1" /> }
-  ];
-
   return (
-    <div className="w-full flex flex-col h-full">
-      <div className="bg-muted p-2 border-b sticky top-0 z-10">
-        <ScrollArea className="w-full">
-          <div className="min-w-max">
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <div className="w-full min-w-max flex gap-1">
-                {tabItems.map((item) => (
-                  <Button 
-                    key={item.id}
-                    variant={activeTab === item.id ? "default" : "ghost"} 
-                    size="sm"
-                    onClick={() => setActiveTab(item.id)}
-                    className="flex items-center gap-1"
-                  >
-                    {item.icon} {item.label}
-                  </Button>
-                ))}
-              </div>
-            </Tabs>
-          </div>
-        </ScrollArea>
-      </div>
+    <div className="h-full flex flex-col">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
+        <TabsList className="border-b flex space-x-2 p-2">
+          {tabItems.map((item) => (
+            <TabsTrigger key={item.id} value={item.id} className="flex items-center gap-2">
+              <item.icon className="w-4 h-4" />
+              {item.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
 
-      <div className="flex-1 overflow-hidden">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
-          <TabsContent value="conversations" className="m-0 p-0 h-full">
-            <WhatsAppConversations />
+        {tabItems.map((item) => (
+          <TabsContent key={item.id} value={item.id} className="m-0 p-0 h-full">
+            {item.id === "conversations" && <WhatsAppConversations />}
+            {item.id === "contacts" && <ContactsManager sessionId={sessionId} />}
+            {item.id === "chatbot" && <ChatbotManager sessionId={sessionId} />}
+            {item.id === "settings" && <SettingsPanel />}
           </TabsContent>
-          
-          <TabsContent value="contacts" className="m-0 p-0 h-full">
-            <ContactsManager sessionId={sessionId} />
-          </TabsContent>
-          
-          <TabsContent value="lists" className="m-0 p-0 h-full">
-            <ListsManager sessionId={sessionId} />
-          </TabsContent>
-          
-          <TabsContent value="broadcasts" className="m-0 p-0 h-full">
-            <BroadcastManager sessionId={sessionId} />
-          </TabsContent>
-          
-          <TabsContent value="schedules" className="m-0 p-0 h-full">
-            <ScheduleManager sessionId={sessionId} />
-          </TabsContent>
-          
-          <TabsContent value="media" className="m-0 p-0 h-full">
-            <MediaManager sessionId={sessionId} />
-          </TabsContent>
-          
-          <TabsContent value="automations" className="m-0 p-0 h-full">
-            <AutomationsManager sessionId={sessionId} />
-          </TabsContent>
-          
-          <TabsContent value="settings" className="m-0 p-0 h-full">
-            <WhatsAppConfig sessionId={sessionId} />
-          </TabsContent>
-        </Tabs>
-      </div>
+        ))}
+      </Tabs>
 
-      {status === "connected" && (
-        <div className="flex justify-end p-2 bg-muted border-t">
-          <Button variant="outline" size="sm" onClick={handleLogout}>
-            <LogOut size={14} className="mr-2" /> Desconectar
-          </Button>
-        </div>
-      )}
+      <div className="border-t p-4 flex justify-end">
+        <button
+          onClick={handleLogout}
+          className="flex items-center text-sm text-red-600 hover:underline"
+        >
+          <LogOut className="w-4 h-4 mr-1" />
+          Desconectar
+        </button>
+      </div>
     </div>
   );
-};
+}
 
-export default WhatsAppMenuLayout;
