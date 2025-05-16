@@ -1,10 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { WhatsAppContact, WhatsAppMessage } from "@/types/whatsapp";
 
-// Define interface separately to avoid circular references
 export interface UseWhatsAppMessagesReturn {
   selectedContact: WhatsAppContact | null;
   setSelectedContact: (contact: WhatsAppContact | null) => void;
@@ -21,7 +19,8 @@ export function useWhatsAppMessages(currentSession: string | null): UseWhatsAppM
   const [loadingMessages, setLoadingMessages] = useState(false);
   const { toast } = useToast();
 
-  // Load contacts for a given session
+  const API_URL = import.meta.env.VITE_API_URL || "";
+
   const loadContacts = async (sessionId: string) => {
     try {
       const { data: messageData, error: messageError } = await supabase
@@ -52,11 +51,15 @@ export function useWhatsAppMessages(currentSession: string | null): UseWhatsAppM
 
       setContacts(contactsList);
     } catch (error) {
-      console.error("loadContacts error:", error);
+      console.error("Erro ao carregar contatos:", error);
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar contatos",
+        variant: "destructive"
+      });
     }
   };
 
-  // Load messages between current session and selected contact
   const loadMessages = async (sessionId: string, contactNumber: string) => {
     setLoadingMessages(true);
     try {
@@ -70,37 +73,44 @@ export function useWhatsAppMessages(currentSession: string | null): UseWhatsAppM
       if (error) throw error;
       setMessages(data || []);
     } catch (error) {
-      console.error("loadMessages error:", error);
+      console.error("Erro ao carregar mensagens:", error);
       toast({
         title: "Erro",
         description: "Erro ao carregar mensagens",
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setLoadingMessages(false);
     }
   };
 
-  // Send a message to the selected contact
   const sendMessage = async (message: string) => {
     if (!currentSession || !selectedContact || !message.trim()) return;
+
     try {
-      const API_URL = import.meta.env.VITE_API_URL || "";
-      await fetch(`${API_URL}/messages/send`, {
+      const response = await fetch(`${API_URL}/messages/send`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           sessionId: currentSession,
           number: selectedContact.number || selectedContact.phone,
-          message: message.trim(),
+          message: message.trim()
         })
       });
+
+      if (!response.ok) {
+        throw new Error("Erro ao enviar mensagem");
+      }
     } catch (error) {
-      console.error("sendMessage error:", error);
+      console.error("Erro ao enviar mensagem:", error);
+      toast({
+        title: "Erro",
+        description: "Erro ao enviar mensagem",
+        variant: "destructive"
+      });
     }
   };
 
-  // Subscribe to real-time message updates
   useEffect(() => {
     if (!currentSession) return;
 
@@ -112,21 +122,25 @@ export function useWhatsAppMessages(currentSession: string | null): UseWhatsAppM
           event: "INSERT",
           schema: "public",
           table: "whatsapp_messages",
-          filter: `session_id=eq.${currentSession}`,
+          filter: `session_id=eq.${currentSession}`
         },
         (payload) => {
           const newMsg = payload.new as WhatsAppMessage;
-          if (selectedContact && (newMsg.number === selectedContact.number || newMsg.number === selectedContact.phone)) {
-            setMessages(prev => [...prev, newMsg]);
+          if (
+            selectedContact &&
+            (newMsg.number === selectedContact.number || newMsg.number === selectedContact.phone)
+          ) {
+            setMessages((prev) => [...prev, newMsg]);
           }
         }
       )
       .subscribe();
 
-    return () => { supabase.removeChannel(channel) };
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [currentSession, selectedContact]);
 
-  // Load messages when contact changes
   useEffect(() => {
     if (currentSession && selectedContact) {
       const contactNumber = selectedContact.number || selectedContact.phone || '';
@@ -134,12 +148,12 @@ export function useWhatsAppMessages(currentSession: string | null): UseWhatsAppM
     }
   }, [selectedContact, currentSession]);
 
-  // Load contacts when session changes
   useEffect(() => {
-    if (currentSession) loadContacts(currentSession);
+    if (currentSession) {
+      loadContacts(currentSession);
+    }
   }, [currentSession]);
 
-  // Explicitly return an object matching the interface type
   return {
     selectedContact,
     setSelectedContact,
