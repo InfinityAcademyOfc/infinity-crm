@@ -10,7 +10,7 @@ const WhatsAppContext = createContext<WhatsAppContextType | undefined>(undefined
 export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Use custom hooks to manage state and logic
   const sessionsData = useWhatsAppSessions();
-  const messagesData = useWhatsAppMessages(sessionsData.currentSession);
+  const messagesData = useWhatsAppMessages();
   
   // Combine values from both hooks into a single context object
   const contextValue: WhatsAppContextType = {
@@ -30,7 +30,7 @@ export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setSelectedContact: messagesData.setSelectedContact,
     contacts: messagesData.contacts,
     messages: messagesData.messages,
-    loadingMessages: messagesData.loadingMessages,
+    loadingMessages: messagesData.isLoading,
     sendMessage: messagesData.sendMessage
   };
 

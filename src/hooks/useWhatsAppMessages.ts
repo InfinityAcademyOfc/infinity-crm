@@ -1,5 +1,6 @@
+
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useWhatsAppSession } from "@/contexts/WhatsAppSessionContext";
 
@@ -44,10 +45,10 @@ export function useWhatsAppMessages(): WhatsAppMessagesHookResult {
       setIsLoading(true);
 
       const { data: msgData, error: msgError } = await supabase
-        .from("messages")
+        .from("whatsapp_messages")
         .select("*")
         .eq("session_id", sessionId)
-        .order("timestamp", { ascending: true });
+        .order("created_at", { ascending: true });
 
       const { data: contactsData, error: contactsError } = await supabase
         .from("contacts")
