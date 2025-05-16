@@ -10,9 +10,9 @@ export type WhatsAppSession = {
 
 export type WhatsAppContact = {
   id: string;
-  name?: string;
-  phone?: string;
-  number?: string;
+  name: string;
+  phone: string;
+  number?: string; // For backward compatibility
 };
 
 export type WhatsAppMessage = {
@@ -43,7 +43,7 @@ export interface WhatsAppActionsProps {
   refreshSessions: () => Promise<void>;
   connectSession: (sessionId: string) => Promise<void>;
   disconnectSession: (sessionId: string) => Promise<void>;
-  sendMessage: (message: string) => Promise<void>;
+  sendMessage: (to: string, body: string) => Promise<void>;
   createNewSession: () => string;
 }
 

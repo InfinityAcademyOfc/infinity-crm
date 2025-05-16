@@ -83,7 +83,7 @@ const WhatsAppMenuLayout = ({
       <div className="flex-1 overflow-hidden">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
           <TabsContent value="conversations" className="m-0 p-0 h-full">
-            <WhatsAppConversations sessionId={sessionId} />
+            <WhatsAppConversations />
           </TabsContent>
           
           <TabsContent value="contacts" className="m-0 p-0 h-full">

@@ -3,35 +3,23 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useWhatsAppSession } from "@/contexts/WhatsAppSessionContext";
-
-export interface Message {
-  id: string;
-  from: string;
-  to: string;
-  body: string;
-  timestamp: string;
-  session_id: string;
-}
-
-export interface Contact {
-  id: string;
-  name: string;
-  phone: string;
-  session_id: string;
-}
+import { WhatsAppContact, WhatsAppMessage } from "@/types/whatsapp";
 
 export interface WhatsAppMessagesHookResult {
-  messages: Message[];
-  contacts: Contact[];
+  messages: WhatsAppMessage[];
+  contacts: WhatsAppContact[];
   isLoading: boolean;
   error: string | null;
+  selectedContact: WhatsAppContact | null;
+  setSelectedContact: (contact: WhatsAppContact | null) => void;
   sendMessage: (to: string, body: string) => Promise<void>;
 }
 
 export function useWhatsAppMessages(): WhatsAppMessagesHookResult {
   const { sessionId } = useWhatsAppSession();
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [messages, setMessages] = useState<WhatsAppMessage[]>([]);
+  const [contacts, setContacts] = useState<WhatsAppContact[]>([]);
+  const [selectedContact, setSelectedContact] = useState<WhatsAppContact | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -64,8 +52,26 @@ export function useWhatsAppMessages(): WhatsAppMessagesHookResult {
         return;
       }
 
-      setMessages(msgData || []);
-      setContacts(contactsData || []);
+      // Transform data to match our WhatsAppMessage type
+      const formattedMessages = msgData ? msgData.map((msg: any) => ({
+        id: msg.id,
+        session_id: msg.session_id,
+        number: msg.number,
+        message: msg.message,
+        from_me: msg.from_me,
+        created_at: msg.created_at
+      })) : [];
+
+      // Transform data to match our WhatsAppContact type
+      const formattedContacts = contactsData ? contactsData.map((contact: any) => ({
+        id: contact.id,
+        name: contact.name,
+        phone: contact.phone,
+        number: contact.phone, // For compatibility
+      })) : [];
+
+      setMessages(formattedMessages);
+      setContacts(formattedContacts);
       setError(null);
       setIsLoading(false);
     };
@@ -76,13 +82,13 @@ export function useWhatsAppMessages(): WhatsAppMessagesHookResult {
   const sendMessage = async (to: string, body: string) => {
     if (!sessionId) return;
 
-    const { error } = await supabase.from("messages").insert([
+    const { error } = await supabase.from("whatsapp_messages").insert([
       {
-        to,
-        body,
+        number: to,
+        message: body,
         session_id: sessionId,
-        from: "me",
-        timestamp: new Date().toISOString(),
+        from_me: true,
+        created_at: new Date().toISOString(),
       },
     ]);
 
@@ -93,15 +99,23 @@ export function useWhatsAppMessages(): WhatsAppMessagesHookResult {
         ...prev,
         {
           id: crypto.randomUUID(),
-          from: "me",
-          to,
-          body,
-          timestamp: new Date().toISOString(),
           session_id: sessionId,
+          number: to,
+          message: body,
+          from_me: true,
+          created_at: new Date().toISOString(),
         },
       ]);
     }
   };
 
-  return { messages, contacts, isLoading, error, sendMessage };
+  return { 
+    messages, 
+    contacts, 
+    isLoading, 
+    error, 
+    selectedContact, 
+    setSelectedContact, 
+    sendMessage 
+  };
 }

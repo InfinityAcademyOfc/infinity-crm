@@ -1,26 +1,30 @@
 
 import React, { useState } from "react";
-import { useWhatsAppMessages } from "@/hooks/useWhatsAppMessages";
-import { useWhatsAppSession } from "@/contexts/WhatsAppSessionContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Search } from "lucide-react";
 import ContactHeader from "./conversation/ContactHeader";
 import ChatMessages from "./conversation/ChatMessages";
 import MessageInput from "./conversation/MessageInput";
 import EmptyConversation from "./conversation/EmptyConversation";
 import ContactsList from "./conversation/ContactsList";
-import { WhatsAppContact } from "@/types/whatsapp";
-import { Search } from "lucide-react";
+import { useWhatsApp } from "@/contexts/WhatsAppContext";
 
 const WhatsAppConversations = () => {
-  const { sessionId } = useWhatsAppSession();
-  const { messages, contacts, isLoading, sendMessage } = useWhatsAppMessages();
+  const { 
+    currentSession, 
+    messages, 
+    contacts, 
+    loadingMessages, 
+    selectedContact,
+    setSelectedContact,
+    sendMessage
+  } = useWhatsApp();
+  
   const [message, setMessage] = useState("");
-  const [selectedContact, setSelectedContact] = useState<WhatsAppContact | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
-  if (!sessionId) {
+  if (!currentSession) {
     return (
       <div className="p-4 text-center text-sm text-muted-foreground">
         Nenhuma sessão conectada. Conecte um número do WhatsApp para iniciar.
@@ -35,21 +39,10 @@ const WhatsAppConversations = () => {
     }
   };
 
-  const filteredContacts = contacts.map(contact => ({
-    id: contact.id,
-    name: contact.name,
-    phone: contact.phone,
-    number: contact.phone, // For compatibility with existing components
-  }));
-
-  const handleSelectContact = (contact: WhatsAppContact) => {
-    setSelectedContact(contact);
-  };
-
   const filteredMessages = selectedContact 
     ? messages.filter(msg => 
-        msg.to === selectedContact.phone || 
-        msg.from === selectedContact.phone
+        msg.number === selectedContact.phone || 
+        (selectedContact.number && msg.number === selectedContact.number)
       )
     : [];
 
@@ -70,9 +63,9 @@ const WhatsAppConversations = () => {
 
         <div className="flex-1 overflow-y-auto">
           <ContactsList 
-            contacts={filteredContacts}
+            contacts={contacts}
             selectedContact={selectedContact}
-            onSelectContact={handleSelectContact}
+            onSelectContact={setSelectedContact}
             searchQuery={searchQuery}
           />
         </div>
@@ -85,7 +78,7 @@ const WhatsAppConversations = () => {
             <div className="flex-1 overflow-y-auto p-4">
               <ChatMessages 
                 messages={filteredMessages}
-                loading={isLoading} 
+                loading={loadingMessages} 
               />
             </div>
             <MessageInput
