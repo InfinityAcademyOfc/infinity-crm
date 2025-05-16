@@ -1,99 +1,94 @@
-
-import React, { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import React, { useEffect, useState, useContext, useRef } from "react";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
-import ContactHeader from "./conversation/ContactHeader";
-import ChatMessages from "./conversation/ChatMessages";
-import MessageInput from "./conversation/MessageInput";
-import EmptyConversation from "./conversation/EmptyConversation";
-import ContactsList from "./conversation/ContactsList";
-import { useWhatsApp } from "@/contexts/WhatsAppContext";
+import { Loader2 } from "lucide-react";
+import { WhatsAppContext } from "@/contexts/WhatsAppContext";
+import ChatMessages from "./ChatMessages";
+import ContactsSidebar from "./ContactsSidebar";
+import { sendMessage } from "@/lib/api";
+import { Message, Contact } from "@/types";
+import ContactHeader from "./ContactHeader";
 
-const WhatsAppConversations = () => {
-  const { 
-    currentSession, 
-    messages, 
-    contacts, 
-    loadingMessages, 
+export default function WhatsAppConversations() {
+  const {
     selectedContact,
     setSelectedContact,
-    sendMessage
-  } = useWhatsApp();
-  
+    messages,
+    fetchMessages,
+    sessionId,
+    loadingMessages,
+  } = useContext(WhatsAppContext);
   const [message, setMessage] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  if (!currentSession) {
-    return (
-      <div className="p-4 text-center text-sm text-muted-foreground">
-        Nenhuma sessão conectada. Conecte um número do WhatsApp para iniciar.
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (selectedContact && sessionId) {
+      fetchMessages(selectedContact.phone, sessionId);
+    }
+  }, [selectedContact, sessionId]);
+
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages]);
 
   const handleSend = async () => {
-    if (selectedContact && message.trim() !== "") {
-      await sendMessage(selectedContact.phone, message);
+    if (message.trim() && selectedContact && sessionId) {
+      await sendMessage(sessionId, selectedContact.phone, message);
       setMessage("");
     }
   };
 
-  // Filter messages for the selected contact
-  const filteredMessages = selectedContact 
-    ? messages.filter(msg => 
-        msg.number === selectedContact.phone || 
-        (selectedContact.number && msg.number === selectedContact.number)
+  const filteredMessages = selectedContact
+    ? messages.filter(
+        (msg: Message) =>
+          msg.number === selectedContact.phone ||
+          msg.from === selectedContact.phone ||
+          msg.to === selectedContact.phone
       )
     : [];
 
   return (
-    <div className="grid grid-cols-4 gap-4 p-4">
-      <Card className="col-span-1 overflow-hidden flex flex-col h-[80vh]">
-        <CardContent className="p-3 border-b">
-          <div className="relative">
-            <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar conversa..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-8"
-            />
-          </div>
-        </CardContent>
-
-        <div className="flex-1 overflow-y-auto">
-          <ContactsList 
-            contacts={contacts}
-            selectedContact={selectedContact}
-            onSelectContact={setSelectedContact}
-            searchQuery={searchQuery}
-          />
-        </div>
-      </Card>
-
-      <Card className="col-span-3 flex flex-col h-[80vh]">
+    <div className="flex h-full">
+      <div className="w-1/3 border-r">
+        <ContactsSidebar onSelectContact={setSelectedContact} />
+      </div>
+      <div className="w-2/3 flex flex-col">
         {selectedContact ? (
           <>
             <ContactHeader contact={selectedContact} />
-            <div className="flex-1 overflow-y-auto p-4">
-              <ChatMessages 
-                messages={filteredMessages}
-                loading={loadingMessages} 
-              />
+            <div className="flex-1 overflow-y-auto p-4 space-y-2">
+              {loadingMessages ? (
+                <div className="flex justify-center items-center h-full">
+                  <Loader2 className="animate-spin w-6 h-6 text-muted-foreground" />
+                </div>
+              ) : filteredMessages.length === 0 ? (
+                <p className="text-center text-sm text-muted-foreground mt-4">
+                  Nenhuma mensagem nesta conversa ainda.
+                </p>
+              ) : (
+                <ChatMessages messages={filteredMessages} />
+              )}
+              <div ref={messagesEndRef} />
             </div>
-            <MessageInput
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              onSend={handleSend}
-            />
+            <div className="p-4 border-t flex items-center space-x-2">
+              <Input
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSend()}
+                placeholder={`Mensagem para ${selectedContact.name || selectedContact.phone}`}
+              />
+              <Button onClick={handleSend}>Enviar</Button>
+            </div>
           </>
         ) : (
-          <EmptyConversation />
+          <div className="flex-1 flex items-center justify-center">
+            <p className="text-muted-foreground">Selecione um contato</p>
+          </div>
         )}
-      </Card>
+      </div>
     </div>
   );
-};
+}
 
-export default WhatsAppConversations;
