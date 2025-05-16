@@ -4,7 +4,19 @@ import { useToast } from "@/hooks/use-toast";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
-export function useWhatsAppSessions() {
+export interface WhatsAppSessionsHookResult {
+  sessions: WhatsAppSession[];
+  loadingSessions: boolean;
+  currentSession: string | null;
+  setCurrentSession: (sessionId: string | null) => void;
+  connectionStatus: WhatsAppConnectionStatus;
+  refreshSessions: () => Promise<void>;
+  connectSession: (sessionId: string) => Promise<void>;
+  disconnectSession: (sessionId: string) => Promise<void>;
+  createNewSession: () => string;
+}
+
+export function useWhatsAppSessions(): WhatsAppSessionsHookResult {
   const [sessions, setSessions] = useState<WhatsAppSession[]>([]);
   const [loadingSessions, setLoadingSessions] = useState(true);
   const [currentSession, setCurrentSession] = useState<string | null>(

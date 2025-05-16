@@ -1,21 +1,20 @@
 
 import React, { createContext, useContext } from "react";
 import { useWhatsAppSessions } from "@/hooks/useWhatsAppSessions";
-import { useWhatsAppMessages } from "@/hooks/useWhatsAppMessages";
+import { useWhatsAppMessages, WhatsAppMessagesHookResult } from "@/hooks/useWhatsAppMessages";
 import { WhatsAppContextType } from "@/types/whatsapp";
 
-// Criar o contexto com um tipo definido
+// Create context with a defined type
 const WhatsAppContext = createContext<WhatsAppContextType | undefined>(undefined);
 
 export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Usar os hooks customizados para gerenciar estado e lógica
+  // Use custom hooks to manage state and logic
   const sessionsData = useWhatsAppSessions();
   const messagesData = useWhatsAppMessages(sessionsData.currentSession);
   
-  // Combinar os valores de ambos os hooks em um único objeto de contexto
-  // Isso evita referências circulares que causam o erro de tipo infinito
-  const contextValue = {
-    // Propriedades e métodos de sessões
+  // Combine values from both hooks into a single context object
+  const contextValue: WhatsAppContextType = {
+    // Session properties and methods
     currentSession: sessionsData.currentSession,
     setCurrentSession: sessionsData.setCurrentSession,
     sessions: sessionsData.sessions,
@@ -26,7 +25,7 @@ export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     disconnectSession: sessionsData.disconnectSession,
     createNewSession: sessionsData.createNewSession,
     
-    // Propriedades e métodos de mensagens
+    // Message properties and methods
     selectedContact: messagesData.selectedContact,
     setSelectedContact: messagesData.setSelectedContact,
     contacts: messagesData.contacts,
@@ -42,7 +41,7 @@ export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   );
 };
 
-// Hook para usar o contexto
+// Hook to use the context
 export const useWhatsApp = () => {
   const context = useContext(WhatsAppContext);
   if (!context) {
@@ -51,7 +50,7 @@ export const useWhatsApp = () => {
   return context;
 };
 
-// Reexportando os tipos para facilitar o uso
+// Re-export types for easier access
 export type { 
   WhatsAppConnectionStatus, 
   WhatsAppSession, 

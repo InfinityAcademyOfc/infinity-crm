@@ -1,5 +1,5 @@
 
-// Tipos básicos para o WhatsApp
+// Basic WhatsApp types
 export type WhatsAppConnectionStatus = 'connected' | 'disconnected' | 'qr' | 'error' | 'not_started' | 'loading';
 
 export type WhatsAppSession = {
@@ -24,7 +24,7 @@ export type WhatsAppMessage = {
   created_at: string;
 };
 
-// Tipos para o contexto separados em categorias para evitar recursão circular
+// State properties interface
 export interface WhatsAppStateProps {
   currentSession: string | null;
   sessions: WhatsAppSession[];
@@ -36,6 +36,7 @@ export interface WhatsAppStateProps {
   loadingMessages: boolean;
 }
 
+// Action methods interface
 export interface WhatsAppActionsProps {
   setCurrentSession: (sessionId: string | null) => void;
   setSelectedContact: (contact: WhatsAppContact | null) => void;
@@ -46,5 +47,5 @@ export interface WhatsAppActionsProps {
   createNewSession: () => string;
 }
 
-// Tipo combinado para o contexto completo
+// Complete context type
 export interface WhatsAppContextType extends WhatsAppStateProps, WhatsAppActionsProps {}

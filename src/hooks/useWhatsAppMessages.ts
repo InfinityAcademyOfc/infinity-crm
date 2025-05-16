@@ -1,9 +1,11 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { WhatsAppContact, WhatsAppMessage } from "@/types/whatsapp";
 
-export interface UseWhatsAppMessagesReturn {
+// Explicitly define the return type to avoid circular references
+export interface WhatsAppMessagesHookResult {
   selectedContact: WhatsAppContact | null;
   setSelectedContact: (contact: WhatsAppContact | null) => void;
   contacts: WhatsAppContact[];
@@ -12,7 +14,7 @@ export interface UseWhatsAppMessagesReturn {
   sendMessage: (message: string) => Promise<void>;
 }
 
-export function useWhatsAppMessages(currentSession: string | null): UseWhatsAppMessagesReturn {
+export function useWhatsAppMessages(currentSession: string | null): WhatsAppMessagesHookResult {
   const [selectedContact, setSelectedContact] = useState<WhatsAppContact | null>(null);
   const [contacts, setContacts] = useState<WhatsAppContact[]>([]);
   const [messages, setMessages] = useState<WhatsAppMessage[]>([]);

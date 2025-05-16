@@ -4,13 +4,13 @@ import { WhatsAppConnectionStatus } from "@/types/whatsapp";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
-interface QRCodeHookReturn {
+export interface QRCodeHookResult {
   qrCodeData: string | null;
   status: WhatsAppConnectionStatus;
   loading: boolean;
 }
 
-export function useQRCode(sessionId: string): QRCodeHookReturn {
+export function useQRCode(sessionId: string): QRCodeHookResult {
   const [qrCodeData, setQrCodeData] = useState<string | null>(null);
   const [status, setStatus] = useState<WhatsAppConnectionStatus>("not_started");
   const [loading, setLoading] = useState<boolean>(true);
@@ -75,5 +75,5 @@ export function useQRCode(sessionId: string): QRCodeHookReturn {
   return { qrCodeData, status, loading };
 }
 
-// Reexportar o tipo usado
+// Re-export the type for easier access
 export type { WhatsAppConnectionStatus } from "@/types/whatsapp";
