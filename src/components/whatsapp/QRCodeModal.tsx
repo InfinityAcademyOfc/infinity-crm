@@ -14,11 +14,13 @@ interface QRCodeModalProps {
 const QRCodeModal = ({ open, onOpenChange, sessionId, onLogin }: QRCodeModalProps) => {
   const { status } = useQRCode(sessionId);
   
-  // Auto-close the modal when connected
+  // Auto-fechar o modal quando conectado
   useEffect(() => {
     if (status === "connected" && onLogin) {
+      // Primeiro chama o callback de login para atualizar o estado
       onLogin();
-      onOpenChange(false);
+      // Depois fecha o modal
+      setTimeout(() => onOpenChange(false), 100);
     }
   }, [status, onLogin, onOpenChange]);
   

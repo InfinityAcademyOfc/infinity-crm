@@ -1,16 +1,20 @@
 
 import { useEffect, useRef, useState } from "react";
+import { WhatsAppConnectionStatus } from "@/types/whatsapp";
 
-// Define the type here so it can be exported and reused
-export type WhatsAppConnectionStatus = "loading" | "not_started" | "qr" | "connected" | "error";
+const API_URL = import.meta.env.VITE_API_URL || "";
 
-const API_URL = import.meta.env.VITE_API_URL;
+interface QRCodeHookReturn {
+  qrCodeData: string | null;
+  status: WhatsAppConnectionStatus;
+  loading: boolean;
+}
 
-export function useQRCode(sessionId: string) {
+export function useQRCode(sessionId: string): QRCodeHookReturn {
   const [qrCodeData, setQrCodeData] = useState<string | null>(null);
   const [status, setStatus] = useState<WhatsAppConnectionStatus>("loading");
   const [loading, setLoading] = useState<boolean>(true);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<number | null>(null);
   const mountedRef = useRef<boolean>(true);
 
   useEffect(() => {
@@ -58,13 +62,18 @@ export function useQRCode(sessionId: string) {
     };
 
     fetchQrCode();
-    intervalRef.current = setInterval(fetchQrCode, 4000);
+    intervalRef.current = window.setInterval(fetchQrCode, 4000);
 
     return () => {
       mountedRef.current = false;
-      if (intervalRef.current) clearInterval(intervalRef.current);
+      if (intervalRef.current !== null) {
+        clearInterval(intervalRef.current);
+      }
     };
   }, [sessionId]);
 
   return { qrCodeData, status, loading };
 }
+
+// Reexportar o tipo usado
+export type { WhatsAppConnectionStatus } from "@/types/whatsapp";

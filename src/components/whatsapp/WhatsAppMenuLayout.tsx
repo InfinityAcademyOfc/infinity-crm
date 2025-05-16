@@ -14,7 +14,6 @@ import {
   LogOut
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
 import WhatsAppConversations from "./WhatsAppConversations";
 import ContactsManager from "./contacts/ContactsManager";
 import ListsManager from "./lists/ListsManager";
@@ -23,7 +22,7 @@ import MediaManager from "./media/MediaManager";
 import ScheduleManager from "./schedules/ScheduleManager";
 import WhatsAppConfig from "./config/WhatsAppConfig";
 import AutomationsManager from "./automations/AutomationsManager";
-import { WhatsAppConnectionStatus } from "@/hooks/useQRCode";
+import { WhatsAppConnectionStatus } from "@/types/whatsapp";
 import { useWhatsApp } from "@/contexts/WhatsAppContext";
 
 interface WhatsAppMenuLayoutProps {
@@ -36,7 +35,6 @@ const WhatsAppMenuLayout = ({
   status = "not_started",
 }: WhatsAppMenuLayoutProps) => {
   const [activeTab, setActiveTab] = useState("conversations");
-  const { toast } = useToast();
   const { disconnectSession } = useWhatsApp();
 
   if (!sessionId) {
@@ -51,36 +49,32 @@ const WhatsAppMenuLayout = ({
     disconnectSession(sessionId);
   };
 
+  const tabItems = [
+    { id: "conversations", label: "Conversas", icon: <MessageSquare size={16} className="mr-1" /> },
+    { id: "contacts", label: "Contatos", icon: <Users size={16} className="mr-1" /> },
+    { id: "lists", label: "Listas", icon: <ListOrdered size={16} className="mr-1" /> },
+    { id: "broadcasts", label: "Broadcast", icon: <Send size={16} className="mr-1" /> },
+    { id: "schedules", label: "Agendamentos", icon: <Calendar size={16} className="mr-1" /> },
+    { id: "media", label: "Mídia", icon: <FileImage size={16} className="mr-1" /> },
+    { id: "automations", label: "Automações", icon: <Zap size={16} className="mr-1" /> },
+    { id: "settings", label: "Config", icon: <Settings size={16} className="mr-1" /> }
+  ];
+
   return (
     <div className="w-full flex flex-col h-full">
       <div className="bg-muted p-2 border-b sticky top-0 z-10">
         <ScrollArea className="w-full">
           <div className="min-w-max">
             <TabsList className="w-full min-w-max flex">
-              <TabsTrigger value="conversations" onClick={() => setActiveTab("conversations")}>
-                <MessageSquare size={16} className="mr-1" /> Conversas
-              </TabsTrigger>
-              <TabsTrigger value="contacts" onClick={() => setActiveTab("contacts")}>
-                <Users size={16} className="mr-1" /> Contatos
-              </TabsTrigger>
-              <TabsTrigger value="lists" onClick={() => setActiveTab("lists")}>
-                <ListOrdered size={16} className="mr-1" /> Listas
-              </TabsTrigger>
-              <TabsTrigger value="broadcasts" onClick={() => setActiveTab("broadcasts")}>
-                <Send size={16} className="mr-1" /> Broadcast
-              </TabsTrigger>
-              <TabsTrigger value="schedules" onClick={() => setActiveTab("schedules")}>
-                <Calendar size={16} className="mr-1" /> Agendamentos
-              </TabsTrigger>
-              <TabsTrigger value="media" onClick={() => setActiveTab("media")}>
-                <FileImage size={16} className="mr-1" /> Mídia
-              </TabsTrigger>
-              <TabsTrigger value="automations" onClick={() => setActiveTab("automations")}>
-                <Zap size={16} className="mr-1" /> Automações
-              </TabsTrigger>
-              <TabsTrigger value="settings" onClick={() => setActiveTab("settings")}>
-                <Settings size={16} className="mr-1" /> Config
-              </TabsTrigger>
+              {tabItems.map((item) => (
+                <TabsTrigger 
+                  key={item.id}
+                  value={item.id} 
+                  onClick={() => setActiveTab(item.id)}
+                >
+                  {item.icon} {item.label}
+                </TabsTrigger>
+              ))}
             </TabsList>
           </div>
         </ScrollArea>

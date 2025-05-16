@@ -9,7 +9,59 @@ import WhatsAppMenuLayout from "@/components/whatsapp/WhatsAppMenuLayout";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
-// Main wrapper that provides WhatsApp context
+// Componente de sessão do WhatsApp
+const WhatsAppSessionCard = ({ 
+  session, 
+  isActive, 
+  onConnect, 
+  onSelect 
+}: { 
+  session: ReturnType<typeof useWhatsApp>["sessions"][0]; 
+  isActive: boolean;
+  onConnect: () => void;
+  onSelect: () => void;
+}) => {
+  return (
+    <Card key={session.id} className={isActive ? "border-primary/50" : ""}>
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between">
+          <div className="font-medium">
+            {session.name || `Sessão: ${session.id}`}
+          </div>
+          <Badge variant={session.status === "CONNECTED" ? "default" : "outline"}>
+            {session.status === "CONNECTED" ? "Conectado" : "Desconectado"}
+          </Badge>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="flex items-center justify-between">
+          <Button
+            variant={session.status !== "CONNECTED" ? "default" : "outline"}
+            size="sm"
+            className="mt-2"
+            onClick={onConnect}
+          >
+            <Smartphone size={14} className="mr-1" />
+            {session.status !== "CONNECTED" ? "Conectar" : "Ver QR Code"}
+          </Button>
+          
+          {session.status === "CONNECTED" && !isActive && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="mt-2"
+              onClick={onSelect}
+            >
+              Selecionar
+            </Button>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+// Wrapper principal que fornece o contexto do WhatsApp
 const WhatsAppIntegrationPage = () => {
   return (
     <WhatsAppProvider>
@@ -18,7 +70,7 @@ const WhatsAppIntegrationPage = () => {
   );
 };
 
-// Inner component that consumes WhatsApp context
+// Componente interno que consome o contexto do WhatsApp
 const WhatsAppIntegrationContent = () => {
   const { 
     currentSession, 
@@ -43,7 +95,7 @@ const WhatsAppIntegrationContent = () => {
     handleConnectClick(newSessionId);
   };
   
-  // Select current session or first available one
+  // Selecionar sessão atual ou a primeira disponível
   useEffect(() => {
     if (!currentSession && sessions.length > 0) {
       setCurrentSession(sessions[0].id);
@@ -104,51 +156,13 @@ const WhatsAppIntegrationContent = () => {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6">
           {sessions.map((session) => (
-            <Card key={session.id} className={currentSession === session.id ? "border-primary/50" : ""}>
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <div className="font-medium">
-                    {session.name || `Sessão: ${session.id}`}
-                  </div>
-                  <Badge variant={session.status === "CONNECTED" ? "default" : "outline"}>
-                    {session.status === "CONNECTED" ? "Conectado" : "Desconectado"}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between">
-                  <Button
-                    variant={session.status !== "CONNECTED" ? "default" : "outline"}
-                    size="sm"
-                    className="mt-2"
-                    onClick={() => handleConnectClick(session.id)}
-                  >
-                    {session.status !== "CONNECTED" ? (
-                      <>
-                        <Smartphone size={14} className="mr-1" />
-                        Conectar
-                      </>
-                    ) : (
-                      <>
-                        <Smartphone size={14} className="mr-1" />
-                        Ver QR Code
-                      </>
-                    )}
-                  </Button>
-                  
-                  {session.status === "CONNECTED" && currentSession !== session.id && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="mt-2"
-                      onClick={() => setCurrentSession(session.id)}
-                    >
-                      Selecionar
-                    </Button>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+            <WhatsAppSessionCard 
+              key={session.id}
+              session={session}
+              isActive={currentSession === session.id}
+              onConnect={() => handleConnectClick(session.id)}
+              onSelect={() => setCurrentSession(session.id)}
+            />
           ))}
         </div>
       )}

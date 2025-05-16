@@ -80,3 +80,18 @@
     backdrop-filter: blur(2px);
   }
 }
+
+/* Improvement for tab scrolling in WhatsApp menu */
+.whatsapp-tabs-container {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.whatsapp-tabs-container::-webkit-scrollbar {
+  height: 3px;
+}
+
+.whatsapp-tabs-container .tabs-list {
+  display: inline-flex;
+  min-width: max-content;
+}
