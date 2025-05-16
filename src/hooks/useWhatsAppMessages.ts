@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { useWhatsAppSession } from "@/contexts/WhatsAppSessionContext";
 import { WhatsAppContact, WhatsAppMessage } from "@/types/whatsapp";
@@ -32,48 +32,57 @@ export function useWhatsAppMessages(): WhatsAppMessagesHookResult {
     const fetchData = async () => {
       setIsLoading(true);
 
-      const { data: msgData, error: msgError } = await supabase
-        .from("whatsapp_messages")
-        .select("*")
-        .eq("session_id", sessionId)
-        .order("created_at", { ascending: true });
+      try {
+        // Fetch messages
+        const { data: msgData, error: msgError } = await supabase
+          .from("whatsapp_messages")
+          .select("*")
+          .eq("session_id", sessionId)
+          .order("created_at", { ascending: true });
 
-      const { data: contactsData, error: contactsError } = await supabase
-        .from("contacts")
-        .select("*")
-        .eq("session_id", sessionId);
+        // Fetch contacts
+        const { data: contactsData, error: contactsError } = await supabase
+          .from("contacts")
+          .select("*")
+          .eq("session_id", sessionId);
 
-      if (msgError || contactsError) {
-        if (sessionId) {
-          toast.error("Erro ao carregar mensagens ou contatos");
+        if (msgError || contactsError) {
+          console.error("Error fetching data:", msgError || contactsError);
+          if (sessionId) {
+            toast.error("Erro ao carregar mensagens ou contatos");
+          }
+          setError("Erro ao carregar dados");
+          setIsLoading(false);
+          return;
         }
-        setError("Erro ao carregar dados");
+
+        // Transform data to match our WhatsAppMessage type
+        const formattedMessages: WhatsAppMessage[] = msgData ? msgData.map((msg: any) => ({
+          id: msg.id,
+          session_id: msg.session_id,
+          number: msg.number,
+          message: msg.message,
+          from_me: msg.from_me,
+          created_at: msg.created_at
+        })) : [];
+
+        // Transform data to match our WhatsAppContact type
+        const formattedContacts: WhatsAppContact[] = contactsData ? contactsData.map((contact: any) => ({
+          id: contact.id,
+          name: contact.name,
+          phone: contact.phone,
+          number: contact.phone, // For compatibility
+        })) : [];
+
+        setMessages(formattedMessages);
+        setContacts(formattedContacts);
+        setError(null);
+      } catch (err) {
+        console.error("Error in fetchData:", err);
+        setError("Erro ao processar dados");
+      } finally {
         setIsLoading(false);
-        return;
       }
-
-      // Transform data to match our WhatsAppMessage type
-      const formattedMessages = msgData ? msgData.map((msg: any) => ({
-        id: msg.id,
-        session_id: msg.session_id,
-        number: msg.number,
-        message: msg.message,
-        from_me: msg.from_me,
-        created_at: msg.created_at
-      })) : [];
-
-      // Transform data to match our WhatsAppContact type
-      const formattedContacts = contactsData ? contactsData.map((contact: any) => ({
-        id: contact.id,
-        name: contact.name,
-        phone: contact.phone,
-        number: contact.phone, // For compatibility
-      })) : [];
-
-      setMessages(formattedMessages);
-      setContacts(formattedContacts);
-      setError(null);
-      setIsLoading(false);
     };
 
     fetchData();
@@ -82,30 +91,36 @@ export function useWhatsAppMessages(): WhatsAppMessagesHookResult {
   const sendMessage = async (to: string, body: string) => {
     if (!sessionId) return;
 
-    const { error } = await supabase.from("whatsapp_messages").insert([
-      {
-        number: to,
-        message: body,
-        session_id: sessionId,
-        from_me: true,
-        created_at: new Date().toISOString(),
-      },
-    ]);
-
-    if (error) {
-      toast.error("Erro ao enviar mensagem");
-    } else {
-      setMessages((prev) => [
-        ...prev,
+    try {
+      const { error } = await supabase.from("whatsapp_messages").insert([
         {
-          id: crypto.randomUUID(),
-          session_id: sessionId,
           number: to,
           message: body,
+          session_id: sessionId,
           from_me: true,
           created_at: new Date().toISOString(),
         },
       ]);
+
+      if (error) {
+        console.error("Error sending message:", error);
+        toast.error("Erro ao enviar mensagem");
+      } else {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: crypto.randomUUID(),
+            session_id: sessionId,
+            number: to,
+            message: body,
+            from_me: true,
+            created_at: new Date().toISOString(),
+          },
+        ]);
+      }
+    } catch (err) {
+      console.error("Error in sendMessage:", err);
+      toast.error("Erro ao enviar mensagem");
     }
   };
 

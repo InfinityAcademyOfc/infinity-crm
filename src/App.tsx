@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from "./components/ui/theme-provider";
 import { AuthProvider } from './contexts/AuthContext';
 import { WhatsAppProvider } from './contexts/WhatsAppContext';
+import { WhatsAppSessionProvider } from './contexts/WhatsAppSessionContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from "./components/ui/toaster";
 
@@ -37,49 +38,51 @@ function App() {
     <BrowserRouter>
       <ThemeProvider defaultTheme="dark">
         <AuthProvider>
-          <WhatsAppProvider>
-            <QueryClientProvider client={queryClient}>
-              <Routes>
-                {/* Public routes */}
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route path="/pricing" element={<Pricing />} />
-                <Route path="/waiting" element={<WaitingArea />} />
+          <WhatsAppSessionProvider>
+            <WhatsAppProvider>
+              <QueryClientProvider client={queryClient}>
+                <Routes>
+                  {/* Public routes */}
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/register" element={<Register />} />
+                  <Route path="/pricing" element={<Pricing />} />
+                  <Route path="/waiting" element={<WaitingArea />} />
 
-                {/* Protected routes with MainLayout */}
-                <Route path="/" element={<ProtectedRoute />}>
-                  <Route element={<MainLayout />}>
-                    <Route index element={<Navigate to="/app" replace />} />
-                    
-                    {/* App routes */}
-                    <Route path="/app" element={<Dashboard />} />
-                    <Route path="/app/sales-funnel" element={<SalesFunnel />} />
-                    <Route path="/app/clients" element={<ClientManagement />} />
-                    <Route path="/app/finance" element={<FinanceManagement />} />
-                    <Route path="/app/products" element={<ProductsServices />} />
-                    <Route path="/app/lead-import" element={<LeadImport />} />
-                    
-                    {/* Integration routes */}
-                    <Route path="/app/whatsapp" element={<WhatsAppIntegrationPage />} />
-                    <Route path="/app/ads-integration" element={<AdsIntegrationPage />} />
-                    
-                    {/* Management routes */}
-                    <Route path="/app/production" element={<ProductionManagement />} />
-                    <Route path="/app/team" element={<TeamManagement />} />
-                    <Route path="/app/meetings" element={<Meetings />} />
-                    
-                    {/* Settings */}
-                    <Route path="/app/settings" element={<Settings />} />
+                  {/* Protected routes with MainLayout */}
+                  <Route path="/" element={<ProtectedRoute />}>
+                    <Route element={<MainLayout />}>
+                      <Route index element={<Navigate to="/app" replace />} />
+                      
+                      {/* App routes */}
+                      <Route path="/app" element={<Dashboard />} />
+                      <Route path="/app/sales-funnel" element={<SalesFunnel />} />
+                      <Route path="/app/clients" element={<ClientManagement />} />
+                      <Route path="/app/finance" element={<FinanceManagement />} />
+                      <Route path="/app/products" element={<ProductsServices />} />
+                      <Route path="/app/lead-import" element={<LeadImport />} />
+                      
+                      {/* Integration routes */}
+                      <Route path="/app/whatsapp" element={<WhatsAppIntegrationPage />} />
+                      <Route path="/app/ads-integration" element={<AdsIntegrationPage />} />
+                      
+                      {/* Management routes */}
+                      <Route path="/app/production" element={<ProductionManagement />} />
+                      <Route path="/app/team" element={<TeamManagement />} />
+                      <Route path="/app/meetings" element={<Meetings />} />
+                      
+                      {/* Settings */}
+                      <Route path="/app/settings" element={<Settings />} />
+                    </Route>
                   </Route>
-                </Route>
 
-                {/* Catch all - redirect to app */}
-                <Route path="*" element={<Navigate to="/app" replace />} />
-              </Routes>
+                  {/* Catch all - redirect to app */}
+                  <Route path="*" element={<Navigate to="/app" replace />} />
+                </Routes>
 
-              <Toaster />
-            </QueryClientProvider>
-          </WhatsAppProvider>
+                <Toaster />
+              </QueryClientProvider>
+            </WhatsAppProvider>
+          </WhatsAppSessionProvider>
         </AuthProvider>
       </ThemeProvider>
     </BrowserRouter>
