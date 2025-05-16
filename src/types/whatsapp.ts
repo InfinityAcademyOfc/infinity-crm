@@ -24,7 +24,7 @@ export type WhatsAppMessage = {
   created_at: string;
 };
 
-// Tipos para o contexto separados em categorias
+// Tipos para o contexto separados em categorias para evitar recursão circular
 export interface WhatsAppStateProps {
   currentSession: string | null;
   sessions: WhatsAppSession[];

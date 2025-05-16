@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { WhatsAppContact, WhatsAppMessage } from "@/types/whatsapp";
 
-interface UseWhatsAppMessagesReturn {
+// Define interface separately to avoid circular references
+export interface UseWhatsAppMessagesReturn {
   selectedContact: WhatsAppContact | null;
   setSelectedContact: (contact: WhatsAppContact | null) => void;
   contacts: WhatsAppContact[];
@@ -138,6 +139,7 @@ export function useWhatsAppMessages(currentSession: string | null): UseWhatsAppM
     if (currentSession) loadContacts(currentSession);
   }, [currentSession]);
 
+  // Explicitly return an object matching the interface type
   return {
     selectedContact,
     setSelectedContact,
