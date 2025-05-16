@@ -1,6 +1,17 @@
 import React, { useState, useContext } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MessageSquare, Users, Bot, Settings, LogOut } from "lucide-react";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import {
+  MessageSquare,
+  Users,
+  Bot,
+  Settings,
+  LogOut,
+} from "lucide-react";
 import WhatsAppConversations from "./WhatsAppConversations";
 import ContactsManager from "./ContactsManager";
 import ChatbotManager from "./ChatbotManager";
@@ -62,4 +73,3 @@ export default function WhatsAppMenuLayout() {
     </div>
   );
 }
-
