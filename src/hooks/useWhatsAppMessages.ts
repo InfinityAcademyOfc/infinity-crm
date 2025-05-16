@@ -11,6 +11,7 @@ export function useWhatsAppMessages(currentSession: string | null) {
   const [loadingMessages, setLoadingMessages] = useState(false);
   const { toast } = useToast();
 
+  // Load contacts for a given session
   const loadContacts = async (sessionId: string) => {
     try {
       const { data: messageData, error: messageError } = await supabase
@@ -45,6 +46,7 @@ export function useWhatsAppMessages(currentSession: string | null) {
     }
   };
 
+  // Load messages between current session and selected contact
   const loadMessages = async (sessionId: string, contactNumber: string) => {
     setLoadingMessages(true);
     try {
@@ -69,6 +71,7 @@ export function useWhatsAppMessages(currentSession: string | null) {
     }
   };
 
+  // Send a message to the selected contact
   const sendMessage = async (message: string) => {
     if (!currentSession || !selectedContact || !message.trim()) return;
     try {
@@ -84,11 +87,10 @@ export function useWhatsAppMessages(currentSession: string | null) {
       });
     } catch (error) {
       console.error("sendMessage error:", error);
-      // Removemos notificações de erro sobre sessões
     }
   };
 
-  // Subscrição de mensagens em tempo real
+  // Subscribe to real-time message updates
   useEffect(() => {
     if (!currentSession) return;
 
@@ -114,14 +116,14 @@ export function useWhatsAppMessages(currentSession: string | null) {
     return () => { supabase.removeChannel(channel) };
   }, [currentSession, selectedContact]);
 
-  // Carregar mensagens quando o contato mudar
+  // Load messages when contact changes
   useEffect(() => {
     if (currentSession && selectedContact) {
       loadMessages(currentSession, selectedContact.number || selectedContact.phone || '');
     }
   }, [selectedContact, currentSession]);
 
-  // Carregar contatos ao mudar sessão
+  // Load contacts when session changes
   useEffect(() => {
     if (currentSession) loadContacts(currentSession);
   }, [currentSession]);

@@ -12,7 +12,7 @@ interface QRCodeHookReturn {
 
 export function useQRCode(sessionId: string): QRCodeHookReturn {
   const [qrCodeData, setQrCodeData] = useState<string | null>(null);
-  const [status, setStatus] = useState<WhatsAppConnectionStatus>("loading");
+  const [status, setStatus] = useState<WhatsAppConnectionStatus>("not_started");
   const [loading, setLoading] = useState<boolean>(true);
   const intervalRef = useRef<number | null>(null);
   const mountedRef = useRef<boolean>(true);
