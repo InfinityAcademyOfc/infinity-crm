@@ -1,166 +1,92 @@
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { WhatsAppContact, WhatsAppMessage } from "@/types/whatsapp";
+import { useEffect, useState } from 'react'
+import { supabase } from '@/lib/supabase'
+import { useSWRConfig } from 'swr'
+import useSWR from 'swr'
+import { API_URL } from '@/lib/constants'
+import { Contact, WhatsAppMessage } from '@/types/whatsapp'
 
-// Explicitly define the return type to avoid circular references
 export interface WhatsAppMessagesHookResult {
-  selectedContact: WhatsAppContact | null;
-  setSelectedContact: (contact: WhatsAppContact | null) => void;
-  contacts: WhatsAppContact[];
-  messages: WhatsAppMessage[];
-  loadingMessages: boolean;
-  sendMessage: (message: string) => Promise<void>;
+  messages: WhatsAppMessage[]
+  isLoading: boolean
+  error: Error | null
+  sendMessage: (message: Partial<WhatsAppMessage>) => Promise<void>
+  contacts: Contact[]
 }
 
-export function useWhatsAppMessages(currentSession: string | null): WhatsAppMessagesHookResult {
-  const [selectedContact, setSelectedContact] = useState<WhatsAppContact | null>(null);
-  const [contacts, setContacts] = useState<WhatsAppContact[]>([]);
-  const [messages, setMessages] = useState<WhatsAppMessage[]>([]);
-  const [loadingMessages, setLoadingMessages] = useState(false);
-  const { toast } = useToast();
+export function useWhatsAppMessages(sessionId?: string): WhatsAppMessagesHookResult {
+  const { mutate } = useSWRConfig()
+  const [contacts, setContacts] = useState<Contact[]>([])
 
-  const API_URL = import.meta.env.VITE_API_URL || "";
-
-  const loadContacts = async (sessionId: string) => {
-    try {
-      const { data: messageData, error: messageError } = await supabase
-        .from("whatsapp_messages")
-        .select("number")
-        .eq("session_id", sessionId)
-        .order("created_at", { ascending: false });
-
-      if (messageError) throw messageError;
-
-      const uniqueNumbers = Array.from(new Set((messageData || []).map(m => m.number)));
-
-      const { data: contactData, error: contactError } = await supabase
-        .from("contacts")
-        .select("name, phone")
-        .eq("session_id", sessionId);
-
-      if (contactError) throw contactError;
-
-      const contactMap = new Map(contactData?.map(c => [c.phone, c.name]));
-
-      const contactsList = uniqueNumbers.map(number => ({
-        id: number,
-        number,
-        name: contactMap.get(number) || number,
-        phone: number
-      }));
-
-      setContacts(contactsList);
-    } catch (error) {
-      console.error("Erro ao carregar contatos:", error);
-      toast({
-        title: "Erro",
-        description: "Erro ao carregar contatos",
-        variant: "destructive"
-      });
+  const {
+    data: messages = [],
+    isLoading,
+    error,
+  } = useSWR<WhatsAppMessage[]>(
+    sessionId ? `${API_URL}/messages/${sessionId}` : null,
+    async (url: string) => {
+      const response = await fetch(url)
+      if (!response.ok) throw new Error('Failed to fetch messages')
+      return response.json()
+    },
+    {
+      revalidateOnFocus: true,
+      refreshInterval: 5000,
     }
-  };
+  )
 
-  const loadMessages = async (sessionId: string, contactNumber: string) => {
-    setLoadingMessages(true);
-    try {
-      const { data, error } = await supabase
-        .from("whatsapp_messages")
-        .select("*")
-        .eq("session_id", sessionId)
-        .eq("number", contactNumber)
-        .order("created_at");
+  const sendMessage = async (message: Partial<WhatsAppMessage>) => {
+    await fetch(`${API_URL}/messages/send`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(message),
+    })
 
-      if (error) throw error;
-      setMessages(data || []);
-    } catch (error) {
-      console.error("Erro ao carregar mensagens:", error);
-      toast({
-        title: "Erro",
-        description: "Erro ao carregar mensagens",
-        variant: "destructive"
-      });
-    } finally {
-      setLoadingMessages(false);
-    }
-  };
+    // revalida SWR
+    if (sessionId) mutate(`${API_URL}/messages/${sessionId}`)
+  }
 
-  const sendMessage = async (message: string) => {
-    if (!currentSession || !selectedContact || !message.trim()) return;
-
-    try {
-      const response = await fetch(`${API_URL}/messages/send`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          sessionId: currentSession,
-          number: selectedContact.number || selectedContact.phone,
-          message: message.trim()
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error("Erro ao enviar mensagem");
-      }
-    } catch (error) {
-      console.error("Erro ao enviar mensagem:", error);
-      toast({
-        title: "Erro",
-        description: "Erro ao enviar mensagem",
-        variant: "destructive"
-      });
-    }
-  };
-
+  // Listener realtime Supabase para novas mensagens
   useEffect(() => {
-    if (!currentSession) return;
+    if (!sessionId) return
 
     const channel = supabase
-      .channel("realtime-messages")
+      .channel('whatsapp:messages')
       .on(
-        "postgres_changes",
+        'postgres_changes',
         {
-          event: "INSERT",
-          schema: "public",
-          table: "whatsapp_messages",
-          filter: `session_id=eq.${currentSession}`
+          event: 'INSERT',
+          schema: 'public',
+          table: 'whatsapp_messages',
+          filter: `session_id=eq.${sessionId}`,
         },
         (payload) => {
-          const newMsg = payload.new as WhatsAppMessage;
-          if (
-            selectedContact &&
-            (newMsg.number === selectedContact.number || newMsg.number === selectedContact.phone)
-          ) {
-            setMessages((prev) => [...prev, newMsg]);
-          }
+          mutate(`${API_URL}/messages/${sessionId}`)
         }
       )
-      .subscribe();
+      .subscribe()
 
     return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [currentSession, selectedContact]);
-
-  useEffect(() => {
-    if (currentSession && selectedContact) {
-      const contactNumber = selectedContact.number || selectedContact.phone || '';
-      loadMessages(currentSession, contactNumber);
+      supabase.removeChannel(channel)
     }
-  }, [selectedContact, currentSession]);
+  }, [sessionId, mutate])
 
+  // Buscar contatos do Supabase
   useEffect(() => {
-    if (currentSession) {
-      loadContacts(currentSession);
+    const fetchContacts = async () => {
+      const { data } = await supabase.from('contacts').select('*')
+      if (data) setContacts(data)
     }
-  }, [currentSession]);
+
+    fetchContacts()
+  }, [])
 
   return {
-    selectedContact,
-    setSelectedContact,
-    contacts,
     messages,
-    loadingMessages,
-    sendMessage
-  };
+    isLoading,
+    error: error instanceof Error ? error : null,
+    sendMessage,
+    contacts,
+  }
 }
