@@ -4,7 +4,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { WhatsAppContact, WhatsAppMessage } from "@/types/whatsapp";
 
-export function useWhatsAppMessages(currentSession: string | null) {
+interface UseWhatsAppMessagesReturn {
+  selectedContact: WhatsAppContact | null;
+  setSelectedContact: (contact: WhatsAppContact | null) => void;
+  contacts: WhatsAppContact[];
+  messages: WhatsAppMessage[];
+  loadingMessages: boolean;
+  sendMessage: (message: string) => Promise<void>;
+}
+
+export function useWhatsAppMessages(currentSession: string | null): UseWhatsAppMessagesReturn {
   const [selectedContact, setSelectedContact] = useState<WhatsAppContact | null>(null);
   const [contacts, setContacts] = useState<WhatsAppContact[]>([]);
   const [messages, setMessages] = useState<WhatsAppMessage[]>([]);

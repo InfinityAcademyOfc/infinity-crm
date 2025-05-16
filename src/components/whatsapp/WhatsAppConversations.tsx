@@ -16,6 +16,7 @@ import {
 import { useWhatsApp } from "@/contexts/WhatsAppContext";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { WhatsAppContact, WhatsAppMessage } from "@/types/whatsapp";
 
 interface MessageInputProps {
   value: string;
@@ -58,17 +59,19 @@ const MessageInput = ({ value, onChange, onSend }: MessageInputProps) => {
 };
 
 // Componente para a lista de contatos
+interface ContactsListProps {
+  contacts: WhatsAppContact[];
+  selectedContact: WhatsAppContact | null;
+  onSelectContact: (contact: WhatsAppContact) => void;
+  searchQuery: string;
+}
+
 const ContactsList = ({ 
   contacts, 
   selectedContact, 
   onSelectContact,
   searchQuery
-}: {
-  contacts: ReturnType<typeof useWhatsApp>["contacts"];
-  selectedContact: ReturnType<typeof useWhatsApp>["selectedContact"];
-  onSelectContact: (contact: ReturnType<typeof useWhatsApp>["contacts"][0]) => void;
-  searchQuery: string;
-}) => {
+}: ContactsListProps) => {
   // Filtrar contatos baseado na pesquisa
   const filteredContacts = contacts.filter(contact => {
     const contactName = contact.name || contact.number || contact.phone || '';
@@ -117,13 +120,12 @@ const ContactsList = ({
 };
 
 // Componente de mensagens
-const ChatMessages = ({ 
-  messages, 
-  loading
-}: { 
-  messages: ReturnType<typeof useWhatsApp>["messages"];
+interface ChatMessagesProps {
+  messages: WhatsAppMessage[];
   loading: boolean;
-}) => {
+}
+
+const ChatMessages = ({ messages, loading }: ChatMessagesProps) => {
   if (loading) {
     return (
       <div className="flex justify-center py-4">
@@ -198,13 +200,15 @@ const WhatsAppConversations = ({ sessionId }: { sessionId: string }) => {
       {/* Painel lateral de contatos */}
       <div className="w-80 border-r bg-muted/30">
         <div className="p-3 border-b">
-          <Input
-            placeholder="Pesquisar conversa..."
-            className="bg-muted"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            prefix={<Search className="text-muted-foreground" size={16} />}
-          />
+          <div className="flex items-center gap-2 bg-muted rounded-md p-2">
+            <Search className="text-muted-foreground" size={16} />
+            <Input
+              placeholder="Pesquisar conversa..."
+              className="bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0 p-0 text-sm"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
         </div>
         <ScrollArea className="h-[calc(100%-56px)]">
           <ContactsList 
