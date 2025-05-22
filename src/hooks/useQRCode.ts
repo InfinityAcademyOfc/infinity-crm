@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from "react";
 import { WhatsAppConnectionStatus } from "@/types/whatsapp";
 
@@ -14,8 +13,10 @@ export function useQRCode(sessionId: string): QRCodeHookResult {
   const [qrCodeData, setQrCodeData] = useState<string | null>(null);
   const [status, setStatus] = useState<WhatsAppConnectionStatus>("not_started");
   const [loading, setLoading] = useState<boolean>(true);
+
   const intervalRef = useRef<number | null>(null);
   const mountedRef = useRef<boolean>(true);
+  const lastStatusRef = useRef<WhatsAppConnectionStatus>("not_started");
 
   useEffect(() => {
     mountedRef.current = true;
@@ -29,27 +30,33 @@ export function useQRCode(sessionId: string): QRCodeHookResult {
 
     const fetchQrCode = async () => {
       try {
-        setLoading(true);
         const res = await fetch(`${API_URL}/sessions/${sessionId}/status`);
         const data = await res.json();
 
         if (!mountedRef.current) return;
 
-        if (data.status === "connected") {
-          clearInterval(intervalRef.current!);
-          setStatus("connected");
-          setQrCodeData(null);
-        } else if (data.status === "qr") {
-          setStatus("qr");
-          setQrCodeData(data.qr_code || null);
-        } else if (data.status === "not_started") {
-          setStatus("not_started");
-          setQrCodeData(null);
-        } else {
-          setStatus("error");
-          setQrCodeData(null);
+        const newStatus = data.status as WhatsAppConnectionStatus;
+
+        // Só atualiza se mudou o status
+        if (newStatus !== lastStatusRef.current) {
+          lastStatusRef.current = newStatus;
+
+          if (newStatus === "connected") {
+            clearInterval(intervalRef.current!);
+            setStatus("connected");
+            setQrCodeData(null);
+          } else if (newStatus === "qr") {
+            setStatus("qr");
+            setQrCodeData(data.qr_code || null);
+          } else if (newStatus === "not_started") {
+            setStatus("not_started");
+            setQrCodeData(null);
+          } else {
+            setStatus("error");
+            setQrCodeData(null);
+          }
         }
-      } catch (err) {
+      } catch {
         if (mountedRef.current) {
           setStatus("error");
           setQrCodeData(null);
@@ -75,5 +82,4 @@ export function useQRCode(sessionId: string): QRCodeHookResult {
   return { qrCodeData, status, loading };
 }
 
-// Re-export the type for easier access
 export type { WhatsAppConnectionStatus } from "@/types/whatsapp";
