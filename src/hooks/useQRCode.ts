@@ -19,66 +19,87 @@ export function useQRCode(sessionId: string): QRCodeHookResult {
 
   const intervalRef = useRef<number | null>(null);
   const mountedRef = useRef<boolean>(true);
-  const lastStatusRef = useRef<WhatsAppConnectionStatus>("not_started");
   const attemptRef = useRef<number>(0);
 
   useEffect(() => {
     mountedRef.current = true;
     attemptRef.current = 0;
 
-    if (!API_URL || !sessionId) {
-      setStatus("error");
+    if (!sessionId) {
+      setStatus("not_started");
       setQrCodeData(null);
       setLoading(false);
-      setError("API URL ou ID da sessão não definidos");
+      setError(null);
       return;
     }
 
     const fetchQrCode = async () => {
       try {
-        const res = await fetch(`${API_URL}/sessions/${sessionId}/status`);
+        // Primeiro verificamos o status da sessão
+        const statusRes = await fetch(`${API_URL}/sessions/${sessionId}/status`, {
+          signal: AbortSignal.timeout(8000) // Timeout aumentado
+        });
         
-        if (!res.ok) {
+        if (!statusRes.ok) {
           if (mountedRef.current) {
-            setStatus("error");
-            setQrCodeData(null);
-            setError(`Erro ao buscar status: ${res.status}`);
-            attemptRef.current += 1;
+            // Em caso de erro de status, ainda tentamos obter o QR Code
+            console.log(`Status indisponível, tentando QR code diretamente`);
           }
+        } else {
+          const statusData = await statusRes.json();
+          
+          if (!mountedRef.current) return;
+          
+          const newStatus = statusData.status as WhatsAppConnectionStatus;
+          setStatus(newStatus);
+          
+          // Se conectado, podemos limpar o QR code
+          if (newStatus === "connected") {
+            setQrCodeData(null);
+            setLoading(false);
+            attemptRef.current = 0;
+            return;
+          }
+        }
+
+        // Sempre tentamos obter o QR code se não estiver conectado
+        // De acordo com o backend, o endpoint de QR code inicia a sessão se necessário
+        const qrRes = await fetch(`${API_URL}/sessions/${sessionId}/qr`, {
+          signal: AbortSignal.timeout(8000)
+        });
+        
+        if (!mountedRef.current) return;
+        
+        if (!qrRes.ok) {
+          // Se o QR não estiver pronto, não consideramos um erro, apenas esperamos
+          if (qrRes.status === 202) {
+            console.log("QR Code ainda não disponível, aguarde...");
+            setStatus("loading");
+            return;
+          }
+          
+          console.warn(`Erro ao buscar QR code: ${qrRes.status}`);
+          attemptRef.current += 1;
           return;
         }
-
-        const data = await res.json();
-
-        if (!mountedRef.current) return;
-
-        const newStatus = data.status as WhatsAppConnectionStatus;
-        setError(null);
-
-        // Always update the status
-        setStatus(newStatus);
         
-        // Update QR code if it's available or clear it when not needed
-        if (newStatus === "qr" && data.qr_code) {
-          setQrCodeData(data.qr_code);
-        } else if (newStatus === "connected") {
-          setQrCodeData(null);
-          clearInterval(intervalRef.current!);
+        const qrData = await qrRes.json();
+        
+        if (qrData && qrData.qr) {
+          setQrCodeData(qrData.qr);
+          setStatus("qr");
+          setError(null);
+          attemptRef.current = 0;
         }
-
-        // Track status changes
-        lastStatusRef.current = newStatus;
-        
-        // Reset attempt counter on successful response
-        attemptRef.current = 0;
       } catch (error) {
         if (mountedRef.current) {
-          console.error("Erro ao buscar QR code:", error);
-          setError("Erro ao buscar código QR. Tente novamente.");
+          console.error("Erro ao conectar com API:", error);
+          
+          // Incrementamos a contagem de tentativas
           attemptRef.current += 1;
           
-          // If we've had too many errors in a row, consider the connection failed
-          if (attemptRef.current > 5) {
+          // Apenas consideramos erro após várias tentativas
+          if (attemptRef.current > 3) {
             setStatus("error");
           }
         }
@@ -92,8 +113,8 @@ export function useQRCode(sessionId: string): QRCodeHookResult {
     setLoading(true);
     fetchQrCode();
     
-    // Fetch more frequently at first, then slow down
-    const interval = window.setInterval(fetchQrCode, 4000);
+    // Intervalos mais curtos no início para obter o QR rapidamente
+    const interval = window.setInterval(fetchQrCode, 5000);
     intervalRef.current = interval;
 
     return () => {

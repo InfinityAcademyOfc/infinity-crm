@@ -18,7 +18,7 @@ interface WhatsAppContextType {
   refreshData: () => Promise<void>;
   fetchMessages: (contactId: string, sessionId: string) => Promise<void>;
   
-  // Adding properties for WhatsAppIntegration.tsx
+  // Propriedades para WhatsAppIntegration.tsx
   currentSession: string | null;
   setCurrentSession: (sessionId: string | null) => void;
   sessions: WhatsAppSession[];
@@ -47,7 +47,7 @@ export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
   const [messages, setMessages] = useState<WhatsAppMessage[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
   
-  // More reliable API URL handling
+  // URL da API mais confiável
   const API_URL = import.meta.env.VITE_API_URL || "";
   const isConnected = connectionStatus === "connected" && !!sessionId;
   
@@ -58,10 +58,10 @@ export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
     }
     
     try {
-      // Create a temporary message ID
+      // ID temporário para a mensagem
       const tempId = `temp-${Date.now()}`;
       
-      // Add message to UI immediately for better UX
+      // Adiciona mensagem à UI imediatamente para melhor UX
       const tempMessage: WhatsAppMessage = {
         id: tempId,
         session_id: sessionId,
@@ -73,7 +73,7 @@ export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
       
       setMessages(prev => [...prev, tempMessage]);
       
-      // Send through API
+      // Envia através da API
       const response = await fetch(`${API_URL}/sessions/${sessionId}/send`, {
         method: 'POST',
         headers: {
@@ -83,10 +83,10 @@ export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
       });
       
       if (!response.ok) {
-        throw new Error('Failed to send message');
+        throw new Error('Falha ao enviar mensagem');
       }
       
-      // Wait a bit and then fetch updated messages to get the actual message ID
+      // Aguarda um pouco e busca mensagens atualizadas
       setTimeout(() => {
         if (selectedContact) {
           fetchMessages(selectedContact.phone, sessionId);
@@ -94,7 +94,7 @@ export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
       }, 1000);
       
     } catch (error) {
-      console.error('Error sending message:', error);
+      console.warn('Erro ao enviar mensagem:', error);
       toast.error("Falha ao enviar mensagem");
     }
   }, [sessionId, isConnected, selectedContact, API_URL]);
@@ -105,16 +105,15 @@ export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
     try {
       setLoadingMessages(true);
       const messagesResponse = await fetch(`${API_URL}/sessions/${sessionId}/messages/${contactId}`);
+      
       if (messagesResponse.ok) {
         const messagesData = await messagesResponse.json();
         setMessages(messagesData);
       } else {
-        console.log("Erro ao buscar mensagens:", messagesResponse.status);
-        // Don't clear messages on error to preserve user experience
+        console.warn("Erro ao buscar mensagens:", messagesResponse.status);
       }
     } catch (error) {
-      console.error("Error fetching messages:", error);
-      // Don't show error toast for better UX when network issues occur
+      console.warn("Erro ao buscar mensagens:", error);
     } finally {
       setLoadingMessages(false);
     }
@@ -124,34 +123,29 @@ export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
     if (!sessionId || !API_URL || !isConnected) return;
     
     try {
-      // Fetch contacts
+      // Buscar contatos
       const contactsResponse = await fetch(`${API_URL}/sessions/${sessionId}/contacts`);
       if (contactsResponse.ok) {
         const contactsData = await contactsResponse.json();
         setContacts(contactsData);
       }
       
-      // Fetch messages if a contact is selected
+      // Buscar mensagens se um contato estiver selecionado
       if (selectedContact) {
         await fetchMessages(selectedContact.phone, sessionId);
       }
     } catch (error) {
-      console.error("Error refreshing WhatsApp data:", error);
-      // Don't show toast here to avoid spamming with errors
+      console.warn("Erro ao atualizar dados do WhatsApp:", error);
     }
   }, [sessionId, selectedContact, fetchMessages, isConnected, API_URL]);
 
   const connect = useCallback(async (id: string) => {
-    if (!API_URL) {
-      toast.error("API do WhatsApp não configurada");
-      return;
-    }
+    if (!API_URL) return;
     
     try {
       await connectSession(id);
-      // Don't show success toast here - QRCodeScanner will show it after successful scan
     } catch (error) {
-      toast.error("Erro ao conectar sessão");
+      console.warn("Erro ao conectar sessão:", error);
     }
   }, [connectSession, API_URL]);
 
@@ -164,11 +158,11 @@ export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
       setMessages([]);
       toast.success("Sessão desconectada com sucesso");
     } catch (error) {
-      toast.error("Erro ao desconectar sessão");
+      console.warn("Erro ao desconectar sessão:", error);
     }
   }, [sessionId, disconnectSession, API_URL]);
 
-  // Periodically refresh data when connected
+  // Atualiza dados periodicamente quando conectado
   useEffect(() => {
     if (isConnected) {
       refreshData();
@@ -177,7 +171,7 @@ export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [isConnected, refreshData]);
 
-  // Clear selected contact when session changes or disconnects
+  // Limpa contato selecionado quando a sessão muda ou desconecta
   useEffect(() => {
     if (!isConnected) {
       setSelectedContact(null);
@@ -201,7 +195,7 @@ export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
         refreshData,
         fetchMessages,
         
-        // Properties for WhatsAppIntegration.tsx
+        // Propriedades para WhatsAppIntegration.tsx
         currentSession: sessionId,
         setCurrentSession,
         sessions,

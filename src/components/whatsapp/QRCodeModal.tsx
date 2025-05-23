@@ -28,7 +28,7 @@ const QRCodeModal = ({ open, onOpenChange, sessionId, onLogin }: QRCodeModalProp
     }
   }, [status, onLogin, onOpenChange, open]);
 
-  // Get status text and color
+  // Obter texto e cor do status
   const getStatusBadge = () => {
     switch (status) {
       case "connected":
@@ -37,8 +37,8 @@ const QRCodeModal = ({ open, onOpenChange, sessionId, onLogin }: QRCodeModalProp
         return <Badge variant="outline" className="text-blue-500 border-blue-200">QR Code</Badge>;
       case "disconnected":
         return <Badge variant="outline" className="text-amber-500 border-amber-200">Desconectado</Badge>;
-      case "error":
-        return <Badge variant="destructive">Erro</Badge>;
+      case "loading":
+        return <Badge variant="outline" className="text-blue-500 border-blue-200">Carregando</Badge>;
       default:
         return <Badge variant="outline">Iniciando</Badge>;
     }

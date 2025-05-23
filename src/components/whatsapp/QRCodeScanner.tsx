@@ -6,7 +6,7 @@ import QRCodeDisplay from "@/components/whatsapp/ui/QRCodeDisplay";
 import { useQRCode } from "@/hooks/useQRCode";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, RefreshCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -20,7 +20,7 @@ const QRCodeScanner = ({ sessionId, onLogin }: QRCodeScannerProps) => {
   const [startingSession, setStartingSession] = useState(false);
   const { toast } = useToast();
 
-  // Initialize session when component mounts
+  // Inicializar sessão quando o componente monta
   useEffect(() => {
     const start = async () => {
       if (!sessionId || !API_URL) return;
@@ -28,10 +28,13 @@ const QRCodeScanner = ({ sessionId, onLogin }: QRCodeScannerProps) => {
       if (status === "not_started" || status === "disconnected" || status === "error") {
         try {
           setStartingSession(true);
-          console.log("Starting WhatsApp session:", sessionId);
-          await fetch(`${API_URL}/sessions/${sessionId}/start`, { method: "POST" });
+          // O endpoint de QR já inicia a sessão conforme o controller do backend
+          await fetch(`${API_URL}/sessions/${sessionId}/status`, { 
+            method: "GET",
+            signal: AbortSignal.timeout(10000)
+          });
         } catch (error) {
-          console.error("Error starting session:", error);
+          console.warn("Erro ao verificar status da sessão:", error);
         } finally {
           setStartingSession(false);
         }
@@ -41,7 +44,7 @@ const QRCodeScanner = ({ sessionId, onLogin }: QRCodeScannerProps) => {
     start();
   }, [sessionId, status]);
 
-  // Notify when connection is successful
+  // Notificar quando a conexão for bem-sucedida
   useEffect(() => {
     if (status === "connected" && onLogin) {
       toast({
@@ -53,39 +56,27 @@ const QRCodeScanner = ({ sessionId, onLogin }: QRCodeScannerProps) => {
     }
   }, [status, onLogin, toast]);
 
-  // Handle manual refresh of QR code
+  // Lidar com atualização manual do QR code
   const handleRefresh = async () => {
     if (!sessionId || !API_URL) return;
     
     try {
+      // O endpoint restart inicia uma nova sessão
       await fetch(`${API_URL}/sessions/${sessionId}/restart`, { method: "POST" });
       toast({
         title: "QR Code atualizado",
         description: "Um novo código QR foi solicitado.",
       });
     } catch (error) {
-      console.error("Error refreshing QR code:", error);
+      console.warn("Erro ao atualizar QR code:", error);
     }
   };
-
-  // Check if API is available
-  if (!API_URL) {
-    return (
-      <div className="flex flex-col items-center justify-center p-6 text-center">
-        <AlertCircle className="text-amber-500 mb-2 h-10 w-10" />
-        <h3 className="font-medium text-lg mb-2">API não configurada</h3>
-        <p className="text-sm text-muted-foreground">
-          O servidor do WhatsApp não está configurado. Configure a variável de ambiente VITE_API_URL.
-        </p>
-      </div>
-    );
-  }
 
   return (
     <div className="flex flex-col items-center justify-center p-4">
       {loading || startingSession ? (
         <QRCodeLoading />
-      ) : status === "qr" ? (
+      ) : status === "qr" && qrCodeData ? (
         <>
           <QRCodeInstructions />
           <QRCodeDisplay qrCodeData={qrCodeData} />
@@ -109,20 +100,22 @@ const QRCodeScanner = ({ sessionId, onLogin }: QRCodeScannerProps) => {
             Você já pode utilizar o WhatsApp no sistema.
           </p>
         </div>
-      ) : error ? (
+      ) : !sessionId ? (
+        <div className="text-center space-y-2">
+          <p className="text-muted-foreground">
+            Nenhuma sessão foi selecionada.
+          </p>
+        </div>
+      ) : (
         <div className="text-center space-y-4">
-          <p className="text-center text-amber-500 font-medium">
-            {error}
+          <p className="text-center text-muted-foreground font-medium">
+            {status === "error" 
+              ? "Não foi possível conectar ao WhatsApp. Tente novamente."
+              : "Aguardando sessão iniciar..."}
           </p>
           <Button variant="outline" onClick={handleRefresh}>
             Tentar novamente
           </Button>
-        </div>
-      ) : (
-        <div className="text-center space-y-2">
-          <p className="text-muted-foreground">
-            Aguardando sessão iniciar...
-          </p>
           <div className="animate-pulse bg-muted h-2 w-32 mx-auto rounded"></div>
         </div>
       )}

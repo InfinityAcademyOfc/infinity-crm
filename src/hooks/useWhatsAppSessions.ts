@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { WhatsAppSession, WhatsAppConnectionStatus } from "@/types/whatsapp";
 import { useToast } from "@/hooks/use-toast";
 
@@ -26,140 +26,123 @@ export function useWhatsAppSessions(): WhatsAppSessionsHookResult {
   const [connectionStatus, setConnectionStatus] = useState<WhatsAppConnectionStatus>("not_started");
   const { toast } = useToast();
   
-  // Flag to track if API is available
-  const [isApiAvailable, setIsApiAvailable] = useState<boolean | null>(null);
-  
-  // Check API availability
-  useEffect(() => {
+  const refreshSessions = useCallback(async () => {
     if (!API_URL) {
-      setIsApiAvailable(false);
       setLoadingSessions(false);
-      return;
-    }
-    
-    // Simple health check to determine if API is available
-    const checkApiAvailability = async () => {
-      try {
-        const res = await fetch(`${API_URL}/health`, { 
-          method: 'GET',
-          signal: AbortSignal.timeout(5000) // 5 second timeout
-        });
-        setIsApiAvailable(res.ok);
-      } catch (error) {
-        console.log("WhatsApp API unavailable:", error);
-        setIsApiAvailable(false);
-      } finally {
-        setLoadingSessions(false);
-      }
-    };
-    
-    checkApiAvailability();
-  }, [API_URL]);
-
-  const refreshSessions = async () => {
-    if (!API_URL || !isApiAvailable) {
-      setLoadingSessions(false);
+      setSessions([]);
       return;
     }
     
     setLoadingSessions(true);
     try {
-      const res = await fetch(`${API_URL}/sessions`);
-      if (!res.ok) throw new Error(`Erro ao buscar sessões: ${res.status}`);
+      const res = await fetch(`${API_URL}/sessions`, {
+        signal: AbortSignal.timeout(8000)
+      });
+      
+      if (!res.ok) {
+        console.warn(`Não foi possível obter as sessões: ${res.status}`);
+        setSessions([]);
+        return;
+      }
+      
       const data = await res.json();
-      setSessions(data);
+      setSessions(data || []);
     } catch (error) {
-      console.error("Erro ao atualizar sessões:", error);
-      // Don't show toast for connection errors to reduce notification spam
+      console.warn("Erro ao atualizar sessões:", error);
+      // Não limpa as sessões existentes em caso de erro temporário
     } finally {
       setLoadingSessions(false);
     }
-  };
+  }, [API_URL]);
 
-  const fetchConnectionStatus = async (sessionId: string) => {
-    if (!API_URL || !isApiAvailable || !sessionId) {
+  const fetchConnectionStatus = useCallback(async (sessionId: string) => {
+    if (!API_URL || !sessionId) {
       setConnectionStatus("not_started");
       return;
     }
     
     try {
-      const res = await fetch(`${API_URL}/sessions/${sessionId}/status`);
-      if (!res.ok) throw new Error(`Erro ao buscar status: ${res.status}`);
+      const res = await fetch(`${API_URL}/sessions/${sessionId}/status`, {
+        signal: AbortSignal.timeout(8000)
+      });
+      
+      if (!res.ok) {
+        console.warn(`Não foi possível obter status para ${sessionId}: ${res.status}`);
+        return;
+      }
+      
       const data = await res.json();
       setConnectionStatus(data?.status as WhatsAppConnectionStatus || "not_started");
     } catch (error) {
-      console.error("Erro ao obter status da sessão:", error);
-      setConnectionStatus("error");
+      console.warn("Erro ao obter status da sessão:", error);
+      // Não alteramos o status em caso de erro de rede temporário
     }
-  };
+  }, [API_URL]);
 
-  const connectSession = async (sessionId: string) => {
-    if (!API_URL || !isApiAvailable || !sessionId) {
-      toast({
-        title: "API indisponível",
-        description: "O serviço de WhatsApp não está disponível no momento",
-        variant: "destructive"
-      });
-      return;
-    }
+  const connectSession = useCallback(async (sessionId: string) => {
+    if (!API_URL || !sessionId) return;
     
     try {
-      const res = await fetch(`${API_URL}/sessions/${sessionId}/start`, { method: "POST" });
-      if (!res.ok) throw new Error("Erro ao conectar sessão");
+      // O endpoint de QR já inicia a sessão
+      const res = await fetch(`${API_URL}/sessions/${sessionId}/qr`, { 
+        method: "GET",
+        signal: AbortSignal.timeout(10000)
+      });
+      
+      if (!res.ok && res.status !== 202) {
+        throw new Error("Erro ao conectar sessão");
+      }
+      
       setCurrentSession(sessionId);
       localStorage.setItem("wa-session-id", sessionId);
       await fetchConnectionStatus(sessionId);
-      
-      // Don't show success toast here - let QRCode component handle it after successful scan
     } catch (error) {
-      console.error("Erro ao conectar sessão:", error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível conectar à sessão do WhatsApp",
-        variant: "destructive"
-      });
+      console.warn("Erro ao conectar sessão:", error);
     }
-  };
+  }, [API_URL, fetchConnectionStatus]);
 
-  const disconnectSession = async (sessionId: string) => {
-    if (!API_URL || !isApiAvailable || !sessionId) return;
+  const disconnectSession = useCallback(async (sessionId: string) => {
+    if (!API_URL || !sessionId) return;
     
     try {
       const res = await fetch(`${API_URL}/sessions/${sessionId}/logout`, { method: "POST" });
-      if (!res.ok) throw new Error("Erro ao desconectar sessão");
+      
+      if (!res.ok) {
+        console.warn(`Erro ao desconectar: ${res.status}`);
+      }
+      
       setConnectionStatus("not_started");
       await refreshSessions();
     } catch (error) {
-      console.error("Erro ao desconectar sessão:", error);
-      // Don't show error toast - if disconnect fails, don't distract user
+      console.warn("Erro ao desconectar sessão:", error);
     }
-  };
+  }, [API_URL, refreshSessions]);
 
-  const createNewSession = () => {
+  const createNewSession = useCallback(() => {
     const newSessionId = `session_${Date.now()}`;
     setCurrentSession(newSessionId);
     localStorage.setItem("wa-session-id", newSessionId);
     setConnectionStatus("not_started");
     return newSessionId;
-  };
+  }, []);
 
+  // Efeito para atualizar o status de conexão
   useEffect(() => {
-    if (!currentSession || !isApiAvailable) return;
+    if (!currentSession) return;
 
     fetchConnectionStatus(currentSession);
 
-    const interval = setInterval(() => fetchConnectionStatus(currentSession), 10000);
+    const interval = setInterval(() => fetchConnectionStatus(currentSession), 15000);
     return () => clearInterval(interval);
-  }, [currentSession, isApiAvailable]);
+  }, [currentSession, fetchConnectionStatus]);
 
+  // Efeito para atualizar a lista de sessões
   useEffect(() => {
-    if (isApiAvailable) {
-      refreshSessions();
-      
-      const interval = setInterval(refreshSessions, 30000);
-      return () => clearInterval(interval);
-    }
-  }, [isApiAvailable]);
+    refreshSessions();
+    
+    const interval = setInterval(refreshSessions, 30000);
+    return () => clearInterval(interval);
+  }, [refreshSessions]);
 
   return {
     sessions,
