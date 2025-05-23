@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
@@ -24,7 +25,7 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   refreshUserData: () => Promise<void>;
   isCompanyAccount: boolean;
-  isCompany: boolean; // Added this property
+  isCompany: boolean; // Added this property to match usage
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);

@@ -5,6 +5,7 @@ export interface Company {
   email: string;
   phone?: string; // Added optional phone property
   avatar?: string; // Added optional avatar property
+  department?: string; // Added optional department property
   owner_id: string;
   created_at: string;
   updated_at: string;
