@@ -1,21 +1,33 @@
 
+import React from "react";
 import { WhatsAppContact } from "@/types/whatsapp";
+import { ChevronLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ContactHeaderProps {
   contact: WhatsAppContact;
+  onBack?: () => void;
 }
 
-const ContactHeader = ({ contact }: ContactHeaderProps) => {
+const ContactHeader = ({ contact, onBack }: ContactHeaderProps) => {
+  const isMobile = useIsMobile();
+  
   return (
-    <div className="p-3 border-b bg-muted/30 flex items-center gap-3">
-      <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-medium">
-        {(contact.name || contact.number || contact.phone || "")?.charAt(0).toUpperCase()}
-      </div>
+    <div className="p-3 flex items-center border-b bg-muted/30">
+      {isMobile && onBack && (
+        <Button variant="ghost" size="icon" onClick={onBack} className="mr-2">
+          <ChevronLeft className="h-5 w-5" />
+        </Button>
+      )}
+      
       <div>
-        <h4 className="font-medium">
-          {contact.name || contact.number || contact.phone}
-        </h4>
-        <p className="text-xs text-muted-foreground">online</p>
+        <h3 className="font-semibold">
+          {contact.name || contact.phone}
+        </h3>
+        {contact.name && (
+          <p className="text-xs text-muted-foreground">{contact.phone}</p>
+        )}
       </div>
     </div>
   );

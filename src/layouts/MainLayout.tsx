@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, Suspense } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { ChevronLeft, Menu } from "lucide-react";
@@ -10,6 +11,9 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import LoadingScreen from "@/components/ui/loading-screen";
 import { MobileNav } from "@/components/layout/MobileNav";
+import { Toaster } from "@/components/ui/toaster";
+import { useNotifications } from "@/hooks/useNotifications";
+import { useAuth } from "@/contexts/AuthContext";
 
 const MainLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -17,6 +21,8 @@ const MainLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
+  const { user, profile, company } = useAuth();
+  const { unreadCount } = useNotifications();
   
   useEffect(() => {
     function handleResize() {
@@ -54,7 +60,11 @@ const MainLayout = () => {
 
         {/* Main content area */}
         <div className={cn("flex flex-col flex-1 w-full overflow-hidden")}>
-          <TopNav openMobileNav={() => setMobileOpen(true)} isMobileView={isMobileView} />
+          <TopNav 
+            openMobileNav={() => setMobileOpen(true)} 
+            isMobileView={isMobileView} 
+            notificationCount={unreadCount}
+          />
           
           <main className="flex-1 overflow-auto">
             <div className="container p-4 md:p-6 mx-0">
@@ -115,7 +125,9 @@ const MainLayout = () => {
           </div>
         )}
 
-        <UnifiedChatButton />
+        {/* Chat flutuante disponível em todo o app */}
+        {user && <UnifiedChatButton />}
+        <Toaster />
       </div>
     </SidebarProvider>
   );

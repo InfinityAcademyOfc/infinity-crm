@@ -1,3 +1,4 @@
+
 // Basic WhatsApp types
 export type WhatsAppConnectionStatus = 'connected' | 'disconnected' | 'qr' | 'error' | 'not_started' | 'loading';
 
@@ -35,6 +36,7 @@ export interface WhatsAppStateProps {
   contacts: WhatsAppContact[];
   messages: WhatsAppMessage[];
   loadingMessages: boolean;
+  isApiAvailable: boolean;
 }
 
 // Action methods interface

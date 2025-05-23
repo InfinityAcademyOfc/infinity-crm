@@ -12,14 +12,28 @@ import ChatMessage from "./ChatMessage";
 import type { PersonContact, GroupContact, Message } from "./types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
+import { useWhatsApp } from "@/contexts/WhatsAppContext";
 
-const UnifiedChatButton = () => {
-  const [isOpen, setIsOpen] = useState(false);
+const UnifiedChatButton = ({ defaultOpen = false }: { defaultOpen?: boolean }) => {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
   const [isMaximized, setIsMaximized] = useState(false);
   const [activeTab, setActiveTab] = useState("interno");
   const [selectedChat, setSelectedChat] = useState<string | null>(null);
   const [message, setMessage] = useState("");
   const { toast } = useToast();
+  
+  // Utilizar contatos do WhatsApp se disponíveis
+  const { contacts: whatsappContacts } = useWhatsApp();
+
+  // Mapear contatos do WhatsApp para o formato esperado
+  const externalContacts: PersonContact[] = whatsappContacts.map(contact => ({
+    id: contact.id,
+    name: contact.name || contact.phone,
+    status: 'online',
+    avatar: "",
+    lastMessage: "Toque para conversar",
+    unread: 0
+  }));
 
   const internalContacts: PersonContact[] = [
     { id: "1", name: "Ana Silva", status: "online", avatar: "", lastMessage: "Podemos revisar o documento?", unread: 2 },
@@ -30,11 +44,6 @@ const UnifiedChatButton = () => {
   const groupContacts: GroupContact[] = [
     { id: "g1", name: "Equipe de Marketing", avatar: "", lastMessage: "Carlos: Campanha finalizada", unread: 3 },
     { id: "g2", name: "Projeto X", avatar: "", lastMessage: "Ana: Reunião às 14h", unread: 0 }
-  ];
-
-  const externalContacts: PersonContact[] = [
-    { id: "e1", name: "Cliente ABC", status: "online", avatar: "", lastMessage: "Quando podemos agendar uma reunião?", unread: 1 },
-    { id: "e2", name: "Fornecedor XYZ", status: "offline", avatar: "", lastMessage: "Orçamento enviado", unread: 0 }
   ];
 
   const mockMessages: Message[] = [
@@ -72,13 +81,16 @@ const UnifiedChatButton = () => {
       case "grupos":
         return groupContacts;
       case "externo":
-        return externalContacts;
+        return externalContacts.length > 0 ? externalContacts : [
+          { id: "e1", name: "Cliente ABC", status: "online", avatar: "", lastMessage: "Quando podemos agendar uma reunião?", unread: 1 },
+          { id: "e2", name: "Fornecedor XYZ", status: "offline", avatar: "", lastMessage: "Orçamento enviado", unread: 0 }
+        ];
       default:
         return [];
     }
   };
 
-  const selectedContact = [...internalContacts, ...groupContacts, ...externalContacts].find(c => c.id === selectedChat);
+  const selectedContact = [...internalContacts, ...groupContacts, ...getContacts()].find(c => c.id === selectedChat);
 
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end space-y-2">
