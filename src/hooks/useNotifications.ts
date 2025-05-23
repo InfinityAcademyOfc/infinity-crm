@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 
 export interface Notification {
@@ -29,20 +29,31 @@ export const useNotifications = () => {
       try {
         setLoading(true);
         
-        const { data, error } = await supabase
-          .from('notifications')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(20);
+        // Usamos dados mockados enquanto não temos a tabela de notificações
+        const mockNotifications: Notification[] = [
+          {
+            id: '1',
+            user_id: user.id,
+            type: 'task',
+            title: 'Nova tarefa',
+            message: 'Você tem uma nova tarefa',
+            read: false,
+            created_at: new Date().toISOString()
+          },
+          {
+            id: '2',
+            user_id: user.id,
+            type: 'lead',
+            title: 'Novo lead',
+            message: 'Um novo lead foi adicionado',
+            read: true,
+            created_at: new Date(Date.now() - 60000).toISOString()
+          }
+        ];
         
-        if (error) throw error;
-        
-        if (data) {
-          setNotifications(data);
-          const unread = data.filter(notification => !notification.read).length;
-          setUnreadCount(unread);
-        }
+        setNotifications(mockNotifications);
+        const unread = mockNotifications.filter(notification => !notification.read).length;
+        setUnreadCount(unread);
       } catch (error) {
         console.error("Erro ao carregar notificações:", error);
       } finally {
@@ -52,24 +63,6 @@ export const useNotifications = () => {
 
     fetchNotifications();
     
-    // Inscrever-se para atualizações em tempo real
-    const notificationsSubscription = supabase
-      .channel('notifications-channel')
-      .on('postgres_changes', { 
-        event: 'INSERT', 
-        schema: 'public', 
-        table: 'notifications',
-        filter: `user_id=eq.${user.id}` 
-      }, (payload) => {
-        const newNotification = payload.new as Notification;
-        setNotifications(prev => [newNotification, ...prev]);
-        setUnreadCount(prev => prev + 1);
-      })
-      .subscribe();
-    
-    return () => {
-      supabase.removeChannel(notificationsSubscription);
-    };
   }, [user]);
 
   // Marcar notificação como lida
@@ -77,14 +70,6 @@ export const useNotifications = () => {
     if (!user) return;
     
     try {
-      const { error } = await supabase
-        .from('notifications')
-        .update({ read: true })
-        .eq('id', id)
-        .eq('user_id', user.id);
-      
-      if (error) throw error;
-      
       setNotifications(prev => 
         prev.map(notification => 
           notification.id === id 
@@ -104,14 +89,6 @@ export const useNotifications = () => {
     if (!user) return;
     
     try {
-      const { error } = await supabase
-        .from('notifications')
-        .update({ read: true })
-        .eq('user_id', user.id)
-        .eq('read', false);
-      
-      if (error) throw error;
-      
       setNotifications(prev => 
         prev.map(notification => ({ ...notification, read: true }))
       );
@@ -133,7 +110,8 @@ export const useNotifications = () => {
     if (!user) return;
     
     try {
-      const notification = {
+      const newNotification: Notification = {
+        id: `temp-${Date.now()}`,
         user_id: user.id,
         type,
         title,
@@ -144,13 +122,9 @@ export const useNotifications = () => {
         created_at: new Date().toISOString()
       };
       
-      const { error } = await supabase
-        .from('notifications')
-        .insert([notification]);
+      setNotifications(prev => [newNotification, ...prev]);
+      setUnreadCount(prev => prev + 1);
       
-      if (error) throw error;
-      
-      // A atualização será feita pela inscrição em tempo real
     } catch (error) {
       console.error("Erro ao adicionar notificação:", error);
     }

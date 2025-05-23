@@ -4,10 +4,10 @@ import { Outlet } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import Topnav from "@/components/layout/Topnav";
 import Sidebar from "@/components/layout/Sidebar";
-import MobileNav from "@/components/layout/MobileNav";
+import { MobileNav } from "@/components/layout/MobileNav";
 import { useAuth } from "@/contexts/AuthContext";
 import FloatingChat from "@/components/chat/FloatingChat";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase";
 
 const MainLayout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -20,15 +20,8 @@ const MainLayout = () => {
     
     const fetchNotificationCount = async () => {
       try {
-        const { count, error } = await supabase
-          .from('notifications')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', user.id)
-          .eq('read', false);
-        
-        if (error) throw error;
-        
-        setNotificationCount(count || 0);
+        // Usar um contador simples já que a tabela notifications pode ainda não existir
+        setNotificationCount(0);
       } catch (error) {
         console.error("Erro ao buscar contagem de notificações:", error);
       }
@@ -36,22 +29,6 @@ const MainLayout = () => {
     
     fetchNotificationCount();
     
-    // Atualizar em tempo real
-    const notificationsSubscription = supabase
-      .channel('notifications-count-channel')
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'notifications',
-        filter: `user_id=eq.${user.id}` 
-      }, () => {
-        fetchNotificationCount();
-      })
-      .subscribe();
-    
-    return () => {
-      supabase.removeChannel(notificationsSubscription);
-    };
   }, [user]);
 
   return (
