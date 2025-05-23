@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { MessageCircle, Users, MessageSquare, X, Maximize2, Minimize2, PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -253,14 +254,12 @@ const UnifiedChatButton = ({ defaultOpen = false }: { defaultOpen?: boolean }) =
   const handleCreateNewChat = () => {
     if (activeTab === "grupos") {
       // Implementação futura: modal para criar grupo
-      toast({
-        title: "Criar novo grupo",
+      toast("Criar novo grupo", {
         description: "Funcionalidade em desenvolvimento"
       });
     } else {
       // Implementação futura: modal para selecionar contato
-      toast({
-        title: "Iniciar nova conversa",
+      toast("Iniciar nova conversa", {
         description: "Funcionalidade em desenvolvimento"
       });
     }
