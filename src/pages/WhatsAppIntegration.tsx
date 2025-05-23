@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import QRCodeModal from "@/components/whatsapp/QRCodeModal";
@@ -62,7 +61,6 @@ const WhatsAppIntegrationPage = () => {
     setCurrentSession,
     sessions,
     loadingSessions,
-    connectionStatus,
     refreshSessions,
     createNewSession
   } = useWhatsApp();
@@ -88,6 +86,10 @@ const WhatsAppIntegrationPage = () => {
       setCurrentSession(sessions[0].id);
     }
   }, [sessions, currentSession, setCurrentSession]);
+
+  // Encontrar dados da sessão atual
+  const currentSessionData = sessions?.find((s) => s.id === currentSession);
+  const isCurrentSessionConnected = currentSessionData?.status?.toLowerCase() === "connected";
 
   return (
     <div className="p-6 space-y-6">
@@ -156,7 +158,7 @@ const WhatsAppIntegrationPage = () => {
         </div>
       )}
 
-      {currentSession && (
+      {isCurrentSessionConnected && (
         <div className="border rounded-lg h-[calc(100vh-15rem)]">
           <ScrollArea className="h-full rounded-md">
             <WhatsAppMenuLayout />
