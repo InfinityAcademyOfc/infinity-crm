@@ -17,11 +17,12 @@ const MainLayout = () => {
 
   return (
     <div className="flex min-h-screen bg-background">
-      <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
+      <Sidebar open={isSidebarOpen} setOpen={setIsSidebarOpen} />
 
       <div className="flex flex-col flex-1">
         <TopNav 
-          toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} 
+          openMobileNav={() => setIsSidebarOpen(!isSidebarOpen)} 
+          isMobileView={false}
           notificationCount={unreadCount}
         />
         

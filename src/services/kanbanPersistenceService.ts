@@ -32,13 +32,13 @@ export const kanbanPersistenceService = {
     }
 
     try {
-      // Temporarily use local storage until kanban_states table is created in Supabase
+      // Use local storage for persistence until kanban_states table is created in Supabase
       localStorage.setItem(
         `kanban_state_${userId}_${companyId}_${kanbanType}`, 
         JSON.stringify(columns)
       );
       
-      // Comment out Supabase code until table is created
+      // This code is commented out until the kanban_states table exists
       /*
       // Verificar se já existe um estado salvo
       const { data: existingState } = await supabase
@@ -92,11 +92,11 @@ export const kanbanPersistenceService = {
     }
 
     try {
-      // Temporarily use local storage until kanban_states table is created in Supabase
+      // Use local storage until kanban_states table is created in Supabase
       const savedState = localStorage.getItem(`kanban_state_${userId}_${companyId}_${kanbanType}`);
       return savedState ? JSON.parse(savedState) : null;
       
-      // Comment out Supabase code until table is created
+      // This code is commented out until the kanban_states table exists
       /*
       const { data, error } = await supabase
         .from('kanban_states')
