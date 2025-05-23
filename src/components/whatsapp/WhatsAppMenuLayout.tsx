@@ -1,3 +1,4 @@
+
 import React, { useState, useContext } from "react";
 import {
   Tabs,
@@ -13,8 +14,8 @@ import {
   LogOut,
 } from "lucide-react";
 import WhatsAppConversations from "./WhatsAppConversations";
-import ContactsManager from "./ContactsManager";
-import ChatbotManager from "./ChatbotManager";
+import ContactsManager from "./contacts/ContactsManager";
+import ChatbotManager from "./chatbot/ChatbotManager";
 import SettingsPanel from "./SettingsPanel";
 import { WhatsAppContext } from "@/contexts/WhatsAppContext";
 import { toast } from "sonner";
