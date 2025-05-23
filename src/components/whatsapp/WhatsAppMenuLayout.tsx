@@ -13,7 +13,7 @@ import {
   Settings,
   LogOut,
 } from "lucide-react";
-import WhatsAppConversations from "./conversation/ChatMessages";
+import WhatsAppConversations from "./WhatsAppConversations";
 import ContactsManager from "./contacts/ContactsManager";
 import ChatbotManager from "./chatbot/ChatbotManager";
 import SettingsPanel from "./SettingsPanel";
