@@ -1,18 +1,19 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { MessageCircle, Users, MessageSquare, X, Maximize2, Minimize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useToast } from "@/hooks/use-toast";
+import { useWhatsApp } from "@/contexts/WhatsAppContext";
+import { useIsMobile } from "@/hooks/use-mobile";
 import ChatList from "./ChatList";
 import ChatHeader from "./ChatHeader";
 import ChatMessage from "./ChatMessage";
 import type { PersonContact, GroupContact, Message } from "./types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useToast } from "@/hooks/use-toast";
-import { useWhatsApp } from "@/contexts/WhatsAppContext";
 
 const UnifiedChatButton = ({ defaultOpen = false }: { defaultOpen?: boolean }) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
@@ -21,9 +22,10 @@ const UnifiedChatButton = ({ defaultOpen = false }: { defaultOpen?: boolean }) =
   const [selectedChat, setSelectedChat] = useState<string | null>(null);
   const [message, setMessage] = useState("");
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   
   // Utilizar contatos do WhatsApp se disponíveis
-  const { contacts: whatsappContacts } = useWhatsApp();
+  const { contacts: whatsappContacts, sendMessage } = useWhatsApp();
 
   // Mapear contatos do WhatsApp para o formato esperado
   const externalContacts: PersonContact[] = whatsappContacts.map(contact => ({
@@ -66,13 +68,40 @@ const UnifiedChatButton = ({ defaultOpen = false }: { defaultOpen?: boolean }) =
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
     if (message.trim()) {
-      toast({
-        title: "Mensagem enviada",
-        description: "Sua mensagem foi enviada com sucesso.",
-      });
+      // Se estiver na aba externa, use a integração do WhatsApp
+      if (activeTab === "externo" && selectedChat) {
+        const contact = whatsappContacts.find(c => c.id === selectedChat);
+        if (contact) {
+          sendMessage(contact.phone, message)
+            .then(() => {
+              toast({
+                title: "Mensagem enviada",
+                description: "Sua mensagem foi enviada com sucesso.",
+              });
+            })
+            .catch(() => {
+              toast({
+                title: "Erro ao enviar",
+                description: "Não foi possível enviar sua mensagem.",
+                variant: "destructive"
+              });
+            });
+        }
+      } else {
+        // Mock para outros tipos de mensagem
+        toast({
+          title: "Mensagem enviada",
+          description: "Sua mensagem foi enviada com sucesso.",
+        });
+      }
       setMessage("");
     }
   };
+
+  useEffect(() => {
+    // Resetar seleção ao trocar de aba
+    setSelectedChat(null);
+  }, [activeTab]);
 
   const getContacts = () => {
     switch (activeTab) {
@@ -91,14 +120,19 @@ const UnifiedChatButton = ({ defaultOpen = false }: { defaultOpen?: boolean }) =
   };
 
   const selectedContact = [...internalContacts, ...groupContacts, ...getContacts()].find(c => c.id === selectedChat);
+  
+  // Adaptar tamanhos para mobile
+  const buttonSize = isMobile ? "h-10 w-10" : "h-12 w-12";
+  const iconSize = isMobile ? 18 : 24;
+  const cardHeight = isMobile ? "h-[80vh]" : "h-[70vh]";
 
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end space-y-2">
       {isOpen && (
-        <Card className={`flex flex-col overflow-hidden shadow-lg transition-all duration-300 ${
+        <Card className={`flex flex-col overflow-hidden shadow-xl transition-all duration-300 ${
           isMaximized 
             ? "fixed inset-4 w-auto h-auto z-50" 
-            : "w-80 h-[70vh] max-h-[500px]"
+            : `w-80 ${cardHeight} max-h-[500px]`
         }`}>
           <div className="p-2 border-b flex items-center justify-between">
             <div className="flex items-center space-x-2">
@@ -128,19 +162,19 @@ const UnifiedChatButton = ({ defaultOpen = false }: { defaultOpen?: boolean }) =
             </div>
           </div>
 
-          <Tabs defaultValue="interno" onValueChange={setActiveTab} className="flex-1 flex flex-col">
+          <Tabs defaultValue="interno" value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
             <div className="border-b">
               <TabsList className="w-full">
-                <TabsTrigger value="interno" className="flex-1">
-                  <MessageSquare className="h-4 w-4 mr-1" />
+                <TabsTrigger value="interno" className="flex-1 text-xs py-1.5">
+                  <MessageSquare className="h-3.5 w-3.5 mr-1" />
                   Interno
                 </TabsTrigger>
-                <TabsTrigger value="grupos" className="flex-1">
-                  <Users className="h-4 w-4 mr-1" />
+                <TabsTrigger value="grupos" className="flex-1 text-xs py-1.5">
+                  <Users className="h-3.5 w-3.5 mr-1" />
                   Grupos
                 </TabsTrigger>
-                <TabsTrigger value="externo" className="flex-1">
-                  <MessageCircle className="h-4 w-4 mr-1" />
+                <TabsTrigger value="externo" className="flex-1 text-xs py-1.5">
+                  <MessageCircle className="h-3.5 w-3.5 mr-1" />
                   Externo
                 </TabsTrigger>
               </TabsList>
@@ -186,9 +220,9 @@ const UnifiedChatButton = ({ defaultOpen = false }: { defaultOpen?: boolean }) =
       <Button
         size="icon"
         onClick={toggleChat}
-        className="h-12 w-12 rounded-full shadow-lg"
+        className={`${buttonSize} rounded-full shadow-lg`}
       >
-        {isOpen ? <X size={24} /> : <MessageCircle size={24} />}
+        {isOpen ? <X size={iconSize} /> : <MessageCircle size={iconSize} />}
       </Button>
     </div>
   );

@@ -2,6 +2,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { WhatsAppSession, WhatsAppConnectionStatus } from "@/types/whatsapp";
 import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
+import { supabase } from "@/lib/supabase";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -26,6 +28,7 @@ export function useWhatsAppSessions(): WhatsAppSessionsHookResult {
   );
   const [connectionStatus, setConnectionStatus] = useState<WhatsAppConnectionStatus>("not_started");
   const [isApiAvailable, setIsApiAvailable] = useState<boolean>(true);
+  const [retryCount, setRetryCount] = useState(0);
   const { toast } = useToast();
   
   const refreshSessions = useCallback(async () => {
@@ -38,8 +41,26 @@ export function useWhatsAppSessions(): WhatsAppSessionsHookResult {
     
     setLoadingSessions(true);
     try {
+      // Tenta buscar sessões do banco de dados local primeiro
+      const { data: localSessions, error: localError } = await supabase
+        .from("whatsapp_sessions")
+        .select("*")
+        .order("created_at", { ascending: false });
+      
+      // Se houver sessões locais, usamos essas enquanto tentamos sincronizar com a API
+      if (localSessions && localSessions.length > 0) {
+        const formattedSessions = localSessions.map(s => ({
+          id: s.session_id,
+          name: s.name || `Sessão ${s.session_id.substring(0, 8)}`,
+          status: s.status
+        }));
+        setSessions(formattedSessions);
+      }
+      
+      // Agora tenta buscar da API do WhatsApp
       const res = await fetch(`${API_URL}/sessions`, {
-        signal: AbortSignal.timeout(8000)
+        signal: AbortSignal.timeout(8000),
+        cache: 'no-store'
       });
       
       if (!res.ok) {
@@ -48,17 +69,20 @@ export function useWhatsAppSessions(): WhatsAppSessionsHookResult {
         // Se o endpoint /sessions não estiver disponível, considere a API indisponível
         if (res.status === 404) {
           setIsApiAvailable(false);
-          // Use sessões simuladas para uma experiência offline
-          const mockSessions: WhatsAppSession[] = currentSession ? [
-            {
-              id: currentSession,
-              name: "Meu WhatsApp",
-              status: "not_started"
-            }
-          ] : [];
-          setSessions(mockSessions);
-        } else {
-          setSessions([]);
+          // Use sessões locais para uma experiência offline
+          if (localSessions && localSessions.length > 0) {
+            // Já carregamos acima, não precisamos fazer nada
+          } else if (currentSession) {
+            // Fallback para sessão atual caso não tenhamos sessões locais
+            const mockSessions: WhatsAppSession[] = [
+              {
+                id: currentSession,
+                name: "Meu WhatsApp",
+                status: "not_started"
+              }
+            ];
+            setSessions(mockSessions);
+          }
         }
         return;
       }
@@ -66,12 +90,28 @@ export function useWhatsAppSessions(): WhatsAppSessionsHookResult {
       const data = await res.json();
       setSessions(data || []);
       setIsApiAvailable(true);
+      
+      // Sincronizar as sessões da API com o banco de dados local
+      if (data && data.length > 0) {
+        for (const session of data) {
+          await supabase
+            .from("whatsapp_sessions")
+            .upsert({
+              session_id: session.id,
+              name: session.name,
+              status: session.status,
+              is_connected: session.status === "connected",
+              updated_at: new Date().toISOString()
+            })
+            .eq("session_id", session.id);
+        }
+      }
     } catch (error) {
       console.warn("Erro ao atualizar sessões:", error);
       setIsApiAvailable(false);
       
       // Não limpa as sessões existentes em caso de erro temporário
-      // Fornecer dados simulados para uma melhor experiência
+      // Se temos sessões do banco local, já carregamos acima
       if (sessions.length === 0 && currentSession) {
         setSessions([{
           id: currentSession,
@@ -79,10 +119,19 @@ export function useWhatsAppSessions(): WhatsAppSessionsHookResult {
           status: "not_started"
         }]);
       }
+      
+      // Implementar retry logic
+      if (retryCount < 3) {
+        setTimeout(() => {
+          setRetryCount(prev => prev + 1);
+          refreshSessions();
+        }, 3000); // Tenta novamente após 3 segundos
+      }
     } finally {
       setLoadingSessions(false);
+      setRetryCount(0); // Reset retry count on success
     }
-  }, [API_URL, currentSession, sessions.length]);
+  }, [API_URL, currentSession, sessions.length, retryCount]);
 
   const fetchConnectionStatus = useCallback(async (sessionId: string) => {
     if (!API_URL || !sessionId) {
@@ -91,8 +140,21 @@ export function useWhatsAppSessions(): WhatsAppSessionsHookResult {
     }
     
     try {
+      // Tenta buscar status do banco de dados local primeiro
+      const { data: localSession } = await supabase
+        .from("whatsapp_sessions")
+        .select("status")
+        .eq("session_id", sessionId)
+        .single();
+        
+      if (localSession) {
+        setConnectionStatus(localSession.status as WhatsAppConnectionStatus);
+      }
+      
+      // Agora tenta buscar da API
       const res = await fetch(`${API_URL}/sessions/${sessionId}/status`, {
-        signal: AbortSignal.timeout(8000)
+        signal: AbortSignal.timeout(8000),
+        cache: 'no-store'
       });
       
       if (!res.ok) {
@@ -106,7 +168,19 @@ export function useWhatsAppSessions(): WhatsAppSessionsHookResult {
       
       setIsApiAvailable(true);
       const data = await res.json();
-      setConnectionStatus(data?.status as WhatsAppConnectionStatus || "not_started");
+      const status = data?.status as WhatsAppConnectionStatus || "not_started";
+      setConnectionStatus(status);
+      
+      // Atualiza o status no banco local
+      await supabase
+        .from("whatsapp_sessions")
+        .upsert({
+          session_id: sessionId,
+          status,
+          is_connected: status === "connected",
+          updated_at: new Date().toISOString()
+        })
+        .eq("session_id", sessionId);
     } catch (error) {
       console.warn("Erro ao obter status da sessão:", error);
       // Não alteramos o status em caso de erro de rede temporário
@@ -117,10 +191,13 @@ export function useWhatsAppSessions(): WhatsAppSessionsHookResult {
     if (!API_URL || !sessionId) return;
     
     try {
+      setConnectionStatus("loading");
+      
       // O endpoint de QR já inicia a sessão
       const res = await fetch(`${API_URL}/sessions/${sessionId}/qr`, { 
         method: "GET",
-        signal: AbortSignal.timeout(10000)
+        signal: AbortSignal.timeout(10000),
+        cache: 'no-store'
       });
       
       if (!res.ok && res.status !== 202) {
@@ -133,6 +210,18 @@ export function useWhatsAppSessions(): WhatsAppSessionsHookResult {
           });
           setCurrentSession(sessionId);
           localStorage.setItem("wa-session-id", sessionId);
+          
+          // Salva no banco local
+          await supabase
+            .from("whatsapp_sessions")
+            .upsert({
+              session_id: sessionId,
+              name: `Sessão ${sessionId.substring(0, 8)}`,
+              status: "not_started",
+              updated_at: new Date().toISOString()
+            })
+            .eq("session_id", sessionId);
+            
           return;
         }
         throw new Error("Erro ao conectar sessão");
@@ -141,6 +230,18 @@ export function useWhatsAppSessions(): WhatsAppSessionsHookResult {
       setIsApiAvailable(true);
       setCurrentSession(sessionId);
       localStorage.setItem("wa-session-id", sessionId);
+      
+      // Salva no banco local
+      await supabase
+        .from("whatsapp_sessions")
+        .upsert({
+          session_id: sessionId,
+          name: `Sessão ${sessionId.substring(0, 8)}`,
+          status: "qr", // Começa com status QR
+          updated_at: new Date().toISOString()
+        })
+        .eq("session_id", sessionId);
+        
       await fetchConnectionStatus(sessionId);
     } catch (error) {
       console.warn("Erro ao conectar sessão:", error);
@@ -152,15 +253,29 @@ export function useWhatsAppSessions(): WhatsAppSessionsHookResult {
       });
       setCurrentSession(sessionId);
       localStorage.setItem("wa-session-id", sessionId);
+      
+      // Salva no banco local como erro
+      await supabase
+        .from("whatsapp_sessions")
+        .upsert({
+          session_id: sessionId,
+          name: `Sessão ${sessionId.substring(0, 8)}`,
+          status: "error",
+          updated_at: new Date().toISOString()
+        })
+        .eq("session_id", sessionId);
     }
   }, [API_URL, fetchConnectionStatus, toast]);
 
   const disconnectSession = useCallback(async (sessionId: string) => {
-    if (!API_URL || !sessionId) return;
+    if (!sessionId) return;
     
     try {
-      if (isApiAvailable) {
-        const res = await fetch(`${API_URL}/sessions/${sessionId}/logout`, { method: "POST" });
+      if (isApiAvailable && API_URL) {
+        const res = await fetch(`${API_URL}/sessions/${sessionId}/logout`, { 
+          method: "POST",
+          cache: 'no-store'
+        });
         
         if (!res.ok) {
           console.warn(`Erro ao desconectar: ${res.status}`);
@@ -168,6 +283,18 @@ export function useWhatsAppSessions(): WhatsAppSessionsHookResult {
       }
       
       setConnectionStatus("not_started");
+      
+      // Atualiza status no banco local
+      await supabase
+        .from("whatsapp_sessions")
+        .upsert({
+          session_id: sessionId,
+          status: "not_started",
+          is_connected: false,
+          updated_at: new Date().toISOString()
+        })
+        .eq("session_id", sessionId);
+        
       await refreshSessions();
     } catch (error) {
       console.warn("Erro ao desconectar sessão:", error);
@@ -179,8 +306,23 @@ export function useWhatsAppSessions(): WhatsAppSessionsHookResult {
     setCurrentSession(newSessionId);
     localStorage.setItem("wa-session-id", newSessionId);
     setConnectionStatus("not_started");
+    
+    // Criar a sessão no banco local
+    supabase
+      .from("whatsapp_sessions")
+      .insert({
+        session_id: newSessionId,
+        name: `Sessão ${newSessionId.substring(0, 8)}`,
+        status: "not_started",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .then(() => {
+        refreshSessions();
+      });
+      
     return newSessionId;
-  }, []);
+  }, [refreshSessions]);
 
   // Efeito para atualizar o status de conexão
   useEffect(() => {
