@@ -44,7 +44,7 @@ export function useWhatsAppSessions(): WhatsAppSessionsHookResult {
       const res = await fetch(`${API_URL}/sessions/${sessionId}/status`);
       if (!res.ok) throw new Error(`Erro ao buscar status: ${res.status}`);
       const data = await res.json();
-      setConnectionStatus(data.status || "error");
+      setConnectionStatus(data?.status as WhatsAppConnectionStatus || "error");
     } catch (error) {
       console.error("Erro ao obter status da sessão:", error);
       setConnectionStatus("error");
