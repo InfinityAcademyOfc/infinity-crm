@@ -40,7 +40,7 @@ const ProfileSettings = () => {
         name: data?.name || "",
         email: data?.email || user.email || "",
         phone: data?.phone || "",
-        department: data?.department || "",
+        department: isCompany ? "" : (profile?.department || ""), // Only get department for non-company profiles
         avatar: data?.avatar || "",
         company_name: isCompany ? data?.name : company?.name || ""
       });
