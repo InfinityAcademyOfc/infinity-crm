@@ -1,8 +1,12 @@
+import QRCodeLoading from "./QRCodeLoading";
+
 interface QRCodeDisplayProps {
   qrCodeData: string;
+  loading?: boolean;
 }
 
-const QRCodeDisplay = ({ qrCodeData }: QRCodeDisplayProps) => {
+const QRCodeDisplay = ({ qrCodeData, loading }: QRCodeDisplayProps) => {
+  if (loading) return <QRCodeLoading />;
   if (!qrCodeData) return null;
 
   return (
@@ -13,8 +17,7 @@ const QRCodeDisplay = ({ qrCodeData }: QRCodeDisplayProps) => {
           alt="QR Code WhatsApp Web"
           className="w-64 h-64"
           loading="lazy"
-          />
-
+        />
       </div>
       <div className="flex items-center">
         <span className="text-sm text-[#4fce5d] font-medium">
