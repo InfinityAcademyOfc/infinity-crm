@@ -14,6 +14,7 @@ import NewClientDialog from "@/components/clients/NewClientDialog";
 import { useToast } from "@/hooks/use-toast";
 import { useRealClientData } from "@/hooks/useRealClientData";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
 
 const ClientManagement = () => {
   const [viewType, setViewType] = useState("list");
@@ -27,7 +28,14 @@ const ClientManagement = () => {
   const { user, company } = useAuth();
   const { clients, analytics, loading, refetch } = useRealClientData();
   
-  const filteredClients = clients.filter(client => 
+  // Transform clients to match ClientList expected format
+  const transformedClients = clients.map(client => ({
+    ...client,
+    nps: 0, // Default value, can be calculated from client_nps table
+    ltv: 0  // Default value, can be calculated from client_ltv table
+  }));
+  
+  const filteredClients = transformedClients.filter(client => 
     client.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
     (client.contact && client.contact.toLowerCase().includes(searchQuery.toLowerCase())) || 
     (client.email && client.email.toLowerCase().includes(searchQuery.toLowerCase()))

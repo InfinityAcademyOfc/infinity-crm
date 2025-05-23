@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,10 +14,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface NewClientDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onClientCreated?: () => void;
   onSave?: (data: any) => void;
   onAddClient?: (data: any) => void;
 }
@@ -26,6 +28,7 @@ interface NewClientDialogProps {
 const NewClientDialog = ({
   open,
   onOpenChange,
+  onClientCreated,
   onSave,
   onAddClient,
 }: NewClientDialogProps) => {
@@ -39,8 +42,10 @@ const NewClientDialog = ({
   const [tag, setTag] = useState("");
   const [tagColor, setTagColor] = useState("bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300");
   const [tags, setTags] = useState<Array<{ label: string; color: string }>>([]);
+  const [loading, setLoading] = useState(false);
   
   const { toast } = useToast();
+  const { company: userCompany } = useAuth();
   
   const resetForm = () => {
     setName("");
@@ -60,7 +65,7 @@ const NewClientDialog = ({
     resetForm();
   };
   
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!name || !email) {
       toast({
         title: "Campos obrigatórios",
@@ -69,37 +74,63 @@ const NewClientDialog = ({
       });
       return;
     }
-    
-    const valueNumber = parseFloat(value.replace(/\./g, "").replace(",", "."));
-    
-    const newClient = {
-      id: `client-${Date.now()}`,
-      name,
-      email,
-      phone,
-      company,
-      source,
-      value: isNaN(valueNumber) ? 0 : valueNumber,
-      notes,
-      tags,
-      createdAt: new Date().toISOString(),
-      status: "active",
-    };
-    
-    if (onSave) {
-      onSave(newClient);
+
+    if (!userCompany?.id) {
+      toast({
+        title: "Erro",
+        description: "Empresa não encontrada.",
+        variant: "destructive",
+      });
+      return;
     }
 
-    if (onAddClient) {
-      onAddClient(newClient);
+    setLoading(true);
+    
+    try {
+      const { data, error } = await supabase
+        .from('clients')
+        .insert([{
+          name,
+          email,
+          phone,
+          contact: company,
+          segment: source,
+          status: 'active',
+          company_id: userCompany.id
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast({
+        title: "Cliente adicionado",
+        description: `${name} foi adicionado com sucesso.`,
+      });
+
+      if (onClientCreated) {
+        onClientCreated();
+      }
+
+      if (onSave) {
+        onSave(data);
+      }
+
+      if (onAddClient) {
+        onAddClient(data);
+      }
+      
+      handleClose();
+    } catch (error) {
+      console.error('Erro ao criar cliente:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao adicionar cliente.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
-    
-    toast({
-      title: "Cliente adicionado",
-      description: `${name} foi adicionado com sucesso.`,
-    });
-    
-    handleClose();
   };
   
   const handleAddTag = () => {
@@ -173,17 +204,18 @@ const NewClientDialog = ({
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="source">Origem</Label>
+              <Label htmlFor="source">Segmento</Label>
               <Select value={source} onValueChange={setSource}>
                 <SelectTrigger id="source">
-                  <SelectValue placeholder="Selecionar origem" />
+                  <SelectValue placeholder="Selecionar segmento" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="website">Website</SelectItem>
-                  <SelectItem value="indicacao">Indicação</SelectItem>
-                  <SelectItem value="marketing">Marketing</SelectItem>
-                  <SelectItem value="outbound">Outbound</SelectItem>
-                  <SelectItem value="outro">Outro</SelectItem>
+                  <SelectItem value="tecnologia">Tecnologia</SelectItem>
+                  <SelectItem value="saude">Saúde</SelectItem>
+                  <SelectItem value="educacao">Educação</SelectItem>
+                  <SelectItem value="varejo">Varejo</SelectItem>
+                  <SelectItem value="servicos">Serviços</SelectItem>
+                  <SelectItem value="industria">Indústria</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -283,10 +315,12 @@ const NewClientDialog = ({
         </div>
         
         <DialogFooter>
-          <Button variant="outline" onClick={handleClose}>
+          <Button variant="outline" onClick={handleClose} disabled={loading}>
             Cancelar
           </Button>
-          <Button onClick={handleSave}>Salvar</Button>
+          <Button onClick={handleSave} disabled={loading}>
+            {loading ? "Salvando..." : "Salvar"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
