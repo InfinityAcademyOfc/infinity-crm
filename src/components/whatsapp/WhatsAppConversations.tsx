@@ -2,12 +2,12 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
 import { useWhatsApp } from "@/contexts/WhatsAppContext";
 import ChatMessages from "./conversation/ChatMessages";
 import ContactsSidebar from "./conversation/ContactsSidebar";
-import { sendMessage } from "@/lib/api";
 import ContactHeader from "./conversation/ContactHeader";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function WhatsAppConversations() {
   const {
@@ -16,17 +16,20 @@ export default function WhatsAppConversations() {
     messages,
     loadingMessages,
     sessionId,
-    fetchMessages
+    fetchMessages,
+    sendMessage,
+    connectionStatus
   } = useWhatsApp();
 
   const [message, setMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const isConnected = connectionStatus === "connected" && !!sessionId;
 
   useEffect(() => {
-    if (selectedContact && sessionId) {
+    if (selectedContact && sessionId && isConnected) {
       fetchMessages(selectedContact.phone, sessionId);
     }
-  }, [selectedContact, sessionId, fetchMessages]);
+  }, [selectedContact, sessionId, fetchMessages, isConnected]);
 
   useEffect(() => {
     if (messagesEndRef.current) {
@@ -35,8 +38,8 @@ export default function WhatsAppConversations() {
   }, [messages]);
 
   const handleSend = async () => {
-    if (message.trim() && selectedContact && sessionId) {
-      await sendMessage(sessionId, selectedContact.phone, message);
+    if (message.trim() && selectedContact && sessionId && isConnected) {
+      await sendMessage(selectedContact.phone, message);
       setMessage("");
     }
   };
@@ -56,6 +59,21 @@ export default function WhatsAppConversations() {
         }
       )
     : [];
+      
+  if (!isConnected) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto p-6">
+          <AlertCircle size={40} className="text-amber-500 mx-auto mb-4" />
+          <h3 className="text-lg font-medium mb-2">WhatsApp não conectado</h3>
+          <p className="text-sm text-muted-foreground">
+            Você precisa conectar o WhatsApp para visualizar e enviar mensagens. 
+            Escaneie o código QR para conectar.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-full">

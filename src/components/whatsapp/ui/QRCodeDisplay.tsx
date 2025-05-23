@@ -1,13 +1,22 @@
+
 import QRCodeLoading from "./QRCodeLoading";
 
 interface QRCodeDisplayProps {
-  qrCodeData: string;
+  qrCodeData: string | null;
   loading?: boolean;
 }
 
 const QRCodeDisplay = ({ qrCodeData, loading }: QRCodeDisplayProps) => {
   if (loading) return <QRCodeLoading />;
-  if (!qrCodeData) return null;
+  if (!qrCodeData) {
+    return (
+      <div className="flex flex-col items-center p-4 bg-muted rounded-lg">
+        <p className="text-sm text-muted-foreground">
+          Código QR indisponível. Tente recarregar a página.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col items-center">

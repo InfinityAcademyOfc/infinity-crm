@@ -1,12 +1,14 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import QRCodeModal from "@/components/whatsapp/QRCodeModal";
 import { Badge } from "@/components/ui/badge";
-import { Loader, Smartphone, Plus, RefreshCw } from "lucide-react";
+import { Loader, Smartphone, Plus, RefreshCw, AlertCircle } from "lucide-react";
 import WhatsAppMenuLayout from "@/components/whatsapp/WhatsAppMenuLayout";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useWhatsApp } from "@/contexts/WhatsAppContext";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 // Card individual para uma sessão
 const WhatsAppSessionCard = ({
@@ -26,7 +28,7 @@ const WhatsAppSessionCard = ({
     <Card key={session.id} className={isActive ? "border-primary/50" : ""}>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <div className="font-medium">{session.name || `Sessão: ${session.id}`}</div>
+          <div className="font-medium">{session.name || `Sessão: ${session.id.substring(0, 8)}...`}</div>
           <Badge variant={isConnected ? "default" : "outline"}>
             {isConnected ? "Conectado" : "Desconectado"}
           </Badge>
@@ -62,11 +64,37 @@ const WhatsAppIntegrationPage = () => {
     sessions,
     loadingSessions,
     refreshSessions,
-    createNewSession
+    createNewSession,
+    connectionStatus
   } = useWhatsApp();
 
   const [showModal, setShowModal] = useState(false);
   const [selectedSessionId, setSelectedSessionId] = useState("");
+  const [apiAvailable, setApiAvailable] = useState<boolean | null>(null);
+
+  const API_URL = import.meta.env.VITE_API_URL || "";
+
+  // Check API availability
+  useEffect(() => {
+    const checkApi = async () => {
+      if (!API_URL) {
+        setApiAvailable(false);
+        return;
+      }
+      
+      try {
+        const res = await fetch(`${API_URL}/health`, { 
+          signal: AbortSignal.timeout(5000) // 5 second timeout
+        });
+        setApiAvailable(res.ok);
+      } catch (error) {
+        console.error("API indisponível:", error);
+        setApiAvailable(false);
+      }
+    };
+    
+    checkApi();
+  }, []);
 
   const handleConnectClick = (sessionId: string) => {
     setSelectedSessionId(sessionId);
@@ -91,6 +119,40 @@ const WhatsAppIntegrationPage = () => {
   const currentSessionData = sessions?.find((s) => s.id === currentSession);
   const isCurrentSessionConnected = currentSessionData?.status?.toLowerCase() === "connected";
 
+  // Render API not available warning
+  if (apiAvailable === false) {
+    return (
+      <div className="p-6 space-y-6">
+        <h2 className="text-2xl font-bold">Integração WhatsApp</h2>
+        
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>API Indisponível</AlertTitle>
+          <AlertDescription>
+            {!API_URL 
+              ? "A API do WhatsApp não está configurada. Configure a variável de ambiente VITE_API_URL."
+              : "A API do WhatsApp não está respondendo. Verifique se o serviço está em execução."}
+          </AlertDescription>
+        </Alert>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>Configuração do WhatsApp</CardTitle>
+            <CardDescription>
+              Para utilizar a integração com WhatsApp, você precisa configurar o servidor backend.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">
+              Verifique se o servidor da API está em execução e se a variável de ambiente VITE_API_URL está configurada corretamente.
+            </p>
+            <Button onClick={() => setApiAvailable(null)}>Verificar novamente</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-center gap-4">
@@ -107,8 +169,13 @@ const WhatsAppIntegrationPage = () => {
             size="sm"
             onClick={refreshSessions}
             className="flex items-center gap-1"
+            disabled={loadingSessions}
           >
-            <RefreshCw size={14} />
+            {loadingSessions ? (
+              <Loader size={14} className="animate-spin" />
+            ) : (
+              <RefreshCw size={14} />
+            )}
             Atualizar
           </Button>
 

@@ -1,12 +1,12 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import QRCodeLoading from "@/components/whatsapp/ui/QRCodeLoading";
 import QRCodeInstructions from "@/components/whatsapp/ui/QRCodeInstructions";
 import QRCodeDisplay from "@/components/whatsapp/ui/QRCodeDisplay";
 import { useQRCode } from "@/hooks/useQRCode";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { RefreshCw } from "lucide-react";
+import { AlertCircle, RefreshCw } from "lucide-react";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -16,31 +16,30 @@ interface QRCodeScannerProps {
 }
 
 const QRCodeScanner = ({ sessionId, onLogin }: QRCodeScannerProps) => {
-  const { loading, qrCodeData, status } = useQRCode(sessionId);
+  const { loading, qrCodeData, status, error } = useQRCode(sessionId);
+  const [startingSession, setStartingSession] = useState(false);
   const { toast } = useToast();
 
   // Initialize session when component mounts
   useEffect(() => {
     const start = async () => {
-      try {
-        if (!sessionId || !API_URL) return;
-        
-        console.log("Starting WhatsApp session:", sessionId);
-        await fetch(`${API_URL}/sessions/${sessionId}/start`, { method: "POST" });
-      } catch (error) {
-        console.error("Error starting session:", error);
-        toast({
-          title: "Erro",
-          description: "Não foi possível iniciar a sessão do WhatsApp",
-          variant: "destructive"
-        });
+      if (!sessionId || !API_URL) return;
+      
+      if (status === "not_started" || status === "disconnected" || status === "error") {
+        try {
+          setStartingSession(true);
+          console.log("Starting WhatsApp session:", sessionId);
+          await fetch(`${API_URL}/sessions/${sessionId}/start`, { method: "POST" });
+        } catch (error) {
+          console.error("Error starting session:", error);
+        } finally {
+          setStartingSession(false);
+        }
       }
     };
     
-    if (sessionId && status !== "connected") {
-      start();
-    }
-  }, [sessionId, status, toast]);
+    start();
+  }, [sessionId, status]);
 
   // Notify when connection is successful
   useEffect(() => {
@@ -56,9 +55,9 @@ const QRCodeScanner = ({ sessionId, onLogin }: QRCodeScannerProps) => {
 
   // Handle manual refresh of QR code
   const handleRefresh = async () => {
+    if (!sessionId || !API_URL) return;
+    
     try {
-      if (!sessionId || !API_URL) return;
-      
       await fetch(`${API_URL}/sessions/${sessionId}/restart`, { method: "POST" });
       toast({
         title: "QR Code atualizado",
@@ -66,25 +65,33 @@ const QRCodeScanner = ({ sessionId, onLogin }: QRCodeScannerProps) => {
       });
     } catch (error) {
       console.error("Error refreshing QR code:", error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível atualizar o código QR",
-        variant: "destructive"
-      });
     }
   };
 
+  // Check if API is available
+  if (!API_URL) {
+    return (
+      <div className="flex flex-col items-center justify-center p-6 text-center">
+        <AlertCircle className="text-amber-500 mb-2 h-10 w-10" />
+        <h3 className="font-medium text-lg mb-2">API não configurada</h3>
+        <p className="text-sm text-muted-foreground">
+          O servidor do WhatsApp não está configurado. Configure a variável de ambiente VITE_API_URL.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col items-center justify-center p-4">
-      {loading ? (
+      {loading || startingSession ? (
         <QRCodeLoading />
-      ) : status === "qr" && qrCodeData ? (
+      ) : status === "qr" ? (
         <>
           <QRCodeInstructions />
           <QRCodeDisplay qrCodeData={qrCodeData} />
           <div className="mt-4 text-center">
             <p className="text-sm text-muted-foreground mb-2">
-              O código QR será atualizado automaticamente a cada 15 segundos.
+              Escaneie o código QR com seu WhatsApp para conectar.
             </p>
             <Button variant="outline" size="sm" onClick={handleRefresh} className="flex items-center gap-1">
               <RefreshCw size={14} />
@@ -102,10 +109,10 @@ const QRCodeScanner = ({ sessionId, onLogin }: QRCodeScannerProps) => {
             Você já pode utilizar o WhatsApp no sistema.
           </p>
         </div>
-      ) : status === "error" ? (
+      ) : error ? (
         <div className="text-center space-y-4">
-          <p className="text-center text-red-500 font-medium">
-            Ocorreu um erro ao carregar o QR Code.
+          <p className="text-center text-amber-500 font-medium">
+            {error}
           </p>
           <Button variant="outline" onClick={handleRefresh}>
             Tentar novamente
