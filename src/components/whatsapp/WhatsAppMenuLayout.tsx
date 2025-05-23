@@ -21,6 +21,7 @@ import SettingsPanel from "./SettingsPanel";
 import { useWhatsApp } from "@/contexts/WhatsAppContext";
 import { toast } from "sonner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const tabItems = [
   { id: "conversations", label: "Conversas", icon: MessageSquare },
@@ -32,6 +33,7 @@ const tabItems = [
 export default function WhatsAppMenuLayout() {
   const [activeTab, setActiveTab] = useState("conversations");
   const { disconnect, sessionId, connectionStatus } = useWhatsApp();
+  const isMobile = useIsMobile();
 
   const handleLogout = async () => {
     try {
@@ -57,9 +59,9 @@ export default function WhatsAppMenuLayout() {
       )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
-        <TabsList className="border-b flex space-x-2 p-2">
+        <TabsList className={`border-b flex p-2 ${isMobile ? 'overflow-x-auto' : 'space-x-2'}`}>
           {tabItems.map((item) => (
-            <TabsTrigger key={item.id} value={item.id} className="flex items-center gap-2">
+            <TabsTrigger key={item.id} value={item.id} className={`flex items-center gap-2 ${isMobile ? 'flex-shrink-0' : ''}`}>
               <item.icon className="w-4 h-4" />
               {item.label}
             </TabsTrigger>
@@ -75,7 +77,6 @@ export default function WhatsAppMenuLayout() {
         </TabsContent>
         
         <TabsContent value="chatbot" className="m-0 p-0 h-full">
-          {/* Pass sessionId as a prop only if ChatbotManager component expects it */}
           <ChatbotManager />
         </TabsContent>
         
