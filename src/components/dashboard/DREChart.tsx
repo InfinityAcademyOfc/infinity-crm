@@ -1,9 +1,14 @@
+
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import { formatCurrency } from "@/lib/formatters";
 import { useToast } from "@/hooks/use-toast";
+
+interface DREChartProps {
+  transactions?: any[]; // Made transactions optional
+}
 
 // Mock data para o DRE
 const mockDREData = [{
@@ -37,10 +42,10 @@ const mockDREData = [{
   custos: 51000,
   lucro: 38000
 }];
-const DREChart = () => {
-  const {
-    toast
-  } = useToast();
+
+const DREChart = ({ transactions = [] }: DREChartProps) => {
+  const { toast } = useToast();
+  
   const handleExport = () => {
     // Create CSV content
     let csvContent = "data:text/csv;charset=utf-8,";
@@ -69,7 +74,9 @@ const DREChart = () => {
       duration: 2000 // 2 segundos conforme solicitado
     });
   };
-  return <Card>
+
+  return (
+    <Card>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-xl">DRE Simplificado</CardTitle>
@@ -84,20 +91,20 @@ const DREChart = () => {
         <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={mockDREData} margin={{
-            top: 10,
-            right: 10,
-            left: 0,
-            bottom: 20
-          }}>
+              top: 10,
+              right: 10,
+              left: 0,
+              bottom: 20
+            }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
               <XAxis dataKey="name" tickLine={false} />
               <YAxis tickFormatter={value => `R$${value / 1000}k`} tickLine={false} axisLine={false} />
               <Tooltip formatter={value => [formatCurrency(Number(value)), ""]} contentStyle={{
-              background: '#fff',
-              border: '1px solid #e5e7eb',
-              borderRadius: '6px',
-              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-            }} />
+                background: '#fff',
+                border: '1px solid #e5e7eb',
+                borderRadius: '6px',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+              }} />
               <Legend />
               <Bar dataKey="receita" name="Receita" fill="#4ade80" radius={[4, 4, 0, 0]} />
               <Bar dataKey="custos" name="Custos" fill="#f87171" radius={[4, 4, 0, 0]} />
@@ -111,6 +118,8 @@ const DREChart = () => {
           Exibindo os últimos 6 períodos
         </div>
       </CardFooter>
-    </Card>;
+    </Card>
+  );
 };
+
 export default DREChart;
