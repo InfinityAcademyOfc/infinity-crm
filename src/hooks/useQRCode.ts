@@ -37,15 +37,10 @@ export function useQRCode(sessionId: string): QRCodeHookResult {
       try {
         // Primeiro verificamos o status da sessão
         const statusRes = await fetch(`${API_URL}/sessions/${sessionId}/status`, {
-          signal: AbortSignal.timeout(8000) // Timeout aumentado
+          signal: AbortSignal.timeout(8000)
         });
         
-        if (!statusRes.ok) {
-          if (mountedRef.current) {
-            // Em caso de erro de status, ainda tentamos obter o QR Code
-            console.log(`Status indisponível, tentando QR code diretamente`);
-          }
-        } else {
+        if (statusRes.ok) {
           const statusData = await statusRes.json();
           
           if (!mountedRef.current) return;
@@ -53,17 +48,20 @@ export function useQRCode(sessionId: string): QRCodeHookResult {
           const newStatus = statusData.status as WhatsAppConnectionStatus;
           setStatus(newStatus);
           
-          // Se conectado, podemos limpar o QR code
+          // Se conectado, limpamos o QR code
           if (newStatus === "connected") {
             setQrCodeData(null);
             setLoading(false);
             attemptRef.current = 0;
             return;
           }
+        } else {
+          if (mountedRef.current) {
+            console.log(`Status indisponível, tentando QR code diretamente`);
+          }
         }
 
         // Sempre tentamos obter o QR code se não estiver conectado
-        // De acordo com o backend, o endpoint de QR code inicia a sessão se necessário
         const qrRes = await fetch(`${API_URL}/sessions/${sessionId}/qr`, {
           signal: AbortSignal.timeout(8000)
         });
@@ -78,7 +76,7 @@ export function useQRCode(sessionId: string): QRCodeHookResult {
             return;
           }
           
-          console.warn(`Erro ao buscar QR code: ${qrRes.status}`);
+          setError("Erro ao obter QR code");
           attemptRef.current += 1;
           return;
         }
