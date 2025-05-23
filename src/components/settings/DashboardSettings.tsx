@@ -1,31 +1,69 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
-import { GripVertical, Bookmark } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { GripVertical, Bookmark, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
+import { settingsService, DashboardConfig } from "@/services/settingsService";
+import { supabase } from "@/lib/supabase";
 
 type ChartConfig = {
   id: string;
   title: string;
   enabled: boolean;
   type: string;
+  order: number;
 };
 
 const defaultCharts: ChartConfig[] = [
-  { id: "sales-funnel", title: "Funil de Vendas", enabled: true, type: "funnel" },
-  { id: "revenue", title: "Receita Mensal", enabled: true, type: "bar" },
-  { id: "leads-source", title: "Origem dos Leads", enabled: true, type: "pie" },
-  { id: "tasks", title: "Tarefas por Status", enabled: true, type: "bar" },
-  { id: "conversion-rate", title: "Taxa de Conversão", enabled: false, type: "line" },
-  { id: "client-activity", title: "Atividade de Clientes", enabled: false, type: "line" },
+  { id: "sales-funnel", title: "Funil de Vendas", enabled: true, type: "funnel", order: 0 },
+  { id: "revenue", title: "Receita Mensal", enabled: true, type: "bar", order: 1 },
+  { id: "leads-source", title: "Origem dos Leads", enabled: true, type: "pie", order: 2 },
+  { id: "tasks", title: "Tarefas por Status", enabled: true, type: "bar", order: 3 },
+  { id: "conversion-rate", title: "Taxa de Conversão", enabled: false, type: "line", order: 4 },
+  { id: "client-activity", title: "Atividade de Clientes", enabled: false, type: "line", order: 5 },
 ];
 
 const DashboardSettings = () => {
   const [charts, setCharts] = useState<ChartConfig[]>(defaultCharts);
-  const { toast } = useToast();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (!user) return;
+    
+    const loadDashboardConfig = async () => {
+      try {
+        setLoading(true);
+        
+        const { data, error } = await supabase
+          .from("user_settings")
+          .select("dashboard_config")
+          .eq("user_id", user.id)
+          .single();
+          
+        if (error) {
+          if (error.code !== "PGRST116") { // No rows found
+            throw error;
+          }
+          // Use defaults if no record found
+        } else if (data?.dashboard_config?.charts) {
+          setCharts(data.dashboard_config.charts);
+        }
+      } catch (error) {
+        console.error("Error loading dashboard config:", error);
+        toast.error("Não foi possível carregar suas configurações de dashboard");
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadDashboardConfig();
+  }, [user]);
 
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
@@ -34,7 +72,13 @@ const DashboardSettings = () => {
     const [reorderedItem] = items.splice(result.source.index, 1);
     items.splice(result.destination.index, 0, reorderedItem);
     
-    setCharts(items);
+    // Update order values
+    const updatedItems = items.map((item, index) => ({
+      ...item,
+      order: index
+    }));
+    
+    setCharts(updatedItems);
   };
 
   const toggleChart = (id: string) => {
@@ -43,12 +87,38 @@ const DashboardSettings = () => {
     ));
   };
 
-  const handleSave = () => {
-    toast({
-      title: "Configurações salvas",
-      description: "Suas preferências de dashboard foram atualizadas com sucesso."
-    });
+  const handleSave = async () => {
+    if (!user) return;
+    
+    try {
+      setSaving(true);
+      
+      const config: DashboardConfig = {
+        charts: charts
+      };
+      
+      const success = await settingsService.saveDashboardConfig(user.id, config);
+      
+      if (success) {
+        toast.success("Configurações do dashboard salvas com sucesso");
+      }
+    } catch (error) {
+      console.error("Error saving dashboard config:", error);
+      toast.error("Não foi possível salvar suas configurações de dashboard");
+    } finally {
+      setSaving(false);
+    }
   };
+
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="p-6 flex justify-center items-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
@@ -92,6 +162,7 @@ const DashboardSettings = () => {
                         <Switch 
                           checked={chart.enabled}
                           onCheckedChange={() => toggleChart(chart.id)}
+                          disabled={saving}
                         />
                       </div>
                     )}
@@ -103,7 +174,18 @@ const DashboardSettings = () => {
           </Droppable>
         </DragDropContext>
         
-        <Button onClick={handleSave}>Salvar Preferências</Button>
+        <Button 
+          onClick={handleSave} 
+          disabled={saving}
+          className="w-full sm:w-auto"
+        >
+          {saving ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Salvando...
+            </>
+          ) : "Salvar Preferências"}
+        </Button>
       </CardContent>
     </Card>
   );

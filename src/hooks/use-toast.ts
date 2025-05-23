@@ -46,7 +46,6 @@ export const useToast = () => {
     toast,
     dismiss: dismissToast,
     toasts,
-    useToastHook: toast, // Added for backward compatibility
   };
 };
 

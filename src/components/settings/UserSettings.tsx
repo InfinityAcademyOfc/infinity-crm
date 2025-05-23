@@ -3,28 +3,26 @@ import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/lib/supabase";
-import { useToast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNotifications } from "@/hooks/useNotifications";
-
-interface UserSettings {
-  theme: string;
-  notifications_enabled: boolean;
-  language: string;
-}
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
+import { settingsService, UserSettings as UserSettingsType } from "@/services/settingsService";
 
 const UserSettings = () => {
   const { user, company } = useAuth();
-  const { toast } = useToast();
   const { notifySystemEvent } = useNotifications();
-  const [settings, setSettings] = useState<UserSettings>({
+  const [settings, setSettings] = useState<UserSettingsType>({
+    user_id: user?.id || '',
     theme: "light",
     notifications_enabled: true,
     language: "pt-BR"
   });
+  
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -32,41 +30,30 @@ const UserSettings = () => {
     async function loadSettings() {
       try {
         setLoading(true);
-        const { data, error } = await supabase
-          .from("user_settings")
-          .select("*")
-          .eq("user_id", user.id)
-          .single();
+        const userSettings = await settingsService.getUserSettings(user.id);
           
-        if (error) {
-          if (error.code === "PGRST116") {
-            // Não encontrou configurações, criar default
-            const { data: newSettings, error: createError } = await supabase
-              .from("user_settings")
-              .insert({
-                user_id: user.id,
-                company_id: company?.id,
-                theme: "light",
-                notifications_enabled: true,
-                language: "pt-BR"
-              })
-              .select("*")
-              .single();
-              
-            if (createError) {
-              console.error("Erro ao criar configurações:", createError);
-              return;
-            }
-            
-            setSettings(newSettings);
-          } else {
-            console.error("Erro ao carregar configurações:", error);
-          }
+        if (userSettings) {
+          setSettings(userSettings);
+          // Apply theme immediately on load
+          settingsService.applyTheme(userSettings.theme);
         } else {
-          setSettings(data);
+          // Create default settings
+          const newSettings = {
+            user_id: user.id,
+            company_id: company?.id,
+            theme: "light",
+            notifications_enabled: true,
+            language: "pt-BR"
+          };
+          
+          const created = await settingsService.createOrUpdateUserSettings(newSettings);
+          if (created) {
+            setSettings(created);
+          }
         }
       } catch (err) {
         console.error("Erro ao carregar configurações:", err);
+        toast.error("Não foi possível carregar suas configurações");
       } finally {
         setLoading(false);
       }
@@ -75,27 +62,26 @@ const UserSettings = () => {
     loadSettings();
   }, [user, company]);
 
-  const updateSetting = async (key: keyof UserSettings, value: any) => {
+  const updateSetting = async (key: keyof UserSettingsType, value: any) => {
     if (!user) return;
     
     try {
+      setSaving(true);
+      
       // Atualização otimista na UI
       setSettings(prev => ({ ...prev, [key]: value }));
       
       // Atualizar no Supabase
-      const { error } = await supabase
-        .from("user_settings")
-        .update({ [key]: value, updated_at: new Date().toISOString() })
-        .eq("user_id", user.id);
-        
-      if (error) {
-        throw error;
+      const updatedSettings = await settingsService.createOrUpdateUserSettings({
+        ...settings,
+        [key]: value
+      });
+      
+      if (!updatedSettings) {
+        throw new Error("Failed to update settings");
       }
       
-      toast({
-        title: "Configurações atualizadas",
-        description: "Suas preferências foram salvas com sucesso."
-      });
+      toast.success("Configurações atualizadas");
       
       // Adicionar notificação sobre a atualização
       await notifySystemEvent(
@@ -105,28 +91,51 @@ const UserSettings = () => {
       
       // Aplicar tema imediatamente se foi essa a mudança
       if (key === 'theme') {
-        document.documentElement.classList.remove('light', 'dark');
-        if (value === 'dark') {
-          document.documentElement.classList.add('dark');
-        } else if (value === 'light') {
-          document.documentElement.classList.add('light');
-        } else if (value === 'system') {
-          const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-          document.documentElement.classList.add(systemPrefersDark ? 'dark' : 'light');
-        }
+        settingsService.applyTheme(value);
       }
     } catch (err) {
       console.error(`Erro ao atualizar ${key}:`, err);
-      toast({
-        title: "Erro ao salvar",
-        description: "Não foi possível atualizar suas configurações.",
-        variant: "destructive"
-      });
+      toast.error("Não foi possível atualizar suas configurações");
       
       // Reverter mudança em caso de erro
       setSettings(prev => ({ ...prev, [key]: !value }));
+    } finally {
+      setSaving(false);
     }
   };
+  
+  const handleSaveAll = async () => {
+    if (!user) return;
+    
+    try {
+      setSaving(true);
+      const updated = await settingsService.createOrUpdateUserSettings(settings);
+      
+      if (!updated) {
+        throw new Error("Failed to update settings");
+      }
+      
+      toast.success("Todas as configurações foram salvas com sucesso");
+      
+      // Apply theme immediately
+      settingsService.applyTheme(settings.theme);
+    } catch (err) {
+      console.error("Erro ao salvar configurações:", err);
+      toast.error("Não foi possível salvar suas configurações");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="p-6 flex justify-center items-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
@@ -146,7 +155,7 @@ const UserSettings = () => {
             <Select
               value={settings.theme}
               onValueChange={(value) => updateSetting("theme", value)}
-              disabled={loading}
+              disabled={saving}
             >
               <SelectTrigger className="w-32">
                 <SelectValue placeholder="Tema" />
@@ -169,7 +178,7 @@ const UserSettings = () => {
             <Switch 
               checked={settings.notifications_enabled}
               onCheckedChange={(checked) => updateSetting("notifications_enabled", checked)}
-              disabled={loading}
+              disabled={saving}
             />
           </div>
           
@@ -183,7 +192,7 @@ const UserSettings = () => {
             <Select
               value={settings.language}
               onValueChange={(value) => updateSetting("language", value)}
-              disabled={loading}
+              disabled={saving}
             >
               <SelectTrigger className="w-32">
                 <SelectValue placeholder="Idioma" />
@@ -195,6 +204,21 @@ const UserSettings = () => {
               </SelectContent>
             </Select>
           </div>
+        </div>
+        
+        <div className="pt-4 flex justify-end">
+          <Button 
+            onClick={handleSaveAll} 
+            disabled={saving || loading}
+            className="min-w-[120px]"
+          >
+            {saving ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Salvando...
+              </>
+            ) : "Salvar Tudo"}
+          </Button>
         </div>
       </CardContent>
     </Card>

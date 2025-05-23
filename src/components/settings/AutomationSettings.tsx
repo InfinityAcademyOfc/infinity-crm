@@ -1,30 +1,22 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PlusCircle, X, ArrowRight } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-
-type AutomationRule = {
-  id: string;
-  condition: {
-    field: string;
-    operator: string;
-    value: string;
-  };
-  action: {
-    type: string;
-    value: string;
-  };
-};
+import { PlusCircle, X, ArrowRight, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
+import { AutomationRule } from "@/services/settingsService";
 
 const AutomationSettings = () => {
   const [rules, setRules] = useState<AutomationRule[]>([]);
   const [showNewRule, setShowNewRule] = useState(false);
-  const { toast } = useToast();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const { user, company } = useAuth();
 
   const [condition, setCondition] = useState({
     field: "status",
@@ -36,14 +28,44 @@ const AutomationSettings = () => {
     type: "move",
     value: ""
   });
+  
+  useEffect(() => {
+    if (!user || !company) return;
+    
+    const loadAutomationRules = async () => {
+      try {
+        setLoading(true);
+        
+        const { data, error } = await supabase
+          .from("automation_rules")
+          .select("rules")
+          .eq("user_id", user.id)
+          .eq("company_id", company.id)
+          .single();
+          
+        if (error) {
+          if (error.code !== "PGRST116") { // No rows found
+            throw error;
+          }
+          // Use empty array if no record found
+          setRules([]);
+        } else if (data?.rules) {
+          setRules(data.rules);
+        }
+      } catch (error) {
+        console.error("Error loading automation rules:", error);
+        toast.error("Não foi possível carregar suas regras de automação");
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadAutomationRules();
+  }, [user, company]);
 
   const addRule = () => {
     if (!condition.value || !action.value) {
-      toast({
-        title: "Campos incompletos",
-        description: "Preencha todos os campos para adicionar a regra",
-        variant: "destructive"
-      });
+      toast.error("Preencha todos os campos para adicionar a regra");
       return;
     }
 
@@ -68,19 +90,70 @@ const AutomationSettings = () => {
       value: ""
     });
 
-    toast({
-      title: "Regra adicionada",
-      description: "A regra de automação foi adicionada com sucesso",
-    });
+    toast.success("Regra adicionada");
   };
 
   const removeRule = (id: string) => {
     setRules(rules.filter(rule => rule.id !== id));
-    toast({
-      title: "Regra removida",
-      description: "A regra de automação foi removida com sucesso",
-    });
+    toast.success("Regra removida");
   };
+  
+  const saveRules = async () => {
+    if (!user || !company) return;
+    
+    try {
+      setSaving(true);
+      
+      // Check if record exists
+      const { data: existing } = await supabase
+        .from("automation_rules")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("company_id", company.id)
+        .single();
+      
+      if (existing) {
+        // Update
+        const { error } = await supabase
+          .from("automation_rules")
+          .update({ 
+            rules: rules,
+            updated_at: new Date().toISOString()
+          })
+          .eq("id", existing.id);
+          
+        if (error) throw error;
+      } else {
+        // Insert
+        const { error } = await supabase
+          .from("automation_rules")
+          .insert({
+            user_id: user.id,
+            company_id: company.id,
+            rules: rules
+          });
+          
+        if (error) throw error;
+      }
+      
+      toast.success("Regras de automação salvas com sucesso");
+    } catch (error) {
+      console.error("Error saving automation rules:", error);
+      toast.error("Não foi possível salvar suas regras de automação");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="p-6 flex justify-center items-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
@@ -99,6 +172,7 @@ const AutomationSettings = () => {
                 size="icon"
                 className="absolute top-2 right-2 h-6 w-6 text-muted-foreground hover:text-destructive"
                 onClick={() => removeRule(rule.id)}
+                disabled={saving}
               >
                 <X size={14} />
               </Button>
@@ -221,22 +295,50 @@ const AutomationSettings = () => {
               </div>
               
               <div className="flex justify-end gap-2 pt-2">
-                <Button variant="outline" onClick={() => setShowNewRule(false)}>Cancelar</Button>
-                <Button onClick={addRule}>Adicionar Regra</Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowNewRule(false)}
+                  disabled={saving}
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  onClick={addRule}
+                  disabled={saving}
+                >
+                  Adicionar Regra
+                </Button>
               </div>
             </div>
           )}
         </div>
         
-        {!showNewRule && (
+        <div className="flex flex-col sm:flex-row justify-between gap-3">
+          {!showNewRule && (
+            <Button 
+              onClick={() => setShowNewRule(true)}
+              className="flex items-center gap-1"
+              variant="outline"
+              disabled={saving}
+            >
+              <PlusCircle size={16} />
+              Adicionar Regra
+            </Button>
+          )}
+          
           <Button 
-            onClick={() => setShowNewRule(true)}
+            onClick={saveRules}
             className="flex items-center gap-1"
+            disabled={saving}
           >
-            <PlusCircle size={16} />
-            Adicionar Regra
+            {saving ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Salvando...
+              </>
+            ) : "Salvar Todas as Regras"}
           </Button>
-        )}
+        </div>
       </CardContent>
     </Card>
   );
