@@ -1,5 +1,5 @@
 
-import React, { useState, useContext } from "react";
+import React, { useState } from "react";
 import {
   Tabs,
   TabsContent,
@@ -17,7 +17,7 @@ import WhatsAppConversations from "./WhatsAppConversations";
 import ContactsManager from "./contacts/ContactsManager";
 import ChatbotManager from "./chatbot/ChatbotManager";
 import SettingsPanel from "./SettingsPanel";
-import { WhatsAppContext } from "@/contexts/WhatsAppContext";
+import { useWhatsApp } from "@/contexts/WhatsAppContext";
 import { toast } from "sonner";
 
 const tabItems = [
@@ -29,7 +29,7 @@ const tabItems = [
 
 export default function WhatsAppMenuLayout() {
   const [activeTab, setActiveTab] = useState("conversations");
-  const { logout, sessionId } = useContext(WhatsAppContext);
+  const { disconnect: logout, sessionId } = useWhatsApp();
 
   const handleLogout = async () => {
     try {
@@ -55,8 +55,8 @@ export default function WhatsAppMenuLayout() {
         {tabItems.map((item) => (
           <TabsContent key={item.id} value={item.id} className="m-0 p-0 h-full">
             {item.id === "conversations" && <WhatsAppConversations />}
-            {item.id === "contacts" && <ContactsManager sessionId={sessionId} />}
-            {item.id === "chatbot" && <ChatbotManager sessionId={sessionId} />}
+            {item.id === "contacts" && <ContactsManager sessionId={sessionId || ""} />}
+            {item.id === "chatbot" && <ChatbotManager sessionId={sessionId || ""} />}
             {item.id === "settings" && <SettingsPanel />}
           </TabsContent>
         ))}

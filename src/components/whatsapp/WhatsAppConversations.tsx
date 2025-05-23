@@ -1,32 +1,26 @@
-import React, { useEffect, useState, useContext, useRef } from "react";
+
+import React, { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2 } from "lucide-react";
-import { WhatsAppContext } from "@/contexts/WhatsAppContext";
-import ChatMessages from "./ChatMessages";
-import ContactsSidebar from "./ContactsSidebar";
+import { useWhatsApp } from "@/contexts/WhatsAppContext";
+import ChatMessages from "./conversation/ChatMessages";
+import ContactsSidebar from "./conversation/ContactsSidebar";
 import { sendMessage } from "@/lib/api";
-import { Message, Contact } from "@/types";
-import ContactHeader from "./ContactHeader";
+import ContactHeader from "./conversation/ContactHeader";
 
 export default function WhatsAppConversations() {
   const {
     selectedContact,
     setSelectedContact,
     messages,
-    fetchMessages,
-    sessionId,
     loadingMessages,
-  } = useContext(WhatsAppContext);
+    sessionId,
+    sendMessage: contextSendMessage
+  } = useWhatsApp();
 
   const [message, setMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (selectedContact && sessionId) {
-      fetchMessages(selectedContact.phone, sessionId);
-    }
-  }, [selectedContact, sessionId]);
 
   useEffect(() => {
     if (messagesEndRef.current) {
@@ -36,14 +30,14 @@ export default function WhatsAppConversations() {
 
   const handleSend = async () => {
     if (message.trim() && selectedContact && sessionId) {
-      await sendMessage(sessionId, selectedContact.phone, message);
+      await contextSendMessage(selectedContact.phone, message);
       setMessage("");
     }
   };
 
   const filteredMessages = selectedContact
     ? messages.filter(
-        (msg: Message) =>
+        (msg) =>
           msg.number === selectedContact.phone ||
           msg.from === selectedContact.phone ||
           msg.to === selectedContact.phone

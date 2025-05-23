@@ -5,7 +5,7 @@ import { Loader } from "lucide-react";
 
 interface ChatMessagesProps {
   messages: WhatsAppMessage[];
-  loading: boolean;
+  loading?: boolean;
 }
 
 const ChatMessages = ({ messages, loading }: ChatMessagesProps) => {

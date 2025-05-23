@@ -1,47 +1,157 @@
 
-import React, { createContext, useContext } from "react";
+import React, { createContext, useState, useContext } from "react";
+import { toast } from "sonner";
+import { WhatsAppContact, WhatsAppMessage, WhatsAppConnectionStatus } from "@/types/whatsapp";
 import { useWhatsAppSessions } from "@/hooks/useWhatsAppSessions";
-import { useWhatsAppMessages } from "@/hooks/useWhatsAppMessages";
-import { WhatsAppContextType } from "@/types/whatsapp";
 
-// Create context with a defined type
-const WhatsAppContext = createContext<WhatsAppContextType | undefined>(undefined);
+interface WhatsAppContextType {
+  selectedContact: WhatsAppContact | null;
+  setSelectedContact: (contact: WhatsAppContact | null) => void;
+  contacts: WhatsAppContact[];
+  messages: WhatsAppMessage[];
+  loadingMessages: boolean;
+  sessionId: string | null;
+  connectionStatus: WhatsAppConnectionStatus;
+  sendMessage: (to: string, body: string) => Promise<void>;
+  disconnect: () => Promise<void>;
+  connect: (sessionId: string) => Promise<void>;
+  refreshData: () => Promise<void>;
+}
 
-export const WhatsAppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Use custom hooks to manage state and logic
-  const sessionsData = useWhatsAppSessions();
-  const messagesData = useWhatsAppMessages();
+const WhatsAppContext = createContext<WhatsAppContextType>({} as WhatsAppContextType);
+
+export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
+  const { 
+    currentSession: sessionId, 
+    connectionStatus, 
+    connectSession,
+    disconnectSession,
+    refreshSessions
+  } = useWhatsAppSessions();
   
-  // Combine values from both hooks into a single context object
-  const contextValue: WhatsAppContextType = {
-    // Session properties and methods
-    currentSession: sessionsData.currentSession,
-    setCurrentSession: sessionsData.setCurrentSession,
-    sessions: sessionsData.sessions,
-    loadingSessions: sessionsData.loadingSessions,
-    connectionStatus: sessionsData.connectionStatus,
-    refreshSessions: sessionsData.refreshSessions,
-    connectSession: sessionsData.connectSession,
-    disconnectSession: sessionsData.disconnectSession,
-    createNewSession: sessionsData.createNewSession,
+  const [selectedContact, setSelectedContact] = useState<WhatsAppContact | null>(null);
+  const [contacts, setContacts] = useState<WhatsAppContact[]>([]);
+  const [messages, setMessages] = useState<WhatsAppMessage[]>([]);
+  const [loadingMessages, setLoadingMessages] = useState(false);
+  
+  const sendMessage = async (to: string, body: string) => {
+    if (!sessionId) {
+      toast.error("Nenhuma sessão WhatsApp conectada");
+      return;
+    }
     
-    // Message properties and methods
-    selectedContact: messagesData.selectedContact,
-    setSelectedContact: messagesData.setSelectedContact,
-    contacts: messagesData.contacts,
-    messages: messagesData.messages,
-    loadingMessages: messagesData.isLoading,
-    sendMessage: messagesData.sendMessage
+    try {
+      // Create a temporary message ID
+      const tempId = `temp-${Date.now()}`;
+      
+      // Add message to UI immediately for better UX
+      const tempMessage: WhatsAppMessage = {
+        id: tempId,
+        session_id: sessionId,
+        number: to,
+        message: body,
+        from_me: true,
+        created_at: new Date().toISOString(),
+      };
+      
+      setMessages(prev => [...prev, tempMessage]);
+      
+      // Send through API
+      const API_URL = import.meta.env.VITE_API_URL || "";
+      const response = await fetch(`${API_URL}/sessions/${sessionId}/send`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ number: to, message: body }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to send message');
+      }
+      
+      // Fetch updated messages (or add real message ID if returned by API)
+      // This is simplified - you might want to update the temp message with real ID
+      refreshData();
+      
+    } catch (error) {
+      console.error('Error sending message:', error);
+      toast.error("Falha ao enviar mensagem");
+    }
+  };
+  
+  const refreshData = async () => {
+    if (!sessionId) return;
+    
+    try {
+      // Simplified API calls - in a real app, you'd implement proper API service
+      const API_URL = import.meta.env.VITE_API_URL || "";
+      
+      // Fetch contacts
+      const contactsResponse = await fetch(`${API_URL}/sessions/${sessionId}/contacts`);
+      if (contactsResponse.ok) {
+        const contactsData = await contactsResponse.json();
+        setContacts(contactsData);
+      }
+      
+      // Fetch messages if a contact is selected
+      if (selectedContact) {
+        setLoadingMessages(true);
+        const messagesResponse = await fetch(`${API_URL}/sessions/${sessionId}/messages/${selectedContact.phone}`);
+        if (messagesResponse.ok) {
+          const messagesData = await messagesResponse.json();
+          setMessages(messagesData);
+        }
+        setLoadingMessages(false);
+      }
+    } catch (error) {
+      console.error("Error refreshing WhatsApp data:", error);
+      // Don't show toast here to avoid spamming with errors
+    }
+  };
+
+  const connect = async (id: string) => {
+    try {
+      await connectSession(id);
+      toast.success("Sessão conectada com sucesso");
+    } catch (error) {
+      toast.error("Erro ao conectar sessão");
+    }
+  };
+
+  const disconnect = async () => {
+    if (!sessionId) return;
+    try {
+      await disconnectSession(sessionId);
+      setSelectedContact(null);
+      setMessages([]);
+      toast.success("Sessão desconectada com sucesso");
+    } catch (error) {
+      toast.error("Erro ao desconectar sessão");
+    }
   };
 
   return (
-    <WhatsAppContext.Provider value={contextValue}>
+    <WhatsAppContext.Provider
+      value={{
+        selectedContact,
+        setSelectedContact,
+        contacts,
+        messages,
+        loadingMessages,
+        sessionId,
+        connectionStatus,
+        sendMessage,
+        disconnect,
+        connect,
+        refreshData
+      }}
+    >
       {children}
     </WhatsAppContext.Provider>
   );
-};
+}
 
-// Hook to use the context
 export const useWhatsApp = () => {
   const context = useContext(WhatsAppContext);
   if (!context) {
@@ -49,11 +159,3 @@ export const useWhatsApp = () => {
   }
   return context;
 };
-
-// Re-export types for easier access
-export type { 
-  WhatsAppConnectionStatus, 
-  WhatsAppSession, 
-  WhatsAppContact, 
-  WhatsAppMessage 
-} from "@/types/whatsapp";
