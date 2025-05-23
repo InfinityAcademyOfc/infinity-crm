@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { MessageCircle, Users, MessageSquare, X, Maximize2, Minimize2, PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,6 +6,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useWhatsApp } from "@/contexts/WhatsAppContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/contexts/AuthContext";
@@ -42,7 +42,7 @@ const UnifiedChatButton = ({ defaultOpen = false }: { defaultOpen?: boolean }) =
   const [loadingContacts, setLoadingContacts] = useState(false);
   const [loadingMessages, setLoadingMessages] = useState(false);
   
-  const { toast } = useToast();
+  const { useToastHook } = useToast(); // Rename to avoid confusion with sonner's toast
   const isMobile = useIsMobile();
   const { user, company, profile } = useAuth();
   

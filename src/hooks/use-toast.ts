@@ -2,6 +2,7 @@
 import { ToastActionElement, ToastProps } from "@/components/ui/toast";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import { toast as sonnerToast } from 'sonner';
 
 export type ToasterToastProps = ToastProps & {
   id: string;
@@ -45,7 +46,8 @@ export const useToast = () => {
     toast,
     dismiss: dismissToast,
     toasts,
+    useToastHook: toast, // Added for backward compatibility
   };
 };
 
-export { toast } from 'sonner';
+export { sonnerToast as toast };
