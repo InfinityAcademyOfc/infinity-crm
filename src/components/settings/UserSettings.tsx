@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useNotifications } from "@/hooks/useNotifications";
 
 interface UserSettings {
   theme: string;
@@ -15,8 +16,9 @@ interface UserSettings {
 }
 
 const UserSettings = () => {
-  const { user } = useAuth();
+  const { user, company } = useAuth();
   const { toast } = useToast();
+  const { notifySystemEvent } = useNotifications();
   const [settings, setSettings] = useState<UserSettings>({
     theme: "light",
     notifications_enabled: true,
@@ -43,6 +45,7 @@ const UserSettings = () => {
               .from("user_settings")
               .insert({
                 user_id: user.id,
+                company_id: company?.id,
                 theme: "light",
                 notifications_enabled: true,
                 language: "pt-BR"
@@ -70,7 +73,7 @@ const UserSettings = () => {
     }
     
     loadSettings();
-  }, [user]);
+  }, [user, company]);
 
   const updateSetting = async (key: keyof UserSettings, value: any) => {
     if (!user) return;
@@ -93,6 +96,25 @@ const UserSettings = () => {
         title: "Configurações atualizadas",
         description: "Suas preferências foram salvas com sucesso."
       });
+      
+      // Adicionar notificação sobre a atualização
+      await notifySystemEvent(
+        "Configurações atualizadas",
+        `A configuração ${key} foi atualizada com sucesso.`
+      );
+      
+      // Aplicar tema imediatamente se foi essa a mudança
+      if (key === 'theme') {
+        document.documentElement.classList.remove('light', 'dark');
+        if (value === 'dark') {
+          document.documentElement.classList.add('dark');
+        } else if (value === 'light') {
+          document.documentElement.classList.add('light');
+        } else if (value === 'system') {
+          const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          document.documentElement.classList.add(systemPrefersDark ? 'dark' : 'light');
+        }
+      }
     } catch (err) {
       console.error(`Erro ao atualizar ${key}:`, err);
       toast({

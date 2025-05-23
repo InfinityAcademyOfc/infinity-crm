@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import { MessageCircle, Users, MessageSquare, X, Maximize2, Minimize2 } from "lucide-react";
+import { MessageCircle, Users, MessageSquare, X, Maximize2, Minimize2, PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -9,11 +9,25 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { useWhatsApp } from "@/contexts/WhatsAppContext";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useAuth } from "@/contexts/AuthContext";
 import ChatList from "./ChatList";
 import ChatHeader from "./ChatHeader";
 import ChatMessage from "./ChatMessage";
 import type { PersonContact, GroupContact, Message } from "./types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { supabase } from "@/lib/supabase";
+
+interface ChatMessage {
+  id: string;
+  user_id: string;
+  sender_id: string;
+  receiver_id: string;
+  content: string;
+  is_group_message: boolean;
+  group_id?: string;
+  created_at: string;
+  read: boolean;
+}
 
 const UnifiedChatButton = ({ defaultOpen = false }: { defaultOpen?: boolean }) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
@@ -21,38 +35,129 @@ const UnifiedChatButton = ({ defaultOpen = false }: { defaultOpen?: boolean }) =
   const [activeTab, setActiveTab] = useState("interno");
   const [selectedChat, setSelectedChat] = useState<string | null>(null);
   const [message, setMessage] = useState("");
+  const [internalContacts, setInternalContacts] = useState<PersonContact[]>([]);
+  const [groupContacts, setGroupContacts] = useState<GroupContact[]>([]);
+  const [externalContacts, setExternalContacts] = useState<PersonContact[]>([]);
+  const [chatMessages, setChatMessages] = useState<Message[]>([]);
+  const [loadingContacts, setLoadingContacts] = useState(false);
+  const [loadingMessages, setLoadingMessages] = useState(false);
+  
   const { toast } = useToast();
   const isMobile = useIsMobile();
+  const { user, company, profile } = useAuth();
   
   // Utilizar contatos do WhatsApp se disponíveis
   const { contacts: whatsappContacts, sendMessage } = useWhatsApp();
 
+  // Carregar contatos internos (colaboradores da mesma empresa)
+  useEffect(() => {
+    const loadInternalContacts = async () => {
+      if (!user?.id || !company?.id) return;
+      
+      try {
+        setLoadingContacts(true);
+        
+        // Buscar perfis da mesma empresa, exceto o usuário atual
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('company_id', company.id)
+          .neq('id', user.id);
+          
+        if (error) throw error;
+        
+        // Mapear para o formato de contatos
+        const mappedContacts: PersonContact[] = (data || []).map(profile => ({
+          id: profile.id,
+          name: profile.name || profile.email,
+          status: profile.status === 'active' ? 'online' : 'offline',
+          avatar: profile.avatar || "",
+          lastMessage: "Clique para iniciar uma conversa",
+          unread: 0 // Será atualizado posteriormente
+        }));
+        
+        setInternalContacts(mappedContacts);
+      } catch (error) {
+        console.error("Erro ao carregar contatos internos:", error);
+        toast.error("Não foi possível carregar seus contatos");
+      } finally {
+        setLoadingContacts(false);
+      }
+    };
+    
+    loadInternalContacts();
+  }, [user, company]);
+  
+  // Carregar grupos
+  useEffect(() => {
+    const loadGroups = async () => {
+      if (!user?.id) return;
+      
+      try {
+        // Exemplo de implementação - isso deverá ser adaptado quando a tabela de grupos for criada
+        // Por enquanto, usamos dados mockados
+        const mockGroups: GroupContact[] = [
+          { id: "g1", name: "Equipe de Marketing", avatar: "", lastMessage: "Carlos: Campanha finalizada", unread: 0 },
+          { id: "g2", name: "Projeto X", avatar: "", lastMessage: "Ana: Reunião às 14h", unread: 0 }
+        ];
+        
+        setGroupContacts(mockGroups);
+      } catch (error) {
+        console.error("Erro ao carregar grupos:", error);
+      }
+    };
+    
+    loadGroups();
+  }, [user]);
+  
   // Mapear contatos do WhatsApp para o formato esperado
-  const externalContacts: PersonContact[] = whatsappContacts.map(contact => ({
-    id: contact.id,
-    name: contact.name || contact.phone,
-    status: 'online',
-    avatar: "",
-    lastMessage: "Toque para conversar",
-    unread: 0
-  }));
+  useEffect(() => {
+    if (whatsappContacts.length > 0) {
+      const contacts: PersonContact[] = whatsappContacts.map(contact => ({
+        id: contact.id,
+        name: contact.name || contact.phone,
+        status: 'online',
+        avatar: "",
+        lastMessage: "Toque para conversar",
+        unread: 0
+      }));
+      
+      setExternalContacts(contacts);
+    } else {
+      // Fallback para contatos externos
+      setExternalContacts([
+        { id: "e1", name: "Cliente ABC", status: "online", avatar: "", lastMessage: "Quando podemos agendar uma reunião?", unread: 1 },
+        { id: "e2", name: "Fornecedor XYZ", status: "offline", avatar: "", lastMessage: "Orçamento enviado", unread: 0 }
+      ]);
+    }
+  }, [whatsappContacts]);
 
-  const internalContacts: PersonContact[] = [
-    { id: "1", name: "Ana Silva", status: "online", avatar: "", lastMessage: "Podemos revisar o documento?", unread: 2 },
-    { id: "2", name: "João Santos", status: "away", avatar: "", lastMessage: "Projeto concluído!", unread: 0 },
-    { id: "3", name: "Maria Oliveira", status: "offline", avatar: "", lastMessage: "Vou enviar os relatórios amanhã", unread: 0 }
-  ];
-
-  const groupContacts: GroupContact[] = [
-    { id: "g1", name: "Equipe de Marketing", avatar: "", lastMessage: "Carlos: Campanha finalizada", unread: 3 },
-    { id: "g2", name: "Projeto X", avatar: "", lastMessage: "Ana: Reunião às 14h", unread: 0 }
-  ];
-
-  const mockMessages: Message[] = [
-    { id: "m1", sender: "other", text: "Olá, como está o projeto?", time: "10:30" },
-    { id: "m2", sender: "me", text: "Está andando bem! Já concluímos a fase inicial.", time: "10:32" },
-    { id: "m3", sender: "other", text: "Ótimo! Quando teremos a primeira entrega?", time: "10:35" }
-  ];
+  // Carregar mensagens quando um chat for selecionado
+  useEffect(() => {
+    const loadMessages = async () => {
+      if (!selectedChat || !user?.id) return;
+      
+      try {
+        setLoadingMessages(true);
+        
+        // Implementação futura: buscar mensagens do Supabase
+        // Por enquanto, usando dados mockados
+        const mockMessages: Message[] = [
+          { id: "m1", sender: "other", text: "Olá, como está o projeto?", time: "10:30" },
+          { id: "m2", sender: "me", text: "Está andando bem! Já concluímos a fase inicial.", time: "10:32" },
+          { id: "m3", sender: "other", text: "Ótimo! Quando teremos a primeira entrega?", time: "10:35" }
+        ];
+        
+        setChatMessages(mockMessages);
+      } catch (error) {
+        console.error("Erro ao carregar mensagens:", error);
+      } finally {
+        setLoadingMessages(false);
+      }
+    };
+    
+    loadMessages();
+  }, [selectedChat, user]);
 
   const toggleChat = () => {
     setIsOpen(!isOpen);
@@ -65,42 +170,62 @@ const UnifiedChatButton = ({ defaultOpen = false }: { defaultOpen?: boolean }) =
     setIsMaximized(!isMaximized);
   };
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (message.trim()) {
-      // Se estiver na aba externa, use a integração do WhatsApp
-      if (activeTab === "externo" && selectedChat) {
-        const contact = whatsappContacts.find(c => c.id === selectedChat);
-        if (contact) {
-          sendMessage(contact.phone, message)
-            .then(() => {
-              toast({
-                title: "Mensagem enviada",
-                description: "Sua mensagem foi enviada com sucesso.",
-              });
-            })
-            .catch(() => {
-              toast({
-                title: "Erro ao enviar",
-                description: "Não foi possível enviar sua mensagem.",
-                variant: "destructive"
-              });
-            });
+    if (!message.trim() || !user?.id) return;
+    
+    if (activeTab === "externo" && selectedChat) {
+      // Enviar mensagem do WhatsApp
+      const contact = whatsappContacts.find(c => c.id === selectedChat);
+      if (contact) {
+        try {
+          await sendMessage(contact.phone, message);
+          
+          // Adicionar mensagem localmente
+          const newMessage: Message = {
+            id: `temp-${Date.now()}`,
+            sender: "me",
+            text: message,
+            time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+          };
+          
+          setChatMessages(prev => [...prev, newMessage]);
+          setMessage("");
+          
+          toast.success("Mensagem enviada com sucesso");
+        } catch (error) {
+          console.error("Erro ao enviar mensagem:", error);
+          toast.error("Não foi possível enviar sua mensagem");
         }
-      } else {
-        // Mock para outros tipos de mensagem
-        toast({
-          title: "Mensagem enviada",
-          description: "Sua mensagem foi enviada com sucesso.",
-        });
       }
-      setMessage("");
+    } else {
+      // Enviar mensagem interna ou de grupo
+      try {
+        // Adicionar mensagem localmente enquanto implementamos o backend
+        const newMessage: Message = {
+          id: `temp-${Date.now()}`,
+          sender: "me",
+          text: message,
+          time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+        };
+        
+        setChatMessages(prev => [...prev, newMessage]);
+        setMessage("");
+        
+        toast.success("Mensagem enviada com sucesso");
+        
+        // Será implementada a persistência no Supabase
+      } catch (error) {
+        console.error("Erro ao enviar mensagem:", error);
+        toast.error("Não foi possível enviar sua mensagem");
+      }
     }
   };
 
+  // Resetar seleção ao trocar de aba
   useEffect(() => {
-    // Resetar seleção ao trocar de aba
     setSelectedChat(null);
+    setChatMessages([]);
   }, [activeTab]);
 
   const getContacts = () => {
@@ -110,21 +235,36 @@ const UnifiedChatButton = ({ defaultOpen = false }: { defaultOpen?: boolean }) =
       case "grupos":
         return groupContacts;
       case "externo":
-        return externalContacts.length > 0 ? externalContacts : [
-          { id: "e1", name: "Cliente ABC", status: "online", avatar: "", lastMessage: "Quando podemos agendar uma reunião?", unread: 1 },
-          { id: "e2", name: "Fornecedor XYZ", status: "offline", avatar: "", lastMessage: "Orçamento enviado", unread: 0 }
-        ];
+        return externalContacts;
       default:
         return [];
     }
   };
 
-  const selectedContact = [...internalContacts, ...groupContacts, ...getContacts()].find(c => c.id === selectedChat);
+  // Encontrar o contato selecionado em todos os tipos de contatos
+  const selectedContact = [...internalContacts, ...groupContacts, ...externalContacts].find(c => c.id === selectedChat);
   
   // Adaptar tamanhos para mobile
   const buttonSize = isMobile ? "h-10 w-10" : "h-12 w-12";
   const iconSize = isMobile ? 18 : 24;
   const cardHeight = isMobile ? "h-[80vh]" : "h-[70vh]";
+  
+  // Função para iniciar um novo chat ou criar um novo grupo
+  const handleCreateNewChat = () => {
+    if (activeTab === "grupos") {
+      // Implementação futura: modal para criar grupo
+      toast({
+        title: "Criar novo grupo",
+        description: "Funcionalidade em desenvolvimento"
+      });
+    } else {
+      // Implementação futura: modal para selecionar contato
+      toast({
+        title: "Iniciar nova conversa",
+        description: "Funcionalidade em desenvolvimento"
+      });
+    }
+  };
 
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end space-y-2">
@@ -137,8 +277,8 @@ const UnifiedChatButton = ({ defaultOpen = false }: { defaultOpen?: boolean }) =
           <div className="p-2 border-b flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <Avatar className="h-6 w-6">
-                <AvatarImage src="/placeholder.svg" alt="User Profile" />
-                <AvatarFallback>AC</AvatarFallback>
+                <AvatarImage src={profile?.avatar || "/placeholder.svg"} alt="User Profile" />
+                <AvatarFallback>{profile?.name?.substring(0, 2) || "AC"}</AvatarFallback>
               </Avatar>
               <span className="text-sm font-medium">Chat</span>
             </div>
@@ -185,11 +325,21 @@ const UnifiedChatButton = ({ defaultOpen = false }: { defaultOpen?: boolean }) =
                 <>
                   <ChatHeader contact={selectedContact} onBack={() => setSelectedChat(null)} />
                   <ScrollArea className="flex-1 p-3">
-                    <div className="space-y-3">
-                      {mockMessages.map(msg => (
-                        <ChatMessage key={msg.id} message={msg} />
-                      ))}
-                    </div>
+                    {loadingMessages ? (
+                      <div className="flex justify-center items-center h-full">
+                        <p className="text-sm text-muted-foreground">Carregando conversas...</p>
+                      </div>
+                    ) : chatMessages.length === 0 ? (
+                      <div className="flex justify-center items-center h-full">
+                        <p className="text-sm text-muted-foreground">Nenhuma mensagem. Inicie uma conversa!</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {chatMessages.map(msg => (
+                          <ChatMessage key={msg.id} message={msg} />
+                        ))}
+                      </div>
+                    )}
                   </ScrollArea>
                   <form onSubmit={handleSendMessage} className="border-t p-2 flex gap-2">
                     <Input
@@ -202,15 +352,38 @@ const UnifiedChatButton = ({ defaultOpen = false }: { defaultOpen?: boolean }) =
                   </form>
                 </>
               ) : (
-                <ScrollArea className="flex-1">
-                  <div className="p-2">
-                    <ChatList
-                      contacts={getContacts()}
-                      onSelectChat={(contact) => setSelectedChat(contact.id)}
-                      selectedId={selectedChat}
-                    />
+                <div className="flex-1 flex flex-col">
+                  <div className="p-2 flex justify-between items-center border-b">
+                    <h3 className="text-sm font-medium">
+                      {activeTab === "interno" ? "Colaboradores" : 
+                       activeTab === "grupos" ? "Grupos" : "Contatos Externos"}
+                    </h3>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleCreateNewChat}
+                      className="h-7 w-7 p-0"
+                    >
+                      <PlusCircle size={16} />
+                    </Button>
                   </div>
-                </ScrollArea>
+                  
+                  <ScrollArea className="flex-1">
+                    {loadingContacts ? (
+                      <div className="p-4 text-center">
+                        <p className="text-sm text-muted-foreground">Carregando contatos...</p>
+                      </div>
+                    ) : (
+                      <div className="p-2">
+                        <ChatList
+                          contacts={getContacts()}
+                          onSelectChat={(contact) => setSelectedChat(contact.id)}
+                          selectedId={selectedChat}
+                        />
+                      </div>
+                    )}
+                  </ScrollArea>
+                </div>
               )}
             </div>
           </Tabs>
