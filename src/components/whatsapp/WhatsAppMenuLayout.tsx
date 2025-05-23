@@ -55,8 +55,8 @@ export default function WhatsAppMenuLayout() {
         {tabItems.map((item) => (
           <TabsContent key={item.id} value={item.id} className="m-0 p-0 h-full">
             {item.id === "conversations" && <WhatsAppConversations />}
-            {item.id === "contacts" && <ContactsManager sessionId={sessionId || ""} />}
-            {item.id === "chatbot" && <ChatbotManager sessionId={sessionId || ""} />}
+            {item.id === "contacts" && <ContactsManager />}
+            {item.id === "chatbot" && <ChatbotManager />}
             {item.id === "settings" && <SettingsPanel />}
           </TabsContent>
         ))}

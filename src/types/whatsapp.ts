@@ -1,4 +1,3 @@
-
 // Basic WhatsApp types
 export type WhatsAppConnectionStatus = 'connected' | 'disconnected' | 'qr' | 'error' | 'not_started' | 'loading';
 
@@ -22,6 +21,8 @@ export type WhatsAppMessage = {
   message: string;
   from_me: boolean;
   created_at: string;
+  from?: string; // Added for compatibility
+  to?: string;   // Added for compatibility
 };
 
 // State properties interface

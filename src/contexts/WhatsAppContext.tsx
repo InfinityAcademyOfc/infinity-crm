@@ -1,7 +1,7 @@
 
-import React, { createContext, useState, useContext } from "react";
+import React, { createContext, useState, useContext, useEffect } from "react";
 import { toast } from "sonner";
-import { WhatsAppContact, WhatsAppMessage, WhatsAppConnectionStatus } from "@/types/whatsapp";
+import { WhatsAppContact, WhatsAppMessage, WhatsAppConnectionStatus, WhatsAppSession } from "@/types/whatsapp";
 import { useWhatsAppSessions } from "@/hooks/useWhatsAppSessions";
 
 interface WhatsAppContextType {
@@ -16,6 +16,15 @@ interface WhatsAppContextType {
   disconnect: () => Promise<void>;
   connect: (sessionId: string) => Promise<void>;
   refreshData: () => Promise<void>;
+  fetchMessages: (contactId: string, sessionId: string) => Promise<void>;
+  
+  // Adding the missing properties for WhatsAppIntegration.tsx
+  currentSession: string | null;
+  setCurrentSession: (sessionId: string | null) => void;
+  sessions: WhatsAppSession[];
+  loadingSessions: boolean;
+  refreshSessions: () => Promise<void>;
+  createNewSession: () => string;
 }
 
 const WhatsAppContext = createContext<WhatsAppContextType>({} as WhatsAppContextType);
@@ -26,7 +35,10 @@ export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
     connectionStatus, 
     connectSession,
     disconnectSession,
-    refreshSessions
+    refreshSessions,
+    sessions,
+    loadingSessions,
+    createNewSession
   } = useWhatsAppSessions();
   
   const [selectedContact, setSelectedContact] = useState<WhatsAppContact | null>(null);
@@ -80,6 +92,25 @@ export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
     }
   };
   
+  const fetchMessages = async (contactId: string, sessionId: string) => {
+    if (!sessionId || !contactId) return;
+    
+    try {
+      setLoadingMessages(true);
+      const API_URL = import.meta.env.VITE_API_URL || "";
+      const messagesResponse = await fetch(`${API_URL}/sessions/${sessionId}/messages/${contactId}`);
+      if (messagesResponse.ok) {
+        const messagesData = await messagesResponse.json();
+        setMessages(messagesData);
+      }
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+      // Don't show error toast for better UX when network issues occur
+    } finally {
+      setLoadingMessages(false);
+    }
+  };
+  
   const refreshData = async () => {
     if (!sessionId) return;
     
@@ -96,13 +127,7 @@ export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
       
       // Fetch messages if a contact is selected
       if (selectedContact) {
-        setLoadingMessages(true);
-        const messagesResponse = await fetch(`${API_URL}/sessions/${sessionId}/messages/${selectedContact.phone}`);
-        if (messagesResponse.ok) {
-          const messagesData = await messagesResponse.json();
-          setMessages(messagesData);
-        }
-        setLoadingMessages(false);
+        await fetchMessages(selectedContact.phone, sessionId);
       }
     } catch (error) {
       console.error("Error refreshing WhatsApp data:", error);
@@ -131,6 +156,13 @@ export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // Map sessionId to currentSession for compatibility
+  const currentSession = sessionId;
+  const setCurrentSession = (sid: string | null) => {
+    // Any additional logic can be added here if needed
+    localStorage.setItem("wa-session-id", sid || "");
+  };
+
   return (
     <WhatsAppContext.Provider
       value={{
@@ -144,7 +176,16 @@ export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
         sendMessage,
         disconnect,
         connect,
-        refreshData
+        refreshData,
+        fetchMessages,
+        
+        // Added properties for WhatsAppIntegration.tsx
+        currentSession,
+        setCurrentSession,
+        sessions,
+        loadingSessions,
+        refreshSessions,
+        createNewSession
       }}
     >
       {children}

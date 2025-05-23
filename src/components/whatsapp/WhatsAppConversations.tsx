@@ -16,11 +16,17 @@ export default function WhatsAppConversations() {
     messages,
     loadingMessages,
     sessionId,
-    sendMessage: contextSendMessage
+    fetchMessages
   } = useWhatsApp();
 
   const [message, setMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (selectedContact && sessionId) {
+      fetchMessages(selectedContact.phone, sessionId);
+    }
+  }, [selectedContact, sessionId, fetchMessages]);
 
   useEffect(() => {
     if (messagesEndRef.current) {
@@ -30,17 +36,24 @@ export default function WhatsAppConversations() {
 
   const handleSend = async () => {
     if (message.trim() && selectedContact && sessionId) {
-      await contextSendMessage(selectedContact.phone, message);
+      await sendMessage(sessionId, selectedContact.phone, message);
       setMessage("");
     }
   };
 
+  // Modified to safely filter messages
   const filteredMessages = selectedContact
     ? messages.filter(
-        (msg) =>
-          msg.number === selectedContact.phone ||
-          msg.from === selectedContact.phone ||
-          msg.to === selectedContact.phone
+        (msg) => {
+          const msgNumber = msg.number;
+          const contactNumber = selectedContact.phone;
+          const fromNumber = msg.from || ''; // Safely access with default
+          const toNumber = msg.to || '';     // Safely access with default
+          
+          return msgNumber === contactNumber || 
+                 fromNumber === contactNumber || 
+                 toNumber === contactNumber;
+        }
       )
     : [];
 
