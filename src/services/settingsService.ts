@@ -11,6 +11,7 @@ export interface UserSettings {
   language: string;
   updated_at?: string;
   created_at?: string;
+  dashboard_config?: DashboardConfig | null;
 }
 
 export interface NotificationSettings {
@@ -26,6 +27,7 @@ export interface SecuritySettings {
   last_password_change?: string | null;
 }
 
+// Define AutomationRule interface without re-exporting
 export interface AutomationRule {
   id: string;
   condition: {
@@ -93,6 +95,7 @@ export const settingsService = {
             theme: settings.theme,
             notifications_enabled: settings.notifications_enabled,
             language: settings.language,
+            dashboard_config: settings.dashboard_config,
             updated_at: new Date().toISOString(),
           })
           .eq("user_id", settings.user_id)
@@ -111,6 +114,7 @@ export const settingsService = {
             theme: settings.theme,
             notifications_enabled: settings.notifications_enabled,
             language: settings.language,
+            dashboard_config: settings.dashboard_config,
           })
           .select()
           .single();
@@ -220,4 +224,5 @@ export const settingsService = {
   }
 };
 
+// Export the type only, not re-export the interface
 export type { AutomationRule };
