@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,7 +8,7 @@ import { PlusCircle, X, ArrowRight, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
-import { AutomationRule } from "@/services/settingsService";
+import { AutomationRule } from "@/services/settings";
 
 const AutomationSettings = () => {
   const [rules, setRules] = useState<AutomationRule[]>([]);

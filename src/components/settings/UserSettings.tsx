@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
@@ -9,7 +8,7 @@ import { useNotifications } from "@/hooks/useNotifications";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
-import { settingsService, UserSettings as UserSettingsType } from "@/services/settingsService";
+import { settingsService, UserSettings as UserSettingsType } from "@/services/settings";
 
 const UserSettings = () => {
   const { user, company } = useAuth();

@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { settingsService, UserSettings } from "@/services/settingsService";
+import { settingsService, UserSettings } from "@/services/settings";
 import { toast } from "sonner";
 
 export const useSettings = () => {
