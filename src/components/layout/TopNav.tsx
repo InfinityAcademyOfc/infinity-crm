@@ -65,11 +65,13 @@ const moduleData: Record<string, {
 interface TopNavProps {
   openMobileNav?: () => void;
   isMobileView?: boolean;
+  notificationCount?: number;
 }
 
 export function TopNav({
   openMobileNav,
-  isMobileView = false
+  isMobileView = false,
+  notificationCount = 0
 }: TopNavProps) {
   const location = useLocation();
 
