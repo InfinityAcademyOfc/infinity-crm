@@ -1,125 +1,19 @@
 
 import React, { useState } from "react";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { MoreHorizontal, Search, Plus, Download, ChevronDown } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Search, Plus, Download, ChevronDown } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ClientList } from "@/components/clients/ClientList";
 import { ClientAnalytics } from "@/components/clients/ClientAnalytics";
 import { ClientCard } from "@/components/clients/ClientCard";
 import ClientLtvFunnel from "@/components/clients/ClientLtvFunnel";
 import NewClientDialog from "@/components/clients/NewClientDialog";
 import { useToast } from "@/hooks/use-toast";
-
-const npsData = [
-  {
-    name: 'Detratores',
-    value: 15,
-    color: '#EF4444'
-  },
-  {
-    name: 'Neutros',
-    value: 25,
-    color: '#F59E0B'
-  },
-  {
-    name: 'Promotores',
-    value: 60,
-    color: '#10B981'
-  }
-];
-
-const ltvData = [
-  {
-    month: 'Jan',
-    value: 2400
-  },
-  {
-    month: 'Fev',
-    value: 3200
-  },
-  {
-    month: 'Mar',
-    value: 4100
-  },
-  {
-    month: 'Abr',
-    value: 4800
-  },
-  {
-    month: 'Mai',
-    value: 5400
-  },
-  {
-    month: 'Jun',
-    value: 6200
-  }
-];
-
-const initialClientsData = [
-  {
-    id: '1',
-    name: 'Empresa XYZ Ltda',
-    contact: 'João Silva',
-    email: 'joao@xyz.com',
-    phone: '(11) 9999-8888',
-    status: 'active',
-    nps: 9,
-    ltv: 25000,
-    lastContact: '2023-07-15',
-    nextMeeting: '2023-07-30'
-  },
-  {
-    id: '2',
-    name: 'Tech Innovations Inc',
-    contact: 'Maria Oliveira',
-    email: 'maria@techinnovations.com',
-    phone: '(11) 8888-7777',
-    status: 'active',
-    nps: 8,
-    ltv: 42000,
-    lastContact: '2023-07-10',
-    nextMeeting: '2023-07-25'
-  },
-  {
-    id: '3',
-    name: 'Green Solutions',
-    contact: 'Pedro Santos',
-    email: 'pedro@greensolutions.com',
-    phone: '(11) 7777-6666',
-    status: 'inactive',
-    nps: 6,
-    ltv: 18000,
-    lastContact: '2023-06-28',
-    nextMeeting: null
-  },
-  {
-    id: '4',
-    name: 'Global Marketing Group',
-    contact: 'Ana Ferreira',
-    email: 'ana@globalmarketing.com',
-    phone: '(11) 6666-5555',
-    status: 'active',
-    nps: 10,
-    ltv: 65000,
-    lastContact: '2023-07-18',
-    nextMeeting: '2023-08-02'
-  },
-  {
-    id: '5',
-    name: 'Quantum Cybersecurity',
-    contact: 'Rafael Lima',
-    email: 'rafael@quantumcyber.com',
-    phone: '(11) 5555-4444',
-    status: 'at-risk',
-    nps: 4,
-    ltv: 30000,
-    lastContact: '2023-07-05',
-    nextMeeting: '2023-07-22'
-  }
-];
+import { useRealClientData } from "@/hooks/useRealClientData";
+import { useAuth } from "@/contexts/AuthContext";
 
 const ClientManagement = () => {
   const [viewType, setViewType] = useState("list");
@@ -127,15 +21,16 @@ const ClientManagement = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [clientToDelete, setClientToDelete] = useState(null);
   const [showAnalytics, setShowAnalytics] = useState(true);
-  const [clientsData, setClientsData] = useState(initialClientsData);
   const [newClientDialogOpen, setNewClientDialogOpen] = useState(false);
   
   const { toast } = useToast();
+  const { user, company } = useAuth();
+  const { clients, analytics, loading, refetch } = useRealClientData();
   
-  const filteredClients = clientsData.filter(client => 
+  const filteredClients = clients.filter(client => 
     client.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    client.contact.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    client.email.toLowerCase().includes(searchQuery.toLowerCase())
+    (client.contact && client.contact.toLowerCase().includes(searchQuery.toLowerCase())) || 
+    (client.email && client.email.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   const handleDeleteClient = (client) => {
@@ -143,89 +38,91 @@ const ClientManagement = () => {
     setDeleteDialogOpen(true);
   };
 
-  const confirmDelete = () => {
-    setClientsData(clientsData.filter(client => client.id !== clientToDelete.id));
-    toast({
-      title: "Cliente removido",
-      description: `${clientToDelete.name} foi removido com sucesso.`
-    });
+  const confirmDelete = async () => {
+    if (!clientToDelete) return;
+    
+    try {
+      const { error } = await supabase
+        .from('clients')
+        .delete()
+        .eq('id', clientToDelete.id);
+        
+      if (error) throw error;
+      
+      toast({
+        title: "Cliente removido",
+        description: `${clientToDelete.name} foi removido com sucesso.`
+      });
+      
+      refetch();
+    } catch (error) {
+      console.error('Erro ao deletar cliente:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao remover cliente.",
+        variant: "destructive"
+      });
+    }
+    
     setDeleteDialogOpen(false);
   };
   
-  const handleAddClient = (newClient) => {
-    setClientsData([...clientsData, newClient]);
-  };
-  
   const exportData = () => {
-    // Export based on current view
-    if (viewType === "list" || viewType === "cards") {
-      exportClients();
-    } else if (viewType === "ltv-kanban") {
-      exportAnalytics();
+    if (filteredClients.length === 0) {
+      toast({
+        title: "Nenhum dado para exportar",
+        description: "Não há clientes para exportar.",
+        variant: "destructive"
+      });
+      return;
     }
-  };
-  
-  const exportClients = () => {
-    // Create CSV data
-    const header = ["Nome", "Contato", "Email", "Telefone", "Status", "NPS", "LTV", "Último Contato", "Próxima Reunião"];
+    
+    const header = ["Nome", "Contato", "Email", "Telefone", "Status", "Segmento", "Último Contato"];
     
     const csvData = [
       header.join(","),
       ...filteredClients.map(client => [
         `"${client.name}"`,
-        `"${client.contact}"`,
-        client.email,
-        client.phone,
+        `"${client.contact || ''}"`,
+        client.email || '',
+        client.phone || '',
         client.status,
-        client.nps,
-        client.ltv,
-        client.lastContact,
-        client.nextMeeting || ""
+        client.segment || '',
+        client.last_contact || ''
       ].join(","))
     ].join("\n");
     
-    // Create and download file
-    downloadCSV(csvData, "clientes.csv");
+    const blob = new Blob([csvData], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `clientes-${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
     
     toast({
       title: "Exportação concluída",
       description: "A lista de clientes foi exportada com sucesso."
     });
   };
-  
-  const exportAnalytics = () => {
-    // Create CSV for analytics
-    const npsCSV = [
-      ["Categoria", "Valor"].join(","),
-      ...npsData.map(item => [`"${item.name}"`, item.value].join(","))
-    ].join("\n");
-    
-    const ltvCSV = [
-      ["Mês", "Valor"].join(","),
-      ...ltvData.map(item => [item.month, item.value].join(","))
-    ].join("\n");
-    
-    // Download both files
-    downloadCSV(npsCSV, "nps_data.csv");
-    downloadCSV(ltvCSV, "ltv_data.csv");
-    
-    toast({
-      title: "Exportação concluída",
-      description: "Os dados de análise foram exportados com sucesso."
-    });
-  };
-  
-  const downloadCSV = (data, filename) => {
-    const blob = new Blob([data], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", filename);
-    link.style.visibility = "hidden";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
+
+  if (!user || !company) {
+    return (
+      <div className="p-6 text-center">
+        <p className="text-muted-foreground">Faça login para gerenciar clientes</p>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-6">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+        <span className="ml-2">Carregando clientes...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -259,7 +156,8 @@ const ClientManagement = () => {
         </div>
       </div>
       
-      {showAnalytics && <ClientAnalytics npsData={npsData} ltvData={ltvData} />}
+      {showAnalytics && <ClientAnalytics analytics={analytics} />}
+      
       <div className="flex justify-center">
         <Button 
           variant="ghost" 
@@ -272,31 +170,44 @@ const ClientManagement = () => {
         </Button>
       </div>
 
-      <Tabs value={viewType} onValueChange={setViewType} className="w-auto">
-        <TabsContent value="list" className="p-0 m-0">
-          <Card>
-            <CardContent className="p-0">
-              <ClientList clients={filteredClients} onDeleteClient={handleDeleteClient} />
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="cards" className="p-0 m-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {filteredClients.map(client => (
-            <ClientCard 
-              key={client.id} 
-              client={client} 
-              onDeleteClient={handleDeleteClient} 
-            />
-          ))}
-        </TabsContent>
+      {filteredClients.length === 0 ? (
+        <Card>
+          <CardContent className="p-6 text-center">
+            <p className="text-muted-foreground mb-4">
+              Nenhum cliente encontrado.
+            </p>
+            <Button onClick={() => setNewClientDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Adicionar Primeiro Cliente
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <Tabs value={viewType} onValueChange={setViewType} className="w-auto">
+          <TabsContent value="list" className="p-0 m-0">
+            <Card>
+              <CardContent className="p-0">
+                <ClientList clients={filteredClients} onDeleteClient={handleDeleteClient} />
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="cards" className="p-0 m-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {filteredClients.map(client => (
+              <ClientCard 
+                key={client.id} 
+                client={client} 
+                onDeleteClient={handleDeleteClient} 
+              />
+            ))}
+          </TabsContent>
 
-        <TabsContent value="ltv-kanban" className="p-0 m-0">
-          <ClientLtvFunnel />
-        </TabsContent>
-      </Tabs>
+          <TabsContent value="ltv-kanban" className="p-0 m-0">
+            <ClientLtvFunnel />
+          </TabsContent>
+        </Tabs>
+      )}
       
-      {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -312,11 +223,10 @@ const ClientManagement = () => {
         </DialogContent>
       </Dialog>
       
-      {/* Add New Client Dialog */}
       <NewClientDialog 
         open={newClientDialogOpen} 
         onOpenChange={setNewClientDialogOpen}
-        onAddClient={handleAddClient}
+        onClientCreated={refetch}
       />
     </div>
   );
