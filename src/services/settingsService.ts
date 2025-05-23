@@ -27,7 +27,7 @@ export interface SecuritySettings {
   last_password_change?: string | null;
 }
 
-// Define AutomationRule interface without re-exporting
+// Define AutomationRule interface
 export interface AutomationRule {
   id: string;
   condition: {
@@ -224,5 +224,5 @@ export const settingsService = {
   }
 };
 
-// Export the type only, not re-export the interface
-export type { AutomationRule };
+// Remove the conflicting export at line 228
+// export type { AutomationRule };
