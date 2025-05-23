@@ -11,6 +11,7 @@ export interface UserProfile {
   status?: string;
   company_id?: string | null;
   phone?: string | null;
+  department?: string | null; // Added missing department property
   created_at?: string;
   updated_at?: string;
 }
