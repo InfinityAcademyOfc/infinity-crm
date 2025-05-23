@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Bot } from "lucide-react";
 
-interface ChatbotManagerProps {
+export interface ChatbotManagerProps {
   sessionId: string;
 }
 

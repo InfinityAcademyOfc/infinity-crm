@@ -13,7 +13,7 @@ import {
   Settings,
   LogOut,
 } from "lucide-react";
-import WhatsAppConversations from "./WhatsAppConversations";
+import WhatsAppConversations from "./conversation/ChatMessages";
 import ContactsManager from "./contacts/ContactsManager";
 import ChatbotManager from "./chatbot/ChatbotManager";
 import SettingsPanel from "./SettingsPanel";
@@ -55,8 +55,8 @@ export default function WhatsAppMenuLayout() {
         {tabItems.map((item) => (
           <TabsContent key={item.id} value={item.id} className="m-0 p-0 h-full">
             {item.id === "conversations" && <WhatsAppConversations />}
-            {item.id === "contacts" && <ContactsManager />}
-            {item.id === "chatbot" && <ChatbotManager />}
+            {item.id === "contacts" && <ContactsManager sessionId={sessionId || ""} />}
+            {item.id === "chatbot" && <ChatbotManager sessionId={sessionId || ""} />}
             {item.id === "settings" && <SettingsPanel />}
           </TabsContent>
         ))}

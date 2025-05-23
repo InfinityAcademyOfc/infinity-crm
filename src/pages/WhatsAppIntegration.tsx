@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import QRCodeModal from "@/components/whatsapp/QRCodeModal";
@@ -83,7 +84,7 @@ const WhatsAppIntegrationPage = () => {
 
   // Selecionar sessão atual ou primeira disponível
   useEffect(() => {
-    if (!currentSession && sessions.length > 0) {
+    if (!currentSession && sessions?.length > 0) {
       setCurrentSession(sessions[0].id);
     }
   }, [sessions, currentSession, setCurrentSession]);
@@ -126,7 +127,7 @@ const WhatsAppIntegrationPage = () => {
           <Loader className="animate-spin" size={20} />
           Carregando sessões...
         </div>
-      ) : sessions.length === 0 ? (
+      ) : sessions?.length === 0 ? (
         <Card>
           <CardHeader>
             <CardTitle>Bem-vindo ao Infinity WhatsApp</CardTitle>
@@ -143,7 +144,7 @@ const WhatsAppIntegrationPage = () => {
         </Card>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6">
-          {sessions.map((session) => (
+          {sessions?.map((session) => (
             <WhatsAppSessionCard
               key={session.id}
               session={session}
@@ -158,7 +159,7 @@ const WhatsAppIntegrationPage = () => {
       {currentSession && (
         <div className="border rounded-lg h-[calc(100vh-15rem)]">
           <ScrollArea className="h-full rounded-md">
-            <WhatsAppMenuLayout sessionId={currentSession} status={connectionStatus} />
+            <WhatsAppMenuLayout />
           </ScrollArea>
         </div>
       )}
