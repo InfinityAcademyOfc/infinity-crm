@@ -1,7 +1,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { KanbanColumnItem } from '@/components/kanban/types';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 
 interface KanbanState {
   id?: string;
@@ -32,6 +32,14 @@ export const kanbanPersistenceService = {
     }
 
     try {
+      // Temporarily use local storage until kanban_states table is created in Supabase
+      localStorage.setItem(
+        `kanban_state_${userId}_${companyId}_${kanbanType}`, 
+        JSON.stringify(columns)
+      );
+      
+      // Comment out Supabase code until table is created
+      /*
       // Verificar se já existe um estado salvo
       const { data: existingState } = await supabase
         .from('kanban_states')
@@ -63,6 +71,7 @@ export const kanbanPersistenceService = {
             updated_at: new Date().toISOString()
           });
       }
+      */
     } catch (error) {
       console.error('Erro ao salvar estado do kanban:', error);
       throw error;
@@ -83,6 +92,12 @@ export const kanbanPersistenceService = {
     }
 
     try {
+      // Temporarily use local storage until kanban_states table is created in Supabase
+      const savedState = localStorage.getItem(`kanban_state_${userId}_${companyId}_${kanbanType}`);
+      return savedState ? JSON.parse(savedState) : null;
+      
+      // Comment out Supabase code until table is created
+      /*
       const { data, error } = await supabase
         .from('kanban_states')
         .select('state')
@@ -96,6 +111,7 @@ export const kanbanPersistenceService = {
       }
 
       return data?.state || null;
+      */
     } catch (error) {
       console.error('Erro ao carregar estado do kanban:', error);
       return null;

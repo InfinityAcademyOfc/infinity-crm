@@ -22,6 +22,14 @@ import { useWhatsApp } from "@/contexts/WhatsAppContext";
 import { toast } from "sonner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
+// Define props type expected by ChatbotManager component
+interface ChatbotManagerProps {
+  sessionId?: string;
+}
+
+// Make sure ChatbotManager is properly typed
+const ChatbotManagerWithProps = ChatbotManager as React.FC<ChatbotManagerProps>;
+
 const tabItems = [
   { id: "conversations", label: "Conversas", icon: MessageSquare },
   { id: "contacts", label: "Contatos", icon: Users },
@@ -75,7 +83,7 @@ export default function WhatsAppMenuLayout() {
         </TabsContent>
         
         <TabsContent value="chatbot" className="m-0 p-0 h-full">
-          <ChatbotManager sessionId={sessionId || ""} />
+          <ChatbotManagerWithProps sessionId={sessionId || ""} />
         </TabsContent>
         
         <TabsContent value="settings" className="m-0 p-0 h-full">

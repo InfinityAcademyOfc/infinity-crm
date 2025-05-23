@@ -2,14 +2,14 @@
 import React, { useState } from "react";
 import { MessageSquare, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
-import { useIsMobile } from "@/hooks/use-mobile";
 
-export interface ChatFullScreenDialogProps {
+// Properly define the props interface for ChatFullScreenDialog
+interface ChatFullScreenDialogProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
+// Create the component with proper props
 const ChatFullScreenDialog: React.FC<ChatFullScreenDialogProps> = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
   
@@ -33,27 +33,16 @@ interface UnifiedChatButtonProps {
 }
 
 const UnifiedChatButton = ({ defaultOpen = false }: UnifiedChatButtonProps) => {
-  const { toast } = useToast();
-  const isMobile = useIsMobile ? useIsMobile() : false;
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const [isFullScreen, setIsFullScreen] = useState(false);
 
   const toggleOpen = () => {
     setIsOpen(!isOpen);
-    if (!isOpen) {
-      toast({
-        title: "Chat aberto",
-        description: "Você pode conversar com sua equipe agora."
-      });
-    }
   };
 
   const toggleFullScreen = () => {
     setIsFullScreen(!isFullScreen);
   };
-
-  const buttonSize = isMobile ? "h-9 w-9" : "h-12 w-12";
-  const iconSize = isMobile ? 18 : 24;
 
   return (
     <div className="fixed bottom-8 right-8 z-50 flex flex-col items-end">
@@ -65,9 +54,9 @@ const UnifiedChatButton = ({ defaultOpen = false }: UnifiedChatButtonProps) => {
       <Button
         size="icon"
         onClick={toggleOpen}
-        className={`rounded-full ${buttonSize} shadow-lg ${isOpen ? 'bg-red-500 hover:bg-red-600' : 'bg-primary hover:bg-primary/90'}`}
+        className="rounded-full h-12 w-12 shadow-lg bg-primary hover:bg-primary/90"
       >
-        {isOpen ? <X size={iconSize} /> : <MessageSquare size={iconSize} />}
+        {isOpen ? <X size={24} /> : <MessageSquare size={24} />}
       </Button>
     </div>
   );

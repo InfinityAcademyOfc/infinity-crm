@@ -29,7 +29,7 @@ export const useNotifications = () => {
       try {
         setLoading(true);
         
-        // Usamos dados mockados enquanto não temos a tabela de notificações
+        // Using mock data since notifications table doesn't exist yet
         const mockNotifications: Notification[] = [
           {
             id: '1',
@@ -54,6 +54,24 @@ export const useNotifications = () => {
         setNotifications(mockNotifications);
         const unread = mockNotifications.filter(notification => !notification.read).length;
         setUnreadCount(unread);
+        
+        // Uncomment when notifications table is created
+        /*
+        const { data, error } = await supabase
+          .from('notifications')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+          
+        if (error) {
+          console.error("Erro ao carregar notificações:", error);
+          return;
+        }
+        
+        setNotifications(data as Notification[]);
+        const unread = data.filter(item => !item.read).length;
+        setUnreadCount(unread);
+        */
       } catch (error) {
         console.error("Erro ao carregar notificações:", error);
       } finally {
@@ -79,6 +97,15 @@ export const useNotifications = () => {
       );
       
       setUnreadCount(prev => Math.max(0, prev - 1));
+      
+      // Uncomment when notifications table is created
+      /*
+      await supabase
+        .from('notifications')
+        .update({ read: true })
+        .eq('id', id)
+        .eq('user_id', user.id);
+      */
     } catch (error) {
       console.error("Erro ao marcar notificação como lida:", error);
     }
@@ -94,6 +121,14 @@ export const useNotifications = () => {
       );
       
       setUnreadCount(0);
+      
+      // Uncomment when notifications table is created
+      /*
+      await supabase
+        .from('notifications')
+        .update({ read: true })
+        .eq('user_id', user.id);
+      */
     } catch (error) {
       console.error("Erro ao marcar todas notificações como lidas:", error);
     }
@@ -125,6 +160,26 @@ export const useNotifications = () => {
       setNotifications(prev => [newNotification, ...prev]);
       setUnreadCount(prev => prev + 1);
       
+      // Uncomment when notifications table is created
+      /*
+      const { data, error } = await supabase
+        .from('notifications')
+        .insert({
+          user_id: user.id,
+          type,
+          title,
+          message,
+          related_to: relatedTo,
+          related_id: relatedId,
+          read: false,
+        })
+        .select();
+        
+      if (error) {
+        console.error("Erro ao adicionar notificação:", error);
+        return;
+      }
+      */
     } catch (error) {
       console.error("Erro ao adicionar notificação:", error);
     }

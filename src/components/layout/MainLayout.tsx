@@ -2,43 +2,27 @@
 import React, { useState, useEffect } from "react";
 import { Outlet } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
-import Topnav from "@/components/layout/Topnav";
-import Sidebar from "@/components/layout/Sidebar";
+import { TopNav } from "@/components/layout/TopNav";
+import Sidebar from "@/components/navigation/Sidebar";
 import { MobileNav } from "@/components/layout/MobileNav";
 import { useAuth } from "@/contexts/AuthContext";
 import FloatingChat from "@/components/chat/FloatingChat";
 import { supabase } from "@/lib/supabase";
+import { useNotifications } from "@/hooks/useNotifications";
 
 const MainLayout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { user, profile, company } = useAuth();
-  const [notificationCount, setNotificationCount] = useState(0);
-
-  // Atualizar contagem de notificações
-  useEffect(() => {
-    if (!user) return;
-    
-    const fetchNotificationCount = async () => {
-      try {
-        // Usar um contador simples já que a tabela notifications pode ainda não existir
-        setNotificationCount(0);
-      } catch (error) {
-        console.error("Erro ao buscar contagem de notificações:", error);
-      }
-    };
-    
-    fetchNotificationCount();
-    
-  }, [user]);
+  const { unreadCount } = useNotifications();
 
   return (
     <div className="flex min-h-screen bg-background">
       <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
 
       <div className="flex flex-col flex-1">
-        <Topnav 
+        <TopNav 
           toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} 
-          notificationCount={notificationCount}
+          notificationCount={unreadCount}
         />
         
         <MobileNav isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />

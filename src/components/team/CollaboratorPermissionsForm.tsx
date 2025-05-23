@@ -81,11 +81,11 @@ const CollaboratorPermissionsForm = ({
   });
   
   // Atualizar role
-  const handleRoleChange = (role: string) => {
+  const handleRoleChange = (roleValue: string) => {
     let updatedPermissions = { ...formData.permissions } as PermissionSettings;
     
     // Configurar permissões conforme o papel selecionado
-    switch(role) {
+    switch(roleValue) {
       case "admin":
         updatedPermissions = {
           canViewDashboard: true,
@@ -142,7 +142,7 @@ const CollaboratorPermissionsForm = ({
     
     setFormData({
       ...formData,
-      role,
+      role: roleValue,
       permissions: updatedPermissions
     });
   };
@@ -189,7 +189,7 @@ const CollaboratorPermissionsForm = ({
           <div>
             <Label htmlFor="role">Função/Cargo</Label>
             <Select 
-              value={formData.role} 
+              value={formData.role || "viewer"} 
               onValueChange={handleRoleChange}
             >
               <SelectTrigger className="w-full">
