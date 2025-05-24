@@ -146,7 +146,7 @@ const SalesFunnel = () => {
                   {totalLeads > 0 ? Math.round((leads.filter(lead => lead.stage === 'Ganhos').length / totalLeads) * 100) : 0}%
                 </p>
               </div>
-              <Badge variant="success">Ganhos</Badge>
+              <Badge variant="default">Ganhos</Badge>
             </div>
           </CardContent>
         </Card>
