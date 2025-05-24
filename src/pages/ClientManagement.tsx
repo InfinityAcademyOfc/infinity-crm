@@ -1,131 +1,199 @@
 
 import React, { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useRealClientData } from '@/hooks/useRealClientData';
-import { LoadingPage } from '@/components/ui/loading-spinner';
-import { SectionHeader } from '@/components/ui/section-header';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, Plus, Filter } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
-import { ClientList } from '@/components/clients/ClientList';
-import { ClientAnalytics } from '@/components/clients/ClientAnalytics';
-import NewClientDialog from '@/components/clients/NewClientDialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Plus, Search, Filter, Users, Phone, Mail, MapPin } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 const ClientManagement = () => {
-  const { user, company, loading: authLoading } = useAuth();
-  const { clients, analytics, loading, refetch } = useRealClientData();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [newClientDialogOpen, setNewClientDialogOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  
+  const mockClients = [
+    {
+      id: 1,
+      name: "João Silva",
+      email: "joao@exemplo.com",
+      phone: "+55 11 99999-8888",
+      company: "Tech Solutions",
+      status: "Ativo",
+      address: "São Paulo, SP",
+      lastContact: "2 dias atrás",
+      value: "R$ 15.000"
+    },
+    {
+      id: 2,
+      name: "Maria Santos",
+      email: "maria@exemplo.com",
+      phone: "+55 11 88888-7777",
+      company: "Digital Corp",
+      status: "Prospect",
+      address: "Rio de Janeiro, RJ",
+      lastContact: "1 semana atrás",
+      value: "R$ 8.500"
+    },
+    {
+      id: 3,
+      name: "Pedro Costa",
+      email: "pedro@exemplo.com",
+      phone: "+55 11 77777-6666",
+      company: "Inovação Ltda",
+      status: "Inativo",
+      address: "Belo Horizonte, MG",
+      lastContact: "1 mês atrás",
+      value: "R$ 22.000"
+    }
+  ];
 
-  if (authLoading) {
-    return <LoadingPage message="Verificando autenticação..." />;
-  }
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'Ativo': return 'bg-green-100 text-green-800';
+      case 'Prospect': return 'bg-blue-100 text-blue-800';
+      case 'Inativo': return 'bg-gray-100 text-gray-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
 
-  if (!user || !company) {
-    return <LoadingPage message="Acesso não autorizado" />;
-  }
-
-  const filteredClients = clients.filter(client =>
-    client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    client.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    client.phone?.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredClients = mockClients.filter(client =>
+    client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    client.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    client.company.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <SectionHeader 
-        title="Gestão de Clientes" 
-        description="Gerencie sua base de clientes e acompanhe relacionamentos"
-        actions={
-          <>
-            <div className="relative w-64">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+    <div className="p-6 space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold">Gestão de Clientes</h1>
+          <p className="text-muted-foreground">Gerencie seus clientes e prospects</p>
+        </div>
+        <Button>
+          <Plus className="w-4 h-4 mr-2" />
+          Novo Cliente
+        </Button>
+      </div>
+
+      {/* Filtros e Busca */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex gap-4">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Buscar clientes..."
-                className="pl-10 focus-ring"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <Button variant="outline" className="hover-scale transition-all duration-200">
-              <Filter className="h-4 w-4 mr-2" />
+            <Button variant="outline">
+              <Filter className="w-4 h-4 mr-2" />
               Filtros
             </Button>
-            <Button 
-              onClick={() => setNewClientDialogOpen(true)}
-              className="hover-scale transition-all duration-200"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Novo Cliente
-            </Button>
-          </>
-        }
-      />
+          </div>
+        </CardContent>
+      </Card>
 
-      {loading ? (
-        <div className="grid gap-4 md:grid-cols-3">
-          {[...Array(6)].map((_, i) => (
-            <Card key={i} className="animate-pulse">
-              <CardContent className="p-6">
-                <div className="space-y-3">
-                  <div className="h-4 bg-muted rounded w-3/4"></div>
-                  <div className="h-3 bg-muted rounded w-1/2"></div>
-                  <div className="h-3 bg-muted rounded w-2/3"></div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      ) : filteredClients.length === 0 ? (
-        <Card className="animate-scale-in">
-          <CardContent className="p-8 text-center">
-            <div className="mx-auto w-24 h-24 bg-muted rounded-full flex items-center justify-center mb-4">
-              <Search className="h-12 w-12 text-muted-foreground" />
-            </div>
-            <h3 className="text-lg font-medium mb-2">
-              {searchQuery ? 'Nenhum cliente encontrado' : 'Nenhum cliente cadastrado'}
-            </h3>
-            <p className="text-muted-foreground mb-4">
-              {searchQuery 
-                ? 'Tente ajustar os filtros de busca' 
-                : 'Comece adicionando seu primeiro cliente ao sistema'
-              }
-            </p>
-            {!searchQuery && (
-              <Button 
-                onClick={() => setNewClientDialogOpen(true)}
-                className="hover-scale transition-all duration-200"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Adicionar Primeiro Cliente
-              </Button>
-            )}
+      {/* Estatísticas */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total de Clientes</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{mockClients.length}</div>
+            <p className="text-xs text-muted-foreground">+2 novos este mês</p>
           </CardContent>
         </Card>
-      ) : (
-        <Tabs defaultValue="list" className="animate-fade-in">
-          <TabsList>
-            <TabsTrigger value="list">Lista de Clientes</TabsTrigger>
-            <TabsTrigger value="analytics">Análises</TabsTrigger>
-          </TabsList>
 
-          <TabsContent value="list" className="animate-fade-in">
-            <ClientList clients={filteredClients} />
-          </TabsContent>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Clientes Ativos</CardTitle>
+            <Users className="h-4 w-4 text-green-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {mockClients.filter(c => c.status === 'Ativo').length}
+            </div>
+            <p className="text-xs text-muted-foreground">66% do total</p>
+          </CardContent>
+        </Card>
 
-          <TabsContent value="analytics" className="animate-fade-in">
-            <ClientAnalytics analytics={analytics} />
-          </TabsContent>
-        </Tabs>
-      )}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Prospects</CardTitle>
+            <Users className="h-4 w-4 text-blue-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {mockClients.filter(c => c.status === 'Prospect').length}
+            </div>
+            <p className="text-xs text-muted-foreground">33% do total</p>
+          </CardContent>
+        </Card>
 
-      <NewClientDialog
-        open={newClientDialogOpen}
-        onOpenChange={setNewClientDialogOpen}
-        onClientCreated={refetch}
-      />
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Valor Total</CardTitle>
+            <Users className="h-4 w-4 text-purple-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">R$ 45.500</div>
+            <p className="text-xs text-muted-foreground">Valor em pipeline</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Lista de Clientes */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Lista de Clientes</CardTitle>
+          <CardDescription>
+            {filteredClients.length} de {mockClients.length} clientes
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {filteredClients.map((client) => (
+              <div key={client.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent transition-colors">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                    <Users className="w-6 h-6 text-primary" />
+                  </div>
+                  <div>
+                    <h4 className="font-medium">{client.name}</h4>
+                    <p className="text-sm text-muted-foreground">{client.company}</p>
+                    <div className="flex items-center space-x-4 mt-1">
+                      <div className="flex items-center space-x-1">
+                        <Mail className="w-3 h-3 text-muted-foreground" />
+                        <span className="text-xs text-muted-foreground">{client.email}</span>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        <Phone className="w-3 h-3 text-muted-foreground" />
+                        <span className="text-xs text-muted-foreground">{client.phone}</span>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        <MapPin className="w-3 h-3 text-muted-foreground" />
+                        <span className="text-xs text-muted-foreground">{client.address}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="text-right space-y-2">
+                  <Badge className={getStatusColor(client.status)}>
+                    {client.status}
+                  </Badge>
+                  <div>
+                    <div className="font-bold">{client.value}</div>
+                    <div className="text-sm text-muted-foreground">{client.lastContact}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
