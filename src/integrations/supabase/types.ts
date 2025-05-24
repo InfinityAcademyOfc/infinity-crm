@@ -9,6 +9,48 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      activities: {
+        Row: {
+          company_id: string
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string
+          priority: string | null
+          related_id: string | null
+          related_to: string | null
+          status: string | null
+          title: string
+          type: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          priority?: string | null
+          related_id?: string | null
+          related_to?: string | null
+          status?: string | null
+          title: string
+          type: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          priority?: string | null
+          related_id?: string | null
+          related_to?: string | null
+          status?: string | null
+          title?: string
+          type?: string
+        }
+        Relationships: []
+      }
       automation_rules: {
         Row: {
           company_id: string
@@ -573,6 +615,33 @@ export type Database = {
           },
         ]
       }
+      financial_categories: {
+        Row: {
+          company_id: string
+          created_at: string | null
+          id: string
+          name: string
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string | null
+          id?: string
+          name: string
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string | null
+          id?: string
+          name?: string
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       financial_transactions: {
         Row: {
           amount: number
@@ -625,6 +694,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      goals: {
+        Row: {
+          company_id: string
+          created_at: string | null
+          created_by: string | null
+          current_value: number | null
+          description: string | null
+          id: string
+          status: string | null
+          target_date: string
+          target_value: number
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string | null
+          created_by?: string | null
+          current_value?: number | null
+          description?: string | null
+          id?: string
+          status?: string | null
+          target_date: string
+          target_value: number
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string | null
+          created_by?: string | null
+          current_value?: number | null
+          description?: string | null
+          id?: string
+          status?: string | null
+          target_date?: string
+          target_value?: number
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       imports: {
         Row: {
@@ -1398,6 +1509,36 @@ export type Database = {
           },
         ]
       }
+      system_settings: {
+        Row: {
+          company_id: string
+          created_at: string | null
+          id: string
+          setting_key: string
+          setting_value: Json
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string | null
+          id?: string
+          setting_key: string
+          setting_value: Json
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string | null
+          id?: string
+          setting_key?: string
+          setting_value?: Json
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       tasks: {
         Row: {
           assigned_to: string | null
@@ -1453,6 +1594,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_permissions: {
+        Row: {
+          company_id: string
+          created_at: string | null
+          granted: boolean | null
+          granted_by: string | null
+          id: string
+          permission_key: string
+          user_id: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string | null
+          granted?: boolean | null
+          granted_by?: string | null
+          id?: string
+          permission_key: string
+          user_id: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string | null
+          granted?: boolean | null
+          granted_by?: string | null
+          id?: string
+          permission_key?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       user_settings: {
         Row: {
