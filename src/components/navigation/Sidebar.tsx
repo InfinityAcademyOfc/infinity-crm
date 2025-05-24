@@ -89,7 +89,18 @@ const Sidebar = ({
 }: SidebarProps) => {
   const location = useLocation();
   const sidebarRef = useRef<HTMLDivElement>(null);
-  const isMobile = window.innerWidth < 768;
+  const [isMobile, setIsMobile] = useState(false);
+  
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
   
   useEffect(() => {
     if (isMobile) {
@@ -103,10 +114,11 @@ const Sidebar = ({
       className={cn(
         "h-full bg-background/95 backdrop-blur-md border-r shadow-lg",
         "flex flex-col overflow-hidden transition-all duration-300 ease-in-out",
+        "fixed left-0 top-0 z-50",
         isMobile ? 
           open ? "w-64 translate-x-0" : "w-0 -translate-x-full" 
           : 
-          open ? "w-64" : "w-16",
+          open ? "w-64 relative" : "w-16 relative",
         "dark:bg-gray-900/90 dark:border-gray-800",
         "bg-gradient-to-b from-background/95 to-background/98"
       )}
