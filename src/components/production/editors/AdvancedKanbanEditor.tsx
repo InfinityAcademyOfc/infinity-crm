@@ -29,19 +29,19 @@ export default function AdvancedKanbanEditor({
     { 
       id: 'todo', 
       title: 'Para Fazer', 
-      tasks: [],
+      cards: [],
       color: '#ef4444'
     },
     { 
       id: 'doing', 
       title: 'Fazendo', 
-      tasks: [],
+      cards: [],
       color: '#f59e0b'
     },
     { 
       id: 'done', 
       title: 'Concluído', 
-      tasks: [],
+      cards: [],
       color: '#10b981'
     }
   ]);
@@ -59,7 +59,7 @@ export default function AdvancedKanbanEditor({
     const newColumn: KanbanColumnItem = {
       id: `column-${Date.now()}`,
       title: `Nova Coluna ${columns.length + 1}`,
-      tasks: [],
+      cards: [],
       color: '#6366f1'
     };
     setColumns([...columns, newColumn]);
@@ -71,20 +71,20 @@ export default function AdvancedKanbanEditor({
       title: 'Nova Tarefa',
       description: 'Descrição da tarefa',
       priority: 'medium' as const,
-      assignee: '',
+      assignedTo: undefined,
       dueDate: '',
       tags: []
     };
 
     setColumns(columns.map(col => 
       col.id === columnId 
-        ? { ...col, tasks: [...col.tasks, newTask] }
+        ? { ...col, cards: [...col.cards, newTask] }
         : col
     ));
   };
 
-  const totalTasks = columns.reduce((acc, col) => acc + col.tasks.length, 0);
-  const completedTasks = columns.find(col => col.id === 'done')?.tasks.length || 0;
+  const totalTasks = columns.reduce((acc, col) => acc + col.cards.length, 0);
+  const completedTasks = columns.find(col => col.id === 'done')?.cards.length || 0;
 
   return (
     <div className="h-full flex flex-col">
