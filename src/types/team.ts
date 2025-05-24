@@ -1,22 +1,16 @@
 
 export interface TeamMember {
   id: string;
-  name: string;
+  name: string | null;
   email: string;
-  phone: string;
+  phone: string | null;
   role: string;
-  department: string;
-  avatar: string;
+  department: string | null;
+  avatar: string | null;
   status: string;
-  tasksAssigned: number;
-  tasksCompleted: number;
-  joinedDate?: string;
-}
-
-export interface DepartmentNode {
-  id: string;
-  name: string;
-  members: TeamMember[];
-  children: DepartmentNode[];
-  expanded?: boolean;
+  company_id: string | null;
+  created_at: string;
+  updated_at: string;
+  tasksAssigned?: number;
+  tasksCompleted?: number;
 }

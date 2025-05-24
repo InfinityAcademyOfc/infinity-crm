@@ -175,6 +175,8 @@ export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
         sessions,
         loadingSessions,
         refreshSessions,
+        connectSession,
+        disconnectSession,
         createNewSession,
         isApiAvailable
       }}
