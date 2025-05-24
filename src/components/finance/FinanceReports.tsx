@@ -34,16 +34,14 @@ interface Transaction {
   amount: number;
   date: string;
   category: string;
-  client: string | null;
   status: string;
-  notes: string;
 }
 
 interface FinanceReportsProps {
   transactions: Transaction[];
 }
 
-const FinanceReports = ({ transactions }: FinanceReportsProps) => {
+const FinanceReports = ({ transactions = [] }: FinanceReportsProps) => {
   const { toast } = useToast();
   
   // Filter states
@@ -59,7 +57,11 @@ const FinanceReports = ({ transactions }: FinanceReportsProps) => {
   // Get unique categories
   const categories = useMemo(() => {
     const uniqueCategories = new Set<string>();
-    transactions.forEach(transaction => uniqueCategories.add(transaction.category));
+    transactions.forEach(transaction => {
+      if (transaction.category) {
+        uniqueCategories.add(transaction.category);
+      }
+    });
     return Array.from(uniqueCategories);
   }, [transactions]);
   
@@ -82,8 +84,7 @@ const FinanceReports = ({ transactions }: FinanceReportsProps) => {
         
       const matchesSearch =
         !searchQuery ||
-        transaction.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (transaction.client && transaction.client.toLowerCase().includes(searchQuery.toLowerCase()));
+        transaction.description.toLowerCase().includes(searchQuery.toLowerCase());
         
       return matchesDateRange && matchesType && matchesCategory && matchesStatus && matchesSearch;
     });
@@ -108,7 +109,6 @@ const FinanceReports = ({ transactions }: FinanceReportsProps) => {
   
   // Handle export
   const handleExport = () => {
-    // Prepare export data
     const exportData = {
       reportType: "Financial Transactions",
       filters: {
@@ -136,13 +136,11 @@ const FinanceReports = ({ transactions }: FinanceReportsProps) => {
         date: t.date,
         dateFormatted: formatDate(t.date),
         category: t.category,
-        client: t.client,
         status: t.status,
       })),
       exportDate: new Date().toISOString(),
     };
     
-    // Create JSON file and download it
     const jsonString = JSON.stringify(exportData, null, 2);
     const blob = new Blob([jsonString], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -271,7 +269,7 @@ const FinanceReports = ({ transactions }: FinanceReportsProps) => {
               <Label>Buscar</Label>
               <div className="relative">
                 <Input 
-                  placeholder="Buscar por descrição ou cliente..." 
+                  placeholder="Buscar por descrição..." 
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -315,7 +313,6 @@ const FinanceReports = ({ transactions }: FinanceReportsProps) => {
                 <TableHead>Descrição</TableHead>
                 <TableHead>Data</TableHead>
                 <TableHead>Categoria</TableHead>
-                <TableHead>Cliente/Fornecedor</TableHead>
                 <TableHead>Valor</TableHead>
                 <TableHead>Status</TableHead>
               </TableRow>
@@ -323,7 +320,7 @@ const FinanceReports = ({ transactions }: FinanceReportsProps) => {
             <TableBody>
               {filteredTransactions.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                     Não foram encontradas transações com os filtros selecionados.
                   </TableCell>
                 </TableRow>
@@ -332,13 +329,12 @@ const FinanceReports = ({ transactions }: FinanceReportsProps) => {
                   <TableRow key={transaction.id}>
                     <TableCell>{transaction.description}</TableCell>
                     <TableCell>{formatDate(transaction.date)}</TableCell>
-                    <TableCell>{transaction.category}</TableCell>
-                    <TableCell>{transaction.client || "-"}</TableCell>
+                    <TableCell>{transaction.category || "-"}</TableCell>
                     <TableCell className={transaction.type === "income" ? "text-green-600" : "text-red-600"}>
                       {transaction.type === "income" ? "+" : "-"}
                       {formatCurrency(transaction.amount)}
                     </TableCell>
-                    <TableCell>{transaction.status}</TableCell>
+                    <TableCell>{transaction.status === 'completed' ? 'Concluída' : 'Pendente'}</TableCell>
                   </TableRow>
                 ))
               )}

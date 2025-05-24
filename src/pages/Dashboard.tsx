@@ -5,9 +5,9 @@ import { LoadingPage } from '@/components/ui/loading-spinner';
 import { SectionHeader } from '@/components/ui/section-header';
 import RealStatsSection from '@/components/dashboard/RealStatsSection';
 import RealActivitiesSection from '@/components/dashboard/RealActivitiesSection';
-import { IntegratedFunnel } from '@/components/dashboard/IntegratedFunnel';
-import { FinanceChart } from '@/components/dashboard/FinanceChart';
-import { WelcomeCard } from '@/components/dashboard/WelcomeCard';
+import IntegratedFunnel from '@/components/dashboard/IntegratedFunnel';
+import FinanceChart from '@/components/dashboard/FinanceChart';
+import WelcomeCard from '@/components/dashboard/WelcomeCard';
 
 const Dashboard = () => {
   const { user, company, loading } = useAuth();

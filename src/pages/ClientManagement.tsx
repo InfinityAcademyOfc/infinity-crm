@@ -10,12 +10,12 @@ import { Search, Plus, Filter } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { ClientList } from '@/components/clients/ClientList';
 import { ClientAnalytics } from '@/components/clients/ClientAnalytics';
-import { NewClientDialog } from '@/components/clients/NewClientDialog';
+import NewClientDialog from '@/components/clients/NewClientDialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const ClientManagement = () => {
   const { user, company, loading: authLoading } = useAuth();
-  const { clients, loading, refetch } = useRealClientData();
+  const { clients, analytics, loading, refetch } = useRealClientData();
   const [searchQuery, setSearchQuery] = useState('');
   const [newClientDialogOpen, setNewClientDialogOpen] = useState(false);
 
@@ -116,7 +116,7 @@ const ClientManagement = () => {
           </TabsContent>
 
           <TabsContent value="analytics" className="animate-fade-in">
-            <ClientAnalytics clients={clients} />
+            <ClientAnalytics analytics={analytics} />
           </TabsContent>
         </Tabs>
       )}

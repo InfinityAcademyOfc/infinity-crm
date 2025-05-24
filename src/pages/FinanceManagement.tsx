@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFinancialData } from '@/hooks/useFinancialData';
@@ -10,7 +9,7 @@ import { Search, Plus, Download, TrendingUp, TrendingDown, DollarSign } from 'lu
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { FinanceReports } from '@/components/finance/FinanceReports';
+import FinanceReports from '@/components/finance/FinanceReports';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
@@ -254,7 +253,7 @@ const FinanceManagement = () => {
         </TabsContent>
 
         <TabsContent value="reports" className="animate-fade-in">
-          <FinanceReports />
+          <FinanceReports transactions={transactions} />
         </TabsContent>
       </Tabs>
     </div>
