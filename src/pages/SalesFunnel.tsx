@@ -1,187 +1,115 @@
 
-import React, { useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import { useRealSalesFunnel } from "@/hooks/useRealSalesFunnel";
-import { LoadingPage } from "@/components/ui/loading-spinner";
-import { SectionHeader } from "@/components/ui/section-header";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Search, Plus, Filter, BarChart3 } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { RealSalesFunnelBoard } from "@/components/sales-funnel/RealSalesFunnelBoard";
-import { FunnelAnalytics } from "@/components/sales-funnel/FunnelAnalytics";
-import { NewSalesLeadDialog } from "@/components/sales-funnel/NewSalesLeadDialog";
+import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Plus, Users, DollarSign, TrendingUp } from 'lucide-react';
 
 const SalesFunnel = () => {
-  const { user, company, loading: authLoading } = useAuth();
-  const { leads, stages, loading, error, getStageMetrics, refetch } = useRealSalesFunnel();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showAnalytics, setShowAnalytics] = useState(false);
-  const [newLeadDialogOpen, setNewLeadDialogOpen] = useState(false);
+  const funnelStages = [
+    { name: "Leads", count: 245, color: "bg-blue-500" },
+    { name: "Qualificados", count: 89, color: "bg-yellow-500" },
+    { name: "Propostas", count: 34, color: "bg-orange-500" },
+    { name: "Negociação", count: 12, color: "bg-red-500" },
+    { name: "Fechados", count: 8, color: "bg-green-500" }
+  ];
 
-  if (authLoading) {
-    return <LoadingPage message="Verificando autenticação..." />;
-  }
-
-  if (!user || !company) {
-    return <LoadingPage message="Acesso não autorizado" />;
-  }
-
-  if (loading) {
-    return <LoadingPage message="Carregando funil de vendas..." />;
-  }
-
-  if (error) {
-    return (
-      <div className="space-y-6 animate-fade-in">
-        <SectionHeader 
-          title="Funil de Vendas" 
-          description="Gerencie seus leads e oportunidades de vendas"
-        />
-        <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-        <div className="flex justify-center">
-          <Button onClick={refetch}>Tentar Novamente</Button>
-        </div>
-      </div>
-    );
-  }
-
-  const filteredLeads = leads.filter(lead =>
-    lead.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    lead.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    lead.phone?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const stageMetrics = getStageMetrics();
-  const totalLeads = leads.length;
-  const totalValue = leads.reduce((sum, lead) => sum + (lead.value || 0), 0);
+  const mockDeals = [
+    { id: 1, client: "João Silva", value: "R$ 15.000", stage: "Negociação", probability: "80%" },
+    { id: 2, client: "Maria Santos", value: "R$ 8.500", stage: "Propostas", probability: "60%" },
+    { id: 3, client: "Pedro Costa", value: "R$ 22.000", stage: "Qualificados", probability: "40%" },
+    { id: 4, client: "Ana Lima", value: "R$ 12.300", stage: "Negociação", probability: "90%" }
+  ];
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <SectionHeader 
-        title="Funil de Vendas" 
-        description="Gerencie seus leads e oportunidades de vendas"
-        actions={
-          <>
-            <div className="relative w-64">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar leads..."
-                className="pl-10 focus-ring"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            <Button 
-              variant="outline" 
-              onClick={() => setShowAnalytics(!showAnalytics)}
-              className="hover-scale transition-all duration-200"
-            >
-              <BarChart3 className="h-4 w-4 mr-2" />
-              {showAnalytics ? 'Ocultar' : 'Mostrar'} Análises
-            </Button>
-            <Button 
-              onClick={() => setNewLeadDialogOpen(true)}
-              className="hover-scale transition-all duration-200"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Novo Lead
-            </Button>
-          </>
-        }
-      />
+    <div className="p-6 space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold">Funil de Vendas</h1>
+          <p className="text-muted-foreground">Gerencie seu pipeline de vendas</p>
+        </div>
+        <Button>
+          <Plus className="w-4 h-4 mr-2" />
+          Nova Oportunidade
+        </Button>
+      </div>
 
-      {/* Métricas Resumidas */}
-      <div className="grid gap-4 md:grid-cols-4 animate-fade-in">
-        <Card className="hover-lift transition-all duration-200">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Total de Leads</p>
-                <p className="text-2xl font-bold">{totalLeads}</p>
+      {/* Funil Visual */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Pipeline de Vendas</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            {funnelStages.map((stage, index) => (
+              <div key={index} className="text-center">
+                <div className={`${stage.color} rounded-lg p-6 mb-2`}>
+                  <div className="text-white text-2xl font-bold">{stage.count}</div>
+                </div>
+                <h3 className="font-medium">{stage.name}</h3>
               </div>
-              <Badge variant="secondary">{stages.length} estágios</Badge>
-            </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Estatísticas */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-sm font-medium">Taxa de Conversão</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">23.5%</div>
+            <p className="text-xs text-muted-foreground">+2.1% desde o mês passado</p>
           </CardContent>
         </Card>
 
-        <Card className="hover-lift transition-all duration-200">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Valor Total</p>
-                <p className="text-2xl font-bold">
-                  R$ {totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                </p>
-              </div>
-              <Badge variant="default">Pipeline</Badge>
-            </div>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-sm font-medium">Valor Total Pipeline</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">R$ 284.500</div>
+            <p className="text-xs text-muted-foreground">+12.3% desde o mês passado</p>
           </CardContent>
         </Card>
 
-        <Card className="hover-lift transition-all duration-200">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Leads Ativos</p>
-                <p className="text-2xl font-bold">
-                  {leads.filter(lead => lead.stage !== 'Ganhos' && lead.stage !== 'Perdidos').length}
-                </p>
-              </div>
-              <Badge variant="outline">Em progresso</Badge>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="hover-lift transition-all duration-200">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Taxa Conversão</p>
-                <p className="text-2xl font-bold">
-                  {totalLeads > 0 ? Math.round((leads.filter(lead => lead.stage === 'Ganhos').length / totalLeads) * 100) : 0}%
-                </p>
-              </div>
-              <Badge variant="default">Ganhos</Badge>
-            </div>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-sm font-medium">Oportunidades Ativas</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">388</div>
+            <p className="text-xs text-muted-foreground">+8 novas esta semana</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Análises (opcional) */}
-      {showAnalytics && (
-        <FunnelAnalytics 
-          funnelStageData={stageMetrics.map(stage => ({
-            name: stage.name,
-            value: stage.count
-          }))}
-          valuePotentialData={stageMetrics.map(stage => ({
-            name: stage.name,
-            value: stage.totalValue
-          }))}
-        />
-      )}
-
-      {/* Board do Kanban */}
-      <RealSalesFunnelBoard 
-        stages={stages}
-        leads={filteredLeads}
-        searchQuery={searchQuery}
-      />
-
-      {/* Dialog para Novo Lead */}
-      <NewSalesLeadDialog
-        open={newLeadDialogOpen}
-        onOpenChange={setNewLeadDialogOpen}
-        onSuccess={() => {
-          refetch();
-          setNewLeadDialogOpen(false);
-        }}
-      />
+      {/* Lista de Negócios */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Oportunidades em Andamento</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {mockDeals.map((deal) => (
+              <div key={deal.id} className="flex items-center justify-between p-4 border rounded-lg">
+                <div>
+                  <h4 className="font-medium">{deal.client}</h4>
+                  <p className="text-sm text-muted-foreground">{deal.stage}</p>
+                </div>
+                <div className="text-right">
+                  <div className="font-bold">{deal.value}</div>
+                  <div className="text-sm text-green-600">{deal.probability}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
