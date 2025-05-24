@@ -2,7 +2,6 @@
 import React, { createContext, useState, useContext, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { WhatsAppContact, WhatsAppMessage, WhatsAppConnectionStatus, WhatsAppSession, WhatsAppContextType } from "@/types/whatsapp";
-import { supabase } from "@/lib/supabase";
 
 const WhatsAppContext = createContext<WhatsAppContextType>({} as WhatsAppContextType);
 
@@ -164,7 +163,7 @@ export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
         contacts,
         messages,
         loadingMessages,
-        sessionId: currentSession,
+        sessionId: currentSession, // Para compatibilidade
         connectionStatus,
         sendMessage,
         disconnect,

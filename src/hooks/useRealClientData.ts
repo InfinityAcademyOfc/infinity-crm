@@ -7,124 +7,121 @@ import { toast } from 'sonner';
 export interface Client {
   id: string;
   name: string;
-  contact: string | null;
   email: string | null;
   phone: string | null;
-  status: string;
-  segment: string | null;
   street: string | null;
   city: string | null;
   state: string | null;
   zip: string | null;
+  segment: string | null;
+  status: string;
+  contact: string | null;
+  company_id: string;
+  created_at: string;
+  updated_at: string;
   last_contact: string | null;
-  created_at: string;
-  updated_at: string;
-  company_id: string;
-}
-
-export interface ClientNPS {
-  id: string;
-  client_id: string;
-  score: number;
-  feedback: string | null;
-  created_at: string;
-  company_id: string;
-}
-
-export interface ClientSatisfaction {
-  id: string;
-  client_id: string;
-  rating: number;
-  category: string;
-  comments: string | null;
-  created_at: string;
-  company_id: string;
-}
-
-export interface ClientLTV {
-  id: string;
-  client_id: string;
-  total_revenue: number;
-  calculated_ltv: number;
-  first_purchase_date: string | null;
-  last_purchase_date: string | null;
-  purchase_frequency: number;
-  updated_at: string;
-  company_id: string;
 }
 
 export const useRealClientData = () => {
   const { company } = useAuth();
   const [clients, setClients] = useState<Client[]>([]);
-  const [clientNPS, setClientNPS] = useState<ClientNPS[]>([]);
-  const [clientSatisfaction, setClientSatisfaction] = useState<ClientSatisfaction[]>([]);
-  const [clientLTV, setClientLTV] = useState<ClientLTV[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchAllClientData = async () => {
+  const fetchClients = async () => {
     if (!company?.id) return;
 
     setLoading(true);
     try {
-      // Fetch all client-related data in parallel
-      const [
-        clientsResponse,
-        npsResponse,
-        satisfactionResponse,
-        ltvResponse
-      ] = await Promise.all([
-        supabase.from('clients').select('*').eq('company_id', company.id),
-        supabase.from('client_nps').select('*').eq('company_id', company.id),
-        supabase.from('client_satisfaction').select('*').eq('company_id', company.id),
-        supabase.from('client_ltv').select('*').eq('company_id', company.id)
-      ]);
+      const { data, error } = await supabase
+        .from('clients')
+        .select('*')
+        .eq('company_id', company.id)
+        .order('created_at', { ascending: false });
 
-      if (clientsResponse.error) throw clientsResponse.error;
-      if (npsResponse.error) throw npsResponse.error;
-      if (satisfactionResponse.error) throw satisfactionResponse.error;
-      if (ltvResponse.error) throw ltvResponse.error;
-
-      setClients(clientsResponse.data || []);
-      setClientNPS(npsResponse.data || []);
-      setClientSatisfaction(satisfactionResponse.data || []);
-      setClientLTV(ltvResponse.data || []);
+      if (error) throw error;
+      setClients(data || []);
     } catch (error) {
-      console.error('Erro ao buscar dados de clientes:', error);
-      toast.error('Erro ao carregar dados de clientes');
+      console.error('Erro ao buscar clientes:', error);
+      toast.error('Erro ao carregar clientes');
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchAllClientData();
-  }, [company]);
+  const createClient = async (client: Omit<Client, 'id' | 'created_at' | 'updated_at' | 'company_id'>) => {
+    if (!company?.id) return;
 
-  // Calculate analytics from real data
-  const analytics = {
-    npsData: clientNPS.reduce((acc, nps) => {
-      if (nps.score >= 9) acc.promoters += 1;
-      else if (nps.score >= 7) acc.neutrals += 1;
-      else acc.detractors += 1;
-      return acc;
-    }, { promoters: 0, neutrals: 0, detractors: 0 }),
-    
-    averageLTV: clientLTV.length > 0 
-      ? clientLTV.reduce((sum, ltv) => sum + ltv.calculated_ltv, 0) / clientLTV.length 
-      : 0,
+    try {
+      const { data, error } = await supabase
+        .from('clients')
+        .insert([{
+          ...client,
+          company_id: company.id
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
       
-    satisfactionAverage: clientSatisfaction.length > 0
-      ? clientSatisfaction.reduce((sum, sat) => sum + sat.rating, 0) / clientSatisfaction.length
-      : 0
+      setClients(prev => [data, ...prev]);
+      toast.success('Cliente criado com sucesso!');
+      return data;
+    } catch (error) {
+      console.error('Erro ao criar cliente:', error);
+      toast.error('Erro ao criar cliente');
+      throw error;
+    }
   };
+
+  const updateClient = async (id: string, updates: Partial<Client>) => {
+    try {
+      const { data, error } = await supabase
+        .from('clients')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      setClients(prev => prev.map(c => c.id === id ? data : c));
+      toast.success('Cliente atualizado com sucesso!');
+      return data;
+    } catch (error) {
+      console.error('Erro ao atualizar cliente:', error);
+      toast.error('Erro ao atualizar cliente');
+      throw error;
+    }
+  };
+
+  const deleteClient = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('clients')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      setClients(prev => prev.filter(c => c.id !== id));
+      toast.success('Cliente excluído com sucesso!');
+    } catch (error) {
+      console.error('Erro ao excluir cliente:', error);
+      toast.error('Erro ao excluir cliente');
+      throw error;
+    }
+  };
+
+  useEffect(() => {
+    fetchClients();
+  }, [company]);
 
   return {
     clients,
-    clientNPS,
-    clientSatisfaction,
-    clientLTV,
-    analytics,
     loading,
-    refetch: fetchAllClientData
+    createClient,
+    updateClient,
+    deleteClient,
+    refetch: fetchClients
   };
 };

@@ -11,7 +11,7 @@ export interface Goal {
   target_value: number;
   current_value: number;
   target_date: string;
-  status: 'active' | 'completed' | 'paused';
+  status: string;
   company_id: string;
   created_by: string | null;
   created_at: string;
@@ -32,7 +32,7 @@ export const useGoals = () => {
         .from('goals')
         .select('*')
         .eq('company_id', company.id)
-        .order('created_at', { ascending: false });
+        .order('target_date', { ascending: true });
 
       if (error) throw error;
       setGoals(data || []);
@@ -59,7 +59,7 @@ export const useGoals = () => {
 
       if (error) throw error;
       
-      setGoals(prev => [data, ...prev]);
+      setGoals(prev => [...prev, data].sort((a, b) => new Date(a.target_date).getTime() - new Date(b.target_date).getTime()));
       toast.success('Meta criada com sucesso!');
       return data;
     } catch (error) {
@@ -90,6 +90,24 @@ export const useGoals = () => {
     }
   };
 
+  const deleteGoal = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('goals')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      setGoals(prev => prev.filter(g => g.id !== id));
+      toast.success('Meta excluída com sucesso!');
+    } catch (error) {
+      console.error('Erro ao excluir meta:', error);
+      toast.error('Erro ao excluir meta');
+      throw error;
+    }
+  };
+
   useEffect(() => {
     fetchGoals();
   }, [company]);
@@ -99,6 +117,7 @@ export const useGoals = () => {
     loading,
     createGoal,
     updateGoal,
+    deleteGoal,
     refetch: fetchGoals
   };
 };

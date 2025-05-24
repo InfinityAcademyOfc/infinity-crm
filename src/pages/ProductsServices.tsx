@@ -6,66 +6,41 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Search, Package, Settings, BarChart3, Edit, Trash } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { useRealProducts } from '@/hooks/useRealProducts';
+import ProductFormDialog from '@/components/forms/ProductFormDialog';
 
 const ProductsServices = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [showProductForm, setShowProductForm] = useState(false);
+  const { products, loading, deleteProduct } = useRealProducts();
 
-  const mockProducts = [
-    {
-      id: 1,
-      name: "CRM Premium",
-      type: "Serviço",
-      price: 297,
-      category: "Software",
-      status: "Ativo",
-      stock: null,
-      description: "Sistema completo de gestão de relacionamento",
-      sales: 45
-    },
-    {
-      id: 2,
-      name: "Consultoria Estratégica",
-      type: "Serviço",
-      price: 2500,
-      category: "Consultoria",
-      status: "Ativo",
-      stock: null,
-      description: "Consultoria especializada em vendas",
-      sales: 12
-    },
-    {
-      id: 3,
-      name: "Template Marketing",
-      type: "Produto",
-      price: 97,
-      category: "Digital",
-      status: "Ativo",
-      stock: 100,
-      description: "Pack com templates para campanhas",
-      sales: 78
-    }
-  ];
+  const filteredProducts = products.filter(product =>
+    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (product.category && product.category.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
 
-  const mockCategories = [
-    { name: "Software", count: 5, revenue: "R$ 45.000" },
-    { name: "Consultoria", count: 3, revenue: "R$ 30.000" },
-    { name: "Digital", count: 8, revenue: "R$ 12.000" },
-    { name: "Treinamento", count: 2, revenue: "R$ 8.000" }
-  ];
+  const categoryCounts = products.reduce((acc, product) => {
+    const category = product.category || 'Sem categoria';
+    acc[category] = (acc[category] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Ativo': return 'bg-green-100 text-green-800';
-      case 'Inativo': return 'bg-gray-100 text-gray-800';
-      case 'Rascunho': return 'bg-yellow-100 text-yellow-800';
-      default: return 'bg-gray-100 text-gray-800';
+  const handleDeleteProduct = async (id: string) => {
+    if (window.confirm('Tem certeza que deseja excluir este produto?')) {
+      await deleteProduct(id);
     }
   };
 
-  const filteredProducts = mockProducts.filter(product =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.category.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  if (loading) {
+    return (
+      <div className="p-6 space-y-6">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-1/4 mb-2"></div>
+          <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -74,7 +49,7 @@ const ProductsServices = () => {
           <h1 className="text-3xl font-bold">Produtos & Serviços</h1>
           <p className="text-muted-foreground">Gerencie seu catálogo de produtos e serviços</p>
         </div>
-        <Button>
+        <Button onClick={() => setShowProductForm(true)}>
           <Plus className="w-4 h-4 mr-2" />
           Novo Produto
         </Button>
@@ -88,45 +63,47 @@ const ProductsServices = () => {
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{mockProducts.length}</div>
-            <p className="text-xs text-muted-foreground">+2 novos este mês</p>
+            <div className="text-2xl font-bold">{products.length}</div>
+            <p className="text-xs text-muted-foreground">Produtos cadastrados</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Produtos Ativos</CardTitle>
+            <CardTitle className="text-sm font-medium">Com Preço</CardTitle>
             <Package className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {mockProducts.filter(p => p.status === 'Ativo').length}
+              {products.filter(p => p.price && p.price > 0).length}
             </div>
-            <p className="text-xs text-muted-foreground">100% disponíveis</p>
+            <p className="text-xs text-muted-foreground">Produtos precificados</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Vendas Totais</CardTitle>
+            <CardTitle className="text-sm font-medium">Com Estoque</CardTitle>
             <BarChart3 className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {mockProducts.reduce((acc, p) => acc + p.sales, 0)}
+              {products.filter(p => p.stock && p.stock > 0).length}
             </div>
-            <p className="text-xs text-muted-foreground">Este mês</p>
+            <p className="text-xs text-muted-foreground">Em estoque</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Receita Total</CardTitle>
+            <CardTitle className="text-sm font-medium">Valor Total</CardTitle>
             <BarChart3 className="h-4 w-4 text-purple-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">R$ 95.000</div>
-            <p className="text-xs text-muted-foreground">+15% vs mês anterior</p>
+            <div className="text-2xl font-bold">
+              R$ {products.reduce((acc, p) => acc + (p.price || 0) * (p.stock || 0), 0).toLocaleString()}
+            </div>
+            <p className="text-xs text-muted-foreground">Valor em estoque</p>
           </CardContent>
         </Card>
       </div>
@@ -135,7 +112,6 @@ const ProductsServices = () => {
         <TabsList>
           <TabsTrigger value="products">Produtos</TabsTrigger>
           <TabsTrigger value="categories">Categorias</TabsTrigger>
-          <TabsTrigger value="analytics">Análises</TabsTrigger>
         </TabsList>
 
         <TabsContent value="products" className="space-y-4">
@@ -169,10 +145,11 @@ const ProductsServices = () => {
                       </div>
                       <div>
                         <h4 className="font-medium">{product.name}</h4>
-                        <p className="text-sm text-muted-foreground">{product.description}</p>
+                        <p className="text-sm text-muted-foreground">{product.description || 'Sem descrição'}</p>
                         <div className="flex items-center space-x-4 mt-1">
-                          <Badge variant="outline">{product.type}</Badge>
-                          <Badge variant="outline">{product.category}</Badge>
+                          {product.category && (
+                            <Badge variant="outline">{product.category}</Badge>
+                          )}
                           {product.stock && (
                             <span className="text-xs text-muted-foreground">
                               Estoque: {product.stock}
@@ -183,23 +160,33 @@ const ProductsServices = () => {
                     </div>
                     <div className="text-right space-y-2">
                       <div className="flex items-center space-x-2">
-                        <Badge className={getStatusColor(product.status)}>
-                          {product.status}
-                        </Badge>
                         <Button variant="ghost" size="sm">
                           <Edit className="w-4 h-4" />
                         </Button>
-                        <Button variant="ghost" size="sm">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleDeleteProduct(product.id)}
+                        >
                           <Trash className="w-4 h-4" />
                         </Button>
                       </div>
                       <div>
-                        <div className="font-bold">R$ {product.price.toLocaleString()}</div>
-                        <div className="text-sm text-muted-foreground">{product.sales} vendas</div>
+                        {product.price && (
+                          <div className="font-bold">R$ {product.price.toLocaleString()}</div>
+                        )}
+                        <div className="text-sm text-muted-foreground">
+                          {new Date(product.created_at).toLocaleDateString()}
+                        </div>
                       </div>
                     </div>
                   </div>
                 ))}
+                {filteredProducts.length === 0 && (
+                  <div className="text-center py-8 text-muted-foreground">
+                    {searchTerm ? 'Nenhum produto encontrado.' : 'Nenhum produto cadastrado ainda.'}
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -213,39 +200,34 @@ const ProductsServices = () => {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {mockCategories.map((category, index) => (
-                  <Card key={index}>
+                {Object.entries(categoryCounts).map(([category, count]) => (
+                  <Card key={category}>
                     <CardContent className="pt-6 text-center">
-                      <h3 className="font-bold text-lg">{category.name}</h3>
+                      <h3 className="font-bold text-lg">{category}</h3>
                       <p className="text-sm text-muted-foreground mb-2">
-                        {category.count} produtos
+                        {count} produto{count !== 1 ? 's' : ''}
                       </p>
-                      <p className="font-bold text-primary">{category.revenue}</p>
                     </CardContent>
                   </Card>
                 ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="analytics" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Análises de Produtos</CardTitle>
-              <CardDescription>Insights sobre performance dos produtos</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="h-64 flex items-center justify-center text-muted-foreground">
-                <div className="text-center">
-                  <BarChart3 className="h-12 w-12 mx-auto mb-4" />
-                  <p>Gráficos de análise em desenvolvimento</p>
-                </div>
+                {Object.keys(categoryCounts).length === 0 && (
+                  <div className="col-span-full text-center py-8 text-muted-foreground">
+                    Nenhuma categoria encontrada.
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
+
+      <ProductFormDialog
+        open={showProductForm}
+        onOpenChange={setShowProductForm}
+        onSuccess={() => {
+          // Os dados são atualizados automaticamente pelo hook
+        }}
+      />
     </div>
   );
 };

@@ -6,17 +6,17 @@ import { toast } from 'sonner';
 
 export interface FinancialTransaction {
   id: string;
-  type: 'income' | 'expense';
+  type: string;
   amount: number;
   description: string;
   category: string | null;
   date: string;
   status: string;
-  reference_id: string | null;
+  company_id: string;
   created_by: string | null;
+  reference_id: string | null;
   created_at: string;
   updated_at: string;
-  company_id: string;
 }
 
 export const useFinancialData = () => {
@@ -39,7 +39,7 @@ export const useFinancialData = () => {
       setTransactions(data || []);
     } catch (error) {
       console.error('Erro ao buscar transações:', error);
-      toast.error('Erro ao carregar transações financeiras');
+      toast.error('Erro ao carregar dados financeiros');
     } finally {
       setLoading(false);
     }
@@ -109,26 +109,6 @@ export const useFinancialData = () => {
     }
   };
 
-  // Calculate financial metrics
-  const calculateMetrics = () => {
-    const totalIncome = transactions
-      .filter(t => t.type === 'income')
-      .reduce((sum, t) => sum + Number(t.amount), 0);
-    
-    const totalExpenses = transactions
-      .filter(t => t.type === 'expense')
-      .reduce((sum, t) => sum + Number(t.amount), 0);
-    
-    const balance = totalIncome - totalExpenses;
-
-    return {
-      totalIncome,
-      totalExpenses,
-      balance,
-      transactionCount: transactions.length
-    };
-  };
-
   useEffect(() => {
     fetchTransactions();
   }, [company]);
@@ -139,7 +119,6 @@ export const useFinancialData = () => {
     createTransaction,
     updateTransaction,
     deleteTransaction,
-    refetch: fetchTransactions,
-    metrics: calculateMetrics()
+    refetch: fetchTransactions
   };
 };

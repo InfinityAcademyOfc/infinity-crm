@@ -10,7 +10,7 @@ export interface Meeting {
   description: string | null;
   date: string;
   time: string;
-  status: 'scheduled' | 'completed' | 'cancelled';
+  status: string;
   participants: number;
   company_id: string;
   created_at: string;
@@ -58,7 +58,7 @@ export const useMeetings = () => {
 
       if (error) throw error;
       
-      setMeetings(prev => [...prev, data]);
+      setMeetings(prev => [...prev, data].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
       toast.success('Reunião criada com sucesso!');
       return data;
     } catch (error) {

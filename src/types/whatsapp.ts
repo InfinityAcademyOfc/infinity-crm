@@ -34,6 +34,7 @@ export interface WhatsAppMessage {
 // State properties interface
 export interface WhatsAppStateProps {
   currentSession: string | null;
+  sessionId: string | null; // Adicionar para compatibilidade
   sessions: WhatsAppSession[];
   loadingSessions: boolean;
   connectionStatus: WhatsAppConnectionStatus;
@@ -52,7 +53,11 @@ export interface WhatsAppActionsProps {
   connectSession: (sessionId: string) => Promise<void>;
   disconnectSession: (sessionId: string) => Promise<void>;
   sendMessage: (to: string, body: string, mediaUrl?: string) => Promise<void>;
+  fetchMessages: (contactId: string, sessionId: string) => Promise<void>;
   createNewSession: () => string;
+  connect: (id: string) => Promise<void>;
+  disconnect: () => Promise<void>;
+  refreshData: () => Promise<void>;
 }
 
 // Complete context type
