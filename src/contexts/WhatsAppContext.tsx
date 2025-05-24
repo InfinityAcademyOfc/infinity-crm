@@ -2,7 +2,8 @@
 import React, { createContext, useState, useContext, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { WhatsAppContact, WhatsAppMessage, WhatsAppConnectionStatus, WhatsAppSession } from "@/types/whatsapp";
-import { useWhatsAppSessions } from "@/hooks/useWhatsAppSessions";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
 
 interface WhatsAppContextType {
   selectedContact: WhatsAppContact | null;
@@ -30,43 +31,313 @@ interface WhatsAppContextType {
 
 const WhatsAppContext = createContext<WhatsAppContextType>({} as WhatsAppContextType);
 
+const API_URL = import.meta.env.VITE_API_URL || "";
+
 export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
-  const { 
-    currentSession: sessionId, 
-    connectionStatus, 
-    connectSession,
-    disconnectSession,
-    refreshSessions,
-    sessions,
-    loadingSessions,
-    createNewSession,
-    setCurrentSession,
-    isApiAvailable
-  } = useWhatsAppSessions();
+  // Estados locais para evitar dependência circular
+  const [sessions, setSessions] = useState<WhatsAppSession[]>([]);
+  const [loadingSessions, setLoadingSessions] = useState(true);
+  const [currentSession, setCurrentSession] = useState<string | null>(
+    () => localStorage.getItem("wa-session-id") || null
+  );
+  const [connectionStatus, setConnectionStatus] = useState<WhatsAppConnectionStatus>("not_started");
+  const [isApiAvailable, setIsApiAvailable] = useState<boolean>(true);
+  const [retryCount, setRetryCount] = useState(0);
   
   const [selectedContact, setSelectedContact] = useState<WhatsAppContact | null>(null);
   const [contacts, setContacts] = useState<WhatsAppContact[]>([]);
   const [messages, setMessages] = useState<WhatsAppMessage[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
   
-  // URL da API
-  const API_URL = import.meta.env.VITE_API_URL || "";
-  const isConnected = connectionStatus === "connected" && !!sessionId;
+  const { toast } = useToast();
+  const isConnected = connectionStatus === "connected" && !!currentSession;
   
+  const refreshSessions = useCallback(async () => {
+    if (!API_URL) {
+      setLoadingSessions(false);
+      setSessions([]);
+      setIsApiAvailable(false);
+      return;
+    }
+    
+    setLoadingSessions(true);
+    try {
+      // Tenta buscar sessões do banco de dados local primeiro
+      const { data: localSessions, error: localError } = await supabase
+        .from("whatsapp_sessions")
+        .select("*")
+        .order("created_at", { ascending: false });
+      
+      // Se houver sessões locais, usamos essas enquanto tentamos sincronizar com a API
+      if (localSessions && localSessions.length > 0) {
+        const formattedSessions = localSessions.map(s => ({
+          id: s.session_id,
+          name: s.name || `Sessão ${s.session_id.substring(0, 8)}`,
+          status: s.status
+        }));
+        setSessions(formattedSessions);
+      }
+      
+      // Agora tenta buscar da API do WhatsApp
+      const res = await fetch(`${API_URL}/sessions`, {
+        signal: AbortSignal.timeout(8000),
+        cache: 'no-store'
+      });
+      
+      if (!res.ok) {
+        console.warn(`Não foi possível obter as sessões: ${res.status}`);
+        
+        if (res.status === 404) {
+          setIsApiAvailable(false);
+          if (localSessions && localSessions.length > 0) {
+            // Já carregamos acima, não precisamos fazer nada
+          } else if (currentSession) {
+            const mockSessions: WhatsAppSession[] = [
+              {
+                id: currentSession,
+                name: "Meu WhatsApp",
+                status: "not_started"
+              }
+            ];
+            setSessions(mockSessions);
+          }
+        }
+        return;
+      }
+      
+      const data = await res.json();
+      setSessions(data || []);
+      setIsApiAvailable(true);
+      
+      // Sincronizar as sessões da API com o banco de dados local
+      if (data && data.length > 0) {
+        for (const session of data) {
+          await supabase
+            .from("whatsapp_sessions")
+            .upsert({
+              session_id: session.id,
+              name: session.name,
+              status: session.status,
+              is_connected: session.status === "connected",
+              updated_at: new Date().toISOString()
+            })
+            .eq("session_id", session.id);
+        }
+      }
+    } catch (error) {
+      console.warn("Erro ao atualizar sessões:", error);
+      setIsApiAvailable(false);
+      
+      if (sessions.length === 0 && currentSession) {
+        setSessions([{
+          id: currentSession,
+          name: "Meu WhatsApp",
+          status: "not_started"
+        }]);
+      }
+      
+      if (retryCount < 3) {
+        setTimeout(() => {
+          setRetryCount(prev => prev + 1);
+          refreshSessions();
+        }, 3000);
+      }
+    } finally {
+      setLoadingSessions(false);
+      setRetryCount(0);
+    }
+  }, [API_URL, currentSession, sessions.length, retryCount]);
+
+  const fetchConnectionStatus = useCallback(async (sessionId: string) => {
+    if (!API_URL || !sessionId) {
+      setConnectionStatus("not_started");
+      return;
+    }
+    
+    try {
+      const { data: localSession } = await supabase
+        .from("whatsapp_sessions")
+        .select("status")
+        .eq("session_id", sessionId)
+        .single();
+        
+      if (localSession) {
+        setConnectionStatus(localSession.status as WhatsAppConnectionStatus);
+      }
+      
+      const res = await fetch(`${API_URL}/sessions/${sessionId}/status`, {
+        signal: AbortSignal.timeout(8000),
+        cache: 'no-store'
+      });
+      
+      if (!res.ok) {
+        console.warn(`Não foi possível obter status para ${sessionId}: ${res.status}`);
+        if (res.status === 404) {
+          setIsApiAvailable(false);
+        }
+        return;
+      }
+      
+      setIsApiAvailable(true);
+      const data = await res.json();
+      const status = data?.status as WhatsAppConnectionStatus || "not_started";
+      setConnectionStatus(status);
+      
+      await supabase
+        .from("whatsapp_sessions")
+        .upsert({
+          session_id: sessionId,
+          status,
+          is_connected: status === "connected",
+          updated_at: new Date().toISOString()
+        })
+        .eq("session_id", sessionId);
+    } catch (error) {
+      console.warn("Erro ao obter status da sessão:", error);
+    }
+  }, [API_URL]);
+
+  const connectSession = useCallback(async (sessionId: string) => {
+    if (!API_URL || !sessionId) return;
+    
+    try {
+      setConnectionStatus("loading");
+      
+      const res = await fetch(`${API_URL}/sessions/${sessionId}/qr`, { 
+        method: "GET",
+        signal: AbortSignal.timeout(10000),
+        cache: 'no-store'
+      });
+      
+      if (!res.ok && res.status !== 202) {
+        if (res.status === 404) {
+          setIsApiAvailable(false);
+          toast({ 
+            title: "Modo offline",
+            description: "Sistema funcionando em modo simulado"
+          });
+          setCurrentSession(sessionId);
+          localStorage.setItem("wa-session-id", sessionId);
+          
+          await supabase
+            .from("whatsapp_sessions")
+            .upsert({
+              session_id: sessionId,
+              name: `Sessão ${sessionId.substring(0, 8)}`,
+              status: "not_started",
+              updated_at: new Date().toISOString()
+            })
+            .eq("session_id", sessionId);
+            
+          return;
+        }
+        throw new Error("Erro ao conectar sessão");
+      }
+      
+      setIsApiAvailable(true);
+      setCurrentSession(sessionId);
+      localStorage.setItem("wa-session-id", sessionId);
+      
+      await supabase
+        .from("whatsapp_sessions")
+        .upsert({
+          session_id: sessionId,
+          name: `Sessão ${sessionId.substring(0, 8)}`,
+          status: "qr",
+          updated_at: new Date().toISOString()
+        })
+        .eq("session_id", sessionId);
+        
+      await fetchConnectionStatus(sessionId);
+    } catch (error) {
+      console.warn("Erro ao conectar sessão:", error);
+      
+      toast({
+        title: "Erro na conexão",
+        description: "Usando modo simulado temporariamente"
+      });
+      setCurrentSession(sessionId);
+      localStorage.setItem("wa-session-id", sessionId);
+      
+      await supabase
+        .from("whatsapp_sessions")
+        .upsert({
+          session_id: sessionId,
+          name: `Sessão ${sessionId.substring(0, 8)}`,
+          status: "error",
+          updated_at: new Date().toISOString()
+        })
+        .eq("session_id", sessionId);
+    }
+  }, [API_URL, fetchConnectionStatus, toast]);
+
+  const disconnectSession = useCallback(async (sessionId: string) => {
+    if (!sessionId) return;
+    
+    try {
+      if (isApiAvailable && API_URL) {
+        const res = await fetch(`${API_URL}/sessions/${sessionId}/logout`, { 
+          method: "POST",
+          cache: 'no-store'
+        });
+        
+        if (!res.ok) {
+          console.warn(`Erro ao desconectar: ${res.status}`);
+        }
+      }
+      
+      setConnectionStatus("not_started");
+      
+      await supabase
+        .from("whatsapp_sessions")
+        .upsert({
+          session_id: sessionId,
+          status: "not_started",
+          is_connected: false,
+          updated_at: new Date().toISOString()
+        })
+        .eq("session_id", sessionId);
+        
+      await refreshSessions();
+    } catch (error) {
+      console.warn("Erro ao desconectar sessão:", error);
+    }
+  }, [API_URL, refreshSessions, isApiAvailable]);
+
+  const createNewSession = useCallback(() => {
+    const newSessionId = `session_${Date.now()}`;
+    setCurrentSession(newSessionId);
+    localStorage.setItem("wa-session-id", newSessionId);
+    setConnectionStatus("not_started");
+    
+    supabase
+      .from("whatsapp_sessions")
+      .insert({
+        session_id: newSessionId,
+        name: `Sessão ${newSessionId.substring(0, 8)}`,
+        status: "not_started",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .then(() => {
+        refreshSessions();
+      });
+      
+    return newSessionId;
+  }, [refreshSessions]);
+
   const sendMessage = useCallback(async (to: string, body: string) => {
-    if (!sessionId || !isConnected) {
+    if (!currentSession || !isConnected) {
       toast.error("Nenhuma sessão WhatsApp conectada");
       return;
     }
     
     try {
-      // ID temporário para a mensagem
       const tempId = `temp-${Date.now()}`;
       
-      // Adiciona mensagem à UI imediatamente para melhor UX
       const tempMessage: WhatsAppMessage = {
         id: tempId,
-        session_id: sessionId,
+        session_id: currentSession,
         number: to,
         message: body,
         from_me: true,
@@ -75,24 +346,22 @@ export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
       
       setMessages(prev => [...prev, tempMessage]);
       
-      // Envia através da API
-      const response = await fetch(`${API_URL}/sessions/${sessionId}/send`, {
+      const response = await fetch(`${API_URL}/sessions/${currentSession}/send`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ number: to, message: body }),
-        signal: AbortSignal.timeout(10000) // 10 segundo timeout
+        signal: AbortSignal.timeout(10000)
       });
       
       if (!response.ok) {
         throw new Error('Falha ao enviar mensagem');
       }
       
-      // Aguarda um pouco e busca mensagens atualizadas
       setTimeout(() => {
         if (selectedContact) {
-          fetchMessages(selectedContact.phone, sessionId);
+          fetchMessages(selectedContact.phone, currentSession);
         }
       }, 1000);
       
@@ -100,7 +369,7 @@ export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
       console.warn('Erro ao enviar mensagem:', error);
       toast.error("Falha ao enviar mensagem");
     }
-  }, [sessionId, isConnected, selectedContact, API_URL]);
+  }, [currentSession, isConnected, selectedContact, API_URL]);
   
   const fetchMessages = useCallback(async (contactId: string, sessionId: string) => {
     if (!sessionId || !contactId || !API_URL || !isConnected) return;
@@ -108,7 +377,7 @@ export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
     try {
       setLoadingMessages(true);
       const messagesResponse = await fetch(`${API_URL}/sessions/${sessionId}/messages/${contactId}`, {
-        signal: AbortSignal.timeout(8000) // 8 segundo timeout
+        signal: AbortSignal.timeout(8000)
       });
       
       if (messagesResponse.ok) {
@@ -117,9 +386,7 @@ export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
       } else {
         console.warn("Erro ao buscar mensagens:", messagesResponse.status);
         
-        // Se a API retornar 404, use dados locais (fallback)
         if (messagesResponse.status === 404) {
-          // Simular mensagens locais para uma melhor experiência do usuário
           const mockMessages = [
             {
               id: `local-${Date.now()}-1`,
@@ -136,7 +403,6 @@ export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.warn("Erro ao buscar mensagens:", error);
       
-      // Fallback para dados locais em caso de erro de rede
       const mockMessages = [
         {
           id: `local-${Date.now()}-1`,
@@ -154,11 +420,10 @@ export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
   }, [isConnected, API_URL]);
   
   const refreshData = useCallback(async () => {
-    if (!sessionId || !API_URL || !isConnected) return;
+    if (!currentSession || !API_URL || !isConnected) return;
     
     try {
-      // Buscar contatos
-      const contactsResponse = await fetch(`${API_URL}/sessions/${sessionId}/contacts`, {
+      const contactsResponse = await fetch(`${API_URL}/sessions/${currentSession}/contacts`, {
         signal: AbortSignal.timeout(8000)
       });
       
@@ -166,7 +431,6 @@ export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
         const contactsData = await contactsResponse.json();
         setContacts(contactsData);
       } else if (contactsResponse.status === 404) {
-        // Fallback para dados simulados
         const mockContacts = [
           { id: "1", name: "João Silva", phone: "+5511999998888" },
           { id: "2", name: "Maria Oliveira", phone: "+5511987654321" },
@@ -175,14 +439,12 @@ export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
         setContacts(mockContacts);
       }
       
-      // Buscar mensagens se um contato estiver selecionado
       if (selectedContact) {
-        await fetchMessages(selectedContact.phone, sessionId);
+        await fetchMessages(selectedContact.phone, currentSession);
       }
     } catch (error) {
       console.warn("Erro ao atualizar dados do WhatsApp:", error);
       
-      // Fallback para dados simulados em caso de erro
       const mockContacts = [
         { id: "1", name: "João Silva", phone: "+5511999998888" },
         { id: "2", name: "Maria Oliveira", phone: "+5511987654321" },
@@ -190,7 +452,7 @@ export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
       ];
       setContacts(mockContacts);
     }
-  }, [sessionId, selectedContact, fetchMessages, isConnected, API_URL]);
+  }, [currentSession, selectedContact, fetchMessages, isConnected, API_URL]);
 
   const connect = useCallback(async (id: string) => {
     if (!API_URL) return;
@@ -203,17 +465,35 @@ export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
   }, [connectSession, API_URL]);
 
   const disconnect = useCallback(async () => {
-    if (!sessionId || !API_URL) return;
+    if (!currentSession || !API_URL) return;
     
     try {
-      await disconnectSession(sessionId);
+      await disconnectSession(currentSession);
       setSelectedContact(null);
       setMessages([]);
       toast.success("Sessão desconectada com sucesso");
     } catch (error) {
       console.warn("Erro ao desconectar sessão:", error);
     }
-  }, [sessionId, disconnectSession, API_URL]);
+  }, [currentSession, disconnectSession, API_URL]);
+
+  // Efeito para atualizar o status de conexão
+  useEffect(() => {
+    if (!currentSession) return;
+
+    fetchConnectionStatus(currentSession);
+
+    const interval = setInterval(() => fetchConnectionStatus(currentSession), 15000);
+    return () => clearInterval(interval);
+  }, [currentSession, fetchConnectionStatus]);
+
+  // Efeito para atualizar a lista de sessões
+  useEffect(() => {
+    refreshSessions();
+    
+    const interval = setInterval(refreshSessions, 30000);
+    return () => clearInterval(interval);
+  }, [refreshSessions]);
 
   // Atualiza dados periodicamente quando conectado
   useEffect(() => {
@@ -230,7 +510,7 @@ export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
       setSelectedContact(null);
       setMessages([]);
     }
-  }, [isConnected, sessionId]);
+  }, [isConnected, currentSession]);
 
   return (
     <WhatsAppContext.Provider
@@ -240,7 +520,7 @@ export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
         contacts,
         messages,
         loadingMessages,
-        sessionId,
+        sessionId: currentSession,
         connectionStatus,
         sendMessage,
         disconnect,
@@ -249,7 +529,7 @@ export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
         fetchMessages,
         
         // Propriedades para WhatsAppIntegration.tsx
-        currentSession: sessionId,
+        currentSession,
         setCurrentSession,
         sessions,
         loadingSessions,
