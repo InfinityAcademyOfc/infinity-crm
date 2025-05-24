@@ -18,7 +18,7 @@ export function useQRCode(sessionId: string): QRCodeHookResult {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  const intervalRef = useRef<number | null>(null);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const mountedRef = useRef<boolean>(true);
   const attemptRef = useRef<number>(0);
 
