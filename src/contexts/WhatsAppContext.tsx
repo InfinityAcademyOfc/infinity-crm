@@ -49,7 +49,7 @@ export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
   const [messages, setMessages] = useState<WhatsAppMessage[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
   
-  const { toast } = useToast();
+  const { toast: toastHook } = useToast();
   const isConnected = connectionStatus === "connected" && !!currentSession;
   
   const refreshSessions = useCallback(async () => {
@@ -212,7 +212,7 @@ export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
       if (!res.ok && res.status !== 202) {
         if (res.status === 404) {
           setIsApiAvailable(false);
-          toast({ 
+          toastHook({ 
             title: "Modo offline",
             description: "Sistema funcionando em modo simulado"
           });
@@ -252,7 +252,7 @@ export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.warn("Erro ao conectar sessão:", error);
       
-      toast({
+      toastHook({
         title: "Erro na conexão",
         description: "Usando modo simulado temporariamente"
       });
@@ -269,7 +269,7 @@ export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
         })
         .eq("session_id", sessionId);
     }
-  }, [API_URL, fetchConnectionStatus, toast]);
+  }, [API_URL, fetchConnectionStatus, toastHook]);
 
   const disconnectSession = useCallback(async (sessionId: string) => {
     if (!sessionId) return;
@@ -328,7 +328,9 @@ export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
 
   const sendMessage = useCallback(async (to: string, body: string) => {
     if (!currentSession || !isConnected) {
-      toast.error("Nenhuma sessão WhatsApp conectada");
+      toast("Nenhuma sessão WhatsApp conectada", { 
+        description: "Conecte uma sessão antes de enviar mensagens"
+      });
       return;
     }
     
@@ -367,7 +369,9 @@ export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
       
     } catch (error) {
       console.warn('Erro ao enviar mensagem:', error);
-      toast.error("Falha ao enviar mensagem");
+      toast("Falha ao enviar mensagem", {
+        description: "Tente novamente em alguns instantes"
+      });
     }
   }, [currentSession, isConnected, selectedContact, API_URL]);
   
@@ -471,7 +475,7 @@ export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
       await disconnectSession(currentSession);
       setSelectedContact(null);
       setMessages([]);
-      toast.success("Sessão desconectada com sucesso");
+      toast("Sessão desconectada com sucesso");
     } catch (error) {
       console.warn("Erro ao desconectar sessão:", error);
     }
