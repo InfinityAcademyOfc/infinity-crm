@@ -115,25 +115,19 @@ const ClientManagement = () => {
     });
   };
 
-  if (!user || !company) {
-    return (
-      <div className="p-6 text-center">
-        <p className="text-muted-foreground">Faça login para gerenciar clientes</p>
-      </div>
-    );
-  }
-
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-6">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-        <span className="ml-2">Carregando clientes...</span>
+      <div className="flex items-center justify-center min-h-[60vh] animate-fade-in">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
+          <p className="text-muted-foreground">Carregando clientes...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="relative flex-1 w-full sm:max-w-[400px]">
           <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -141,50 +135,66 @@ const ClientManagement = () => {
             placeholder="Buscar clientes..." 
             value={searchQuery} 
             onChange={e => setSearchQuery(e.target.value)} 
-            className="pl-8" 
+            className="pl-8 transition-all duration-200 focus:ring-2 focus:ring-primary/20" 
           />
         </div>
         
         <div className="flex items-center gap-2 self-end sm:self-auto">
           <Tabs value={viewType} onValueChange={setViewType} className="w-auto">
             <TabsList className="grid grid-cols-3 h-8 w-[240px] px-[5px] my-0 py-0 mx-px">
-              <TabsTrigger value="list" className="text-xs">Lista</TabsTrigger>
-              <TabsTrigger value="cards" className="text-xs">Cards</TabsTrigger>
-              <TabsTrigger value="ltv-kanban" className="text-xs">Kanban LTV</TabsTrigger>
+              <TabsTrigger value="list" className="text-xs transition-all duration-200">Lista</TabsTrigger>
+              <TabsTrigger value="cards" className="text-xs transition-all duration-200">Cards</TabsTrigger>
+              <TabsTrigger value="ltv-kanban" className="text-xs transition-all duration-200">Kanban LTV</TabsTrigger>
             </TabsList>
           </Tabs>
           
-          <Button size="sm" className="h-8" onClick={() => setNewClientDialogOpen(true)}>
+          <Button 
+            size="sm" 
+            className="h-8 hover-scale transition-all duration-200" 
+            onClick={() => setNewClientDialogOpen(true)}
+          >
             <Plus className="h-4 w-4" />
           </Button>
           
-          <Button variant="outline" size="icon" className="h-8 w-8" onClick={exportData}>
+          <Button 
+            variant="outline" 
+            size="icon" 
+            className="h-8 w-8 hover-scale transition-all duration-200" 
+            onClick={exportData}
+          >
             <Download className="h-4 w-4" />
           </Button>
         </div>
       </div>
       
-      {showAnalytics && <ClientAnalytics analytics={analytics} />}
+      {showAnalytics && (
+        <div className="animate-slide-in-right">
+          <ClientAnalytics analytics={analytics} />
+        </div>
+      )}
       
       <div className="flex justify-center">
         <Button 
           variant="ghost" 
           size="sm" 
           onClick={() => setShowAnalytics(s => !s)} 
-          className="mx-auto mt-1"
+          className="mx-auto mt-1 hover-scale transition-all duration-200"
         >
-          <ChevronDown className={`transition-transform duration-200 ${showAnalytics ? "" : "rotate-180"}`} />
+          <ChevronDown className={`transition-transform duration-300 ${showAnalytics ? "" : "rotate-180"}`} />
           <span className="sr-only">{showAnalytics ? "Esconder gráficos" : "Mostrar gráficos"}</span>
         </Button>
       </div>
 
       {filteredClients.length === 0 ? (
-        <Card>
+        <Card className="animate-scale-in">
           <CardContent className="p-6 text-center">
             <p className="text-muted-foreground mb-4">
               Nenhum cliente encontrado.
             </p>
-            <Button onClick={() => setNewClientDialogOpen(true)}>
+            <Button 
+              onClick={() => setNewClientDialogOpen(true)}
+              className="hover-scale transition-all duration-200"
+            >
               <Plus className="h-4 w-4 mr-2" />
               Adicionar Primeiro Cliente
             </Button>
@@ -192,7 +202,7 @@ const ClientManagement = () => {
         </Card>
       ) : (
         <Tabs value={viewType} onValueChange={setViewType} className="w-auto">
-          <TabsContent value="list" className="p-0 m-0">
+          <TabsContent value="list" className="p-0 m-0 animate-fade-in">
             <Card>
               <CardContent className="p-0">
                 <ClientList clients={filteredClients} onDeleteClient={handleDeleteClient} />
@@ -200,24 +210,25 @@ const ClientManagement = () => {
             </Card>
           </TabsContent>
           
-          <TabsContent value="cards" className="p-0 m-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {filteredClients.map(client => (
-              <ClientCard 
-                key={client.id} 
-                client={client} 
-                onDeleteClient={handleDeleteClient} 
-              />
+          <TabsContent value="cards" className="p-0 m-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-fade-in">
+            {filteredClients.map((client, index) => (
+              <div key={client.id} className="animate-scale-in" style={{ animationDelay: `${index * 50}ms` }}>
+                <ClientCard 
+                  client={client} 
+                  onDeleteClient={handleDeleteClient} 
+                />
+              </div>
             ))}
           </TabsContent>
 
-          <TabsContent value="ltv-kanban" className="p-0 m-0">
+          <TabsContent value="ltv-kanban" className="p-0 m-0 animate-fade-in">
             <ClientLtvFunnel />
           </TabsContent>
         </Tabs>
       )}
       
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent>
+        <DialogContent className="animate-scale-in">
           <DialogHeader>
             <DialogTitle>Confirmar Exclusão</DialogTitle>
             <DialogDescription>
@@ -225,8 +236,20 @@ const ClientManagement = () => {
             </DialogDescription>
           </DialogHeader>
           <div className="flex gap-4 justify-end mt-4">
-            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>Cancelar</Button>
-            <Button variant="destructive" onClick={confirmDelete}>Excluir</Button>
+            <Button 
+              variant="outline" 
+              onClick={() => setDeleteDialogOpen(false)}
+              className="hover-scale transition-all duration-200"
+            >
+              Cancelar
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={confirmDelete}
+              className="hover-scale transition-all duration-200"
+            >
+              Excluir
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

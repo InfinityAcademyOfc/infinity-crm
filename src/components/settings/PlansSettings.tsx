@@ -1,305 +1,197 @@
 
-import React, { useEffect, useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { PlanWithFeatures } from '@/types/plan';
-import { planService } from '@/services/api/planService';
-import { useAuth } from '@/contexts/AuthContext';
-import PlanCard from '@/components/pricing/PlanCard';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowUpRight, CreditCard } from 'lucide-react';
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from 'sonner';
+import React from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { CheckCircle, Star } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const PlansSettings = () => {
-  const { companyProfile, company } = useAuth();
-  const [plans, setPlans] = useState<PlanWithFeatures[]>([]);
-  const [currentPlan, setCurrentPlan] = useState<PlanWithFeatures | null>(null);
-  const [companyId, setCompanyId] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { user, company } = useAuth();
 
-  useEffect(() => {
-    const fetchCompanyInfo = async () => {
-      if (!companyProfile) return;
-
-      try {
-        if (companyProfile.company_id) {
-          setCompanyId(companyProfile.company_id);
-          
-          // Get company's subscription
-          const subscription = await planService.getCompanySubscription(companyProfile.company_id);
-          
-          if (subscription) {
-            // Load all plans
-            const allPlans = await planService.getPlansWithFeatures();
-            setPlans(allPlans);
-            
-            // Find the current plan
-            const currentPlanData = allPlans.find(plan => plan.id === subscription.plan_id);
-            if (currentPlanData) {
-              setCurrentPlan(currentPlanData);
-            }
-          } else {
-            // Sem assinatura - carregar todos os planos de qualquer maneira
-            const allPlans = await planService.getPlansWithFeatures();
-            setPlans(allPlans);
-            // Plano gratuito como padrão se não houver assinatura
-            setCurrentPlan(allPlans.find(plan => plan.code === 'free') || null);
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching company info:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchCompanyInfo();
-  }, [companyProfile]);
-
-  const handleChangePlan = async (planId: string) => {
-    if (!companyId || !companyProfile) return;
-    
-    try {
-      // Check if there's an existing subscription
-      const existingSubscription = await planService.getCompanySubscription(companyId);
-      
-      if (existingSubscription) {
-        // Update existing subscription
-        const { error } = await supabase
-          .from('company_subscriptions')
-          .update({
-            plan_id: planId,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', existingSubscription.id);
-          
-        if (error) throw error;
-      } else {
-        // Create new subscription
-        const { data, error } = await supabase
-          .from('company_subscriptions')
-          .insert({
-            company_id: companyId,
-            plan_id: planId,
-            status: 'active',
-            started_at: new Date().toISOString()
-          })
-          .select('id')
-          .single();
-          
-        if (error) throw error;
-        
-        // Update company profile with subscription ID
-        if (data) {
-          const { error: updateError } = await supabase
-            .from('profiles_companies')
-            .update({ subscription_id: data.id })
-            .eq('id', companyProfile.id);
-            
-          if (updateError) throw updateError;
-        }
-      }
-      
-      // Reload plans data
-      const newPlanData = await planService.getPlanById(planId);
-      if (newPlanData) {
-        setCurrentPlan(newPlanData);
-        toast.success(`Plano alterado para ${newPlanData.name} com sucesso!`);
-      }
-    } catch (error) {
-      console.error('Error changing plan:', error);
-      toast.error('Não foi possível alterar o plano. Tente novamente.');
-    }
+  const currentPlan = {
+    name: "Plano Profissional",
+    price: "R$ 97,00",
+    period: "mensal",
+    status: "ativo",
+    nextBilling: "15/01/2025",
+    features: [
+      "CRM completo",
+      "Gestão de leads ilimitados",
+      "Dashboard avançado",
+      "Relatórios personalizados",
+      "Suporte prioritário",
+      "Integração WhatsApp",
+      "Automação de vendas"
+    ]
   };
 
-  if (isLoading) {
+  const availablePlans = [
+    {
+      id: "basic",
+      name: "Básico",
+      price: "R$ 47,00",
+      period: "mensal",
+      description: "Ideal para pequenos negócios",
+      features: [
+        "CRM básico",
+        "Até 100 leads",
+        "Dashboard simples",
+        "Suporte via email"
+      ],
+      current: false
+    },
+    {
+      id: "professional",
+      name: "Profissional",
+      price: "R$ 97,00",
+      period: "mensal",
+      description: "Para empresas em crescimento",
+      features: [
+        "CRM completo",
+        "Leads ilimitados",
+        "Dashboard avançado",
+        "Relatórios personalizados",
+        "Suporte prioritário",
+        "Integração WhatsApp"
+      ],
+      current: true,
+      popular: true
+    },
+    {
+      id: "enterprise",
+      name: "Enterprise",
+      price: "R$ 197,00",
+      period: "mensal",
+      description: "Para grandes empresas",
+      features: [
+        "Todos os recursos do Profissional",
+        "API personalizada",
+        "Suporte dedicado",
+        "Onboarding personalizado",
+        "SLA garantido"
+      ],
+      current: false
+    }
+  ];
+
+  if (!user || !company) {
     return (
-      <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-2xl">Plano atual</CardTitle>
-            <CardDescription>Detalhes do seu plano atual e uso</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="animate-pulse bg-gray-200 dark:bg-gray-700 h-40 w-full rounded-md"></div>
-          </CardContent>
-        </Card>
+      <div className="p-6 text-center animate-fade-in">
+        <p className="text-muted-foreground">Faça login para visualizar os planos</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl">Plano atual</CardTitle>
-          <CardDescription>Detalhes do seu plano atual e uso</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {currentPlan ? (
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold">Plano {currentPlan.name}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {currentPlan.price === 0 ? 'Gratuito' : `R$ ${currentPlan.price}/mês`}
-                  </p>
-                </div>
-                <div>
-                  <Button variant="outline" className="flex items-center gap-2">
-                    <CreditCard className="h-4 w-4" />
-                    <span>Gerenciar pagamento</span>
-                  </Button>
-                </div>
-              </div>
+    <div className="space-y-6 animate-fade-in">
+      <div>
+        <h2 className="text-2xl font-semibold">Planos e Assinatura</h2>
+        <p className="text-muted-foreground mt-1">
+          Gerencie sua assinatura e explore nossos planos
+        </p>
+      </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {currentPlan.features.map((feature) => (
-                  <div key={feature.id} className="bg-muted/50 rounded-md p-3">
-                    <p className="font-medium">{feature.description}</p>
-                    <p className="text-primary font-semibold">
-                      {feature.feature_value === 'unlimited' ? 'Ilimitado' : 
-                       feature.feature_value === 'true' ? 'Sim' : 
-                       feature.feature_value}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <p className="text-lg text-muted-foreground">Nenhum plano ativo encontrado</p>
-              <Button variant="default" className="mt-4">
-                Escolher um plano
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
+      {/* Current Plan */}
+      <Card className="border-primary/20 animate-scale-in">
         <CardHeader>
-          <CardTitle className="text-2xl">Mudar de plano</CardTitle>
-          <CardDescription>Compare os planos disponíveis e escolha o mais adequado para o seu negócio</CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                {currentPlan.name}
+                <Badge variant="default" className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
+                  {currentPlan.status}
+                </Badge>
+              </CardTitle>
+              <CardDescription>
+                Próxima cobrança: {currentPlan.nextBilling}
+              </CardDescription>
+            </div>
+            <div className="text-right">
+              <div className="text-2xl font-bold">{currentPlan.price}</div>
+              <div className="text-sm text-muted-foreground">/{currentPlan.period}</div>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="card-view">
-            <TabsList className="mb-6">
-              <TabsTrigger value="card-view">Cartões</TabsTrigger>
-              <TabsTrigger value="table-view">Tabela comparativa</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="card-view">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {plans.map((plan) => (
-                  <PlanCard 
-                    key={plan.id}
-                    plan={plan}
-                    isPopular={plan.code === 'pro'}
-                    onSelectPlan={handleChangePlan}
-                    isSelected={currentPlan?.id === plan.id}
-                  />
-                ))}
+          <div className="grid gap-2">
+            <h4 className="font-medium mb-2">Recursos inclusos:</h4>
+            {currentPlan.features.map((feature, index) => (
+              <div key={index} className="flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-green-500" />
+                <span className="text-sm">{feature}</span>
               </div>
-            </TabsContent>
-            
-            <TabsContent value="table-view">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left p-3">Recurso</th>
-                      {plans.map((plan) => (
-                        <th key={plan.id} className="text-center p-3">
-                          <div>
-                            <div className="font-bold">{plan.name}</div>
-                            <div>{plan.price === 0 ? 'Grátis' : `R$ ${plan.price}/mês`}</div>
-                          </div>
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {/* Dynamically generate rows based on feature keys */}
-                    {plans.length > 0 && plans[0].features.map((feature) => (
-                      <tr key={feature.feature_key} className="border-b">
-                        <td className="p-3 font-medium">{feature.description}</td>
-                        {plans.map((plan) => {
-                          const planFeature = plan.features.find(f => f.feature_key === feature.feature_key);
-                          return (
-                            <td key={`${plan.id}-${feature.feature_key}`} className="text-center p-3">
-                              {planFeature?.feature_value === 'unlimited' ? 'Ilimitado' : 
-                               planFeature?.feature_value === 'true' ? 'Sim' : 
-                               planFeature?.feature_value === 'false' ? 'Não' : 
-                               planFeature?.feature_value || '—'}
-                            </td>
-                          );
-                        })}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl">Recursos adicionais</CardTitle>
-          <CardDescription>Adicione recursos específicos ao seu plano</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Card className="border border-dashed">
-              <CardContent className="p-6 flex flex-col items-center justify-center text-center h-full">
-                <div className="rounded-full bg-primary/10 w-12 h-12 flex items-center justify-center mb-4">
-                  <ArrowUpRight className="h-6 w-6 text-primary" />
-                </div>
-                <h3 className="font-medium text-lg mb-2">Usuários adicionais</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Adicione mais usuários à sua conta além do limite do seu plano atual
-                </p>
-                <Button variant="outline">
-                  Adicionar usuários
-                </Button>
-              </CardContent>
-            </Card>
-            
-            <Card className="border border-dashed">
-              <CardContent className="p-6 flex flex-col items-center justify-center text-center h-full">
-                <div className="rounded-full bg-primary/10 w-12 h-12 flex items-center justify-center mb-4">
-                  <ArrowUpRight className="h-6 w-6 text-primary" />
-                </div>
-                <h3 className="font-medium text-lg mb-2">Integrações premium</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Acesse integrações avançadas com outras plataformas
-                </p>
-                <Button variant="outline">
-                  Ver integrações
-                </Button>
-              </CardContent>
-            </Card>
-            
-            <Card className="border border-dashed">
-              <CardContent className="p-6 flex flex-col items-center justify-center text-center h-full">
-                <div className="rounded-full bg-primary/10 w-12 h-12 flex items-center justify-center mb-4">
-                  <ArrowUpRight className="h-6 w-6 text-primary" />
-                </div>
-                <h3 className="font-medium text-lg mb-2">Suporte dedicado</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Tenha um gerente de conta dedicado para ajudar com sua implementação
-                </p>
-                <Button variant="outline">
-                  Contratar suporte
-                </Button>
-              </CardContent>
-            </Card>
+            ))}
+          </div>
+          <div className="flex gap-2 mt-6">
+            <Button variant="outline" className="hover-scale transition-all duration-200">
+              Gerenciar Assinatura
+            </Button>
+            <Button variant="outline" className="hover-scale transition-all duration-200">
+              Histórico de Pagamentos
+            </Button>
           </div>
         </CardContent>
       </Card>
+
+      {/* Available Plans */}
+      <div>
+        <h3 className="text-lg font-semibold mb-4">Planos Disponíveis</h3>
+        <div className="grid gap-6 md:grid-cols-3">
+          {availablePlans.map((plan, index) => (
+            <Card 
+              key={plan.id} 
+              className={`relative transition-all duration-200 hover:shadow-lg animate-scale-in ${
+                plan.current ? 'border-primary/40 shadow-md' : ''
+              }`}
+              style={{ animationDelay: `${index * 100}ms` }}
+            >
+              {plan.popular && (
+                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                  <Badge className="bg-primary text-primary-foreground gap-1">
+                    <Star className="h-3 w-3" />
+                    Mais Popular
+                  </Badge>
+                </div>
+              )}
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  {plan.name}
+                  {plan.current && (
+                    <Badge variant="outline" className="text-xs">
+                      Atual
+                    </Badge>
+                  )}
+                </CardTitle>
+                <CardDescription>{plan.description}</CardDescription>
+                <div className="text-3xl font-bold">
+                  {plan.price}
+                  <span className="text-sm font-normal text-muted-foreground">
+                    /{plan.period}
+                  </span>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2 mb-6">
+                  {plan.features.map((feature, featIndex) => (
+                    <div key={featIndex} className="flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                      <span className="text-sm">{feature}</span>
+                    </div>
+                  ))}
+                </div>
+                <Button 
+                  className="w-full hover-scale transition-all duration-200" 
+                  variant={plan.current ? "outline" : "default"}
+                  disabled={plan.current}
+                >
+                  {plan.current ? "Plano Atual" : "Escolher Plano"}
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
     </div>
   );
 };

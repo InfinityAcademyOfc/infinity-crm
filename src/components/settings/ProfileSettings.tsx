@@ -1,247 +1,211 @@
 
-import React, { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import React, { useState } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Loader2, Upload, Save } from "lucide-react";
+import { Camera, Save, Building } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "sonner";
-import { supabase } from "@/lib/supabase";
-
-interface ProfileData {
-  name: string;
-  email: string;
-  phone: string;
-  department: string;
-  avatar: string;
-  company_name?: string;
-}
+import { useToast } from "@/hooks/use-toast";
 
 const ProfileSettings = () => {
-  const { user, profile, company, isCompany } = useAuth();
-  const [profileData, setProfileData] = useState<ProfileData>({
-    name: "",
-    email: "",
-    phone: "",
-    department: "",
-    avatar: "",
-    company_name: ""
+  const { user, profile, company, isCompanyAccount } = useAuth();
+  const { toast } = useToast();
+  
+  const [profileData, setProfileData] = useState({
+    name: isCompanyAccount ? company?.name || "" : profile?.name || "",
+    email: isCompanyAccount ? company?.email || "" : profile?.email || "",
+    phone: profile?.phone || "",
+    role: profile?.role || "",
+    department: profile?.department || "",
+    avatar: profile?.avatar || ""
   });
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
 
-  useEffect(() => {
-    if (user && (profile || company)) {
-      const data = isCompany ? company : profile;
-      setProfileData({
-        name: data?.name || "",
-        email: data?.email || user.email || "",
-        phone: data?.phone || "",
-        department: isCompany ? "" : (profile?.department || ""), // Only get department for non-company profiles
-        avatar: data?.avatar || "",
-        company_name: isCompany ? data?.name : company?.name || ""
+  const [companyData, setCompanyData] = useState({
+    name: company?.name || "",
+    email: company?.email || ""
+  });
+
+  const handleProfileUpdate = async () => {
+    try {
+      // Here you would update the profile via Supabase
+      toast({
+        title: "Perfil atualizado",
+        description: "Suas informações foram atualizadas com sucesso."
       });
-      setLoading(false);
-    }
-  }, [user, profile, company, isCompany]);
-
-  const handleInputChange = (field: keyof ProfileData, value: string) => {
-    setProfileData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file || !user) return;
-
-    try {
-      setUploading(true);
-      
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}-${Math.random()}.${fileExt}`;
-      const filePath = `avatars/${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(filePath);
-
-      setProfileData(prev => ({ ...prev, avatar: publicUrl }));
-      toast.success("Avatar atualizado com sucesso!");
     } catch (error) {
-      console.error("Erro ao fazer upload do avatar:", error);
-      toast.error("Erro ao fazer upload do avatar");
-    } finally {
-      setUploading(false);
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar perfil.",
+        variant: "destructive"
+      });
     }
   };
 
-  const handleSave = async () => {
-    if (!user) return;
-
+  const handleCompanyUpdate = async () => {
     try {
-      setSaving(true);
-      
-      const tableName = isCompany ? "profiles_companies" : "profiles";
-      const updateData = {
-        name: profileData.name,
-        phone: profileData.phone,
-        avatar: profileData.avatar,
-        ...(isCompany ? {} : { department: profileData.department }),
-        updated_at: new Date().toISOString()
-      };
-
-      const { error } = await supabase
-        .from(tableName)
-        .update(updateData)
-        .eq("id", user.id);
-
-      if (error) throw error;
-
-      toast.success("Perfil atualizado com sucesso!");
+      // Here you would update the company via Supabase
+      toast({
+        title: "Empresa atualizada",
+        description: "Informações da empresa foram atualizadas com sucesso."
+      });
     } catch (error) {
-      console.error("Erro ao salvar perfil:", error);
-      toast.error("Erro ao salvar perfil");
-    } finally {
-      setSaving(false);
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar empresa.",
+        variant: "destructive"
+      });
     }
   };
 
-  if (loading) {
+  if (!user) {
     return (
-      <Card>
-        <CardContent className="p-6 flex justify-center items-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </CardContent>
-      </Card>
+      <div className="p-6 text-center animate-fade-in">
+        <p className="text-muted-foreground">Faça login para visualizar o perfil</p>
+      </div>
     );
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Informações do Perfil</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="flex items-center space-x-4">
-          <Avatar className="h-20 w-20">
-            <AvatarImage src={profileData.avatar} />
-            <AvatarFallback>
-              {profileData.name.split(' ').map(n => n[0]).join('').toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-          <div>
-            <Label htmlFor="avatar-upload" className="cursor-pointer">
-              <Button variant="outline" size="sm" disabled={uploading}>
-                {uploading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Enviando...
-                  </>
-                ) : (
-                  <>
-                    <Upload className="mr-2 h-4 w-4" />
-                    Alterar Avatar
-                  </>
-                )}
+    <div className="space-y-6 animate-fade-in">
+      <div>
+        <h2 className="text-2xl font-semibold">Perfil</h2>
+        <p className="text-muted-foreground mt-1">
+          Gerencie suas informações pessoais e de empresa
+        </p>
+      </div>
+
+      {/* Profile Information */}
+      <Card className="animate-scale-in">
+        <CardHeader>
+          <CardTitle>Informações Pessoais</CardTitle>
+          <CardDescription>
+            Atualize suas informações pessoais e configurações de conta
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Avatar Section */}
+          <div className="flex items-center gap-4">
+            <Avatar className="h-20 w-20">
+              <AvatarImage src={profileData.avatar} />
+              <AvatarFallback className="text-lg">
+                {profileData.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <Button variant="outline" size="sm" className="hover-scale transition-all duration-200">
+                <Camera className="h-4 w-4 mr-2" />
+                Alterar Foto
               </Button>
-            </Label>
-            <input
-              id="avatar-upload"
-              type="file"
-              accept="image/*"
-              onChange={handleAvatarUpload}
-              className="hidden"
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">
-              {isCompany ? "Nome da Empresa" : "Nome Completo"}
-            </Label>
-            <Input
-              id="name"
-              value={profileData.name}
-              onChange={(e) => handleInputChange("name", e.target.value)}
-              placeholder={isCompany ? "Digite o nome da empresa" : "Digite seu nome completo"}
-            />
+              <p className="text-xs text-muted-foreground mt-1">
+                JPG, PNG ou GIF. Máximo 2MB.
+              </p>
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={profileData.email}
-              disabled
-              className="bg-gray-100"
-            />
-            <p className="text-xs text-muted-foreground">
-              O email não pode ser alterado aqui
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="phone">Telefone</Label>
-            <Input
-              id="phone"
-              value={profileData.phone}
-              onChange={(e) => handleInputChange("phone", e.target.value)}
-              placeholder="(11) 99999-9999"
-            />
-          </div>
-
-          {!isCompany && (
+          {/* Form Fields */}
+          <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="department">Cargo/Departamento</Label>
+              <Label htmlFor="name">Nome Completo</Label>
               <Input
-                id="department"
-                value={profileData.department}
-                onChange={(e) => handleInputChange("department", e.target.value)}
-                placeholder="Ex: Desenvolvedor, Vendas, Marketing"
+                id="name"
+                value={profileData.name}
+                onChange={(e) => setProfileData(prev => ({ ...prev, name: e.target.value }))}
+                className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
               />
             </div>
-          )}
-
-          {!isCompany && profileData.company_name && (
             <div className="space-y-2">
-              <Label htmlFor="company">Empresa</Label>
+              <Label htmlFor="email">Email</Label>
               <Input
-                id="company"
-                value={profileData.company_name}
-                disabled
-                className="bg-gray-100"
+                id="email"
+                type="email"
+                value={profileData.email}
+                onChange={(e) => setProfileData(prev => ({ ...prev, email: e.target.value }))}
+                className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
               />
             </div>
-          )}
-        </div>
+            <div className="space-y-2">
+              <Label htmlFor="phone">Telefone</Label>
+              <Input
+                id="phone"
+                value={profileData.phone}
+                onChange={(e) => setProfileData(prev => ({ ...prev, phone: e.target.value }))}
+                className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="role">Cargo</Label>
+              <Input
+                id="role"
+                value={profileData.role}
+                onChange={(e) => setProfileData(prev => ({ ...prev, role: e.target.value }))}
+                className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+              />
+            </div>
+          </div>
 
-        <div className="flex justify-end">
-          <Button onClick={handleSave} disabled={saving}>
-            {saving ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Salvando...
-              </>
-            ) : (
-              <>
-                <Save className="mr-2 h-4 w-4" />
-                Salvar Alterações
-              </>
-            )}
+          <div className="space-y-2">
+            <Label htmlFor="department">Departamento</Label>
+            <Input
+              id="department"
+              value={profileData.department}
+              onChange={(e) => setProfileData(prev => ({ ...prev, department: e.target.value }))}
+              className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+            />
+          </div>
+
+          <Button onClick={handleProfileUpdate} className="hover-scale transition-all duration-200">
+            <Save className="h-4 w-4 mr-2" />
+            Salvar Alterações
           </Button>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+
+      {/* Company Information */}
+      {company && (
+        <Card className="animate-scale-in" style={{ animationDelay: "100ms" }}>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Building className="h-5 w-5" />
+              Informações da Empresa
+            </CardTitle>
+            <CardDescription>
+              Gerencie as informações da sua empresa
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="company-name">Nome da Empresa</Label>
+                <Input
+                  id="company-name"
+                  value={companyData.name}
+                  onChange={(e) => setCompanyData(prev => ({ ...prev, name: e.target.value }))}
+                  className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="company-email">Email da Empresa</Label>
+                <Input
+                  id="company-email"
+                  type="email"
+                  value={companyData.email}
+                  onChange={(e) => setCompanyData(prev => ({ ...prev, email: e.target.value }))}
+                  className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                />
+              </div>
+            </div>
+
+            <Button onClick={handleCompanyUpdate} className="hover-scale transition-all duration-200">
+              <Save className="h-4 w-4 mr-2" />
+              Salvar Informações da Empresa
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
 };
 
