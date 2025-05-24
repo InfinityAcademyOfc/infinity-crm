@@ -695,6 +695,33 @@ export type Database = {
           },
         ]
       }
+      funnel_stages: {
+        Row: {
+          color: string | null
+          company_id: string
+          created_at: string | null
+          id: string
+          name: string
+          order_index: number
+        }
+        Insert: {
+          color?: string | null
+          company_id: string
+          created_at?: string | null
+          id?: string
+          name: string
+          order_index: number
+        }
+        Update: {
+          color?: string | null
+          company_id?: string
+          created_at?: string | null
+          id?: string
+          name?: string
+          order_index?: number
+        }
+        Relationships: []
+      }
       goals: {
         Row: {
           company_id: string
@@ -900,6 +927,41 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lead_activities: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          description: string
+          id: string
+          lead_id: string
+          type: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          description: string
+          id?: string
+          lead_id: string
+          type: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string
+          id?: string
+          lead_id?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_activities_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "sales_leads"
             referencedColumns: ["id"]
           },
         ]
@@ -1451,6 +1513,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      sales_leads: {
+        Row: {
+          assigned_to: string | null
+          company_id: string
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          email: string | null
+          id: string
+          name: string
+          phone: string | null
+          priority: string | null
+          source: string | null
+          stage: string
+          updated_at: string | null
+          value: number | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          company_id: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          email?: string | null
+          id?: string
+          name: string
+          phone?: string | null
+          priority?: string | null
+          source?: string | null
+          stage?: string
+          updated_at?: string | null
+          value?: number | null
+        }
+        Update: {
+          assigned_to?: string | null
+          company_id?: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          email?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          priority?: string | null
+          source?: string | null
+          stage?: string
+          updated_at?: string | null
+          value?: number | null
+        }
+        Relationships: []
       }
       schedules: {
         Row: {
