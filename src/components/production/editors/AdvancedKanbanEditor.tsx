@@ -88,7 +88,6 @@ export default function AdvancedKanbanEditor({
 
   return (
     <div className="h-full flex flex-col">
-      {/* Header */}
       <div className="border-b p-4">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-lg font-semibold">Quadro Kanban</h2>
@@ -127,17 +126,16 @@ export default function AdvancedKanbanEditor({
         </div>
       </div>
 
-      {/* Kanban Board */}
       <div className="flex-1 p-4">
         <div className="h-full">
           <KanbanBoard 
             columns={columns}
             setColumns={setColumns}
+            onAddCard={handleAddTask}
           />
         </div>
       </div>
 
-      {/* Quick add buttons for each column */}
       <div className="border-t p-4">
         <div className="flex gap-2 flex-wrap">
           {columns.map((column) => (

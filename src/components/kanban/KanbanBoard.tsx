@@ -5,35 +5,27 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Calendar, DollarSign, User } from 'lucide-react';
-
-export interface KanbanCard {
-  id: string;
-  title: string;
-  description?: string;
-  priority: 'low' | 'medium' | 'high';
-  assignedTo?: string;
-  dueDate?: string;
-  value?: number;
-  tags?: string[];
-}
-
-export interface KanbanColumnItem {
-  id: string;
-  title: string;
-  cards: KanbanCard[];
-  color: string;
-}
+import { KanbanColumnItem, KanbanCardItem } from './types';
 
 interface KanbanBoardProps {
   columns: KanbanColumnItem[];
   setColumns: (columns: KanbanColumnItem[]) => void;
+  onAddCard?: (columnId: string) => void;
+  onEditCard?: (cardId: string, columnId: string) => void;
+  onDeleteCard?: (cardId: string, columnId: string) => void;
 }
 
-export default function KanbanBoard({ columns, setColumns }: KanbanBoardProps) {
+export default function KanbanBoard({ 
+  columns, 
+  setColumns, 
+  onAddCard,
+  onEditCard,
+  onDeleteCard 
+}: KanbanBoardProps) {
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
 
-    const { source, destination, draggableId } = result;
+    const { source, destination } = result;
 
     if (source.droppableId === destination.droppableId && source.index === destination.index) {
       return;
@@ -63,7 +55,7 @@ export default function KanbanBoard({ columns, setColumns }: KanbanBoardProps) {
     setColumns(newColumns);
   };
 
-  const getPriorityColor = (priority: string) => {
+  const getPriorityColor = (priority?: string) => {
     switch (priority) {
       case 'high':
         return 'destructive';
@@ -76,7 +68,7 @@ export default function KanbanBoard({ columns, setColumns }: KanbanBoardProps) {
     }
   };
 
-  const getPriorityLabel = (priority: string) => {
+  const getPriorityLabel = (priority?: string) => {
     switch (priority) {
       case 'high':
         return 'Alta';
@@ -85,7 +77,7 @@ export default function KanbanBoard({ columns, setColumns }: KanbanBoardProps) {
       case 'low':
         return 'Baixa';
       default:
-        return priority;
+        return 'Normal';
     }
   };
 
@@ -134,9 +126,11 @@ export default function KanbanBoard({ columns, setColumns }: KanbanBoardProps) {
                               <CardTitle className="text-sm font-medium line-clamp-2">
                                 {card.title}
                               </CardTitle>
-                              <Badge variant={getPriorityColor(card.priority)} className="ml-2">
-                                {getPriorityLabel(card.priority)}
-                              </Badge>
+                              {card.priority && (
+                                <Badge variant={getPriorityColor(card.priority)} className="ml-2">
+                                  {getPriorityLabel(card.priority)}
+                                </Badge>
+                              )}
                             </div>
                           </CardHeader>
                           
@@ -165,7 +159,10 @@ export default function KanbanBoard({ columns, setColumns }: KanbanBoardProps) {
                               {card.assignedTo && (
                                 <Avatar className="h-6 w-6">
                                   <AvatarFallback className="text-xs">
-                                    {card.assignedTo.substring(0, 2).toUpperCase()}
+                                    {typeof card.assignedTo === 'string' 
+                                      ? card.assignedTo.substring(0, 2).toUpperCase()
+                                      : card.assignedTo.name.substring(0, 2).toUpperCase()
+                                    }
                                   </AvatarFallback>
                                 </Avatar>
                               )}
@@ -175,7 +172,7 @@ export default function KanbanBoard({ columns, setColumns }: KanbanBoardProps) {
                               <div className="flex flex-wrap gap-1">
                                 {card.tags.slice(0, 2).map((tag, i) => (
                                   <Badge key={i} variant="secondary" className="text-xs">
-                                    {tag}
+                                    {typeof tag === 'string' ? tag : tag.label}
                                   </Badge>
                                 ))}
                                 {card.tags.length > 2 && (

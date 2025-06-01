@@ -29,7 +29,8 @@ export default function ClientForm({ client, onClose, onSuccess }: ClientFormPro
     zip: client?.zip || '',
     segment: client?.segment || '',
     status: client?.status || 'active',
-    contact: client?.contact || ''
+    contact: client?.contact || '',
+    last_contact: client?.last_contact || null
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
