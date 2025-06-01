@@ -81,6 +81,16 @@ export default function KanbanBoard({
     }
   };
 
+  const getAssigneeInitials = (assignedTo: string | { id: string; name: string; avatar?: string; role?: string } | undefined): string => {
+    if (!assignedTo) return '';
+    
+    if (typeof assignedTo === 'string') {
+      return assignedTo.substring(0, 2).toUpperCase();
+    }
+    
+    return assignedTo.name.substring(0, 2).toUpperCase();
+  };
+
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
       <div className="flex gap-6 h-full overflow-x-auto pb-4">
@@ -159,10 +169,7 @@ export default function KanbanBoard({
                               {card.assignedTo && (
                                 <Avatar className="h-6 w-6">
                                   <AvatarFallback className="text-xs">
-                                    {typeof card.assignedTo === 'string' 
-                                      ? card.assignedTo.substring(0, 2).toUpperCase()
-                                      : card.assignedTo.name.substring(0, 2).toUpperCase()
-                                    }
+                                    {getAssigneeInitials(card.assignedTo)}
                                   </AvatarFallback>
                                 </Avatar>
                               )}
