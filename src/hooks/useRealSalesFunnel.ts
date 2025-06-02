@@ -1,41 +1,40 @@
 
 import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+import { leadService } from '@/services/api/leadService';
 
 export interface SalesLead {
   id: string;
-  company_id: string;
   name: string;
-  email?: string;
-  phone?: string;
-  value: number;
+  email: string | null;
+  phone: string | null;
+  description: string | null;
+  source: string | null;
+  priority: 'low' | 'medium' | 'high';
   stage: string;
-  priority: string;
-  source?: string;
-  description?: string;
-  assigned_to?: string;
-  created_by?: string;
+  value: number;
+  assigned_to: string | null;
+  due_date: string | null;
+  company_id: string;
   created_at: string;
   updated_at: string;
 }
 
 export interface FunnelStage {
   id: string;
-  company_id: string;
   name: string;
-  order_index: number;
   color: string;
-  created_at: string;
+  order: number;
+  company_id: string;
 }
 
 export const useRealSalesFunnel = () => {
-  const { user, company } = useAuth();
-  const [leads, setLeads] = useState<SalesLead[]>([]);
   const [stages, setStages] = useState<FunnelStage[]>([]);
+  const [leads, setLeads] = useState<SalesLead[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { company } = useAuth();
 
   const fetchStages = async () => {
     if (!company?.id) return;
@@ -45,13 +44,51 @@ export const useRealSalesFunnel = () => {
         .from('funnel_stages')
         .select('*')
         .eq('company_id', company.id)
-        .order('order_index', { ascending: true });
+        .order('order', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao buscar estágios:', error);
+        // Create default stages if none exist
+        await createDefaultStages();
+        return;
+      }
+
       setStages(data || []);
-    } catch (err: any) {
-      console.error('Erro ao buscar estágios:', err);
-      setError('Erro ao carregar estágios do funil');
+    } catch (error) {
+      console.error('Erro ao buscar estágios:', error);
+      await createDefaultStages();
+    }
+  };
+
+  const createDefaultStages = async () => {
+    if (!company?.id) return;
+
+    const defaultStages = [
+      { name: 'Prospects', color: '#ef4444', order: 1 },
+      { name: 'Qualificados', color: '#f59e0b', order: 2 },
+      { name: 'Proposta', color: '#3b82f6', order: 3 },
+      { name: 'Negociação', color: '#8b5cf6', order: 4 },
+      { name: 'Fechado - Ganho', color: '#10b981', order: 5 },
+      { name: 'Fechado - Perdido', color: '#6b7280', order: 6 }
+    ];
+
+    try {
+      const { data, error } = await supabase
+        .from('funnel_stages')
+        .insert(defaultStages.map(stage => ({
+          ...stage,
+          company_id: company.id
+        })))
+        .select();
+
+      if (error) {
+        console.error('Erro ao criar estágios padrão:', error);
+        return;
+      }
+
+      setStages(data || []);
+    } catch (error) {
+      console.error('Erro ao criar estágios padrão:', error);
     }
   };
 
@@ -59,138 +96,83 @@ export const useRealSalesFunnel = () => {
     if (!company?.id) return;
 
     try {
-      const { data, error } = await supabase
-        .from('sales_leads')
-        .select('*')
-        .eq('company_id', company.id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setLeads(data || []);
-    } catch (err: any) {
-      console.error('Erro ao buscar leads:', err);
-      setError('Erro ao carregar leads');
-    }
-  };
-
-  const createLead = async (leadData: Omit<SalesLead, 'id' | 'created_at' | 'updated_at' | 'company_id'>) => {
-    if (!company?.id || !user?.id) return null;
-
-    try {
-      const { data, error } = await supabase
-        .from('sales_leads')
-        .insert([{
-          ...leadData,
-          company_id: company.id,
-          created_by: user.id
-        }])
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      setLeads(prev => [data, ...prev]);
-      toast.success('Lead criado com sucesso!');
-      return data;
-    } catch (err: any) {
-      console.error('Erro ao criar lead:', err);
-      toast.error('Erro ao criar lead');
-      return null;
-    }
-  };
-
-  const updateLead = async (id: string, updates: Partial<SalesLead>) => {
-    try {
-      const { data, error } = await supabase
-        .from('sales_leads')
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      setLeads(prev => prev.map(lead => lead.id === id ? data : lead));
-      toast.success('Lead atualizado com sucesso!');
-      return data;
-    } catch (err: any) {
-      console.error('Erro ao atualizar lead:', err);
-      toast.error('Erro ao atualizar lead');
-      return null;
-    }
-  };
-
-  const deleteLead = async (id: string) => {
-    try {
-      const { error } = await supabase
-        .from('sales_leads')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-
-      setLeads(prev => prev.filter(lead => lead.id !== id));
-      toast.success('Lead removido com sucesso!');
-      return true;
-    } catch (err: any) {
-      console.error('Erro ao deletar lead:', err);
-      toast.error('Erro ao remover lead');
-      return false;
+      const leadsData = await leadService.getLeads(company.id);
+      const transformedLeads: SalesLead[] = leadsData.map(lead => ({
+        id: lead.id,
+        name: lead.name,
+        email: lead.email,
+        phone: lead.phone,
+        description: lead.description,
+        source: lead.source,
+        priority: lead.priority,
+        stage: lead.status, // Map status to stage
+        value: lead.value || 0,
+        assigned_to: lead.assigned_to,
+        due_date: lead.due_date,
+        company_id: lead.company_id,
+        created_at: lead.created_at,
+        updated_at: lead.updated_at
+      }));
+      
+      setLeads(transformedLeads);
+    } catch (error) {
+      console.error('Erro ao buscar leads:', error);
+      toast.error('Erro ao carregar leads');
     }
   };
 
   const moveLeadToStage = async (leadId: string, newStage: string) => {
-    return updateLead(leadId, { stage: newStage });
+    try {
+      const updatedLead = await leadService.updateLead(leadId, { 
+        status: newStage as any 
+      });
+
+      if (updatedLead) {
+        setLeads(prev => prev.map(lead => 
+          lead.id === leadId 
+            ? { ...lead, stage: newStage }
+            : lead
+        ));
+        toast.success('Lead movido com sucesso!');
+      }
+    } catch (error) {
+      console.error('Erro ao mover lead:', error);
+      toast.error('Erro ao mover lead');
+    }
+  };
+
+  const deleteLead = async (leadId: string) => {
+    try {
+      const success = await leadService.deleteLead(leadId);
+      if (success) {
+        setLeads(prev => prev.filter(lead => lead.id !== leadId));
+      }
+    } catch (error) {
+      console.error('Erro ao excluir lead:', error);
+      toast.error('Erro ao excluir lead');
+    }
   };
 
   useEffect(() => {
     const loadData = async () => {
-      if (!company?.id) return;
-
       setLoading(true);
-      setError(null);
-
-      try {
-        await Promise.all([fetchStages(), fetchLeads()]);
-      } catch (err) {
-        console.error('Erro ao carregar dados:', err);
-      } finally {
-        setLoading(false);
-      }
+      await fetchStages();
+      await fetchLeads();
+      setLoading(false);
     };
 
     loadData();
-  }, [company]);
-
-  const getLeadsByStage = (stageName: string) => {
-    return leads.filter(lead => lead.stage === stageName);
-  };
-
-  const getStageMetrics = () => {
-    return stages.map(stage => {
-      const stageLeads = getLeadsByStage(stage.name);
-      const totalValue = stageLeads.reduce((sum, lead) => sum + (lead.value || 0), 0);
-      
-      return {
-        ...stage,
-        count: stageLeads.length,
-        totalValue,
-        leads: stageLeads
-      };
-    });
-  };
+  }, [company?.id]);
 
   return {
-    leads,
     stages,
+    leads,
     loading,
-    error,
-    createLead,
-    updateLead,
-    deleteLead,
     moveLeadToStage,
-    getLeadsByStage,
-    getStageMetrics,
-    refetch: () => Promise.all([fetchStages(), fetchLeads()])
+    deleteLead,
+    refetch: () => {
+      fetchStages();
+      fetchLeads();
+    }
   };
 };

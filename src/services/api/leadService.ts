@@ -13,7 +13,19 @@ export const leadService = {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data || [];
+      
+      // Validate and transform data to ensure proper types
+      const validatedData = (data || []).map(lead => ({
+        ...lead,
+        priority: (['high', 'medium', 'low'].includes(lead.priority) 
+          ? lead.priority 
+          : 'medium') as 'high' | 'medium' | 'low',
+        status: (['new', 'contacted', 'qualified', 'proposal', 'negotiation', 'won', 'lost'].includes(lead.status) 
+          ? lead.status 
+          : 'new') as 'new' | 'contacted' | 'qualified' | 'proposal' | 'negotiation' | 'won' | 'lost'
+      })) as Lead[];
+
+      return validatedData;
     } catch (error) {
       console.error("Erro ao buscar leads:", error);
       toast.error("Erro ao carregar leads");
@@ -30,7 +42,21 @@ export const leadService = {
         .maybeSingle();
 
       if (error) throw error;
-      return data;
+      
+      if (!data) return null;
+
+      // Validate and transform data
+      const validatedData = {
+        ...data,
+        priority: (['high', 'medium', 'low'].includes(data.priority) 
+          ? data.priority 
+          : 'medium') as 'high' | 'medium' | 'low',
+        status: (['new', 'contacted', 'qualified', 'proposal', 'negotiation', 'won', 'lost'].includes(data.status) 
+          ? data.status 
+          : 'new') as 'new' | 'contacted' | 'qualified' | 'proposal' | 'negotiation' | 'won' | 'lost'
+      } as Lead;
+
+      return validatedData;
     } catch (error) {
       console.error("Erro ao buscar lead:", error);
       toast.error("Erro ao carregar dados do lead");
@@ -47,8 +73,20 @@ export const leadService = {
         .maybeSingle();
 
       if (error) throw error;
+      if (!data) return null;
+
+      const validatedData = {
+        ...data,
+        priority: (['high', 'medium', 'low'].includes(data.priority) 
+          ? data.priority 
+          : 'medium') as 'high' | 'medium' | 'low',
+        status: (['new', 'contacted', 'qualified', 'proposal', 'negotiation', 'won', 'lost'].includes(data.status) 
+          ? data.status 
+          : 'new') as 'new' | 'contacted' | 'qualified' | 'proposal' | 'negotiation' | 'won' | 'lost'
+      } as Lead;
+
       toast.success("Lead criado com sucesso");
-      return data;
+      return validatedData;
     } catch (error) {
       console.error("Erro ao criar lead:", error);
       toast.error("Erro ao criar lead");
@@ -66,8 +104,20 @@ export const leadService = {
         .maybeSingle();
 
       if (error) throw error;
+      if (!data) return null;
+
+      const validatedData = {
+        ...data,
+        priority: (['high', 'medium', 'low'].includes(data.priority) 
+          ? data.priority 
+          : 'medium') as 'high' | 'medium' | 'low',
+        status: (['new', 'contacted', 'qualified', 'proposal', 'negotiation', 'won', 'lost'].includes(data.status) 
+          ? data.status 
+          : 'new') as 'new' | 'contacted' | 'qualified' | 'proposal' | 'negotiation' | 'won' | 'lost'
+      } as Lead;
+
       toast.success("Lead atualizado com sucesso");
-      return data;
+      return validatedData;
     } catch (error) {
       console.error("Erro ao atualizar lead:", error);
       toast.error("Erro ao atualizar lead");

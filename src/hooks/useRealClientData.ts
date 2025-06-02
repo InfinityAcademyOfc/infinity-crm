@@ -43,7 +43,15 @@ export const useRealClientData = () => {
         return;
       }
 
-      setClients(data || []);
+      // Type assertion with validation for status
+      const validatedData = (data || []).map(client => ({
+        ...client,
+        status: (['active', 'inactive', 'prospect'].includes(client.status) 
+          ? client.status 
+          : 'active') as 'active' | 'inactive' | 'prospect'
+      })) as Client[];
+
+      setClients(validatedData);
     } catch (error) {
       console.error('Erro ao buscar clientes:', error);
       toast.error('Erro ao carregar clientes');
@@ -76,9 +84,16 @@ export const useRealClientData = () => {
         return;
       }
 
-      setClients(prev => [data, ...prev]);
+      const validatedData = {
+        ...data,
+        status: (['active', 'inactive', 'prospect'].includes(data.status) 
+          ? data.status 
+          : 'active') as 'active' | 'inactive' | 'prospect'
+      } as Client;
+
+      setClients(prev => [validatedData, ...prev]);
       toast.success('Cliente criado com sucesso!');
-      return data;
+      return validatedData;
     } catch (error) {
       console.error('Erro ao criar cliente:', error);
       toast.error('Erro ao criar cliente');
@@ -100,11 +115,18 @@ export const useRealClientData = () => {
         return;
       }
 
+      const validatedData = {
+        ...data,
+        status: (['active', 'inactive', 'prospect'].includes(data.status) 
+          ? data.status 
+          : 'active') as 'active' | 'inactive' | 'prospect'
+      } as Client;
+
       setClients(prev => prev.map(client => 
-        client.id === id ? data : client
+        client.id === id ? validatedData : client
       ));
       toast.success('Cliente atualizado com sucesso!');
-      return data;
+      return validatedData;
     } catch (error) {
       console.error('Erro ao atualizar cliente:', error);
       toast.error('Erro ao atualizar cliente');
