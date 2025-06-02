@@ -73,94 +73,69 @@ export const useProductionWorkspace = () => {
   };
 
   const createProject = async (projectData: Omit<ProductionProject, 'id' | 'company_id' | 'created_at' | 'updated_at'>) => {
-    if (!company?.id || !user?.id) {
-      toast.error('Empresa ou usuário não encontrado');
-      return;
-    }
+    if (!company?.id || !user?.id) return null;
 
     setIsCreating(true);
     try {
       const { data, error } = await supabase
         .from('production_projects')
-        .insert([
-          {
-            ...projectData,
-            company_id: company.id,
-            created_by: user.id
-          }
-        ])
+        .insert([{
+          ...projectData,
+          company_id: company.id,
+          created_by: user.id
+        }])
         .select()
         .single();
 
-      if (error) {
-        console.error('Erro ao criar projeto:', error);
-        toast.error('Erro ao criar projeto');
-        return;
-      }
+      if (error) throw error;
 
-      const validatedData = {
+      const newProject = {
         ...data,
-        type: (['document', 'mindmap', 'kanban', 'presentation'].includes(data.type) 
-          ? data.type 
-          : 'document') as 'document' | 'mindmap' | 'kanban' | 'presentation',
-        status: (['draft', 'in_progress', 'review', 'completed'].includes(data.status) 
-          ? data.status 
-          : 'draft') as 'draft' | 'in_progress' | 'review' | 'completed',
-        collaborators: data.collaborators || [],
-        created_by: data.created_by || user.id
+        type: data.type as 'document' | 'mindmap' | 'kanban' | 'presentation',
+        status: data.status as 'draft' | 'in_progress' | 'review' | 'completed',
+        collaborators: data.collaborators || []
       } as ProductionProject;
 
-      setProjects(prev => [validatedData, ...prev]);
+      setProjects(prev => [newProject, ...prev]);
       toast.success('Projeto criado com sucesso!');
-      return validatedData;
+      return newProject;
     } catch (error) {
       console.error('Erro ao criar projeto:', error);
       toast.error('Erro ao criar projeto');
+      return null;
     } finally {
       setIsCreating(false);
     }
   };
 
-  const updateProject = async (id: string, projectData: Partial<ProductionProject>) => {
+  const updateProject = async (id: string, updates: Partial<ProductionProject>) => {
     try {
       const { data, error } = await supabase
         .from('production_projects')
-        .update(projectData)
+        .update(updates)
         .eq('id', id)
         .select()
         .single();
 
-      if (error) {
-        console.error('Erro ao atualizar projeto:', error);
-        toast.error('Erro ao atualizar projeto');
-        return;
-      }
+      if (error) throw error;
 
-      const validatedData = {
+      const updatedProject = {
         ...data,
-        type: (['document', 'mindmap', 'kanban', 'presentation'].includes(data.type) 
-          ? data.type 
-          : 'document') as 'document' | 'mindmap' | 'kanban' | 'presentation',
-        status: (['draft', 'in_progress', 'review', 'completed'].includes(data.status) 
-          ? data.status 
-          : 'draft') as 'draft' | 'in_progress' | 'review' | 'completed',
-        collaborators: data.collaborators || [],
-        created_by: data.created_by || user?.id || ''
+        type: data.type as 'document' | 'mindmap' | 'kanban' | 'presentation',
+        status: data.status as 'draft' | 'in_progress' | 'review' | 'completed',
+        collaborators: data.collaborators || []
       } as ProductionProject;
 
-      setProjects(prev => prev.map(project => 
-        project.id === id ? validatedData : project
-      ));
-      
+      setProjects(prev => prev.map(p => p.id === id ? updatedProject : p));
       if (activeProject?.id === id) {
-        setActiveProject(validatedData);
+        setActiveProject(updatedProject);
       }
-      
       toast.success('Projeto atualizado com sucesso!');
-      return validatedData;
+      return updatedProject;
     } catch (error) {
       console.error('Erro ao atualizar projeto:', error);
       toast.error('Erro ao atualizar projeto');
+      return null;
     }
   };
 
@@ -171,36 +146,22 @@ export const useProductionWorkspace = () => {
         .delete()
         .eq('id', id);
 
-      if (error) {
-        console.error('Erro ao deletar projeto:', error);
-        toast.error('Erro ao deletar projeto');
-        return;
-      }
+      if (error) throw error;
 
-      setProjects(prev => prev.filter(project => project.id !== id));
-      
+      setProjects(prev => prev.filter(p => p.id !== id));
       if (activeProject?.id === id) {
         setActiveProject(null);
       }
-      
-      toast.success('Projeto removido com sucesso!');
+      toast.success('Projeto excluído com sucesso!');
     } catch (error) {
-      console.error('Erro ao deletar projeto:', error);
-      toast.error('Erro ao deletar projeto');
-    }
-  };
-
-  const autoSave = async (projectId: string, data: any) => {
-    try {
-      await updateProject(projectId, { data });
-    } catch (error) {
-      console.error('Erro no auto-save:', error);
+      console.error('Erro ao excluir projeto:', error);
+      toast.error('Erro ao excluir projeto');
     }
   };
 
   useEffect(() => {
     fetchProjects();
-  }, [company?.id]);
+  }, [company]);
 
   return {
     projects,
@@ -211,7 +172,6 @@ export const useProductionWorkspace = () => {
     createProject,
     updateProject,
     deleteProject,
-    autoSave,
     refetch: fetchProjects
   };
 };

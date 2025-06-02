@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
+import { registerUser } from '@/lib/registerUser';
 
 interface Company {
   id: string;
@@ -29,7 +30,7 @@ interface AuthContextType {
   isCompanyAccount: boolean;
   companyProfile: Company | null;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, userData: any) => Promise<void>;
+  signUp: (email: string, password: string, name: string, isCompany: boolean) => Promise<{ user: User; companyId?: string }>;
   signOut: () => Promise<void>;
 }
 
@@ -131,15 +132,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (error) throw error;
   };
 
-  const signUp = async (email: string, password: string, userData: any) => {
-    const { error } = await supabase.auth.signUp({
+  const signUp = async (email: string, password: string, name: string, isCompany: boolean) => {
+    const result = await registerUser({
       email,
       password,
-      options: {
-        data: userData,
-      },
+      name,
+      isCompany
     });
-    if (error) throw error;
+    return {
+      user: result.user,
+      companyId: result.companyId
+    };
   };
 
   const signOut = async () => {

@@ -1,111 +1,51 @@
 
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import KanbanBoard from '@/components/kanban/KanbanBoard';
-import { KanbanColumnItem, KanbanCardItem } from '@/components/kanban/types';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Plus, Filter, TrendingUp } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Plus, Filter, TrendingUp, MoreHorizontal, Phone, Mail } from 'lucide-react';
+import { useRealSalesFunnel } from '@/hooks/useRealSalesFunnel';
+import { NewSalesLeadDialog } from './NewSalesLeadDialog';
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from '@/components/ui/dropdown-menu';
 
 interface SalesFunnelBoardProps {
   className?: string;
 }
 
-const initialColumns: KanbanColumnItem[] = [
-  {
-    id: 'prospects',
-    title: 'Prospects',
-    color: '#ef4444',
-    cards: [
-      {
-        id: 'prospect-1',
-        title: 'João Silva',
-        description: 'Interessado em consultoria empresarial',
-        priority: 'high',
-        value: 15000,
-        dueDate: '2024-12-30',
-        tags: [
-          { label: 'Quente', color: '#ef4444' },
-          { label: 'Consultoria', color: '#3b82f6' }
-        ],
-        assignedTo: {
-          id: '1',
-          name: 'Carlos Santos',
-          avatar: '/placeholder.svg'
-        }
-      }
-    ]
-  },
-  {
-    id: 'qualified',
-    title: 'Qualificados',
-    color: '#f59e0b',
-    cards: [
-      {
-        id: 'qualified-1',
-        title: 'Maria Oliveira',
-        description: 'Orçamento aprovado, aguardando contrato',
-        priority: 'medium',
-        value: 25000,
-        dueDate: '2024-12-25',
-        tags: [
-          { label: 'Aprovado', color: '#10b981' },
-          { label: 'Contrato', color: '#8b5cf6' }
-        ]
-      }
-    ]
-  },
-  {
-    id: 'proposal',
-    title: 'Proposta',
-    color: '#3b82f6',
-    cards: []
-  },
-  {
-    id: 'negotiation',
-    title: 'Negociação',
-    color: '#8b5cf6',
-    cards: []
-  },
-  {
-    id: 'closed-won',
-    title: 'Fechado - Ganho',
-    color: '#10b981',
-    cards: []
-  },
-  {
-    id: 'closed-lost',
-    title: 'Fechado - Perdido',
-    color: '#6b7280',
-    cards: []
-  }
-];
-
 const SalesFunnelBoard: React.FC<SalesFunnelBoardProps> = ({ className }) => {
-  const [columns, setColumns] = useState<KanbanColumnItem[]>(initialColumns);
+  const { stages, leads, loading, moveLeadToStage, deleteLead } = useRealSalesFunnel();
+  const [showNewLeadDialog, setShowNewLeadDialog] = useState(false);
 
-  const handleAddCard = (columnId: string) => {
-    const newCard: KanbanCardItem = {
-      id: `card-${Date.now()}`,
-      title: 'Novo Lead',
-      description: 'Descrição do lead',
-      priority: 'medium',
-      value: 0,
-      tags: []
-    };
-
-    setColumns(prev => prev.map(col => 
-      col.id === columnId 
-        ? { ...col, cards: [...col.cards, newCard] }
-        : col
-    ));
+  const getLeadsByStage = (stageName: string) => {
+    return leads.filter(lead => lead.stage === stageName || lead.stage.toLowerCase() === stageName.toLowerCase());
   };
 
-  const totalValue = columns.reduce((sum, col) => 
-    sum + col.cards.reduce((cardSum, card) => cardSum + (card.value || 0), 0), 0
-  );
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'high': return 'bg-red-100 text-red-800';
+      case 'medium': return 'bg-yellow-100 text-yellow-800';
+      case 'low': return 'bg-green-100 text-green-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
 
-  const totalLeads = columns.reduce((sum, col) => sum + col.cards.length, 0);
+  const totalValue = leads.reduce((sum, lead) => sum + (lead.value || 0), 0);
+  const totalLeads = leads.length;
+  const wonLeads = leads.filter(lead => lead.stage.toLowerCase().includes('ganho') || lead.stage.toLowerCase().includes('won')).length;
+  const conversionRate = totalLeads > 0 ? Math.round((wonLeads / totalLeads) * 100) : 0;
+
+  if (loading) {
+    return (
+      <div className={`flex items-center justify-center h-64 ${className}`}>
+        <div className="text-lg">Carregando funil de vendas...</div>
+      </div>
+    );
+  }
 
   return (
     <div className={`space-y-6 ${className}`}>
@@ -121,7 +61,7 @@ const SalesFunnelBoard: React.FC<SalesFunnelBoardProps> = ({ className }) => {
                 <Filter className="h-4 w-4 mr-2" />
                 Filtros
               </Button>
-              <Button size="sm" onClick={() => handleAddCard('prospects')}>
+              <Button size="sm" onClick={() => setShowNewLeadDialog(true)}>
                 <Plus className="h-4 w-4 mr-2" />
                 Novo Lead
               </Button>
@@ -141,22 +81,124 @@ const SalesFunnelBoard: React.FC<SalesFunnelBoardProps> = ({ className }) => {
               <div className="text-sm text-muted-foreground">Valor Total</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">
-                {totalLeads > 0 ? Math.round((columns.find(c => c.id === 'closed-won')?.cards.length || 0) / totalLeads * 100) : 0}%
-              </div>
+              <div className="text-2xl font-bold text-blue-600">{conversionRate}%</div>
               <div className="text-sm text-muted-foreground">Taxa de Conversão</div>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <div className="min-h-[600px]">
-        <KanbanBoard 
-          columns={columns}
-          setColumns={setColumns}
-          onAddCard={handleAddCard}
-        />
+      {/* Kanban Board */}
+      <div className="overflow-x-auto">
+        <div className="flex gap-6 min-w-max pb-4">
+          {stages.map((stage) => {
+            const stageLeads = getLeadsByStage(stage.name);
+            const stageValue = stageLeads.reduce((sum, lead) => sum + (lead.value || 0), 0);
+
+            return (
+              <div key={stage.id} className="flex-shrink-0 w-80">
+                <div className="bg-white rounded-lg border shadow-sm">
+                  <div 
+                    className="p-4 rounded-t-lg text-white font-medium"
+                    style={{ backgroundColor: stage.color }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span>{stage.name}</span>
+                      <span className="text-sm opacity-90">
+                        {stageLeads.length}
+                      </span>
+                    </div>
+                    <div className="text-xs opacity-75 mt-1">
+                      R$ {stageValue.toLocaleString('pt-BR')}
+                    </div>
+                  </div>
+                  
+                  <div className="p-4 space-y-3 max-h-96 overflow-y-auto">
+                    {stageLeads.map((lead) => (
+                      <div
+                        key={lead.id}
+                        className="bg-gray-50 p-3 rounded-lg border hover:shadow-md transition-shadow cursor-move"
+                      >
+                        <div className="flex items-start justify-between mb-2">
+                          <h4 className="font-medium text-sm">{lead.name}</h4>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-6 w-6">
+                                <MoreHorizontal className="h-3 w-3" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem>
+                                <Mail className="h-4 w-4 mr-2" />
+                                Enviar Email
+                              </DropdownMenuItem>
+                              <DropdownMenuItem>
+                                <Phone className="h-4 w-4 mr-2" />
+                                Ligar
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                onClick={() => deleteLead(lead.id)}
+                                className="text-red-600"
+                              >
+                                Excluir
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                        
+                        {lead.description && (
+                          <p className="text-xs text-gray-600 mb-2 line-clamp-2">
+                            {lead.description}
+                          </p>
+                        )}
+                        
+                        <div className="flex items-center justify-between">
+                          <Badge variant="outline" className={getPriorityColor(lead.priority)}>
+                            {lead.priority === 'high' ? 'Alta' : 
+                             lead.priority === 'medium' ? 'Média' : 'Baixa'}
+                          </Badge>
+                          <span className="text-sm font-medium text-green-600">
+                            R$ {(lead.value || 0).toLocaleString('pt-BR')}
+                          </span>
+                        </div>
+                        
+                        {(lead.email || lead.phone) && (
+                          <div className="mt-2 space-y-1">
+                            {lead.email && (
+                              <div className="text-xs text-gray-500 flex items-center">
+                                <Mail className="h-3 w-3 mr-1" />
+                                {lead.email}
+                              </div>
+                            )}
+                            {lead.phone && (
+                              <div className="text-xs text-gray-500 flex items-center">
+                                <Phone className="h-3 w-3 mr-1" />
+                                {lead.phone}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                    
+                    {stageLeads.length === 0 && (
+                      <div className="text-center text-gray-400 text-sm py-8">
+                        Nenhum lead neste estágio
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
+
+      <NewSalesLeadDialog
+        open={showNewLeadDialog}
+        onOpenChange={setShowNewLeadDialog}
+        onSuccess={() => setShowNewLeadDialog(false)}
+      />
     </div>
   );
 };

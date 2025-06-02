@@ -22,14 +22,13 @@ export const loginUser = async (email: string, password: string) => {
 export const registerUserWithAuth = async (
   email: string,
   password: string,
-  name: string,
-  isCompany: boolean
+  name: string
 ) => {
   return await registerUser({
     email,
     password,
     name,
-    isCompany
+    isCompany: true
   });
 };
 
