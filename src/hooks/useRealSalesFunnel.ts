@@ -121,6 +121,57 @@ export const useRealSalesFunnel = () => {
     }
   };
 
+  const createLead = async (leadData: Omit<SalesLead, 'id' | 'company_id' | 'created_at' | 'updated_at'>) => {
+    if (!company?.id) {
+      toast.error('Empresa não encontrada');
+      return null;
+    }
+
+    try {
+      const newLead = await leadService.createLead({
+        title: leadData.name,
+        name: leadData.name,
+        email: leadData.email,
+        phone: leadData.phone,
+        description: leadData.description,
+        source: leadData.source,
+        priority: leadData.priority,
+        status: 'new',
+        value: leadData.value,
+        assigned_to: leadData.assigned_to,
+        due_date: leadData.due_date,
+        company_id: company.id
+      });
+
+      if (newLead) {
+        const transformedLead: SalesLead = {
+          id: newLead.id,
+          name: newLead.name,
+          email: newLead.email,
+          phone: newLead.phone,
+          description: newLead.description,
+          source: newLead.source,
+          priority: newLead.priority,
+          stage: newLead.status,
+          value: newLead.value || 0,
+          assigned_to: newLead.assigned_to,
+          due_date: newLead.due_date,
+          company_id: newLead.company_id,
+          created_at: newLead.created_at,
+          updated_at: newLead.updated_at
+        };
+
+        setLeads(prev => [transformedLead, ...prev]);
+        return transformedLead;
+      }
+    } catch (error) {
+      console.error('Erro ao criar lead:', error);
+      toast.error('Erro ao criar lead');
+    }
+
+    return null;
+  };
+
   const moveLeadToStage = async (leadId: string, newStage: string) => {
     try {
       const updatedLead = await leadService.updateLead(leadId, { 
@@ -168,6 +219,7 @@ export const useRealSalesFunnel = () => {
     stages,
     leads,
     loading,
+    createLead,
     moveLeadToStage,
     deleteLead,
     refetch: () => {

@@ -9,7 +9,12 @@ export interface RegisterUserPayload {
   isCompany: boolean;
 }
 
-export async function registerUser({ name, email, password, isCompany }: RegisterUserPayload) {
+export interface RegisterUserResult {
+  user: any;
+  companyId?: string;
+}
+
+export async function registerUser({ name, email, password, isCompany }: RegisterUserPayload): Promise<RegisterUserResult> {
   // Validação forte para senha
   const passwordRegex =
     /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;

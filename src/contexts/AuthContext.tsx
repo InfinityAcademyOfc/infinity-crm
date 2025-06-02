@@ -15,6 +15,10 @@ interface Profile {
   email: string;
   role: string;
   company_id?: string;
+  phone?: string;
+  department?: string;
+  avatar?: string;
+  avatar_url?: string;
 }
 
 interface AuthContextType {
@@ -22,6 +26,8 @@ interface AuthContextType {
   company: Company | null;
   profile: Profile | null;
   loading: boolean;
+  isCompanyAccount: boolean;
+  companyProfile: Company | null;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, userData: any) => Promise<void>;
   signOut: () => Promise<void>;
@@ -42,6 +48,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [company, setCompany] = useState<Company | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const isCompanyAccount = user?.user_metadata?.is_company === true;
+  const companyProfile = isCompanyAccount ? company : null;
 
   const fetchUserData = async (userId: string) => {
     try {
@@ -146,6 +155,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     company,
     profile,
     loading,
+    isCompanyAccount,
+    companyProfile,
     signIn,
     signUp,
     signOut,

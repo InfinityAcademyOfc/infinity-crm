@@ -12,6 +12,17 @@ export interface ProductionProject {
   status: 'draft' | 'in_progress' | 'review' | 'completed';
   data: any;
   company_id: string;
+  created_by: string;
+  collaborators?: string[];
+  folder_id?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProductionFolder {
+  id: string;
+  name: string;
+  company_id: string;
   created_at: string;
   updated_at: string;
 }
@@ -21,7 +32,7 @@ export const useProductionWorkspace = () => {
   const [loadingProjects, setLoadingProjects] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [activeProject, setActiveProject] = useState<ProductionProject | null>(null);
-  const { company } = useAuth();
+  const { company, user } = useAuth();
 
   const fetchProjects = async () => {
     if (!company?.id) return;
@@ -39,7 +50,20 @@ export const useProductionWorkspace = () => {
         return;
       }
 
-      setProjects(data || []);
+      // Transform and validate data
+      const validatedData = (data || []).map(project => ({
+        ...project,
+        type: (['document', 'mindmap', 'kanban', 'presentation'].includes(project.type) 
+          ? project.type 
+          : 'document') as 'document' | 'mindmap' | 'kanban' | 'presentation',
+        status: (['draft', 'in_progress', 'review', 'completed'].includes(project.status) 
+          ? project.status 
+          : 'draft') as 'draft' | 'in_progress' | 'review' | 'completed',
+        collaborators: project.collaborators || [],
+        created_by: project.created_by || user?.id || ''
+      })) as ProductionProject[];
+
+      setProjects(validatedData);
     } catch (error) {
       console.error('Erro ao buscar projetos:', error);
       toast.error('Erro ao carregar projetos');
@@ -49,8 +73,8 @@ export const useProductionWorkspace = () => {
   };
 
   const createProject = async (projectData: Omit<ProductionProject, 'id' | 'company_id' | 'created_at' | 'updated_at'>) => {
-    if (!company?.id) {
-      toast.error('Empresa não encontrada');
+    if (!company?.id || !user?.id) {
+      toast.error('Empresa ou usuário não encontrado');
       return;
     }
 
@@ -61,7 +85,8 @@ export const useProductionWorkspace = () => {
         .insert([
           {
             ...projectData,
-            company_id: company.id
+            company_id: company.id,
+            created_by: user.id
           }
         ])
         .select()
@@ -73,9 +98,21 @@ export const useProductionWorkspace = () => {
         return;
       }
 
-      setProjects(prev => [data, ...prev]);
+      const validatedData = {
+        ...data,
+        type: (['document', 'mindmap', 'kanban', 'presentation'].includes(data.type) 
+          ? data.type 
+          : 'document') as 'document' | 'mindmap' | 'kanban' | 'presentation',
+        status: (['draft', 'in_progress', 'review', 'completed'].includes(data.status) 
+          ? data.status 
+          : 'draft') as 'draft' | 'in_progress' | 'review' | 'completed',
+        collaborators: data.collaborators || [],
+        created_by: data.created_by || user.id
+      } as ProductionProject;
+
+      setProjects(prev => [validatedData, ...prev]);
       toast.success('Projeto criado com sucesso!');
-      return data;
+      return validatedData;
     } catch (error) {
       console.error('Erro ao criar projeto:', error);
       toast.error('Erro ao criar projeto');
@@ -99,16 +136,28 @@ export const useProductionWorkspace = () => {
         return;
       }
 
+      const validatedData = {
+        ...data,
+        type: (['document', 'mindmap', 'kanban', 'presentation'].includes(data.type) 
+          ? data.type 
+          : 'document') as 'document' | 'mindmap' | 'kanban' | 'presentation',
+        status: (['draft', 'in_progress', 'review', 'completed'].includes(data.status) 
+          ? data.status 
+          : 'draft') as 'draft' | 'in_progress' | 'review' | 'completed',
+        collaborators: data.collaborators || [],
+        created_by: data.created_by || user?.id || ''
+      } as ProductionProject;
+
       setProjects(prev => prev.map(project => 
-        project.id === id ? data : project
+        project.id === id ? validatedData : project
       ));
       
       if (activeProject?.id === id) {
-        setActiveProject(data);
+        setActiveProject(validatedData);
       }
       
       toast.success('Projeto atualizado com sucesso!');
-      return data;
+      return validatedData;
     } catch (error) {
       console.error('Erro ao atualizar projeto:', error);
       toast.error('Erro ao atualizar projeto');
@@ -141,6 +190,14 @@ export const useProductionWorkspace = () => {
     }
   };
 
+  const autoSave = async (projectId: string, data: any) => {
+    try {
+      await updateProject(projectId, { data });
+    } catch (error) {
+      console.error('Erro no auto-save:', error);
+    }
+  };
+
   useEffect(() => {
     fetchProjects();
   }, [company?.id]);
@@ -154,6 +211,7 @@ export const useProductionWorkspace = () => {
     createProject,
     updateProject,
     deleteProject,
+    autoSave,
     refetch: fetchProjects
   };
 };
