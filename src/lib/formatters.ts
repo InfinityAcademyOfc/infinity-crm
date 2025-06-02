@@ -1,63 +1,50 @@
 
-export const formatCurrency = (value: number): string => {
+export const formatCurrency = (value: number, currency: string = 'BRL'): string => {
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
-    currency: 'BRL',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0
+    currency: currency,
   }).format(value);
 };
 
+export const formatNumber = (value: number): string => {
+  return new Intl.NumberFormat('pt-BR').format(value);
+};
+
 export const formatDate = (date: string | Date): string => {
-  if (!date) return '';
-  const d = new Date(date);
-  return new Intl.DateTimeFormat('pt-BR').format(d);
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  return new Intl.DateTimeFormat('pt-BR').format(dateObj);
 };
 
 export const formatDateTime = (date: string | Date): string => {
-  if (!date) return '';
-  const d = new Date(date);
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
   return new Intl.DateTimeFormat('pt-BR', {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
     hour: '2-digit',
-    minute: '2-digit'
-  }).format(d);
+    minute: '2-digit',
+  }).format(dateObj);
 };
 
-export const formatPhoneNumber = (phoneNumber: string): string => {
-  if (!phoneNumber) return '';
-  // Format as (XX) XXXXX-XXXX
-  const cleaned = phoneNumber.replace(/\D/g, '');
-  const match = cleaned.match(/^(\d{2})(\d{5})(\d{4})$/);
-  if (match) {
-    return `(${match[1]}) ${match[2]}-${match[3]}`;
-  }
-  return phoneNumber;
+export const formatPercentage = (value: number, decimals: number = 1): string => {
+  return `${value.toFixed(decimals)}%`;
 };
 
-export const formatCpfCnpj = (value: string): string => {
-  if (!value) return '';
-  const cleaned = value.replace(/\D/g, '');
+export const formatPhoneNumber = (phone: string): string => {
+  // Remove non-numeric characters
+  const cleaned = phone.replace(/\D/g, '');
   
+  // Check if it's a valid Brazilian phone number
   if (cleaned.length === 11) {
-    // CPF: XXX.XXX.XXX-XX
-    return cleaned.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
-  } else if (cleaned.length === 14) {
-    // CNPJ: XX.XXX.XXX/XXXX-XX
-    return cleaned.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+    return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(7)}`;
+  } else if (cleaned.length === 10) {
+    return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 6)}-${cleaned.slice(6)}`;
   }
   
-  return value;
+  return phone;
 };
 
-export const getInitials = (name: string): string => {
-  if (!name) return '';
-  return name
-    .split(' ')
-    .map(n => n[0])
-    .join('')
-    .toUpperCase()
-    .substring(0, 2);
+export const truncateText = (text: string, maxLength: number): string => {
+  if (text.length <= maxLength) return text;
+  return text.slice(0, maxLength) + '...';
 };
