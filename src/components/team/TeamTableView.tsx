@@ -79,7 +79,7 @@ export const TeamTableView = ({ members, onDeleteMember }: TeamTableViewProps) =
                 <TableCell>
                   <div className="flex items-center gap-3">
                     <Avatar>
-                      <AvatarImage src={member.avatar} alt={member.name} />
+                      <AvatarImage src={member.avatar || undefined} alt={member.name} />
                       <AvatarFallback>{getInitials(member.name)}</AvatarFallback>
                     </Avatar>
                     <div>
@@ -99,10 +99,12 @@ export const TeamTableView = ({ members, onDeleteMember }: TeamTableViewProps) =
                     <Mail size={14} className="text-muted-foreground" />
                     <span>{member.email}</span>
                   </div>
-                  <div className="flex items-center gap-1 text-sm mt-1">
-                    <Phone size={14} className="text-muted-foreground" />
-                    <span>{member.phone}</span>
-                  </div>
+                  {member.phone && (
+                    <div className="flex items-center gap-1 text-sm mt-1">
+                      <Phone size={14} className="text-muted-foreground" />
+                      <span>{member.phone}</span>
+                    </div>
+                  )}
                 </TableCell>
                 <TableCell>
                   <div className="space-y-1">
@@ -111,7 +113,7 @@ export const TeamTableView = ({ members, onDeleteMember }: TeamTableViewProps) =
                       <span className="font-medium">{member.tasksCompleted}/{member.tasksAssigned}</span>
                     </div>
                     <Progress 
-                      value={(member.tasksCompleted / member.tasksAssigned) * 100} 
+                      value={member.tasksAssigned > 0 ? (member.tasksCompleted / member.tasksAssigned) * 100 : 0} 
                       className="h-2"
                     />
                   </div>

@@ -44,16 +44,24 @@ export const useRealSalesFunnel = () => {
         .from('funnel_stages')
         .select('*')
         .eq('company_id', company.id)
-        .order('order', { ascending: true });
+        .order('order_index', { ascending: true });
 
       if (error) {
         console.error('Erro ao buscar estágios:', error);
-        // Create default stages if none exist
         await createDefaultStages();
         return;
       }
 
-      setStages(data || []);
+      // Transform data to match FunnelStage interface
+      const transformedStages: FunnelStage[] = (data || []).map(stage => ({
+        id: stage.id,
+        name: stage.name,
+        color: stage.color,
+        order: stage.order_index,
+        company_id: stage.company_id
+      }));
+
+      setStages(transformedStages);
     } catch (error) {
       console.error('Erro ao buscar estágios:', error);
       await createDefaultStages();
@@ -64,12 +72,12 @@ export const useRealSalesFunnel = () => {
     if (!company?.id) return;
 
     const defaultStages = [
-      { name: 'Prospects', color: '#ef4444', order: 1 },
-      { name: 'Qualificados', color: '#f59e0b', order: 2 },
-      { name: 'Proposta', color: '#3b82f6', order: 3 },
-      { name: 'Negociação', color: '#8b5cf6', order: 4 },
-      { name: 'Fechado - Ganho', color: '#10b981', order: 5 },
-      { name: 'Fechado - Perdido', color: '#6b7280', order: 6 }
+      { name: 'Prospects', color: '#ef4444', order_index: 1 },
+      { name: 'Qualificados', color: '#f59e0b', order_index: 2 },
+      { name: 'Proposta', color: '#3b82f6', order_index: 3 },
+      { name: 'Negociação', color: '#8b5cf6', order_index: 4 },
+      { name: 'Fechado - Ganho', color: '#10b981', order_index: 5 },
+      { name: 'Fechado - Perdido', color: '#6b7280', order_index: 6 }
     ];
 
     try {
@@ -86,7 +94,16 @@ export const useRealSalesFunnel = () => {
         return;
       }
 
-      setStages(data || []);
+      // Transform data to match FunnelStage interface
+      const transformedStages: FunnelStage[] = (data || []).map(stage => ({
+        id: stage.id,
+        name: stage.name,
+        color: stage.color,
+        order: stage.order_index,
+        company_id: stage.company_id
+      }));
+
+      setStages(transformedStages);
     } catch (error) {
       console.error('Erro ao criar estágios padrão:', error);
     }
@@ -105,7 +122,7 @@ export const useRealSalesFunnel = () => {
         description: lead.description,
         source: lead.source,
         priority: lead.priority,
-        stage: lead.status, // Map status to stage
+        stage: lead.status,
         value: lead.value || 0,
         assigned_to: lead.assigned_to,
         due_date: lead.due_date,

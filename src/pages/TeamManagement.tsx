@@ -17,7 +17,7 @@ import { TeamMember } from "@/types/team";
 import TeamMemberFormDialog from "@/components/forms/TeamMemberFormDialog";
 
 const TeamManagement = () => {
-  const { teamMembers, loading, createTeamMember, updateTeamMember, deleteTeamMember } = useTeamMembers();
+  const { teamMembers, loading, updateTeamMember, deleteTeamMember } = useTeamMembers();
   const [searchTerm, setSearchTerm] = useState("");
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [selectedDepartment, setSelectedDepartment] = useState<string>("all");
@@ -40,13 +40,6 @@ const TeamManagement = () => {
   const totalMembers = teamMembers.length;
   const activeMembers = teamMembers.filter(m => m.status === 'active').length;
   const departmentCount = new Set(teamMembers.map(m => m.department).filter(Boolean)).size;
-
-  // Convert useTeamMembers.TeamMember to TeamMember type with additional properties
-  const enrichedMembers: TeamMember[] = filteredMembers.map(member => ({
-    ...member,
-    tasksAssigned: Math.floor(Math.random() * 10) + 1, // Mock data
-    tasksCompleted: Math.floor(Math.random() * 8) + 1, // Mock data
-  }));
 
   if (loading) {
     return (
@@ -97,7 +90,7 @@ const TeamManagement = () => {
           <CardContent>
             <div className="text-2xl font-bold">{activeMembers}</div>
             <p className="text-xs text-muted-foreground">
-              {Math.round((activeMembers / totalMembers) * 100)}% do total
+              {totalMembers > 0 ? Math.round((activeMembers / totalMembers) * 100) : 0}% do total
             </p>
           </CardContent>
         </Card>
@@ -142,7 +135,7 @@ const TeamManagement = () => {
 
       {/* Team Members Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {enrichedMembers.map((member) => (
+        {filteredMembers.map((member) => (
           <Card key={member.id} className="hover:shadow-md transition-shadow">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
@@ -167,7 +160,10 @@ const TeamManagement = () => {
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem>Editar</DropdownMenuItem>
                     <DropdownMenuItem>Ver Detalhes</DropdownMenuItem>
-                    <DropdownMenuItem className="text-red-600">
+                    <DropdownMenuItem 
+                      className="text-red-600"
+                      onClick={() => deleteTeamMember(member.id)}
+                    >
                       Remover
                     </DropdownMenuItem>
                   </DropdownMenuContent>
