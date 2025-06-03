@@ -7,11 +7,11 @@ import { toast } from 'sonner';
 export interface Meeting {
   id: string;
   title: string;
-  description: string | null;
+  description?: string;
   date: string;
   time: string;
-  status: string;
   participants: number;
+  status: string;
   company_id: string;
   created_at: string;
   updated_at: string;
@@ -31,7 +31,7 @@ export const useMeetings = () => {
         .from('meetings')
         .select('*')
         .eq('company_id', company.id)
-        .order('date', { ascending: true });
+        .order('date', { ascending: false });
 
       if (error) throw error;
       setMeetings(data || []);
@@ -43,14 +43,14 @@ export const useMeetings = () => {
     }
   };
 
-  const createMeeting = async (meeting: Omit<Meeting, 'id' | 'created_at' | 'updated_at' | 'company_id'>) => {
+  const createMeeting = async (meetingData: Omit<Meeting, 'id' | 'created_at' | 'updated_at' | 'company_id'>) => {
     if (!company?.id) return;
 
     try {
       const { data, error } = await supabase
         .from('meetings')
         .insert([{
-          ...meeting,
+          ...meetingData,
           company_id: company.id
         }])
         .select()
@@ -58,7 +58,7 @@ export const useMeetings = () => {
 
       if (error) throw error;
       
-      setMeetings(prev => [...prev, data].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
+      setMeetings(prev => [data, ...prev]);
       toast.success('Reunião criada com sucesso!');
       return data;
     } catch (error) {
@@ -79,7 +79,7 @@ export const useMeetings = () => {
 
       if (error) throw error;
       
-      setMeetings(prev => prev.map(m => m.id === id ? data : m));
+      setMeetings(prev => prev.map(meeting => meeting.id === id ? data : meeting));
       toast.success('Reunião atualizada com sucesso!');
       return data;
     } catch (error) {
@@ -98,12 +98,11 @@ export const useMeetings = () => {
 
       if (error) throw error;
       
-      setMeetings(prev => prev.filter(m => m.id !== id));
+      setMeetings(prev => prev.filter(meeting => meeting.id !== id));
       toast.success('Reunião excluída com sucesso!');
     } catch (error) {
       console.error('Erro ao excluir reunião:', error);
       toast.error('Erro ao excluir reunião');
-      throw error;
     }
   };
 

@@ -4,24 +4,24 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
-export interface FinancialTransaction {
+export interface Transaction {
   id: string;
-  type: string;
+  type: 'income' | 'expense';
   amount: number;
   description: string;
-  category: string | null;
+  category?: string;
   date: string;
   status: string;
+  reference_id?: string;
   company_id: string;
-  created_by: string | null;
-  reference_id: string | null;
+  created_by?: string;
   created_at: string;
   updated_at: string;
 }
 
 export const useFinancialData = () => {
   const { company } = useAuth();
-  const [transactions, setTransactions] = useState<FinancialTransaction[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchTransactions = async () => {
@@ -45,14 +45,14 @@ export const useFinancialData = () => {
     }
   };
 
-  const createTransaction = async (transaction: Omit<FinancialTransaction, 'id' | 'created_at' | 'updated_at' | 'company_id'>) => {
+  const createTransaction = async (transactionData: Omit<Transaction, 'id' | 'created_at' | 'updated_at' | 'company_id'>) => {
     if (!company?.id) return;
 
     try {
       const { data, error } = await supabase
         .from('financial_transactions')
         .insert([{
-          ...transaction,
+          ...transactionData,
           company_id: company.id
         }])
         .select()
@@ -70,7 +70,7 @@ export const useFinancialData = () => {
     }
   };
 
-  const updateTransaction = async (id: string, updates: Partial<FinancialTransaction>) => {
+  const updateTransaction = async (id: string, updates: Partial<Transaction>) => {
     try {
       const { data, error } = await supabase
         .from('financial_transactions')
@@ -81,7 +81,7 @@ export const useFinancialData = () => {
 
       if (error) throw error;
       
-      setTransactions(prev => prev.map(t => t.id === id ? data : t));
+      setTransactions(prev => prev.map(transaction => transaction.id === id ? data : transaction));
       toast.success('Transação atualizada com sucesso!');
       return data;
     } catch (error) {
@@ -100,12 +100,11 @@ export const useFinancialData = () => {
 
       if (error) throw error;
       
-      setTransactions(prev => prev.filter(t => t.id !== id));
+      setTransactions(prev => prev.filter(transaction => transaction.id !== id));
       toast.success('Transação excluída com sucesso!');
     } catch (error) {
       console.error('Erro ao excluir transação:', error);
       toast.error('Erro ao excluir transação');
-      throw error;
     }
   };
 

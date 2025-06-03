@@ -1,41 +1,26 @@
-import React, { ReactNode } from "react";
-import { Button } from "./button";
-import { cn } from "@/lib/utils";
-import { HelpCircle } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./tooltip";
+
+import React from 'react';
+
 interface SectionHeaderProps {
   title: string;
   description?: string;
-  tooltip?: string;
-  actions?: ReactNode;
-  className?: string;
+  children?: React.ReactNode;
 }
-export function SectionHeader({
-  title,
-  description,
-  tooltip,
-  actions,
-  className
-}: SectionHeaderProps) {
-  return <div className="">
-      
-      {actions && <div className="flex flex-wrap gap-2 mt-2 sm:mt-0">{actions}</div>}
-    </div>;
-}
-interface ActionButtonProps {
-  icon: ReactNode;
-  label: string;
-  onClick: () => void;
-  variant?: "default" | "outline" | "secondary";
-}
-export function ActionButton({
-  icon,
-  label,
-  onClick,
-  variant = "default"
-}: ActionButtonProps) {
-  return <Button variant={variant} onClick={onClick} className="gap-2 whitespace-nowrap">
-      {icon}
-      {label}
-    </Button>;
-}
+
+export const SectionHeader = ({ title, description, children }: SectionHeaderProps) => {
+  return (
+    <div className="flex items-center justify-between">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
+        {description && (
+          <p className="text-muted-foreground mt-2">{description}</p>
+        )}
+      </div>
+      {children && (
+        <div className="flex items-center gap-2">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+};
