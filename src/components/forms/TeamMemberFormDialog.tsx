@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -44,6 +45,7 @@ const TeamMemberFormDialog = ({ open, onOpenChange, onSuccess }: TeamMemberFormD
         role: formData.role,
         department: formData.department,
         avatar: null,
+        avatar_url: null,
         status: formData.status
       });
 

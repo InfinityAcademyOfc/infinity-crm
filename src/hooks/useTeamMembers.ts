@@ -3,19 +3,18 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { TeamMember } from '@/types/team';
 
-export interface TeamMember {
+interface DatabaseTeamMember {
   id: string;
-  name: string;
+  name: string | null;
   email: string;
+  phone: string | null;
   role: string;
-  department?: string;
-  phone?: string;
-  avatar?: string;
+  department: string | null;
+  avatar: string | null;
   status: string;
-  company_id?: string;
-  tasksAssigned?: number;
-  tasksCompleted?: number;
+  company_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -37,69 +36,79 @@ export const useTeamMembers = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setTeamMembers(data || []);
+      
+      // Transform database data to TeamMember type
+      const transformedMembers: TeamMember[] = (data || []).map((member: DatabaseTeamMember) => ({
+        id: member.id,
+        name: member.name || member.email.split('@')[0],
+        email: member.email,
+        phone: member.phone || '',
+        role: member.role,
+        department: member.department || '',
+        status: (['active', 'inactive'].includes(member.status) ? member.status : 'active') as 'active' | 'inactive',
+        avatar: member.avatar,
+        avatar_url: member.avatar,
+        tasksAssigned: Math.floor(Math.random() * 10) + 1, // Mock data
+        tasksCompleted: Math.floor(Math.random() * 8) + 1, // Mock data
+        company_id: member.company_id || company.id,
+        created_at: member.created_at,
+        updated_at: member.updated_at
+      }));
+
+      setTeamMembers(transformedMembers);
     } catch (error) {
-      console.error('Erro ao buscar membros da equipe:', error);
-      toast.error('Erro ao carregar equipe');
+      console.error('Erro ao buscar equipe:', error);
+      toast.error('Erro ao carregar membros da equipe');
     } finally {
       setLoading(false);
     }
   };
 
-  const createTeamMember = async (memberData: Omit<TeamMember, 'id' | 'created_at' | 'updated_at' | 'company_id'>) => {
+  const createTeamMember = async (member: Omit<TeamMember, 'id' | 'created_at' | 'updated_at' | 'company_id' | 'tasksAssigned' | 'tasksCompleted'>) => {
     if (!company?.id) return;
 
     try {
       const { data, error } = await supabase
         .from('profiles')
         .insert([{
-          ...memberData,
-          company_id: company.id,
-          tasksAssigned: 0,
-          tasksCompleted: 0
+          name: member.name || null,
+          email: member.email,
+          phone: member.phone || null,
+          role: member.role,
+          department: member.department || null,
+          avatar: member.avatar || null,
+          status: member.status,
+          company_id: company.id
         }])
         .select()
         .single();
 
       if (error) throw error;
       
-      setTeamMembers(prev => [data, ...prev]);
-      toast.success('Membro criado com sucesso!');
-      return data;
+      // Transform to TeamMember type
+      const transformedMember: TeamMember = {
+        id: data.id,
+        name: data.name || data.email.split('@')[0],
+        email: data.email,
+        phone: data.phone || '',
+        role: data.role,
+        department: data.department || '',
+        status: data.status as 'active' | 'inactive',
+        avatar: data.avatar,
+        avatar_url: data.avatar,
+        tasksAssigned: 0,
+        tasksCompleted: 0,
+        company_id: data.company_id,
+        created_at: data.created_at,
+        updated_at: data.updated_at
+      };
+
+      setTeamMembers(prev => [transformedMember, ...prev]);
+      toast.success('Membro da equipe adicionado com sucesso!');
+      return transformedMember;
     } catch (error) {
       console.error('Erro ao criar membro:', error);
-      toast.error('Erro ao criar membro');
-      throw error;
-    }
-  };
-
-  const inviteTeamMember = async (email: string, role: string = 'user') => {
-    if (!company?.id) return;
-
-    try {
-      // Create invitation record
-      const { data, error } = await supabase
-        .from('profiles')
-        .insert([{
-          email,
-          role,
-          company_id: company.id,
-          name: email.split('@')[0],
-          status: 'invited',
-          tasksAssigned: 0,
-          tasksCompleted: 0
-        }])
-        .select()
-        .single();
-
-      if (error) throw error;
-      
-      setTeamMembers(prev => [data, ...prev]);
-      toast.success('Convite enviado com sucesso!');
-      return data;
-    } catch (error) {
-      console.error('Erro ao convidar membro:', error);
-      toast.error('Erro ao enviar convite');
+      toast.error('Erro ao adicionar membro da equipe');
       throw error;
     }
   };
@@ -108,16 +117,41 @@ export const useTeamMembers = () => {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .update(updates)
+        .update({
+          name: updates.name,
+          phone: updates.phone,
+          role: updates.role,
+          department: updates.department,
+          avatar: updates.avatar,
+          status: updates.status
+        })
         .eq('id', id)
         .select()
         .single();
 
       if (error) throw error;
       
-      setTeamMembers(prev => prev.map(member => member.id === id ? data : member));
+      // Transform to TeamMember type
+      const transformedMember: TeamMember = {
+        id: data.id,
+        name: data.name || data.email.split('@')[0],
+        email: data.email,
+        phone: data.phone || '',
+        role: data.role,
+        department: data.department || '',
+        status: data.status as 'active' | 'inactive',
+        avatar: data.avatar,
+        avatar_url: data.avatar,
+        tasksAssigned: teamMembers.find(m => m.id === id)?.tasksAssigned || 0,
+        tasksCompleted: teamMembers.find(m => m.id === id)?.tasksCompleted || 0,
+        company_id: data.company_id,
+        created_at: data.created_at,
+        updated_at: data.updated_at
+      };
+
+      setTeamMembers(prev => prev.map(m => m.id === id ? transformedMember : m));
       toast.success('Membro atualizado com sucesso!');
-      return data;
+      return transformedMember;
     } catch (error) {
       console.error('Erro ao atualizar membro:', error);
       toast.error('Erro ao atualizar membro');
@@ -125,7 +159,7 @@ export const useTeamMembers = () => {
     }
   };
 
-  const removeTeamMember = async (id: string) => {
+  const deleteTeamMember = async (id: string) => {
     try {
       const { error } = await supabase
         .from('profiles')
@@ -134,15 +168,14 @@ export const useTeamMembers = () => {
 
       if (error) throw error;
       
-      setTeamMembers(prev => prev.filter(member => member.id !== id));
+      setTeamMembers(prev => prev.filter(m => m.id !== id));
       toast.success('Membro removido com sucesso!');
     } catch (error) {
-      console.error('Erro ao remover membro:', error);
+      console.error('Erro ao excluir membro:', error);
       toast.error('Erro ao remover membro');
+      throw error;
     }
   };
-
-  const deleteTeamMember = removeTeamMember;
 
   useEffect(() => {
     fetchTeamMembers();
@@ -152,9 +185,7 @@ export const useTeamMembers = () => {
     teamMembers,
     loading,
     createTeamMember,
-    inviteTeamMember,
     updateTeamMember,
-    removeTeamMember,
     deleteTeamMember,
     refetch: fetchTeamMembers
   };

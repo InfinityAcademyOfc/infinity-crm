@@ -1,66 +1,97 @@
 
-import React, { useState } from 'react';
-import { SectionHeader } from '@/components/ui/section-header';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { User, Shield, Zap, CreditCard, MessageSquare } from 'lucide-react';
-import ProfileSettings from '@/components/settings/ProfileSettings';
-import SecuritySettings from '@/components/settings/SecuritySettings';
-import AutomationSettings from '@/components/settings/AutomationSettings';
-import PlansSettings from '@/components/settings/PlansSettings';
-import WhatsAppSettings from '@/components/settings/WhatsAppSettings';
+import { useState } from "react";
+import { SectionHeader } from "@/components/ui/section-header";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { User, Bell, Shield, Settings as SettingsIcon, Zap, PieChart, CreditCard, MessageCircle } from "lucide-react";
+import ProfileSettings from "@/components/settings/ProfileSettings";
+import NotificationSettings from "@/components/settings/NotificationSettings";
+import SecuritySettings from "@/components/settings/SecuritySettings";
+import SystemSettings from "@/components/settings/SystemSettings";
+import AutomationSettings from "@/components/settings/AutomationSettings";
+import DashboardSettings from "@/components/settings/DashboardSettings";
+import PlansSettings from "@/components/settings/PlansSettings";
+import WhatsAppSettings from "@/components/settings/WhatsAppSettings";
 
 const Settings = () => {
-  const [activeTab, setActiveTab] = useState('profile');
+  const [activeTab, setActiveTab] = useState("profile");
 
   return (
     <div className="space-y-6">
       <SectionHeader 
         title="Configurações" 
-        description="Gerencie suas preferências e configurações do sistema"
+        description="Gerencie suas preferências e dados de perfil"
       />
       
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
+      <Tabs 
+        value={activeTab} 
+        onValueChange={setActiveTab} 
+        className="space-y-4"
+      >
+        <TabsList className="grid grid-cols-3 md:grid-cols-8 gap-1 max-w-5xl overflow-x-auto">
           <TabsTrigger value="profile" className="flex items-center gap-2">
-            <User className="h-4 w-4" />
-            Perfil
-          </TabsTrigger>
-          <TabsTrigger value="security" className="flex items-center gap-2">
-            <Shield className="h-4 w-4" />
-            Segurança
-          </TabsTrigger>
-          <TabsTrigger value="automation" className="flex items-center gap-2">
-            <Zap className="h-4 w-4" />
-            Automação
+            <User size={16} />
+            <span className="hidden sm:inline">Perfil</span>
           </TabsTrigger>
           <TabsTrigger value="plans" className="flex items-center gap-2">
-            <CreditCard className="h-4 w-4" />
-            Planos
+            <CreditCard size={16} />
+            <span className="hidden sm:inline">Planos</span>
+          </TabsTrigger>
+          <TabsTrigger value="notifications" className="flex items-center gap-2">
+            <Bell size={16} />
+            <span className="hidden sm:inline">Notificações</span>
+          </TabsTrigger>
+          <TabsTrigger value="security" className="flex items-center gap-2">
+            <Shield size={16} />
+            <span className="hidden sm:inline">Segurança</span>
+          </TabsTrigger>
+          <TabsTrigger value="automation" className="flex items-center gap-2">
+            <Zap size={16} />
+            <span className="hidden sm:inline">Automação</span>
+          </TabsTrigger>
+          <TabsTrigger value="dashboard" className="flex items-center gap-2">
+            <PieChart size={16} />
+            <span className="hidden sm:inline">Dashboard</span>
           </TabsTrigger>
           <TabsTrigger value="whatsapp" className="flex items-center gap-2">
-            <MessageSquare className="h-4 w-4" />
-            WhatsApp
+            <MessageCircle size={16} />
+            <span className="hidden sm:inline">WhatsApp</span>
+          </TabsTrigger>
+          <TabsTrigger value="system" className="flex items-center gap-2">
+            <SettingsIcon size={16} />
+            <span className="hidden sm:inline">Sistema</span>
           </TabsTrigger>
         </TabsList>
-
+        
         <TabsContent value="profile">
           <ProfileSettings />
         </TabsContent>
-
-        <TabsContent value="security">
-          <SecuritySettings />
-        </TabsContent>
-
-        <TabsContent value="automation">
-          <AutomationSettings />
-        </TabsContent>
-
+        
         <TabsContent value="plans">
           <PlansSettings />
         </TabsContent>
-
+        
+        <TabsContent value="notifications">
+          <NotificationSettings />
+        </TabsContent>
+        
+        <TabsContent value="security">
+          <SecuritySettings />
+        </TabsContent>
+        
+        <TabsContent value="automation">
+          <AutomationSettings />
+        </TabsContent>
+        
+        <TabsContent value="dashboard">
+          <DashboardSettings />
+        </TabsContent>
+        
         <TabsContent value="whatsapp">
           <WhatsAppSettings />
+        </TabsContent>
+        
+        <TabsContent value="system">
+          <SystemSettings />
         </TabsContent>
       </Tabs>
     </div>

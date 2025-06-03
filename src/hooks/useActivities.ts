@@ -8,13 +8,13 @@ export interface Activity {
   id: string;
   type: string;
   title: string;
-  description?: string;
-  related_to?: string;
-  related_id?: string;
-  priority: string;
+  description: string | null;
   status: string;
+  priority: string;
+  related_to: string | null;
+  related_id: string | null;
   company_id: string;
-  created_by?: string;
+  created_by: string | null;
   created_at: string;
 }
 
@@ -32,8 +32,7 @@ export const useActivities = () => {
         .from('activities')
         .select('*')
         .eq('company_id', company.id)
-        .order('created_at', { ascending: false })
-        .limit(50);
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
       setActivities(data || []);
@@ -45,14 +44,14 @@ export const useActivities = () => {
     }
   };
 
-  const createActivity = async (activityData: Omit<Activity, 'id' | 'created_at' | 'company_id'>) => {
+  const createActivity = async (activity: Omit<Activity, 'id' | 'created_at' | 'company_id'>) => {
     if (!company?.id) return;
 
     try {
       const { data, error } = await supabase
         .from('activities')
         .insert([{
-          ...activityData,
+          ...activity,
           company_id: company.id
         }])
         .select()
@@ -61,9 +60,50 @@ export const useActivities = () => {
       if (error) throw error;
       
       setActivities(prev => [data, ...prev]);
+      toast.success('Atividade criada com sucesso!');
       return data;
     } catch (error) {
       console.error('Erro ao criar atividade:', error);
+      toast.error('Erro ao criar atividade');
+      throw error;
+    }
+  };
+
+  const updateActivity = async (id: string, updates: Partial<Activity>) => {
+    try {
+      const { data, error } = await supabase
+        .from('activities')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      setActivities(prev => prev.map(a => a.id === id ? data : a));
+      toast.success('Atividade atualizada com sucesso!');
+      return data;
+    } catch (error) {
+      console.error('Erro ao atualizar atividade:', error);
+      toast.error('Erro ao atualizar atividade');
+      throw error;
+    }
+  };
+
+  const deleteActivity = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('activities')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      setActivities(prev => prev.filter(a => a.id !== id));
+      toast.success('Atividade excluída com sucesso!');
+    } catch (error) {
+      console.error('Erro ao excluir atividade:', error);
+      toast.error('Erro ao excluir atividade');
       throw error;
     }
   };
@@ -76,6 +116,8 @@ export const useActivities = () => {
     activities,
     loading,
     createActivity,
+    updateActivity,
+    deleteActivity,
     refetch: fetchActivities
   };
 };

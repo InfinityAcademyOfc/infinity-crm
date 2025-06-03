@@ -1,104 +1,129 @@
 
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer,
+  PieChart as RPieChart, 
+  Pie, 
+  Cell 
+} from "recharts";
+import { useEffect, useState } from "react";
 
 interface FunnelAnalyticsProps {
-  leads: any[];
-  stages: any[];
+  funnelStageData: { name: string; value: number }[];
+  valuePotentialData: { name: string; value: number }[];
 }
 
-export const FunnelAnalytics = ({ leads, stages }: FunnelAnalyticsProps) => {
-  const getStageData = () => {
-    return stages.map(stage => ({
-      name: stage.name,
-      count: leads.filter(lead => lead.stage === stage.name).length,
-      value: leads.filter(lead => lead.stage === stage.name).reduce((sum, lead) => sum + (lead.value || 0), 0)
-    }));
-  };
+const COLORS = ['#4361ee', '#7209b7', '#9d4edd', '#3a0ca3', '#4cc9f0'];
+const DARK_COLORS = ['#5D72F2', '#8E32CD', '#AE64E7', '#5C27C9', '#65D2F9'];
 
-  const conversionRate = leads.length > 0 ? 
-    Math.round((leads.filter(lead => lead.stage.toLowerCase().includes('won')).length / leads.length) * 100) : 0;
-
-  const totalValue = leads.reduce((sum, lead) => sum + (lead.value || 0), 0);
-
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
+export const FunnelAnalytics = ({ 
+  funnelStageData, 
+  valuePotentialData 
+}: FunnelAnalyticsProps) => {
+  const [isDark, setIsDark] = useState(false);
+  const [chartColors, setChartColors] = useState(COLORS);
+  
+  useEffect(() => {
+    // Check if dark mode is active
+    const checkDarkMode = () => {
+      const isDarkMode = document.documentElement.classList.contains('dark');
+      setIsDark(isDarkMode);
+      setChartColors(isDarkMode ? DARK_COLORS : COLORS);
+    };
+    
+    // Check initial state
+    checkDarkMode();
+    
+    // Create a mutation observer to detect class changes on document.documentElement
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName === 'class') {
+          checkDarkMode();
+        }
+      });
+    });
+    
+    // Start observing document.documentElement for class changes
+    observer.observe(document.documentElement, { attributes: true });
+    
+    // Cleanup
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>Total de Leads</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{leads.length}</div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader>
-            <CardTitle>Valor Total</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">R$ {totalValue.toLocaleString('pt-BR')}</div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader>
-            <CardTitle>Taxa de Conversão</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{conversionRate}%</div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Leads por Estágio</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={getStageData()}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="count" fill="#8884d8" />
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg">Leads por Etapa</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={funnelStageData} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke={isDark ? "#444" : "#e5e7eb"} />
+                <XAxis type="number" stroke={isDark ? "#ccc" : "#374151"} />
+                <YAxis dataKey="name" type="category" width={100} stroke={isDark ? "#ccc" : "#374151"} />
+                <Tooltip 
+                  formatter={(value) => [`${value} leads`, "Quantidade"]}
+                  contentStyle={{ 
+                    background: isDark ? '#1f2937' : '#fff', 
+                    border: isDark ? '1px solid #374151' : '1px solid #e5e7eb', 
+                    borderRadius: '6px', 
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                    color: isDark ? '#f9fafb' : '#111827'
+                  }}
+                />
+                <Bar dataKey="value" fill={chartColors[0]} radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Distribuição de Valor</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
+          </div>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg">Valor Potencial</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <RPieChart>
                 <Pie
-                  data={getStageData()}
+                  data={valuePotentialData}
                   cx="50%"
                   cy="50%"
-                  labelLine={false}
                   outerRadius={80}
                   fill="#8884d8"
                   dataKey="value"
+                  label={({name, percent}) => `${name} ${(percent * 100).toFixed(0)}%`}
                 >
-                  {getStageData().map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  {valuePotentialData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={chartColors[index % chartColors.length]} />
                   ))}
                 </Pie>
-                <Tooltip />
-              </PieChart>
+                <Tooltip 
+                  formatter={(value) => [`R$ ${value.toLocaleString('pt-BR')}`, "Valor"]}
+                  contentStyle={{ 
+                    background: isDark ? '#1f2937' : '#fff', 
+                    border: isDark ? '1px solid #374151' : '1px solid #e5e7eb', 
+                    borderRadius: '6px', 
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                    color: isDark ? '#f9fafb' : '#111827'
+                  }}
+                />
+              </RPieChart>
             </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

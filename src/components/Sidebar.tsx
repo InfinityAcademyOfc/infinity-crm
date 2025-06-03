@@ -22,11 +22,11 @@ import {
   Upload
 } from "lucide-react";
 import { NavLink, useLocation } from 'react-router-dom';
-import { useSession } from '@supabase/auth-helpers-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Sidebar = () => {
   const location = useLocation();
-  const session = useSession();
+  const { user } = useAuth();
 
   const menuItems = [
     { icon: BarChart3, label: 'Dashboard', path: '/' },
@@ -57,10 +57,10 @@ const Sidebar = () => {
         <ScrollArea className="h-full py-6">
           <div className="px-3 py-2">
             <h2 className="mb-2 mt-2 px-4 text-lg font-semibold tracking-tight">
-              {session?.user?.email?.split('@')[0] || 'Usuário'}
+              {user?.email?.split('@')[0] || 'Usuário'}
             </h2>
             <p className="text-muted-foreground px-4 text-sm">
-              {session?.user?.email}
+              {user?.email}
             </p>
           </div>
           <Separator className="my-2" />

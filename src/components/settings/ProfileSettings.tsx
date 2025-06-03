@@ -8,15 +8,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Camera, User, Mail, Phone, MapPin, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { useSession, useSupabaseClient } from '@supabase/auth-helpers-react';
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
 
 const ProfileSettings = () => {
-  const session = useSession();
-  const supabase = useSupabaseClient();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [profile, setProfile] = useState({
-    name: session?.user?.email?.split('@')[0] || '',
-    email: session?.user?.email || '',
+    name: user?.email?.split('@')[0] || '',
+    email: user?.email || '',
     phone: '',
     department: '',
     bio: ''
@@ -68,7 +68,7 @@ const ProfileSettings = () => {
             <Avatar className="h-20 w-20">
               <AvatarImage src="" alt="Avatar do usuário" />
               <AvatarFallback>
-                {session?.user?.email?.charAt(0).toUpperCase() || 'U'}
+                {user?.email?.charAt(0).toUpperCase() || 'U'}
               </AvatarFallback>
             </Avatar>
             <Button variant="outline" onClick={handleAvatarUpload}>

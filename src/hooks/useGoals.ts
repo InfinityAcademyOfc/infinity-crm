@@ -7,13 +7,13 @@ import { toast } from 'sonner';
 export interface Goal {
   id: string;
   title: string;
-  description?: string;
+  description: string | null;
   target_value: number;
   current_value: number;
   target_date: string;
   status: string;
   company_id: string;
-  created_by?: string;
+  created_by: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -44,14 +44,14 @@ export const useGoals = () => {
     }
   };
 
-  const createGoal = async (goalData: Omit<Goal, 'id' | 'created_at' | 'updated_at' | 'company_id'>) => {
+  const createGoal = async (goal: Omit<Goal, 'id' | 'created_at' | 'updated_at' | 'company_id'>) => {
     if (!company?.id) return;
 
     try {
       const { data, error } = await supabase
         .from('goals')
         .insert([{
-          ...goalData,
+          ...goal,
           company_id: company.id
         }])
         .select()
@@ -59,7 +59,7 @@ export const useGoals = () => {
 
       if (error) throw error;
       
-      setGoals(prev => [data, ...prev]);
+      setGoals(prev => [...prev, data].sort((a, b) => new Date(a.target_date).getTime() - new Date(b.target_date).getTime()));
       toast.success('Meta criada com sucesso!');
       return data;
     } catch (error) {
@@ -80,7 +80,7 @@ export const useGoals = () => {
 
       if (error) throw error;
       
-      setGoals(prev => prev.map(goal => goal.id === id ? data : goal));
+      setGoals(prev => prev.map(g => g.id === id ? data : g));
       toast.success('Meta atualizada com sucesso!');
       return data;
     } catch (error) {
@@ -99,11 +99,12 @@ export const useGoals = () => {
 
       if (error) throw error;
       
-      setGoals(prev => prev.filter(goal => goal.id !== id));
+      setGoals(prev => prev.filter(g => g.id !== id));
       toast.success('Meta excluída com sucesso!');
     } catch (error) {
       console.error('Erro ao excluir meta:', error);
       toast.error('Erro ao excluir meta');
+      throw error;
     }
   };
 
