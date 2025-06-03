@@ -4,8 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus, FolderOpen, FileText, Brain, Calendar, Users } from 'lucide-react';
 import { useProductionWorkspace } from '@/hooks/useProductionWorkspace';
-import { ProductionProjectDialog } from './ProductionProjectDialog';
-import ProductionEditor from './ProductionEditor';
+import ProductionProjectDialog from './ProductionProjectDialog';
+import AdvancedProjectEditor from './AdvancedProjectEditor';
 import { useAuth } from '@/contexts/AuthContext';
 
 const ProductionWorkspace = () => {
@@ -151,9 +151,9 @@ const ProductionWorkspace = () => {
           </Card>
         </div>
 
-        {/* Editor Area */}
+        {/* Advanced Editor Area */}
         <div className="lg:col-span-2">
-          <ProductionEditor />
+          <AdvancedProjectEditor />
         </div>
       </div>
 

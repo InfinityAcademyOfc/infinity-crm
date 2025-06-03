@@ -1,11 +1,10 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Filter, TrendingUp, MoreHorizontal, Phone, Mail } from 'lucide-react';
 import { useRealSalesFunnel } from '@/hooks/useRealSalesFunnel';
-import { NewSalesLeadDialog } from './NewSalesLeadDialog';
+import NewSalesLeadDialog from './NewSalesLeadDialog';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
