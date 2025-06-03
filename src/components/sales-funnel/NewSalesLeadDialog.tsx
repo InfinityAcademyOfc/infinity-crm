@@ -8,7 +8,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useRealSalesFunnel } from '@/hooks/useRealSalesFunnel';
 import { Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
 
 interface NewSalesLeadDialogProps {
   open: boolean;
@@ -16,9 +15,14 @@ interface NewSalesLeadDialogProps {
   onSuccess?: () => void;
 }
 
-export const NewSalesLeadDialog = ({ open, onOpenChange, onSuccess }: NewSalesLeadDialogProps) => {
+const NewSalesLeadDialog: React.FC<NewSalesLeadDialogProps> = ({
+  open,
+  onOpenChange,
+  onSuccess
+}) => {
   const { createLead, stages } = useRealSalesFunnel();
   const [loading, setLoading] = useState(false);
+  
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -30,50 +34,46 @@ export const NewSalesLeadDialog = ({ open, onOpenChange, onSuccess }: NewSalesLe
     description: ''
   });
 
+  // Set default stage when stages are loaded
+  React.useEffect(() => {
+    if (stages.length > 0 && !formData.stage) {
+      setFormData(prev => ({ ...prev, stage: stages[0].name }));
+    }
+  }, [stages, formData.stage]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!formData.name.trim()) {
-      toast.error('Nome é obrigatório');
-      return;
-    }
-
-    if (!formData.stage) {
-      toast.error('Selecione um estágio');
-      return;
-    }
+    if (!formData.name || !formData.email) return;
 
     setLoading(true);
-
     try {
-      const leadData = {
-        name: formData.name.trim(),
-        email: formData.email.trim() || undefined,
-        phone: formData.phone.trim() || undefined,
-        value: formData.value ? parseFloat(formData.value) : 0,
+      await createLead({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        value: parseFloat(formData.value) || 0,
         stage: formData.stage,
-        priority: formData.priority,
-        source: formData.source.trim() || undefined,
-        description: formData.description.trim() || undefined
-      };
+        priority: formData.priority as 'low' | 'medium' | 'high',
+        source: formData.source,
+        description: formData.description,
+        assigned_to: null,
+        due_date: null
+      });
 
-      const result = await createLead(leadData);
-      
-      if (result) {
-        // Reset form
-        setFormData({
-          name: '',
-          email: '',
-          phone: '',
-          value: '',
-          stage: '',
-          priority: 'medium',
-          source: '',
-          description: ''
-        });
-        
-        onSuccess?.();
-      }
+      // Reset form
+      setFormData({
+        name: '',
+        email: '',
+        phone: '',
+        value: '',
+        stage: stages.length > 0 ? stages[0].name : '',
+        priority: 'medium',
+        source: '',
+        description: ''
+      });
+
+      onOpenChange(false);
+      onSuccess?.();
     } catch (error) {
       console.error('Erro ao criar lead:', error);
     } finally {
@@ -81,66 +81,79 @@ export const NewSalesLeadDialog = ({ open, onOpenChange, onSuccess }: NewSalesLe
     }
   };
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Novo Lead</DialogTitle>
+          <DialogTitle>Novo Lead de Vendas</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="name">Nome *</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => handleInputChange('name', e.target.value)}
-                placeholder="Nome do lead"
-                required
-              />
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="name">Nome *</Label>
+            <Input
+              id="name"
+              value={formData.name}
+              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+              placeholder="Nome do lead"
+              required
+            />
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => handleInputChange('email', e.target.value)}
-                placeholder="email@exemplo.com"
-              />
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="email">Email *</Label>
+            <Input
+              id="email"
+              type="email"
+              value={formData.email}
+              onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+              placeholder="email@exemplo.com"
+              required
+            />
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="phone">Telefone</Label>
-              <Input
-                id="phone"
-                value={formData.phone}
-                onChange={(e) => handleInputChange('phone', e.target.value)}
-                placeholder="(11) 99999-9999"
-              />
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="phone">Telefone</Label>
+            <Input
+              id="phone"
+              value={formData.phone}
+              onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+              placeholder="(11) 99999-9999"
+            />
+          </div>
 
+          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="value">Valor Potencial</Label>
+              <Label htmlFor="value">Valor</Label>
               <Input
                 id="value"
                 type="number"
                 step="0.01"
                 value={formData.value}
-                onChange={(e) => handleInputChange('value', e.target.value)}
-                placeholder="0,00"
+                onChange={(e) => setFormData(prev => ({ ...prev, value: e.target.value }))}
+                placeholder="0.00"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="stage">Estágio *</Label>
-              <Select value={formData.stage} onValueChange={(value) => handleInputChange('stage', value)}>
+              <Label htmlFor="priority">Prioridade</Label>
+              <Select value={formData.priority} onValueChange={(value) => setFormData(prev => ({ ...prev, priority: value }))}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">Baixa</SelectItem>
+                  <SelectItem value="medium">Média</SelectItem>
+                  <SelectItem value="high">Alta</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="stage">Estágio</Label>
+              <Select value={formData.stage} onValueChange={(value) => setFormData(prev => ({ ...prev, stage: value }))}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione o estágio" />
                 </SelectTrigger>
@@ -155,26 +168,12 @@ export const NewSalesLeadDialog = ({ open, onOpenChange, onSuccess }: NewSalesLe
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="priority">Prioridade</Label>
-              <Select value={formData.priority} onValueChange={(value) => handleInputChange('priority', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione a prioridade" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="low">Baixa</SelectItem>
-                  <SelectItem value="medium">Média</SelectItem>
-                  <SelectItem value="high">Alta</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2 md:col-span-2">
               <Label htmlFor="source">Origem</Label>
               <Input
                 id="source"
                 value={formData.source}
-                onChange={(e) => handleInputChange('source', e.target.value)}
-                placeholder="Ex: Website, Indicação, Google Ads"
+                onChange={(e) => setFormData(prev => ({ ...prev, source: e.target.value }))}
+                placeholder="Ex: Website, Indicação"
               />
             </div>
           </div>
@@ -184,8 +183,8 @@ export const NewSalesLeadDialog = ({ open, onOpenChange, onSuccess }: NewSalesLe
             <Textarea
               id="description"
               value={formData.description}
-              onChange={(e) => handleInputChange('description', e.target.value)}
-              placeholder="Detalhes adicionais sobre o lead..."
+              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+              placeholder="Informações adicionais sobre o lead"
               rows={3}
             />
           </div>
@@ -215,3 +214,5 @@ export const NewSalesLeadDialog = ({ open, onOpenChange, onSuccess }: NewSalesLe
     </Dialog>
   );
 };
+
+export default NewSalesLeadDialog;
