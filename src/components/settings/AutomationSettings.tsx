@@ -1,237 +1,169 @@
 
-import React, { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import React, { useState } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Zap, Trash2, Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
+import { Plus, Zap, Clock, Users, Mail } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/lib/supabase";
-
-interface AutomationRule {
-  id: string;
-  trigger: string;
-  action: string;
-  condition: string;
-  enabled: boolean;
-}
 
 const AutomationSettings = () => {
   const { user, company } = useAuth();
-  const [rules, setRules] = useState<AutomationRule[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    if (user && company) {
-      loadAutomationRules();
+  const [automations, setAutomations] = useState([
+    {
+      id: "1",
+      name: "Boas-vindas para novos leads",
+      description: "Envia email automático quando um novo lead é criado",
+      enabled: true,
+      trigger: "Novo lead",
+      action: "Enviar email",
+      lastRun: "Há 2 horas"
+    },
+    {
+      id: "2", 
+      name: "Follow-up de proposta",
+      description: "Lembra de fazer follow-up 3 dias após enviar proposta",
+      enabled: true,
+      trigger: "Proposta enviada",
+      action: "Criar tarefa",
+      lastRun: "Ontem"
+    },
+    {
+      id: "3",
+      name: "Notificação de cliente inativo",
+      description: "Alerta quando cliente não tem contato há 30 dias",
+      enabled: false,
+      trigger: "Cliente inativo",
+      action: "Enviar notificação",
+      lastRun: "Nunca"
     }
-  }, [user, company]);
+  ]);
 
-  const loadAutomationRules = async () => {
-    if (!user || !company) return;
+  const toggleAutomation = (id: string) => {
+    setAutomations(prev => 
+      prev.map(auto => 
+        auto.id === id ? { ...auto, enabled: !auto.enabled } : auto
+      )
+    );
+  };
 
-    try {
-      const { data, error } = await supabase
-        .from('automation_rules')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('company_id', company.id)
-        .single();
-
-      if (error) {
-        if (error.code !== 'PGRST116') throw error;
-        // No rules found, use defaults
-        setRules([]);
-      } else if (data?.rules) {
-        setRules(data.rules);
-      }
-    } catch (error) {
-      console.error('Erro ao carregar regras:', error);
-      toast.error('Erro ao carregar regras de automação');
-    } finally {
-      setLoading(false);
+  const automationTypes = [
+    {
+      icon: <Mail className="h-5 w-5" />,
+      title: "Email Marketing",
+      description: "Envios automáticos de email",
+      count: 2
+    },
+    {
+      icon: <Users className="h-5 w-5" />,
+      title: "Gestão de Leads",
+      description: "Automações do funil de vendas",
+      count: 3
+    },
+    {
+      icon: <Clock className="h-5 w-5" />,
+      title: "Lembretes",
+      description: "Notificações e tarefas automáticas",
+      count: 1
     }
-  };
+  ];
 
-  const saveRules = async () => {
-    if (!user || !company) return;
-
-    setSaving(true);
-    try {
-      const { error } = await supabase
-        .from('automation_rules')
-        .upsert({
-          user_id: user.id,
-          company_id: company.id,
-          rules
-        });
-
-      if (error) throw error;
-      toast.success('Regras de automação salvas com sucesso!');
-    } catch (error) {
-      console.error('Erro ao salvar regras:', error);
-      toast.error('Erro ao salvar regras de automação');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const addRule = () => {
-    const newRule: AutomationRule = {
-      id: Date.now().toString(),
-      trigger: 'new_lead',
-      action: 'send_email',
-      condition: 'always',
-      enabled: true
-    };
-    setRules([...rules, newRule]);
-  };
-
-  const updateRule = (id: string, updates: Partial<AutomationRule>) => {
-    setRules(rules.map(rule => 
-      rule.id === id ? { ...rule, ...updates } : rule
-    ));
-  };
-
-  const deleteRule = (id: string) => {
-    setRules(rules.filter(rule => rule.id !== id));
-  };
-
-  if (loading) {
+  if (!user || !company) {
     return (
-      <Card>
-        <CardContent className="p-6 flex justify-center items-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </CardContent>
-      </Card>
+      <div className="p-6 text-center animate-fade-in">
+        <p className="text-muted-foreground">Faça login para configurar automações</p>
+      </div>
     );
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Zap className="h-5 w-5" />
-          Regras de Automação
-        </CardTitle>
-        <CardDescription>
-          Configure automações para agilizar seu fluxo de trabalho
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h3 className="text-lg font-medium">Regras Ativas</h3>
-          <Button onClick={addRule} size="sm">
-            <Plus className="h-4 w-4 mr-2" />
-            Nova Regra
-          </Button>
+    <div className="space-y-6 animate-fade-in">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-semibold">Automações</h2>
+          <p className="text-muted-foreground mt-1">
+            Configure fluxos automáticos para seu CRM
+          </p>
         </div>
+        <Button className="hover-scale transition-all duration-200">
+          <Plus className="h-4 w-4 mr-2" />
+          Nova Automação
+        </Button>
+      </div>
 
-        {rules.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            <Zap className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>Nenhuma regra de automação configurada</p>
-            <Button variant="outline" onClick={addRule} className="mt-2">
-              <Plus className="h-4 w-4 mr-2" />
-              Criar Primeira Regra
-            </Button>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {rules.map((rule) => (
-              <div key={rule.id} className="border rounded-lg p-4 space-y-4">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-medium">Regra de Automação</h4>
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      checked={rule.enabled}
-                      onCheckedChange={(enabled) => updateRule(rule.id, { enabled })}
-                    />
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => deleteRule(rule.id)}
-                      className="text-red-600 hover:text-red-700"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+      {/* Automation Types */}
+      <div className="grid gap-4 md:grid-cols-3">
+        {automationTypes.map((type, index) => (
+          <Card 
+            key={type.title} 
+            className="hover:shadow-md transition-all duration-200 cursor-pointer hover-scale animate-scale-in"
+            style={{ animationDelay: `${index * 100}ms` }}
+          >
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                  {type.icon}
                 </div>
+                <div className="flex-1">
+                  <h3 className="font-medium">{type.title}</h3>
+                  <p className="text-sm text-muted-foreground">{type.description}</p>
+                </div>
+                <Badge variant="secondary">{type.count}</Badge>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="text-sm font-medium block mb-1">Gatilho</label>
-                    <Select
-                      value={rule.trigger}
-                      onValueChange={(trigger) => updateRule(rule.id, { trigger })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="new_lead">Novo Lead</SelectItem>
-                        <SelectItem value="lead_updated">Lead Atualizado</SelectItem>
-                        <SelectItem value="task_created">Tarefa Criada</SelectItem>
-                        <SelectItem value="task_completed">Tarefa Concluída</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium block mb-1">Ação</label>
-                    <Select
-                      value={rule.action}
-                      onValueChange={(action) => updateRule(rule.id, { action })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="send_email">Enviar Email</SelectItem>
-                        <SelectItem value="create_task">Criar Tarefa</SelectItem>
-                        <SelectItem value="send_notification">Enviar Notificação</SelectItem>
-                        <SelectItem value="update_status">Atualizar Status</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium block mb-1">Condição</label>
-                    <Select
-                      value={rule.condition}
-                      onValueChange={(condition) => updateRule(rule.id, { condition })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="always">Sempre</SelectItem>
-                        <SelectItem value="high_priority">Alta Prioridade</SelectItem>
-                        <SelectItem value="specific_source">Origem Específica</SelectItem>
-                        <SelectItem value="value_above">Valor Acima de R$ 1000</SelectItem>
-                      </SelectContent>
-                    </Select>
+      {/* Active Automations */}
+      <Card className="animate-fade-in">
+        <CardHeader>
+          <CardTitle>Automações Ativas</CardTitle>
+          <CardDescription>
+            Gerencie suas automações existentes
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {automations.map((automation, index) => (
+            <div 
+              key={automation.id} 
+              className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-all duration-200 animate-scale-in"
+              style={{ animationDelay: `${index * 50}ms` }}
+            >
+              <div className="flex items-center gap-4">
+                <div className="p-2 bg-primary/10 rounded-lg">
+                  <Zap className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <h4 className="font-medium">{automation.name}</h4>
+                  <p className="text-sm text-muted-foreground">{automation.description}</p>
+                  <div className="flex items-center gap-4 mt-2">
+                    <Badge variant="outline" className="text-xs">
+                      {automation.trigger}
+                    </Badge>
+                    <Badge variant="outline" className="text-xs">
+                      {automation.action}
+                    </Badge>
+                    <span className="text-xs text-muted-foreground">
+                      Última execução: {automation.lastRun}
+                    </span>
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
-
-        <div className="pt-4 flex justify-end">
-          <Button onClick={saveRules} disabled={saving}>
-            {saving ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Salvando...
-              </>
-            ) : "Salvar Regras"}
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={automation.enabled}
+                  onCheckedChange={() => toggleAutomation(automation.id)}
+                />
+                <Button variant="ghost" size="sm" className="hover-scale transition-all duration-200">
+                  Editar
+                </Button>
+              </div>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 

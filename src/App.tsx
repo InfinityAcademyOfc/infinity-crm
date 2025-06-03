@@ -1,83 +1,94 @@
-import React, { useEffect, useState } from 'react';
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
-import { Auth } from '@supabase/auth-ui-react'
-import { ThemeSupa } from '@supabase/auth-ui-shared'
-import { useSession, useSupabaseClient } from '@supabase/auth-helpers-react'
-import Account from './pages/Account'
-import Home from './pages/Home';
+
+import React from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { ThemeProvider } from "./components/ui/theme-provider";
+import { AuthProvider } from './contexts/AuthContext';
+import { WhatsAppSessionProvider } from './contexts/WhatsAppSessionContext';
+import { WhatsAppProvider } from './contexts/WhatsAppContext';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Toaster } from "./components/ui/toaster";
+import { Toaster as SonnerToaster } from "sonner";
+
+import ProtectedRoute from "./components/auth/ProtectedRoute";
+import MainLayout from "./layouts/MainLayout";
+
+// Auth pages
+import Login from './pages/Login';
+import Register from './pages/Register';
+import WaitingArea from './pages/WaitingArea';
+import Pricing from './pages/Pricing';
+
+// App pages
 import Dashboard from './pages/Dashboard';
-import Leads from './pages/Leads';
 import SalesFunnel from './pages/SalesFunnel';
-import Clients from './pages/Clients';
-import Tasks from './pages/Tasks';
-import Meetings from './pages/Meetings';
-import Goals from './pages/Goals';
-import ProductionWorkspace from './pages/ProductionWorkspace';
-import Settings from './pages/Settings';
-import WhatsApp from './pages/WhatsApp';
-import Financial from './pages/Financial';
-import Documents from './pages/Documents';
-import InternalCommunication from './pages/InternalCommunication';
-import Sidebar from './components/Sidebar';
-import { useAuth } from './contexts/AuthContext';
+import ClientManagement from './pages/ClientManagement';
+import FinanceManagement from './pages/FinanceManagement';
+import ProductsServices from './pages/ProductsServices';
 import LeadImport from './pages/LeadImport';
-import Import from './pages/Import';
-import Reports from './pages/Reports';
+import WhatsAppIntegrationPage from './pages/WhatsAppIntegration';
+import AdsIntegrationPage from './pages/AdsIntegrationPage';
+import ProductionManagement from './pages/ProductionManagement';
+import TeamManagement from './pages/TeamManagement';
+import Meetings from './pages/Meetings';
+import Settings from './pages/Settings';
 
-const App = () => {
-  const session = useSession()
-  const supabase = useSupabaseClient()
-  const { authUser } = useAuth();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+const queryClient = new QueryClient();
 
-  useEffect(() => {
-    if (window.innerWidth < 768) {
-      setIsSidebarOpen(false);
-    }
-  }, []);
-
+function App() {
   return (
-    <Router>
-      <div className="min-h-screen bg-gray-100">
-        {session ? (
-          <div className="flex h-screen">
-            {/* Sidebar */}
-            <Sidebar isOpen={isSidebarOpen} toggle={() => setIsSidebarOpen(!isSidebarOpen)} />
+    <BrowserRouter>
+      <ThemeProvider defaultTheme="dark">
+        <AuthProvider>
+          <WhatsAppSessionProvider>
+            <WhatsAppProvider>
+              <QueryClientProvider client={queryClient}>
+                <Routes>
+                  {/* Public routes */}
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/register" element={<Register />} />
+                  <Route path="/pricing" element={<Pricing />} />
+                  <Route path="/waiting" element={<WaitingArea />} />
 
-            {/* Main Content */}
-            <main className="flex-1 p-4">
-              <Routes>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/leads" element={<Leads />} />
-                <Route path="/sales-funnel" element={<SalesFunnel />} />
-                <Route path="/clients" element={<Clients />} />
-                <Route path="/tasks" element={<Tasks />} />
-                <Route path="/meetings" element={<Meetings />} />
-                <Route path="/goals" element={<Goals />} />
-                <Route path="/production" element={<ProductionWorkspace />} />
-                <Route path="/import" element={<Import />} />
-                <Route path="/reports" element={<Reports />} />
-                <Route path="/settings" element={<Settings />} />
-                <Route path="/whatsapp" element={<WhatsApp />} />
-                <Route path="/financial" element={<Financial />} />
-                <Route path="/documents" element={<Documents />} />
-                <Route path="/internal-communication" element={<InternalCommunication />} />
-              </Routes>
-            </main>
-          </div>
-        ) : (
-          <div className="container mx-auto py-8">
-            <Auth
-              supabaseClient={supabase}
-              appearance={{ theme: ThemeSupa }}
-              providers={['google', 'github']}
-              redirectTo={`${window.location.origin}/`}
-            />
-          </div>
-        )}
-      </div>
-    </Router>
-  )
+                  {/* Protected routes with MainLayout */}
+                  <Route path="/" element={<ProtectedRoute />}>
+                    <Route element={<MainLayout />}>
+                      <Route index element={<Navigate to="/app" replace />} />
+                      
+                      {/* App routes */}
+                      <Route path="/app" element={<Dashboard />} />
+                      <Route path="/app/sales-funnel" element={<SalesFunnel />} />
+                      <Route path="/app/clients" element={<ClientManagement />} />
+                      <Route path="/app/finance" element={<FinanceManagement />} />
+                      <Route path="/app/products" element={<ProductsServices />} />
+                      <Route path="/app/lead-import" element={<LeadImport />} />
+                      
+                      {/* Integration routes */}
+                      <Route path="/app/whatsapp" element={<WhatsAppIntegrationPage />} />
+                      <Route path="/app/ads-integration" element={<AdsIntegrationPage />} />
+                      
+                      {/* Management routes */}
+                      <Route path="/app/production" element={<ProductionManagement />} />
+                      <Route path="/app/team" element={<TeamManagement />} />
+                      <Route path="/app/meetings" element={<Meetings />} />
+                      
+                      {/* Settings */}
+                      <Route path="/app/settings" element={<Settings />} />
+                    </Route>
+                  </Route>
+
+                  {/* Catch all - redirect to app */}
+                  <Route path="*" element={<Navigate to="/app" replace />} />
+                </Routes>
+
+                <Toaster />
+                <SonnerToaster position="top-right" />
+              </QueryClientProvider>
+            </WhatsAppProvider>
+          </WhatsAppSessionProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </BrowserRouter>
+  );
 }
 
-export default App
+export default App;

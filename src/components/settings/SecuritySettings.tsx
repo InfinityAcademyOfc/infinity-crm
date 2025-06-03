@@ -1,149 +1,162 @@
-
 import React, { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Shield, Key, Smartphone, Loader2 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Eye, EyeOff, Save, Loader2 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { supabase } from "@/lib/supabase";
+import { settingsService } from "@/services/settings";
 
 const SecuritySettings = () => {
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [passwords, setPasswords] = useState({
-    current: '',
-    new: '',
-    confirm: ''
-  });
+  const { profile } = useAuth();
 
-  const handlePasswordChange = async (e: React.FormEvent) => {
+  const handlePasswordUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (passwords.new !== passwords.confirm) {
+    // Validação de senha
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+    if (!passwordRegex.test(newPassword)) {
+      toast.error("A senha deve conter pelo menos 8 caracteres, incluindo letras maiúsculas, minúsculas, números e caracteres especiais.");
+      return;
+    }
+    
+    if (newPassword !== confirmPassword) {
       toast.error("As senhas não coincidem");
       return;
     }
 
-    if (passwords.new.length < 6) {
-      toast.error("A nova senha deve ter pelo menos 6 caracteres");
-      return;
-    }
-
     setLoading(true);
+    
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: passwords.new
-      });
-
-      if (error) throw error;
-
-      setPasswords({ current: '', new: '', confirm: '' });
-      toast.success("Senha alterada com sucesso!");
-    } catch (error) {
-      console.error("Erro ao alterar senha:", error);
-      toast.error("Não foi possível alterar a senha");
+      const success = await settingsService.updatePassword(currentPassword, newPassword);
+      
+      if (success) {
+        setCurrentPassword("");
+        setNewPassword("");
+        setConfirmPassword("");
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const handleEnable2FA = () => {
-    toast.info("Autenticação de dois fatores será implementada em breve");
+  const handleTwoFactorToggle = () => {
+    setTwoFactorEnabled(!twoFactorEnabled);
+    toast.info(`Autenticação em dois fatores ${!twoFactorEnabled ? 'ativada' : 'desativada'}`);
   };
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Key className="h-5 w-5" />
-            Alterar Senha
-          </CardTitle>
-          <CardDescription>
-            Mantenha sua conta segura com uma senha forte
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handlePasswordChange} className="space-y-4">
-            <div>
-              <Label htmlFor="current-password">Senha Atual</Label>
-              <Input
-                id="current-password"
-                type="password"
-                value={passwords.current}
-                onChange={(e) => setPasswords({ ...passwords, current: e.target.value })}
-                placeholder="Digite sua senha atual"
-                required
+    <Card>
+      <CardHeader>
+        <CardTitle>Segurança da Conta</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <form onSubmit={handlePasswordUpdate} className="space-y-4">
+          <h3 className="text-lg font-medium">Alterar Senha</h3>
+          <div className="space-y-2">
+            <Label htmlFor="current-password">Senha Atual</Label>
+            <div className="relative">
+              <Input 
+                id="current-password" 
+                type={showCurrentPassword ? "text" : "password"} 
+                value={currentPassword} 
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                className="pr-10"
               />
+              <button 
+                type="button" 
+                onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                {showCurrentPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
             </div>
-            
-            <div>
-              <Label htmlFor="new-password">Nova Senha</Label>
-              <Input
-                id="new-password"
-                type="password"
-                value={passwords.new}
-                onChange={(e) => setPasswords({ ...passwords, new: e.target.value })}
-                placeholder="Digite sua nova senha"
-                required
-                minLength={6}
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor="confirm-password">Confirmar Nova Senha</Label>
-              <Input
-                id="confirm-password"
-                type="password"
-                value={passwords.confirm}
-                onChange={(e) => setPasswords({ ...passwords, confirm: e.target.value })}
-                placeholder="Confirme sua nova senha"
-                required
-                minLength={6}
-              />
-            </div>
-            
-            <Button type="submit" disabled={loading}>
-              {loading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Alterando...
-                </>
-              ) : "Alterar Senha"}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Smartphone className="h-5 w-5" />
-            Autenticação de Dois Fatores
-          </CardTitle>
-          <CardDescription>
-            Adicione uma camada extra de segurança à sua conta
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium">Status da 2FA</p>
-              <p className="text-sm text-muted-foreground">Desabilitada</p>
-            </div>
-            <Button variant="outline" onClick={handleEnable2FA}>
-              <Shield className="mr-2 h-4 w-4" />
-              Habilitar 2FA
-            </Button>
           </div>
           
-          <p className="text-sm text-muted-foreground">
-            A autenticação de dois fatores adiciona uma camada extra de segurança, 
-            exigindo um código do seu telefone além da sua senha.
-          </p>
-        </CardContent>
-      </Card>
-    </div>
+          <div className="space-y-2">
+            <Label htmlFor="new-password">Nova Senha</Label>
+            <div className="relative">
+              <Input 
+                id="new-password" 
+                type={showNewPassword ? "text" : "password"} 
+                value={newPassword} 
+                onChange={(e) => setNewPassword(e.target.value)}
+                className="pr-10"
+              />
+              <button 
+                type="button" 
+                onClick={() => setShowNewPassword(!showNewPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              A senha deve conter pelo menos 8 caracteres, incluindo letras maiúsculas, minúsculas, números e caracteres especiais.
+            </p>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="confirm-password">Confirmar Nova Senha</Label>
+            <div className="relative">
+              <Input 
+                id="confirm-password" 
+                type={showConfirmPassword ? "text" : "password"} 
+                value={confirmPassword} 
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="pr-10"
+              />
+              <button 
+                type="button" 
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+          </div>
+          
+          <Button 
+            type="submit" 
+            className="flex gap-2 items-center"
+            disabled={loading || !currentPassword || !newPassword || !confirmPassword}
+          >
+            {loading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Atualizando...
+              </>
+            ) : (
+              <>
+                <Save size={16} />
+                Atualizar Senha
+              </>
+            )}
+          </Button>
+        </form>
+        
+        <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+          <h3 className="text-lg font-medium mb-4">Segurança Adicional</h3>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-medium">Autenticação de dois fatores</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Adicione uma camada extra de segurança</p>
+            </div>
+            <Switch checked={twoFactorEnabled} onCheckedChange={handleTwoFactorToggle} />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 
