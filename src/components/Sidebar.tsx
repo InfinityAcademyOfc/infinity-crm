@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -57,7 +56,7 @@ const Sidebar = () => {
         <ScrollArea className="h-full py-6">
           <div className="px-3 py-2">
             <h2 className="mb-2 mt-2 px-4 text-lg font-semibold tracking-tight">
-              {user?.email?.split('@')[0] || 'Usuário'}
+              {user?.name}
             </h2>
             <p className="text-muted-foreground px-4 text-sm">
               {user?.email}

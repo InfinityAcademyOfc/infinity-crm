@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import { Auth } from '@supabase/auth-ui-react'
@@ -21,13 +20,14 @@ import Documents from './pages/Documents';
 import InternalCommunication from './pages/InternalCommunication';
 import Sidebar from './components/Sidebar';
 import { useAuth } from './contexts/AuthContext';
+import LeadImport from './pages/LeadImport';
 import Import from './pages/Import';
 import Reports from './pages/Reports';
 
 const App = () => {
   const session = useSession()
   const supabase = useSupabaseClient()
-  const { user } = useAuth();
+  const { authUser } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   useEffect(() => {
@@ -42,7 +42,7 @@ const App = () => {
         {session ? (
           <div className="flex h-screen">
             {/* Sidebar */}
-            <Sidebar />
+            <Sidebar isOpen={isSidebarOpen} toggle={() => setIsSidebarOpen(!isSidebarOpen)} />
 
             {/* Main Content */}
             <main className="flex-1 p-4">
