@@ -14,6 +14,8 @@ export interface TeamMember {
   avatar?: string;
   status: string;
   company_id?: string;
+  tasksAssigned?: number;
+  tasksCompleted?: number;
   created_at: string;
   updated_at: string;
 }
@@ -44,6 +46,33 @@ export const useTeamMembers = () => {
     }
   };
 
+  const createTeamMember = async (memberData: Omit<TeamMember, 'id' | 'created_at' | 'updated_at' | 'company_id'>) => {
+    if (!company?.id) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .insert([{
+          ...memberData,
+          company_id: company.id,
+          tasksAssigned: 0,
+          tasksCompleted: 0
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      setTeamMembers(prev => [data, ...prev]);
+      toast.success('Membro criado com sucesso!');
+      return data;
+    } catch (error) {
+      console.error('Erro ao criar membro:', error);
+      toast.error('Erro ao criar membro');
+      throw error;
+    }
+  };
+
   const inviteTeamMember = async (email: string, role: string = 'user') => {
     if (!company?.id) return;
 
@@ -56,7 +85,9 @@ export const useTeamMembers = () => {
           role,
           company_id: company.id,
           name: email.split('@')[0],
-          status: 'invited'
+          status: 'invited',
+          tasksAssigned: 0,
+          tasksCompleted: 0
         }])
         .select()
         .single();
@@ -111,6 +142,8 @@ export const useTeamMembers = () => {
     }
   };
 
+  const deleteTeamMember = removeTeamMember;
+
   useEffect(() => {
     fetchTeamMembers();
   }, [company]);
@@ -118,9 +151,11 @@ export const useTeamMembers = () => {
   return {
     teamMembers,
     loading,
+    createTeamMember,
     inviteTeamMember,
     updateTeamMember,
     removeTeamMember,
+    deleteTeamMember,
     refetch: fetchTeamMembers
   };
 };

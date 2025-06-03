@@ -21,7 +21,14 @@ const FinancialTransactionDialog = ({ open, onOpenChange, onSuccess }: Financial
   const { user } = useAuth();
   const { createTransaction } = useFinancialData();
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    type: "income" | "expense";
+    amount: string;
+    description: string;
+    category: string;
+    date: string;
+    status: string;
+  }>({
     type: "income",
     amount: "",
     description: "",
@@ -80,7 +87,7 @@ const FinancialTransactionDialog = ({ open, onOpenChange, onSuccess }: Financial
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="type">Tipo *</Label>
-              <Select value={formData.type} onValueChange={(value) => setFormData(prev => ({ ...prev, type: value }))}>
+              <Select value={formData.type} onValueChange={(value: "income" | "expense") => setFormData(prev => ({ ...prev, type: value }))}>
                 <SelectTrigger>
                   <SelectValue placeholder="Tipo da transação" />
                 </SelectTrigger>

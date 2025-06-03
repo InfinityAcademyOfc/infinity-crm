@@ -17,7 +17,7 @@ import { TeamMember } from "@/types/team";
 import TeamMemberFormDialog from "@/components/forms/TeamMemberFormDialog";
 
 const TeamManagement = () => {
-  const { teamMembers, loading, updateTeamMember, deleteTeamMember } = useTeamMembers();
+  const { teamMembers, loading, updateTeamMember, removeTeamMember } = useTeamMembers();
   const [searchTerm, setSearchTerm] = useState("");
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [selectedDepartment, setSelectedDepartment] = useState<string>("all");
@@ -162,7 +162,7 @@ const TeamManagement = () => {
                     <DropdownMenuItem>Ver Detalhes</DropdownMenuItem>
                     <DropdownMenuItem 
                       className="text-red-600"
-                      onClick={() => deleteTeamMember(member.id)}
+                      onClick={() => removeTeamMember(member.id)}
                     >
                       Remover
                     </DropdownMenuItem>
