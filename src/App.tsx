@@ -20,14 +20,12 @@ import Financial from './pages/Financial';
 import Documents from './pages/Documents';
 import InternalCommunication from './pages/InternalCommunication';
 import Sidebar from './components/Sidebar';
-import { useAuth } from './contexts/AuthContext';
 import Import from './pages/Import';
 import Reports from './pages/Reports';
 
 const App = () => {
   const session = useSession()
   const supabase = useSupabaseClient()
-  const { user } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   useEffect(() => {
