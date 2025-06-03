@@ -1,197 +1,256 @@
 
-import React from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import React, { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, Star } from "lucide-react";
+import { Check, Crown, Zap, Star, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
+
+interface Plan {
+  id: string;
+  name: string;
+  code: string;
+  price: number;
+  currency: string;
+  description: string;
+  features: string[];
+  active: boolean;
+}
 
 const PlansSettings = () => {
   const { user, company } = useAuth();
+  const [plans, setPlans] = useState<Plan[]>([]);
+  const [currentPlan, setCurrentPlan] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const currentPlan = {
-    name: "Plano Profissional",
-    price: "R$ 97,00",
-    period: "mensal",
-    status: "ativo",
-    nextBilling: "15/01/2025",
-    features: [
-      "CRM completo",
-      "Gestão de leads ilimitados",
-      "Dashboard avançado",
-      "Relatórios personalizados",
-      "Suporte prioritário",
-      "Integração WhatsApp",
-      "Automação de vendas"
-    ]
+  useEffect(() => {
+    loadPlans();
+    loadCurrentSubscription();
+  }, []);
+
+  const loadPlans = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('plans')
+        .select(`
+          id,
+          name,
+          code,
+          price,
+          currency,
+          description,
+          active,
+          plan_features (
+            feature_key,
+            feature_value,
+            description
+          )
+        `)
+        .eq('active', true)
+        .order('price');
+
+      if (error) throw error;
+
+      const plansWithFeatures = data?.map(plan => ({
+        ...plan,
+        features: plan.plan_features?.map(f => f.description || f.feature_key) || []
+      })) || [];
+
+      setPlans(plansWithFeatures);
+    } catch (error) {
+      console.error('Erro ao carregar planos:', error);
+      // Mock data para demonstração
+      setPlans([
+        {
+          id: '1',
+          name: 'Básico',
+          code: 'basic',
+          price: 29.90,
+          currency: 'BRL',
+          description: 'Ideal para pequenas empresas',
+          features: [
+            'Até 100 leads por mês',
+            'Dashboard básico',
+            'Suporte por email',
+            '1 usuário'
+          ],
+          active: true
+        },
+        {
+          id: '2',
+          name: 'Profissional',
+          code: 'pro',
+          price: 79.90,
+          currency: 'BRL',
+          description: 'Para empresas em crescimento',
+          features: [
+            'Leads ilimitados',
+            'Dashboard avançado',
+            'Automações',
+            'Até 5 usuários',
+            'Suporte prioritário',
+            'Relatórios avançados'
+          ],
+          active: true
+        },
+        {
+          id: '3',
+          name: 'Enterprise',
+          code: 'enterprise',
+          price: 199.90,
+          currency: 'BRL',
+          description: 'Para grandes empresas',
+          features: [
+            'Todas as funcionalidades',
+            'Usuários ilimitados',
+            'API personalizada',
+            'Suporte 24/7',
+            'Treinamento dedicado',
+            'Integrações avançadas'
+          ],
+          active: true
+        }
+      ]);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const availablePlans = [
-    {
-      id: "basic",
-      name: "Básico",
-      price: "R$ 47,00",
-      period: "mensal",
-      description: "Ideal para pequenos negócios",
-      features: [
-        "CRM básico",
-        "Até 100 leads",
-        "Dashboard simples",
-        "Suporte via email"
-      ],
-      current: false
-    },
-    {
-      id: "professional",
-      name: "Profissional",
-      price: "R$ 97,00",
-      period: "mensal",
-      description: "Para empresas em crescimento",
-      features: [
-        "CRM completo",
-        "Leads ilimitados",
-        "Dashboard avançado",
-        "Relatórios personalizados",
-        "Suporte prioritário",
-        "Integração WhatsApp"
-      ],
-      current: true,
-      popular: true
-    },
-    {
-      id: "enterprise",
-      name: "Enterprise",
-      price: "R$ 197,00",
-      period: "mensal",
-      description: "Para grandes empresas",
-      features: [
-        "Todos os recursos do Profissional",
-        "API personalizada",
-        "Suporte dedicado",
-        "Onboarding personalizado",
-        "SLA garantido"
-      ],
-      current: false
-    }
-  ];
+  const loadCurrentSubscription = async () => {
+    if (!company) return;
 
-  if (!user || !company) {
+    try {
+      const { data, error } = await supabase
+        .from('company_subscriptions')
+        .select('plan_id')
+        .eq('company_id', company.id)
+        .eq('status', 'active')
+        .single();
+
+      if (error && error.code !== 'PGRST116') throw error;
+      
+      setCurrentPlan(data?.plan_id || null);
+    } catch (error) {
+      console.error('Erro ao carregar assinatura:', error);
+    }
+  };
+
+  const handleUpgrade = async (planId: string, planName: string) => {
+    toast.info(`Upgrade para ${planName} será implementado em breve`);
+  };
+
+  const getPlanIcon = (planCode: string) => {
+    switch (planCode) {
+      case 'basic':
+        return <Star className="h-5 w-5" />;
+      case 'pro':
+        return <Zap className="h-5 w-5" />;
+      case 'enterprise':
+        return <Crown className="h-5 w-5" />;
+      default:
+        return <Star className="h-5 w-5" />;
+    }
+  };
+
+  if (loading) {
     return (
-      <div className="p-6 text-center animate-fade-in">
-        <p className="text-muted-foreground">Faça login para visualizar os planos</p>
-      </div>
+      <Card>
+        <CardContent className="p-6 flex justify-center items-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div>
-        <h2 className="text-2xl font-semibold">Planos e Assinatura</h2>
-        <p className="text-muted-foreground mt-1">
-          Gerencie sua assinatura e explore nossos planos
-        </p>
-      </div>
-
-      {/* Current Plan */}
-      <Card className="border-primary/20 animate-scale-in">
+    <div className="space-y-6">
+      <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                {currentPlan.name}
-                <Badge variant="default" className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
-                  {currentPlan.status}
-                </Badge>
-              </CardTitle>
-              <CardDescription>
-                Próxima cobrança: {currentPlan.nextBilling}
-              </CardDescription>
-            </div>
-            <div className="text-right">
-              <div className="text-2xl font-bold">{currentPlan.price}</div>
-              <div className="text-sm text-muted-foreground">/{currentPlan.period}</div>
-            </div>
-          </div>
+          <CardTitle>Planos e Assinatura</CardTitle>
+          <CardDescription>
+            Gerencie seu plano atual e explore opções de upgrade
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-2">
-            <h4 className="font-medium mb-2">Recursos inclusos:</h4>
-            {currentPlan.features.map((feature, index) => (
-              <div key={index} className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-green-500" />
-                <span className="text-sm">{feature}</span>
-              </div>
-            ))}
-          </div>
-          <div className="flex gap-2 mt-6">
-            <Button variant="outline" className="hover-scale transition-all duration-200">
-              Gerenciar Assinatura
-            </Button>
-            <Button variant="outline" className="hover-scale transition-all duration-200">
-              Histórico de Pagamentos
-            </Button>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {plans.map((plan) => {
+              const isCurrentPlan = currentPlan === plan.id;
+              const isBasic = plan.code === 'basic';
+              const isPro = plan.code === 'pro';
+              const isEnterprise = plan.code === 'enterprise';
+
+              return (
+                <Card
+                  key={plan.id}
+                  className={`relative ${isCurrentPlan ? 'ring-2 ring-primary' : ''} ${
+                    isPro ? 'border-primary' : ''
+                  }`}
+                >
+                  {isPro && (
+                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                      <Badge className="bg-primary text-white">Mais Popular</Badge>
+                    </div>
+                  )}
+                  
+                  <CardHeader className="text-center">
+                    <div className="flex justify-center mb-2">
+                      {getPlanIcon(plan.code)}
+                    </div>
+                    <CardTitle className="flex items-center justify-center gap-2">
+                      {plan.name}
+                      {isCurrentPlan && (
+                        <Badge variant="secondary" className="text-xs">Atual</Badge>
+                      )}
+                    </CardTitle>
+                    <div className="text-3xl font-bold">
+                      R$ {plan.price.toFixed(2)}
+                      <span className="text-sm font-normal text-muted-foreground">/mês</span>
+                    </div>
+                    <CardDescription>{plan.description}</CardDescription>
+                  </CardHeader>
+                  
+                  <CardContent className="space-y-4">
+                    <ul className="space-y-2">
+                      {plan.features.map((feature, index) => (
+                        <li key={index} className="flex items-center gap-2 text-sm">
+                          <Check className="h-4 w-4 text-green-600 flex-shrink-0" />
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
+                    
+                    <Button
+                      className="w-full"
+                      variant={isCurrentPlan ? "outline" : isPro ? "default" : "outline"}
+                      onClick={() => handleUpgrade(plan.id, plan.name)}
+                      disabled={isCurrentPlan}
+                    >
+                      {isCurrentPlan ? 'Plano Atual' : 'Escolher Plano'}
+                    </Button>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         </CardContent>
       </Card>
 
-      {/* Available Plans */}
-      <div>
-        <h3 className="text-lg font-semibold mb-4">Planos Disponíveis</h3>
-        <div className="grid gap-6 md:grid-cols-3">
-          {availablePlans.map((plan, index) => (
-            <Card 
-              key={plan.id} 
-              className={`relative transition-all duration-200 hover:shadow-lg animate-scale-in ${
-                plan.current ? 'border-primary/40 shadow-md' : ''
-              }`}
-              style={{ animationDelay: `${index * 100}ms` }}
-            >
-              {plan.popular && (
-                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                  <Badge className="bg-primary text-primary-foreground gap-1">
-                    <Star className="h-3 w-3" />
-                    Mais Popular
-                  </Badge>
-                </div>
-              )}
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  {plan.name}
-                  {plan.current && (
-                    <Badge variant="outline" className="text-xs">
-                      Atual
-                    </Badge>
-                  )}
-                </CardTitle>
-                <CardDescription>{plan.description}</CardDescription>
-                <div className="text-3xl font-bold">
-                  {plan.price}
-                  <span className="text-sm font-normal text-muted-foreground">
-                    /{plan.period}
-                  </span>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2 mb-6">
-                  {plan.features.map((feature, featIndex) => (
-                    <div key={featIndex} className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                      <span className="text-sm">{feature}</span>
-                    </div>
-                  ))}
-                </div>
-                <Button 
-                  className="w-full hover-scale transition-all duration-200" 
-                  variant={plan.current ? "outline" : "default"}
-                  disabled={plan.current}
-                >
-                  {plan.current ? "Plano Atual" : "Escolher Plano"}
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Histórico de Pagamentos</CardTitle>
+          <CardDescription>
+            Visualize seu histórico de faturas e pagamentos
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8 text-muted-foreground">
+            <p>Nenhuma fatura encontrada</p>
+            <p className="text-sm mt-2">O histórico de pagamentos aparecerá aqui após a primeira cobrança</p>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
