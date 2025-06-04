@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
-import { toast } from 'sonner';
 
 export interface Notification {
   id: string;
@@ -18,13 +17,17 @@ export interface Notification {
 }
 
 export const useNotifications = () => {
-  const { user, company } = useAuth();
+  const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
   const fetchNotifications = async () => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      setNotifications([]);
+      setUnreadCount(0);
+      return;
+    }
 
     setLoading(true);
     try {
@@ -48,7 +51,8 @@ export const useNotifications = () => {
       setUnreadCount(validatedData.filter(n => !n.read).length);
     } catch (error) {
       console.error('Erro ao buscar notificações:', error);
-      toast.error('Erro ao carregar notificações');
+      setNotifications([]);
+      setUnreadCount(0);
     } finally {
       setLoading(false);
     }
@@ -111,7 +115,9 @@ export const useNotifications = () => {
   };
 
   useEffect(() => {
-    fetchNotifications();
+    if (user?.id) {
+      fetchNotifications();
+    }
   }, [user?.id]);
 
   return {

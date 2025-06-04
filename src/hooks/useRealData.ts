@@ -20,14 +20,13 @@ export const useRealData = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Use existing hooks
-  const { clients, loading: clientsLoading, refetch: refetchClients } = useRealClientData();
-  const { products, loading: productsLoading, refetch: refetchProducts } = useRealProducts();
-  const { teamMembers, loading: teamLoading, refetch: refetchTeam } = useTeamMembers();
-  const { transactions, loading: transactionsLoading, refetch: refetchTransactions } = useFinancialData();
-  const { meetings, loading: meetingsLoading, refetch: refetchMeetings } = useMeetings();
-  const { activities, loading: activitiesLoading, refetch: refetchActivities } = useActivities();
-  const { goals, loading: goalsLoading, refetch: refetchGoals } = useGoals();
+  const { clients, loading: clientsLoading } = useRealClientData();
+  const { products, loading: productsLoading } = useRealProducts();
+  const { teamMembers, loading: teamLoading } = useTeamMembers();
+  const { transactions, loading: transactionsLoading } = useFinancialData();
+  const { meetings, loading: meetingsLoading } = useMeetings();
+  const { activities, loading: activitiesLoading } = useActivities();
+  const { goals, loading: goalsLoading } = useGoals();
 
   const fetchLeads = async () => {
     if (!company?.id) {
@@ -36,17 +35,13 @@ export const useRealData = () => {
     }
 
     try {
-      console.log('Fetching leads for company:', company.id);
       const { data, error } = await supabase
         .from('leads')
         .select('*')
         .eq('company_id', company.id)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching leads:', error);
-        throw error;
-      }
+      if (error) throw error;
       
       const validatedData = (data || []).map(lead => ({
         ...lead,
@@ -59,11 +54,9 @@ export const useRealData = () => {
       })) as Lead[];
 
       setLeads(validatedData);
-      console.log('Leads loaded:', validatedData.length);
     } catch (error: any) {
       console.error('Error fetching leads:', error);
       setError('Erro ao carregar leads');
-      toast.error('Erro ao carregar leads');
     }
   };
 
@@ -74,17 +67,13 @@ export const useRealData = () => {
     }
 
     try {
-      console.log('Fetching tasks for company:', company.id);
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
         .eq('company_id', company.id)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching tasks:', error);
-        throw error;
-      }
+      if (error) throw error;
 
       const validatedData = (data || []).map(task => ({
         ...task,
@@ -97,52 +86,46 @@ export const useRealData = () => {
       })) as Task[];
 
       setTasks(validatedData);
-      console.log('Tasks loaded:', validatedData.length);
     } catch (error: any) {
       console.error('Error fetching tasks:', error);
       setError('Erro ao carregar tarefas');
-      toast.error('Erro ao carregar tarefas');
-    }
-  };
-
-  const refetch = async () => {
-    if (!company?.id || !user) {
-      console.log('No company or user available for refetch');
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-    
-    try {
-      await Promise.all([
-        fetchLeads(),
-        fetchTasks(),
-        refetchClients(),
-        refetchProducts(),
-        refetchTeam(),
-        refetchTransactions(),
-        refetchMeetings(),
-        refetchActivities(),
-        refetchGoals()
-      ]);
-    } catch (error) {
-      console.error('Error during refetch:', error);
-      setError('Erro ao carregar dados');
-    } finally {
-      setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (company?.id && user) {
-      console.log('Company and user available, fetching data...', { companyId: company.id, userId: user.id });
-      refetch();
-    } else {
-      console.log('No company or user, skipping data fetch', { company: !!company, user: !!user });
-      setLoading(false);
-    }
+    let mounted = true;
+    
+    const loadData = async () => {
+      if (!company?.id || !user) {
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      setError(null);
+      
+      try {
+        await Promise.all([
+          fetchLeads(),
+          fetchTasks()
+        ]);
+      } catch (error) {
+        console.error('Error during data fetch:', error);
+        if (mounted) {
+          setError('Erro ao carregar dados');
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadData();
+    
+    return () => {
+      mounted = false;
+    };
   }, [company?.id, user?.id]);
 
   const allLoading = loading || clientsLoading || productsLoading || teamLoading || 
@@ -159,7 +142,6 @@ export const useRealData = () => {
     activities,
     goals,
     loading: allLoading,
-    error,
-    refetch
+    error
   };
 };

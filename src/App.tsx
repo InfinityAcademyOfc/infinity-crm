@@ -10,13 +10,14 @@ import { Toaster } from "./components/ui/toaster";
 import { Toaster as SonnerToaster } from "sonner";
 
 import ProtectedRoute from "./components/auth/ProtectedRoute";
-import MainLayout from "./layouts/MainLayout";
+import MainLayout from "./components/layout/MainLayout";
 
 // Auth pages
 import Login from './pages/Login';
 import Register from './pages/Register';
 import WaitingArea from './pages/WaitingArea';
 import Pricing from './pages/Pricing';
+import Index from './pages/Index';
 
 // App pages
 import Dashboard from './pages/Dashboard';
@@ -44,41 +45,39 @@ function App() {
               <QueryClientProvider client={queryClient}>
                 <Routes>
                   {/* Public routes */}
+                  <Route path="/" element={<Index />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/register" element={<Register />} />
                   <Route path="/pricing" element={<Pricing />} />
                   <Route path="/waiting" element={<WaitingArea />} />
 
                   {/* Protected routes with MainLayout */}
-                  <Route path="/" element={<ProtectedRoute />}>
+                  <Route path="/app" element={<ProtectedRoute />}>
                     <Route element={<MainLayout />}>
-                      <Route index element={<Navigate to="/app" replace />} />
-                      
-                      {/* App routes */}
-                      <Route path="app" element={<Dashboard />} />
-                      <Route path="app/dashboard" element={<Dashboard />} />
-                      <Route path="app/sales-funnel" element={<SalesFunnel />} />
-                      <Route path="app/clients" element={<ClientManagement />} />
-                      <Route path="app/finance" element={<FinanceManagement />} />
-                      <Route path="app/products" element={<ProductsServices />} />
-                      <Route path="app/lead-import" element={<LeadImport />} />
+                      <Route index element={<Dashboard />} />
+                      <Route path="dashboard" element={<Dashboard />} />
+                      <Route path="sales-funnel" element={<SalesFunnel />} />
+                      <Route path="clients" element={<ClientManagement />} />
+                      <Route path="finance" element={<FinanceManagement />} />
+                      <Route path="products" element={<ProductsServices />} />
+                      <Route path="lead-import" element={<LeadImport />} />
                       
                       {/* Integration routes */}
-                      <Route path="app/whatsapp" element={<WhatsAppIntegrationPage />} />
-                      <Route path="app/ads-integration" element={<AdsIntegrationPage />} />
+                      <Route path="whatsapp" element={<WhatsAppIntegrationPage />} />
+                      <Route path="ads-integration" element={<AdsIntegrationPage />} />
                       
                       {/* Management routes */}
-                      <Route path="app/production" element={<ProductionManagement />} />
-                      <Route path="app/team" element={<TeamManagement />} />
-                      <Route path="app/meetings" element={<Meetings />} />
+                      <Route path="production" element={<ProductionManagement />} />
+                      <Route path="team" element={<TeamManagement />} />
+                      <Route path="meetings" element={<Meetings />} />
                       
                       {/* Settings */}
-                      <Route path="app/settings" element={<Settings />} />
+                      <Route path="settings" element={<Settings />} />
                     </Route>
                   </Route>
 
-                  {/* Catch all - redirect to app */}
-                  <Route path="*" element={<Navigate to="/app" replace />} />
+                  {/* Catch all - redirect to home */}
+                  <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
 
                 <Toaster />

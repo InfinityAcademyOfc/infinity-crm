@@ -1,244 +1,87 @@
 
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
+import React from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
-  LayoutDashboard, 
-  TrendingUp, 
+  Home, 
+  BarChart2, 
   Users, 
-  DollarSign, 
-  Package,
-  Upload,
-  MessageSquare,
-  Target,
-  FolderOpen,
-  UserCheck,
-  Calendar,
+  FileText, 
   Settings,
+  Package, 
+  Calendar, 
+  MessageSquare,
+  UserPlus,
   X
-} from 'lucide-react';
+} from "lucide-react";
 
 interface SidebarProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  isOpen: boolean;
+  setIsOpen: (open: boolean) => void;
 }
 
-const navigationItems = [
-  {
-    title: 'Dashboard',
-    href: '/app/dashboard',
-    icon: LayoutDashboard,
-  },
-  {
-    title: 'Funil de Vendas',
-    href: '/app/sales-funnel',
-    icon: TrendingUp,
-  },
-  {
-    title: 'Clientes',
-    href: '/app/clients',
-    icon: Users,
-  },
-  {
-    title: 'Financeiro',
-    href: '/app/finance',
-    icon: DollarSign,
-  },
-  {
-    title: 'Produtos/Serviços',
-    href: '/app/products',
-    icon: Package,
-  },
-  {
-    title: 'Importar Leads',
-    href: '/app/lead-import',
-    icon: Upload,
-  },
-];
-
-const integrationItems = [
-  {
-    title: 'WhatsApp',
-    href: '/app/whatsapp',
-    icon: MessageSquare,
-  },
-  {
-    title: 'Anúncios',
-    href: '/app/ads-integration',
-    icon: Target,
-  },
-];
-
-const managementItems = [
-  {
-    title: 'Produção',
-    href: '/app/production',
-    icon: FolderOpen,
-  },
-  {
-    title: 'Equipe',
-    href: '/app/team',
-    icon: UserCheck,
-  },
-  {
-    title: 'Reuniões',
-    href: '/app/meetings',
-    icon: Calendar,
-  },
-];
-
-export const Sidebar = ({ open, onOpenChange }: SidebarProps) => {
+const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
+  const navigate = useNavigate();
   const location = useLocation();
-
+  
+  const menuItems = [
+    { icon: Home, label: "Dashboard", path: "/app" },
+    { icon: BarChart2, label: "Funil de Vendas", path: "/app/sales-funnel" },
+    { icon: Users, label: "Clientes", path: "/app/clients" },
+    { icon: Package, label: "Produtos", path: "/app/products" },
+    { icon: FileText, label: "Financeiro", path: "/app/finance" },
+    { icon: Calendar, label: "Reuniões", path: "/app/meetings" },
+    { icon: MessageSquare, label: "WhatsApp", path: "/app/whatsapp" },
+    { icon: UserPlus, label: "Equipe", path: "/app/team" },
+    { icon: Settings, label: "Configurações", path: "/app/settings" },
+  ];
+  
   return (
-    <>
-      {/* Mobile overlay */}
-      {open && (
-        <div 
-          className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm lg:hidden"
-          onClick={() => onOpenChange(false)}
-        />
+    <aside
+      className={cn(
+        "fixed inset-y-0 left-0 z-50 flex flex-col w-64 bg-background border-r transition-transform md:translate-x-0 duration-300 md:sticky",
+        isOpen ? "translate-x-0" : "-translate-x-full"
       )}
-
-      {/* Sidebar */}
-      <div className={cn(
-        "fixed left-0 top-0 z-50 h-full w-64 bg-card border-r transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0",
-        open ? "translate-x-0" : "-translate-x-full"
-      )}>
-        <div className="flex h-full flex-col">
-          {/* Header */}
-          <div className="flex h-14 items-center justify-between px-4 border-b">
-            <Link to="/app" className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded bg-primary flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-sm">∞</span>
-              </div>
-              <span className="font-semibold">Infinity CRM</span>
-            </Link>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="lg:hidden"
-              onClick={() => onOpenChange(false)}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-
-          {/* Navigation */}
-          <ScrollArea className="flex-1 px-3 py-4">
-            <div className="space-y-6">
-              {/* Main Navigation */}
-              <div>
-                <h3 className="mb-2 px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  Principal
-                </h3>
-                <div className="space-y-1">
-                  {navigationItems.map((item) => {
-                    const isActive = location.pathname === item.href;
-                    return (
-                      <Link
-                        key={item.href}
-                        to={item.href}
-                        onClick={() => onOpenChange(false)}
-                        className={cn(
-                          "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
-                          isActive
-                            ? "bg-primary text-primary-foreground"
-                            : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                        )}
-                      >
-                        <item.icon className="h-4 w-4" />
-                        {item.title}
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <Separator />
-
-              {/* Integrations */}
-              <div>
-                <h3 className="mb-2 px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  Integrações
-                </h3>
-                <div className="space-y-1">
-                  {integrationItems.map((item) => {
-                    const isActive = location.pathname === item.href;
-                    return (
-                      <Link
-                        key={item.href}
-                        to={item.href}
-                        onClick={() => onOpenChange(false)}
-                        className={cn(
-                          "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
-                          isActive
-                            ? "bg-primary text-primary-foreground"
-                            : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                        )}
-                      >
-                        <item.icon className="h-4 w-4" />
-                        {item.title}
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <Separator />
-
-              {/* Management */}
-              <div>
-                <h3 className="mb-2 px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  Gestão
-                </h3>
-                <div className="space-y-1">
-                  {managementItems.map((item) => {
-                    const isActive = location.pathname === item.href;
-                    return (
-                      <Link
-                        key={item.href}
-                        to={item.href}
-                        onClick={() => onOpenChange(false)}
-                        className={cn(
-                          "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
-                          isActive
-                            ? "bg-primary text-primary-foreground"
-                            : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                        )}
-                      >
-                        <item.icon className="h-4 w-4" />
-                        {item.title}
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          </ScrollArea>
-
-          {/* Footer */}
-          <div className="border-t p-3">
-            <Link
-              to="/app/settings"
-              onClick={() => onOpenChange(false)}
-              className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors w-full",
-                location.pathname === '/app/settings'
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
-              )}
-            >
-              <Settings className="h-4 w-4" />
-              Configurações
-            </Link>
-          </div>
-        </div>
+    >
+      <div className="flex items-center justify-between h-14 px-4 border-b">
+        <h2 className="text-lg font-semibold">Infinity CRM</h2>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setIsOpen(false)}
+          className="md:hidden"
+        >
+          <X className="h-5 w-5" />
+          <span className="sr-only">Close sidebar</span>
+        </Button>
       </div>
-    </>
+      
+      <ScrollArea className="flex-1 py-4">
+        <nav className="px-2 space-y-1">
+          {menuItems.map((item) => (
+            <Button
+              key={item.path}
+              variant={location.pathname === item.path ? "secondary" : "ghost"}
+              className={cn(
+                "w-full justify-start gap-3",
+                location.pathname === item.path ? "bg-muted" : ""
+              )}
+              onClick={() => {
+                navigate(item.path);
+                if (window.innerWidth < 768) {
+                  setIsOpen(false);
+                }
+              }}
+            >
+              <item.icon className="h-5 w-5" />
+              {item.label}
+            </Button>
+          ))}
+        </nav>
+      </ScrollArea>
+    </aside>
   );
 };
 

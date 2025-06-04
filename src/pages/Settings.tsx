@@ -1,99 +1,87 @@
 
-import { useState } from "react";
-import { SectionHeader } from "@/components/ui/section-header";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User, Bell, Shield, Settings as SettingsIcon, Zap, PieChart, CreditCard, MessageCircle } from "lucide-react";
-import ProfileSettings from "@/components/settings/ProfileSettings";
-import NotificationSettings from "@/components/settings/NotificationSettings";
-import SecuritySettings from "@/components/settings/SecuritySettings";
-import SystemSettings from "@/components/settings/SystemSettings";
-import AutomationSettings from "@/components/settings/AutomationSettings";
-import DashboardSettings from "@/components/settings/DashboardSettings";
-import PlansSettings from "@/components/settings/PlansSettings";
-import WhatsAppSettings from "@/components/settings/WhatsAppSettings";
+import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Settings as SettingsIcon, User, Bell, Shield } from 'lucide-react';
 
 const Settings = () => {
-  const [activeTab, setActiveTab] = useState("profile");
-
   return (
-    <div className="space-y-6">
-      <SectionHeader 
-        title="Configurações" 
-        description="Gerencie suas preferências e dados de perfil"
-      />
-      
-      <Tabs 
-        value={activeTab} 
-        onValueChange={setActiveTab} 
-        className="space-y-4"
-      >
-        <TabsList className="grid grid-cols-3 md:grid-cols-8 gap-1 max-w-5xl overflow-x-auto">
-          <TabsTrigger value="profile" className="flex items-center gap-2">
-            <User size={16} />
-            <span className="hidden sm:inline">Perfil</span>
-          </TabsTrigger>
-          <TabsTrigger value="plans" className="flex items-center gap-2">
-            <CreditCard size={16} />
-            <span className="hidden sm:inline">Planos</span>
-          </TabsTrigger>
-          <TabsTrigger value="notifications" className="flex items-center gap-2">
-            <Bell size={16} />
-            <span className="hidden sm:inline">Notificações</span>
-          </TabsTrigger>
-          <TabsTrigger value="security" className="flex items-center gap-2">
-            <Shield size={16} />
-            <span className="hidden sm:inline">Segurança</span>
-          </TabsTrigger>
-          <TabsTrigger value="automation" className="flex items-center gap-2">
-            <Zap size={16} />
-            <span className="hidden sm:inline">Automação</span>
-          </TabsTrigger>
-          <TabsTrigger value="dashboard" className="flex items-center gap-2">
-            <PieChart size={16} />
-            <span className="hidden sm:inline">Dashboard</span>
-          </TabsTrigger>
-          <TabsTrigger value="whatsapp" className="flex items-center gap-2">
-            <MessageCircle size={16} />
-            <span className="hidden sm:inline">WhatsApp</span>
-          </TabsTrigger>
-          <TabsTrigger value="system" className="flex items-center gap-2">
-            <SettingsIcon size={16} />
-            <span className="hidden sm:inline">Sistema</span>
-          </TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="profile">
-          <ProfileSettings />
-        </TabsContent>
-        
-        <TabsContent value="plans">
-          <PlansSettings />
-        </TabsContent>
-        
-        <TabsContent value="notifications">
-          <NotificationSettings />
-        </TabsContent>
-        
-        <TabsContent value="security">
-          <SecuritySettings />
-        </TabsContent>
-        
-        <TabsContent value="automation">
-          <AutomationSettings />
-        </TabsContent>
-        
-        <TabsContent value="dashboard">
-          <DashboardSettings />
-        </TabsContent>
-        
-        <TabsContent value="whatsapp">
-          <WhatsAppSettings />
-        </TabsContent>
-        
-        <TabsContent value="system">
-          <SystemSettings />
-        </TabsContent>
-      </Tabs>
+    <div className="p-6 space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold">Configurações</h1>
+        <p className="text-muted-foreground">
+          Gerencie as configurações do sistema e da sua conta
+        </p>
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <User className="h-5 w-5" />
+              Perfil
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">
+              Atualize suas informações pessoais e preferências
+            </p>
+            <button className="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90">
+              Editar Perfil
+            </button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Bell className="h-5 w-5" />
+              Notificações
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">
+              Configure quando e como receber notificações
+            </p>
+            <button className="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90">
+              Configurar
+            </button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5" />
+              Segurança
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">
+              Gerencie senha e configurações de segurança
+            </p>
+            <button className="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90">
+              Alterar Senha
+            </button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <SettingsIcon className="h-5 w-5" />
+              Sistema
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">
+              Configurações gerais do sistema e empresa
+            </p>
+            <button className="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90">
+              Configurar
+            </button>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
