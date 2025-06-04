@@ -1,57 +1,46 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
-import { TopNav } from '@/components/layout/TopNav';
-import { MobileNav } from '@/components/layout/MobileNav';
-import Sidebar from '@/components/navigation/Sidebar';
-import { useNotifications } from '@/hooks/useNotifications';
+import { Sidebar } from '@/components/layout/Sidebar';
+import { Header } from '@/components/layout/Header';
+import { useAuth } from '@/contexts/AuthContext';
+import { Loader2 } from 'lucide-react';
 
 const MainLayout = () => {
+  const { loading } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isMobileView, setIsMobileView] = useState(false);
-  const { unreadCount } = useNotifications();
 
-  useEffect(() => {
-    const checkMobileView = () => {
-      setIsMobileView(window.innerWidth < 768);
-    };
-
-    checkMobileView();
-    window.addEventListener('resize', checkMobileView);
-
-    return () => window.removeEventListener('resize', checkMobileView);
-  }, []);
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Carregando aplicação...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-background flex w-full">
-      {/* Desktop Sidebar */}
-      {!isMobileView && (
-        <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} />
-      )}
-
-      {/* Mobile Navigation */}
-      <MobileNav isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
-
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <TopNav 
-          openMobileNav={() => setSidebarOpen(true)}
-          isMobileView={isMobileView}
-          notificationCount={unreadCount}
+    <div className="min-h-screen bg-background">
+      <div className="flex h-screen">
+        {/* Sidebar */}
+        <Sidebar 
+          open={sidebarOpen} 
+          onOpenChange={setSidebarOpen}
         />
         
-        <main className="flex-1 overflow-x-hidden overflow-y-auto">
-          <Outlet />
-        </main>
+        {/* Main Content */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <Header onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
+          
+          <main className="flex-1 overflow-auto">
+            <div className="h-full">
+              <Outlet />
+            </div>
+          </main>
+        </div>
       </div>
-
-      {/* Mobile Overlay */}
-      {isMobileView && sidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black/50 z-40"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
     </div>
   );
 };

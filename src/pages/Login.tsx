@@ -1,197 +1,303 @@
 
-import React, { useState } from 'react';
-import { Link, Navigate, useNavigate } from 'react-router-dom';
-import { ArrowLeft, LogIn, Eye, EyeOff } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import ThemeToggle from '@/components/theme/ThemeToggle';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Eye, EyeOff, Loader2, Building, User } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import LoadingScreen from '@/components/ui/loading-screen';
 import { toast } from 'sonner';
 
-const passwordRules = "Ao menos 8 caracteres, letras maiúsculas, minúsculas, número e caractere especial";
-
-const loginSchema = z.object({
-  email: z.string().email('Email inválido'),
-  password: z.string()
-    .min(8, "A senha deve conter pelo menos 8 caracteres")
-    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/, passwordRules)
-});
-
-type LoginFormValues = z.infer<typeof loginSchema>;
-
 const Login = () => {
-  const { signIn, user, loading } = useAuth();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
-
-  // Initialize form regardless of loading or authenticated state
-  // This ensures hooks are always called in the same order
-  const form = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: '',
-      password: ''
-    }
+  const { user, signIn, signUp, loading } = useAuth();
+  
+  const [loginData, setLoginData] = useState({
+    email: '',
+    password: '',
   });
+  
+  const [registerData, setRegisterData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    isCompany: true,
+  });
+  
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const onSubmit = async (values: LoginFormValues) => {
-    setIsSubmitting(true);
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user && !loading) {
+      navigate('/app');
+    }
+  }, [user, loading, navigate]);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!loginData.email || !loginData.password) {
+      toast.error('Por favor, preencha todos os campos');
+      return;
+    }
+
+    setIsLoading(true);
     try {
-      await signIn(values.email, values.password);
-      // Force redirect to app
-      navigate('/app', { replace: true });
-    } catch (error) {
-      // Error handling done in the signIn function
+      await signIn(loginData.email, loginData.password);
+      navigate('/app');
+    } catch (error: any) {
+      console.error('Error during login:', error);
+      toast.error(error.message || 'Erro ao fazer login');
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
   };
 
-  // Render loader after form initialization
-  if (loading) {
-    return <LoadingScreen />;
-  }
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!registerData.name || !registerData.email || !registerData.password) {
+      toast.error('Por favor, preencha todos os campos obrigatórios');
+      return;
+    }
 
-  // Redirect if already authenticated (after form initialization)
-  if (user) {
-    return <Navigate to="/app" replace />;
+    if (registerData.password !== registerData.confirmPassword) {
+      toast.error('As senhas não coincidem');
+      return;
+    }
+
+    if (registerData.password.length < 6) {
+      toast.error('A senha deve ter pelo menos 6 caracteres');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await signUp(
+        registerData.email, 
+        registerData.password, 
+        registerData.name, 
+        registerData.isCompany
+      );
+      toast.success('Conta criada com sucesso! Você será redirecionado...');
+      navigate('/app');
+    } catch (error: any) {
+      console.error('Error during registration:', error);
+      toast.error(error.message || 'Erro ao criar conta');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Carregando...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-black via-gray-900 to-black text-white overflow-hidden">
-      {/* Background grid pattern */}
-      <div className="fixed inset-0 z-0 bg-[url('/grid-pattern.svg')] opacity-5"></div>
-      
-      {/* Global light effects */}
-      <div className="fixed inset-0 z-0">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl"></div>
-      </div>
-      
-      <header className="container relative z-10 px-4 py-6 flex items-center justify-between">
-        <Link to="/" className="inline-flex items-center text-primary hover:underline">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Voltar para a página inicial
-        </Link>
-        <div className="flex items-center gap-4">
-          <ThemeToggle />
-          <Link to="/register">
-            <Button variant="outline" className="border-white/20 text-white hover:bg-white/5">Cadastrar</Button>
-          </Link>
-        </div>
-      </header>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted p-4">
+      <Card className="w-full max-w-md animate-fade-in">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl">Infinity CRM</CardTitle>
+          <CardDescription>
+            Faça login ou crie sua conta para começar
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Tabs defaultValue="login" className="space-y-4">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="login">Login</TabsTrigger>
+              <TabsTrigger value="register">Criar Conta</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="login">
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="login-email">Email</Label>
+                  <Input
+                    id="login-email"
+                    type="email"
+                    placeholder="seu@email.com"
+                    value={loginData.email}
+                    onChange={(e) => setLoginData(prev => ({ ...prev, email: e.target.value }))}
+                    className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                    required
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="login-password">Senha</Label>
+                  <div className="relative">
+                    <Input
+                      id="login-password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Digite sua senha"
+                      value={loginData.password}
+                      onChange={(e) => setLoginData(prev => ({ ...prev, password: e.target.value }))}
+                      className="pr-10 transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                </div>
+                
+                <Button 
+                  type="submit" 
+                  className="w-full hover-scale transition-all duration-200"
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Entrando...
+                    </>
+                  ) : (
+                    'Entrar'
+                  )}
+                </Button>
+              </form>
+            </TabsContent>
+            
+            <TabsContent value="register">
+              <form onSubmit={handleRegister} className="space-y-4">
+                {/* Account Type Selection */}
+                <div className="space-y-3">
+                  <Label>Tipo de Conta</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      type="button"
+                      variant={registerData.isCompany ? "default" : "outline"}
+                      onClick={() => setRegisterData(prev => ({ ...prev, isCompany: true }))}
+                      className="h-auto p-3 flex-col gap-1"
+                    >
+                      <Building className="h-4 w-4" />
+                      <span className="text-xs">Empresa</span>
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={!registerData.isCompany ? "default" : "outline"}
+                      onClick={() => setRegisterData(prev => ({ ...prev, isCompany: false }))}
+                      className="h-auto p-3 flex-col gap-1"
+                    >
+                      <User className="h-4 w-4" />
+                      <span className="text-xs">Colaborador</span>
+                    </Button>
+                  </div>
+                </div>
 
-      <main className="flex-1 flex items-center justify-center p-4 relative z-10">
-        <div className="w-full max-w-sm">
-          <Card className="bg-black/40 border-white/10 backdrop-blur-lg shadow-[0_0_25px_rgba(130,80,223,0.2)]">
-            <CardHeader className="space-y-1 px-4 py-3">
-              <CardTitle className="text-xl text-center text-white">Entrar</CardTitle>
-              <CardDescription className="text-center text-white/70 text-sm">
-                Acesse sua conta no Infinity CRM
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="px-4 py-2">
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-white text-sm">E-mail</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="seu@email.com" 
-                            type="email" 
-                            required 
-                            {...field} 
-                            className="bg-black/60 border-white/10 text-white placeholder:text-white/50"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                <div className="space-y-2">
+                  <Label htmlFor="register-name">
+                    {registerData.isCompany ? 'Nome da Empresa' : 'Nome Completo'}
+                  </Label>
+                  <Input
+                    id="register-name"
+                    type="text"
+                    placeholder={registerData.isCompany ? 'Minha Empresa Ltda' : 'João Silva'}
+                    value={registerData.name}
+                    onChange={(e) => setRegisterData(prev => ({ ...prev, name: e.target.value }))}
+                    className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                    required
                   />
-                  
-                  <FormField
-                    control={form.control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem>
-                        <div className="flex items-center justify-between">
-                          <FormLabel className="text-white text-sm">Senha</FormLabel>
-                          <Link to="/forgot-password" className="text-xs text-primary hover:underline">
-                            Esqueceu a senha?
-                          </Link>
-                        </div>
-                        <FormControl>
-                          <div className="relative">
-                            <Input 
-                              placeholder="••••••••" 
-                              type={showPassword ? "text" : "password"}
-                              required 
-                              {...field} 
-                              className="bg-black/60 border-white/10 text-white placeholder:text-white/50 pr-10"
-                            />
-                            <button 
-                              type="button" 
-                              onClick={() => setShowPassword(!showPassword)}
-                              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/70 hover:text-white"
-                            >
-                              {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                            </button>
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                        <p className="text-xs text-white/50 mt-1">{passwordRules}</p>
-                      </FormItem>
-                    )}
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="register-email">Email</Label>
+                  <Input
+                    id="register-email"
+                    type="email"
+                    placeholder="seu@email.com"
+                    value={registerData.email}
+                    onChange={(e) => setRegisterData(prev => ({ ...prev, email: e.target.value }))}
+                    className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                    required
                   />
-                  
-                  <Button 
-                    type="submit" 
-                    className="w-full bg-primary hover:bg-primary/90 text-white group relative overflow-hidden"
-                    disabled={isSubmitting}
-                  >
-                    <span className="relative z-10 flex items-center">
-                      {isSubmitting ? (
-                        <span className="flex items-center">
-                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                          Entrando...
-                        </span>
-                      ) : (
-                        <>
-                          <LogIn className="mr-2 h-4 w-4" />
-                          Entrar
-                        </>
-                      )}
-                    </span>
-                    <span className="absolute inset-0 bg-gradient-to-r from-primary via-primary to-primary/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
-                  </Button>
-                </form>
-              </Form>
-            </CardContent>
-            <CardFooter className="flex flex-col space-y-4 border-t border-white/10 px-4 py-3">
-              <div className="text-center text-xs text-white/70">
-                Não tem uma conta?{" "}
-                <Link to="/register" className="text-primary hover:underline">
-                  Criar conta
-                </Link>
-              </div>
-            </CardFooter>
-          </Card>
-        </div>
-      </main>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="register-password">Senha</Label>
+                  <div className="relative">
+                    <Input
+                      id="register-password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Mínimo 6 caracteres"
+                      value={registerData.password}
+                      onChange={(e) => setRegisterData(prev => ({ ...prev, password: e.target.value }))}
+                      className="pr-10 transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="register-confirm">Confirmar Senha</Label>
+                  <div className="relative">
+                    <Input
+                      id="register-confirm"
+                      type={showConfirmPassword ? "text" : "password"}
+                      placeholder="Digite novamente"
+                      value={registerData.confirmPassword}
+                      onChange={(e) => setRegisterData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                      className="pr-10 transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                </div>
+                
+                <Button 
+                  type="submit" 
+                  className="w-full hover-scale transition-all duration-200"
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Criando conta...
+                    </>
+                  ) : (
+                    'Criar Conta'
+                  )}
+                </Button>
+              </form>
+            </TabsContent>
+          </Tabs>
+          
+          <div className="mt-6 text-center text-sm text-muted-foreground">
+            <Link to="/pricing" className="hover:text-primary transition-colors">
+              Ver Planos e Preços
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
