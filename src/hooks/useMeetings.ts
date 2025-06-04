@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
@@ -10,8 +10,8 @@ export interface Meeting {
   description: string | null;
   date: string;
   time: string;
-  status: string;
   participants: number;
+  status: 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
   company_id: string;
   created_at: string;
   updated_at: string;
@@ -43,7 +43,7 @@ export const useMeetings = () => {
     }
   };
 
-  const createMeeting = async (meeting: Omit<Meeting, 'id' | 'created_at' | 'updated_at' | 'company_id'>) => {
+  const createMeeting = async (meeting: Omit<Meeting, 'id' | 'company_id' | 'created_at' | 'updated_at'>) => {
     if (!company?.id) return;
 
     try {
@@ -58,7 +58,7 @@ export const useMeetings = () => {
 
       if (error) throw error;
       
-      setMeetings(prev => [...prev, data].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
+      setMeetings(prev => [...prev, data]);
       toast.success('Reunião criada com sucesso!');
       return data;
     } catch (error) {

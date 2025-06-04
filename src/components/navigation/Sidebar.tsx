@@ -1,158 +1,244 @@
 
-import { useState, useEffect, useRef } from "react";
-import { useLocation } from "react-router-dom";
-import { LayoutDashboard, Filter, Users, DollarSign, Package, Upload, ClipboardList, UserCog, Video, Settings, MessageCircle, Zap } from "lucide-react";
-import NavSection from "./NavSection";
-import { cn } from "@/lib/utils";
+import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
+import { 
+  LayoutDashboard, 
+  TrendingUp, 
+  Users, 
+  DollarSign, 
+  Package,
+  Upload,
+  MessageSquare,
+  Target,
+  FolderOpen,
+  UserCheck,
+  Calendar,
+  Settings,
+  X
+} from 'lucide-react';
 
 interface SidebarProps {
   open: boolean;
-  setOpen: (open: boolean) => void;
+  onOpenChange: (open: boolean) => void;
 }
 
-const mainMenuItems = [
+const navigationItems = [
   {
-    icon: <LayoutDashboard size={18} />,
-    label: "Dashboard",
-    to: "/app",
-    end: true
+    title: 'Dashboard',
+    href: '/app/dashboard',
+    icon: LayoutDashboard,
   },
   {
-    icon: <Filter size={18} />,
-    label: "Funil de Vendas",
-    to: "/app/sales-funnel"
+    title: 'Funil de Vendas',
+    href: '/app/sales-funnel',
+    icon: TrendingUp,
   },
   {
-    icon: <Users size={18} />,
-    label: "Clientes",
-    to: "/app/clients"
+    title: 'Clientes',
+    href: '/app/clients',
+    icon: Users,
   },
   {
-    icon: <DollarSign size={18} />,
-    label: "Financeiro",
-    to: "/app/finance"
+    title: 'Financeiro',
+    href: '/app/finance',
+    icon: DollarSign,
   },
   {
-    icon: <Package size={18} />,
-    label: "Produtos/Serviços",
-    to: "/app/products"
+    title: 'Produtos/Serviços',
+    href: '/app/products',
+    icon: Package,
   },
   {
-    icon: <Upload size={18} />,
-    label: "Importar",
-    to: "/app/lead-import"
-  }
+    title: 'Importar Leads',
+    href: '/app/lead-import',
+    icon: Upload,
+  },
 ];
 
 const integrationItems = [
   {
-    icon: <MessageCircle size={18} />,
-    label: "WhatsApp",
-    to: "/app/whatsapp"
+    title: 'WhatsApp',
+    href: '/app/whatsapp',
+    icon: MessageSquare,
   },
   {
-    icon: <Zap size={18} />,
-    label: "Anúncios",
-    to: "/app/ads-integration"
-  }
+    title: 'Anúncios',
+    href: '/app/ads-integration',
+    icon: Target,
+  },
 ];
 
 const managementItems = [
   {
-    icon: <ClipboardList size={18} />,
-    label: "Produção",
-    to: "/app/production"
+    title: 'Produção',
+    href: '/app/production',
+    icon: FolderOpen,
   },
   {
-    icon: <UserCog size={18} />,
-    label: "Equipe",
-    to: "/app/team"
+    title: 'Equipe',
+    href: '/app/team',
+    icon: UserCheck,
   },
   {
-    icon: <Video size={18} />,
-    label: "Reuniões",
-    to: "/app/meetings"
-  }
+    title: 'Reuniões',
+    href: '/app/meetings',
+    icon: Calendar,
+  },
 ];
 
-const systemItems = [
-  {
-    icon: <Settings size={18} />,
-    label: "Configurações",
-    to: "/app/settings"
-  }
-];
-
-const Sidebar = ({
-  open,
-  setOpen
-}: SidebarProps) => {
+export const Sidebar = ({ open, onOpenChange }: SidebarProps) => {
   const location = useLocation();
-  const sidebarRef = useRef<HTMLDivElement>(null);
-  const [isMobile, setIsMobile] = useState(false);
-  
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
-  
-  useEffect(() => {
-    if (isMobile) {
-      setOpen(false);
-    }
-  }, [location.pathname, isMobile, setOpen]);
 
   return (
-    <div 
-      ref={sidebarRef} 
-      className={cn(
-        "h-full bg-background/95 backdrop-blur-md border-r shadow-lg",
-        "flex flex-col overflow-hidden transition-all duration-300 ease-in-out",
-        "fixed left-0 top-0 z-50",
-        isMobile ? 
-          open ? "w-64 translate-x-0" : "w-0 -translate-x-full" 
-          : 
-          open ? "w-64 relative" : "w-16 relative",
-        "dark:bg-gray-900/90 dark:border-gray-800",
-        "bg-gradient-to-b from-background/95 to-background/98"
+    <>
+      {/* Mobile overlay */}
+      {open && (
+        <div 
+          className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm lg:hidden"
+          onClick={() => onOpenChange(false)}
+        />
       )}
-    >
-      <div className="flex-1 overflow-y-auto p-4 py-[30px] pt-14">
-        <NavSection 
-          title="Menu Principal" 
-          items={mainMenuItems} 
-          isCollapsed={!open} 
-          onItemClick={() => isMobile && setOpen(false)} 
-        />
-        <NavSection 
-          title="Integrações" 
-          items={integrationItems} 
-          isCollapsed={!open} 
-          onItemClick={() => isMobile && setOpen(false)}
-          className="mt-6" 
-        />
-        <NavSection 
-          title="Gestão" 
-          items={managementItems} 
-          isCollapsed={!open} 
-          onItemClick={() => isMobile && setOpen(false)}
-          className="mt-6" 
-        />
-        <NavSection 
-          title="Sistema" 
-          items={systemItems} 
-          isCollapsed={!open} 
-          onItemClick={() => isMobile && setOpen(false)}
-          className="mt-6 mb-4" 
-        />
+
+      {/* Sidebar */}
+      <div className={cn(
+        "fixed left-0 top-0 z-50 h-full w-64 bg-card border-r transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0",
+        open ? "translate-x-0" : "-translate-x-full"
+      )}>
+        <div className="flex h-full flex-col">
+          {/* Header */}
+          <div className="flex h-14 items-center justify-between px-4 border-b">
+            <Link to="/app" className="flex items-center gap-2">
+              <div className="h-8 w-8 rounded bg-primary flex items-center justify-center">
+                <span className="text-primary-foreground font-bold text-sm">∞</span>
+              </div>
+              <span className="font-semibold">Infinity CRM</span>
+            </Link>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="lg:hidden"
+              onClick={() => onOpenChange(false)}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+
+          {/* Navigation */}
+          <ScrollArea className="flex-1 px-3 py-4">
+            <div className="space-y-6">
+              {/* Main Navigation */}
+              <div>
+                <h3 className="mb-2 px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Principal
+                </h3>
+                <div className="space-y-1">
+                  {navigationItems.map((item) => {
+                    const isActive = location.pathname === item.href;
+                    return (
+                      <Link
+                        key={item.href}
+                        to={item.href}
+                        onClick={() => onOpenChange(false)}
+                        className={cn(
+                          "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
+                          isActive
+                            ? "bg-primary text-primary-foreground"
+                            : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                        )}
+                      >
+                        <item.icon className="h-4 w-4" />
+                        {item.title}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Integrations */}
+              <div>
+                <h3 className="mb-2 px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Integrações
+                </h3>
+                <div className="space-y-1">
+                  {integrationItems.map((item) => {
+                    const isActive = location.pathname === item.href;
+                    return (
+                      <Link
+                        key={item.href}
+                        to={item.href}
+                        onClick={() => onOpenChange(false)}
+                        className={cn(
+                          "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
+                          isActive
+                            ? "bg-primary text-primary-foreground"
+                            : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                        )}
+                      >
+                        <item.icon className="h-4 w-4" />
+                        {item.title}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Management */}
+              <div>
+                <h3 className="mb-2 px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Gestão
+                </h3>
+                <div className="space-y-1">
+                  {managementItems.map((item) => {
+                    const isActive = location.pathname === item.href;
+                    return (
+                      <Link
+                        key={item.href}
+                        to={item.href}
+                        onClick={() => onOpenChange(false)}
+                        className={cn(
+                          "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
+                          isActive
+                            ? "bg-primary text-primary-foreground"
+                            : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                        )}
+                      >
+                        <item.icon className="h-4 w-4" />
+                        {item.title}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </ScrollArea>
+
+          {/* Footer */}
+          <div className="border-t p-3">
+            <Link
+              to="/app/settings"
+              onClick={() => onOpenChange(false)}
+              className={cn(
+                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors w-full",
+                location.pathname === '/app/settings'
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              )}
+            >
+              <Settings className="h-4 w-4" />
+              Configurações
+            </Link>
+          </div>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

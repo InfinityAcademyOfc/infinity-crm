@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
@@ -9,10 +9,10 @@ export interface Activity {
   type: string;
   title: string;
   description: string | null;
-  status: string;
-  priority: string;
   related_to: string | null;
   related_id: string | null;
+  priority: 'low' | 'medium' | 'high';
+  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
   company_id: string;
   created_by: string | null;
   created_at: string;
@@ -35,7 +35,18 @@ export const useActivities = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setActivities(data || []);
+      
+      const validatedData = (data || []).map(activity => ({
+        ...activity,
+        priority: (['low', 'medium', 'high'].includes(activity.priority) 
+          ? activity.priority 
+          : 'medium') as 'low' | 'medium' | 'high',
+        status: (['pending', 'in_progress', 'completed', 'cancelled'].includes(activity.status) 
+          ? activity.status 
+          : 'pending') as 'pending' | 'in_progress' | 'completed' | 'cancelled'
+      })) as Activity[];
+
+      setActivities(validatedData);
     } catch (error) {
       console.error('Erro ao buscar atividades:', error);
       toast.error('Erro ao carregar atividades');
@@ -44,7 +55,7 @@ export const useActivities = () => {
     }
   };
 
-  const createActivity = async (activity: Omit<Activity, 'id' | 'created_at' | 'company_id'>) => {
+  const createActivity = async (activity: Omit<Activity, 'id' | 'company_id' | 'created_at'>) => {
     if (!company?.id) return;
 
     try {
@@ -59,9 +70,19 @@ export const useActivities = () => {
 
       if (error) throw error;
       
-      setActivities(prev => [data, ...prev]);
+      const validatedData = {
+        ...data,
+        priority: (['low', 'medium', 'high'].includes(data.priority) 
+          ? data.priority 
+          : 'medium') as 'low' | 'medium' | 'high',
+        status: (['pending', 'in_progress', 'completed', 'cancelled'].includes(data.status) 
+          ? data.status 
+          : 'pending') as 'pending' | 'in_progress' | 'completed' | 'cancelled'
+      } as Activity;
+
+      setActivities(prev => [validatedData, ...prev]);
       toast.success('Atividade criada com sucesso!');
-      return data;
+      return validatedData;
     } catch (error) {
       console.error('Erro ao criar atividade:', error);
       toast.error('Erro ao criar atividade');
@@ -80,9 +101,19 @@ export const useActivities = () => {
 
       if (error) throw error;
       
-      setActivities(prev => prev.map(a => a.id === id ? data : a));
+      const validatedData = {
+        ...data,
+        priority: (['low', 'medium', 'high'].includes(data.priority) 
+          ? data.priority 
+          : 'medium') as 'low' | 'medium' | 'high',
+        status: (['pending', 'in_progress', 'completed', 'cancelled'].includes(data.status) 
+          ? data.status 
+          : 'pending') as 'pending' | 'in_progress' | 'completed' | 'cancelled'
+      } as Activity;
+
+      setActivities(prev => prev.map(a => a.id === id ? validatedData : a));
       toast.success('Atividade atualizada com sucesso!');
-      return data;
+      return validatedData;
     } catch (error) {
       console.error('Erro ao atualizar atividade:', error);
       toast.error('Erro ao atualizar atividade');

@@ -1,20 +1,20 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
 export interface FinancialTransaction {
   id: string;
-  type: string;
+  type: 'income' | 'expense';
   amount: number;
   description: string;
   category: string | null;
   date: string;
-  status: string;
+  status: 'completed' | 'pending' | 'cancelled';
+  reference_id: string | null;
   company_id: string;
   created_by: string | null;
-  reference_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -45,7 +45,7 @@ export const useFinancialData = () => {
     }
   };
 
-  const createTransaction = async (transaction: Omit<FinancialTransaction, 'id' | 'created_at' | 'updated_at' | 'company_id'>) => {
+  const createTransaction = async (transaction: Omit<FinancialTransaction, 'id' | 'company_id' | 'created_at' | 'updated_at'>) => {
     if (!company?.id) return;
 
     try {
