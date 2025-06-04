@@ -71,7 +71,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .maybeSingle();
 
       if (companyData && !companyError) {
-        setCompany(companyData);
+        // Map the company data to match our Company interface
+        const mappedCompany: Company = {
+          id: companyData.id,
+          name: companyData.name,
+          email: companyData.email,
+          owner_id: companyData.id, // Use id as owner_id for companies
+          created_at: companyData.created_at,
+          updated_at: companyData.updated_at
+        };
+        setCompany(mappedCompany);
         setProfile(null);
         return;
       }
@@ -95,7 +104,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             .maybeSingle();
           
           if (userCompanyData) {
-            setCompany(userCompanyData);
+            const mappedUserCompany: Company = {
+              id: userCompanyData.id,
+              name: userCompanyData.name,
+              email: userCompanyData.email,
+              owner_id: userCompanyData.id,
+              created_at: userCompanyData.created_at,
+              updated_at: userCompanyData.updated_at
+            };
+            setCompany(mappedUserCompany);
           } else {
             // Try companies table
             const { data: companiesData } = await supabase
@@ -108,8 +125,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               setCompany(companiesData);
             }
           }
+        } else {
+          setCompany(null);
         }
-        setCompany(null);
       }
     } catch (error) {
       console.error('Error fetching user data:', error);

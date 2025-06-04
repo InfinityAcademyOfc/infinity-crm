@@ -55,24 +55,25 @@ function App() {
                       <Route index element={<Navigate to="/app" replace />} />
                       
                       {/* App routes */}
-                      <Route path="/app" element={<Dashboard />} />
-                      <Route path="/app/sales-funnel" element={<SalesFunnel />} />
-                      <Route path="/app/clients" element={<ClientManagement />} />
-                      <Route path="/app/finance" element={<FinanceManagement />} />
-                      <Route path="/app/products" element={<ProductsServices />} />
-                      <Route path="/app/lead-import" element={<LeadImport />} />
+                      <Route path="app" element={<Dashboard />} />
+                      <Route path="app/dashboard" element={<Dashboard />} />
+                      <Route path="app/sales-funnel" element={<SalesFunnel />} />
+                      <Route path="app/clients" element={<ClientManagement />} />
+                      <Route path="app/finance" element={<FinanceManagement />} />
+                      <Route path="app/products" element={<ProductsServices />} />
+                      <Route path="app/lead-import" element={<LeadImport />} />
                       
                       {/* Integration routes */}
-                      <Route path="/app/whatsapp" element={<WhatsAppIntegrationPage />} />
-                      <Route path="/app/ads-integration" element={<AdsIntegrationPage />} />
+                      <Route path="app/whatsapp" element={<WhatsAppIntegrationPage />} />
+                      <Route path="app/ads-integration" element={<AdsIntegrationPage />} />
                       
                       {/* Management routes */}
-                      <Route path="/app/production" element={<ProductionManagement />} />
-                      <Route path="/app/team" element={<TeamManagement />} />
-                      <Route path="/app/meetings" element={<Meetings />} />
+                      <Route path="app/production" element={<ProductionManagement />} />
+                      <Route path="app/team" element={<TeamManagement />} />
+                      <Route path="app/meetings" element={<Meetings />} />
                       
                       {/* Settings */}
-                      <Route path="/app/settings" element={<Settings />} />
+                      <Route path="app/settings" element={<Settings />} />
                     </Route>
                   </Route>
 

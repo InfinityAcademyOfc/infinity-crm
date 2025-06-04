@@ -1,8 +1,8 @@
 
 import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
-import { Sidebar } from '@/components/layout/Sidebar';
-import { Header } from '@/components/layout/Header';
+import Sidebar from '@/components/navigation/Sidebar';
+import Header from '@/components/navigation/Header';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
 
@@ -27,12 +27,16 @@ const MainLayout = () => {
         {/* Sidebar */}
         <Sidebar 
           open={sidebarOpen} 
-          onOpenChange={setSidebarOpen}
+          setOpen={setSidebarOpen}
         />
         
         {/* Main Content */}
         <div className="flex-1 flex flex-col overflow-hidden">
-          <Header onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
+          <Header 
+            openSidebar={() => setSidebarOpen(true)}
+            isSidebarOpen={sidebarOpen}
+            toggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+          />
           
           <main className="flex-1 overflow-auto">
             <div className="h-full">
