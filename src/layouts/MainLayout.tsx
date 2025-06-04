@@ -27,15 +27,13 @@ const MainLayout = () => {
         {/* Sidebar */}
         <Sidebar 
           open={sidebarOpen} 
-          setOpen={setSidebarOpen}
+          onOpenChange={setSidebarOpen}
         />
         
         {/* Main Content */}
         <div className="flex-1 flex flex-col overflow-hidden">
           <Header 
-            openSidebar={() => setSidebarOpen(true)}
-            isSidebarOpen={sidebarOpen}
-            toggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+            onMenuClick={() => setSidebarOpen(true)}
           />
           
           <main className="flex-1 overflow-auto">

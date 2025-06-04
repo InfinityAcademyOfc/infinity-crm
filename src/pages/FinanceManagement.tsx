@@ -1,48 +1,37 @@
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { DollarSign, TrendingUp, TrendingDown, Plus, Calendar, Filter } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { Plus, TrendingUp, TrendingDown, DollarSign, Calendar } from 'lucide-react';
 import { useFinancialData } from '@/hooks/useFinancialData';
 import FinancialTransactionDialog from '@/components/forms/FinancialTransactionDialog';
+import { formatCurrency } from '@/lib/formatters';
 
 const FinanceManagement = () => {
-  const [showTransactionForm, setShowTransactionForm] = useState(false);
-  const { transactions, loading, deleteTransaction } = useFinancialData();
+  const { transactions, loading } = useFinancialData();
+  const [showDialog, setShowDialog] = useState(false);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed': return 'bg-green-100 text-green-800';
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'cancelled': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
+  const totalIncome = transactions
+    .filter(t => t.type === 'income')
+    .reduce((sum, t) => sum + t.amount, 0);
 
-  const totalIncome = transactions.filter(t => t.type === 'income' && t.status === 'completed')
-    .reduce((acc, t) => acc + t.amount, 0);
-  
-  const totalExpenses = transactions.filter(t => t.type === 'expense' && t.status === 'completed')
-    .reduce((acc, t) => acc + t.amount, 0);
-  
-  const netProfit = totalIncome - totalExpenses;
-  const pendingAmount = transactions.filter(t => t.status === 'pending')
-    .reduce((acc, t) => acc + t.amount, 0);
+  const totalExpenses = transactions
+    .filter(t => t.type === 'expense')
+    .reduce((sum, t) => sum + t.amount, 0);
 
-  const handleDeleteTransaction = async (id: string) => {
-    if (window.confirm('Tem certeza que deseja excluir esta transação?')) {
-      await deleteTransaction(id);
-    }
-  };
+  const balance = totalIncome - totalExpenses;
 
   if (loading) {
     return (
-      <div className="p-6 space-y-6">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/4 mb-2"></div>
-          <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+      <div className="p-6">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="h-32 bg-gray-200 rounded"></div>
+            ))}
+          </div>
+          <div className="h-64 bg-gray-200 rounded"></div>
         </div>
       </div>
     );
@@ -50,33 +39,32 @@ const FinanceManagement = () => {
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Gestão Financeira</h1>
-          <p className="text-muted-foreground">Controle suas finanças e orçamentos</p>
+          <p className="text-muted-foreground">
+            Controle suas receitas e despesas
+          </p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline">
-            <Calendar className="w-4 h-4 mr-2" />
-            Período
-          </Button>
-          <Button onClick={() => setShowTransactionForm(true)}>
-            <Plus className="w-4 h-4 mr-2" />
-            Nova Transação
-          </Button>
-        </div>
+        <Button onClick={() => setShowDialog(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Nova Transação
+        </Button>
       </div>
 
-      {/* Cards de Resumo */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Receita Total</CardTitle>
+            <CardTitle className="text-sm font-medium">Receitas</CardTitle>
             <TrendingUp className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">R$ {totalIncome.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">Receitas confirmadas</p>
+            <div className="text-2xl font-bold text-green-600">
+              {formatCurrency(totalIncome)}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Total de receitas
+            </p>
           </CardContent>
         </Card>
 
@@ -86,138 +74,92 @@ const FinanceManagement = () => {
             <TrendingDown className="h-4 w-4 text-red-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">R$ {totalExpenses.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">Despesas confirmadas</p>
+            <div className="text-2xl font-bold text-red-600">
+              {formatCurrency(totalExpenses)}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Total de despesas
+            </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Lucro Líquido</CardTitle>
+            <CardTitle className="text-sm font-medium">Saldo</CardTitle>
             <DollarSign className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl font-bold ${netProfit >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
-              R$ {netProfit.toLocaleString()}
+            <div className={`text-2xl font-bold ${balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              {formatCurrency(balance)}
             </div>
-            <p className="text-xs text-muted-foreground">Receitas - Despesas</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pendente</CardTitle>
-            <DollarSign className="h-4 w-4 text-orange-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-600">R$ {pendingAmount.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">Aguardando confirmação</p>
+            <p className="text-xs text-muted-foreground">
+              Saldo atual
+            </p>
           </CardContent>
         </Card>
       </div>
 
-      <Tabs defaultValue="transactions" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="transactions">Transações</TabsTrigger>
-          <TabsTrigger value="reports">Relatórios</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="transactions" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Transações Recentes</CardTitle>
-              <CardDescription>Últimas movimentações financeiras</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {transactions.map((transaction) => (
-                  <div key={transaction.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex items-center space-x-4">
-                      <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                        transaction.type === 'income' ? 'bg-green-100' : 'bg-red-100'
-                      }`}>
-                        {transaction.type === 'income' ? (
-                          <TrendingUp className="w-6 h-6 text-green-600" />
-                        ) : (
-                          <TrendingDown className="w-6 h-6 text-red-600" />
+      <Card>
+        <CardHeader>
+          <CardTitle>Transações Recentes</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {transactions.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">Nenhuma transação encontrada</p>
+              <Button 
+                onClick={() => setShowDialog(true)}
+                className="mt-4"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Adicionar Primeira Transação
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {transactions.slice(0, 10).map((transaction) => (
+                <div key={transaction.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex items-center space-x-4">
+                    <div className={`p-2 rounded-full ${
+                      transaction.type === 'income' 
+                        ? 'bg-green-100 text-green-600' 
+                        : 'bg-red-100 text-red-600'
+                    }`}>
+                      {transaction.type === 'income' ? (
+                        <TrendingUp className="h-4 w-4" />
+                      ) : (
+                        <TrendingDown className="h-4 w-4" />
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-medium">{transaction.description}</p>
+                      <div className="flex items-center text-sm text-muted-foreground">
+                        <Calendar className="h-3 w-3 mr-1" />
+                        {new Date(transaction.date).toLocaleDateString('pt-BR')}
+                        {transaction.category && (
+                          <span className="ml-2 px-2 py-1 bg-gray-100 rounded-full text-xs">
+                            {transaction.category}
+                          </span>
                         )}
                       </div>
-                      <div>
-                        <h4 className="font-medium">{transaction.description}</h4>
-                        <p className="text-sm text-muted-foreground">{transaction.category || 'Sem categoria'}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {new Date(transaction.date).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-right space-y-2">
-                      <div className={`font-bold ${
-                        transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
-                      }`}>
-                        {transaction.type === 'income' ? '+' : '-'}R$ {transaction.amount.toLocaleString()}
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Badge className={getStatusColor(transaction.status)}>
-                          {transaction.status === 'completed' ? 'Concluído' : 
-                           transaction.status === 'pending' ? 'Pendente' : 'Cancelado'}
-                        </Badge>
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => handleDeleteTransaction(transaction.id)}
-                        >
-                          Excluir
-                        </Button>
-                      </div>
                     </div>
                   </div>
-                ))}
-                {transactions.length === 0 && (
-                  <div className="text-center py-8 text-muted-foreground">
-                    Nenhuma transação encontrada.
+                  <div className={`text-right font-semibold ${
+                    transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
+                  }`}>
+                    {transaction.type === 'income' ? '+' : '-'}{formatCurrency(transaction.amount)}
                   </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="reports" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Relatórios Financeiros</CardTitle>
-              <CardDescription>Análises e insights financeiros</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-4">
-                <Button variant="outline" className="h-24 flex flex-col">
-                  <TrendingUp className="w-8 h-8 mb-2" />
-                  Relatório de Receitas
-                </Button>
-                <Button variant="outline" className="h-24 flex flex-col">
-                  <TrendingDown className="w-8 h-8 mb-2" />
-                  Relatório de Despesas
-                </Button>
-                <Button variant="outline" className="h-24 flex flex-col">
-                  <DollarSign className="w-8 h-8 mb-2" />
-                  Fluxo de Caixa
-                </Button>
-                <Button variant="outline" className="h-24 flex flex-col">
-                  <Filter className="w-8 h-8 mb-2" />
-                  Relatório Customizado
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <FinancialTransactionDialog
-        open={showTransactionForm}
-        onOpenChange={setShowTransactionForm}
-        onSuccess={() => {
-          // Os dados são atualizados automaticamente pelo hook
-        }}
+        open={showDialog}
+        onOpenChange={setShowDialog}
+        onSuccess={() => setShowDialog(false)}
       />
     </div>
   );

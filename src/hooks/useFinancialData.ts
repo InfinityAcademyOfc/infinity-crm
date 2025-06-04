@@ -36,7 +36,19 @@ export const useFinancialData = () => {
         .order('date', { ascending: false });
 
       if (error) throw error;
-      setTransactions(data || []);
+      
+      // Validar e converter dados
+      const validatedData = (data || []).map(transaction => ({
+        ...transaction,
+        type: (['income', 'expense'].includes(transaction.type) 
+          ? transaction.type 
+          : 'income') as 'income' | 'expense',
+        status: (['completed', 'pending', 'cancelled'].includes(transaction.status) 
+          ? transaction.status 
+          : 'completed') as 'completed' | 'pending' | 'cancelled'
+      })) as FinancialTransaction[];
+
+      setTransactions(validatedData);
     } catch (error) {
       console.error('Erro ao buscar transações:', error);
       toast.error('Erro ao carregar dados financeiros');
@@ -60,9 +72,19 @@ export const useFinancialData = () => {
 
       if (error) throw error;
       
-      setTransactions(prev => [data, ...prev]);
+      const validatedData = {
+        ...data,
+        type: (['income', 'expense'].includes(data.type) 
+          ? data.type 
+          : 'income') as 'income' | 'expense',
+        status: (['completed', 'pending', 'cancelled'].includes(data.status) 
+          ? data.status 
+          : 'completed') as 'completed' | 'pending' | 'cancelled'
+      } as FinancialTransaction;
+
+      setTransactions(prev => [validatedData, ...prev]);
       toast.success('Transação criada com sucesso!');
-      return data;
+      return validatedData;
     } catch (error) {
       console.error('Erro ao criar transação:', error);
       toast.error('Erro ao criar transação');
@@ -81,9 +103,19 @@ export const useFinancialData = () => {
 
       if (error) throw error;
       
-      setTransactions(prev => prev.map(t => t.id === id ? data : t));
+      const validatedData = {
+        ...data,
+        type: (['income', 'expense'].includes(data.type) 
+          ? data.type 
+          : 'income') as 'income' | 'expense',
+        status: (['completed', 'pending', 'cancelled'].includes(data.status) 
+          ? data.status 
+          : 'completed') as 'completed' | 'pending' | 'cancelled'
+      } as FinancialTransaction;
+
+      setTransactions(prev => prev.map(t => t.id === id ? validatedData : t));
       toast.success('Transação atualizada com sucesso!');
-      return data;
+      return validatedData;
     } catch (error) {
       console.error('Erro ao atualizar transação:', error);
       toast.error('Erro ao atualizar transação');

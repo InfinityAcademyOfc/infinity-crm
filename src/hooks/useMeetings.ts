@@ -34,7 +34,16 @@ export const useMeetings = () => {
         .order('date', { ascending: true });
 
       if (error) throw error;
-      setMeetings(data || []);
+      
+      // Validar e converter dados
+      const validatedData = (data || []).map(meeting => ({
+        ...meeting,
+        status: (['scheduled', 'in_progress', 'completed', 'cancelled'].includes(meeting.status) 
+          ? meeting.status 
+          : 'scheduled') as 'scheduled' | 'in_progress' | 'completed' | 'cancelled'
+      })) as Meeting[];
+
+      setMeetings(validatedData);
     } catch (error) {
       console.error('Erro ao buscar reuniões:', error);
       toast.error('Erro ao carregar reuniões');
@@ -58,9 +67,16 @@ export const useMeetings = () => {
 
       if (error) throw error;
       
-      setMeetings(prev => [...prev, data]);
+      const validatedData = {
+        ...data,
+        status: (['scheduled', 'in_progress', 'completed', 'cancelled'].includes(data.status) 
+          ? data.status 
+          : 'scheduled') as 'scheduled' | 'in_progress' | 'completed' | 'cancelled'
+      } as Meeting;
+
+      setMeetings(prev => [...prev, validatedData]);
       toast.success('Reunião criada com sucesso!');
-      return data;
+      return validatedData;
     } catch (error) {
       console.error('Erro ao criar reunião:', error);
       toast.error('Erro ao criar reunião');
@@ -79,9 +95,16 @@ export const useMeetings = () => {
 
       if (error) throw error;
       
-      setMeetings(prev => prev.map(m => m.id === id ? data : m));
+      const validatedData = {
+        ...data,
+        status: (['scheduled', 'in_progress', 'completed', 'cancelled'].includes(data.status) 
+          ? data.status 
+          : 'scheduled') as 'scheduled' | 'in_progress' | 'completed' | 'cancelled'
+      } as Meeting;
+
+      setMeetings(prev => prev.map(m => m.id === id ? validatedData : m));
       toast.success('Reunião atualizada com sucesso!');
-      return data;
+      return validatedData;
     } catch (error) {
       console.error('Erro ao atualizar reunião:', error);
       toast.error('Erro ao atualizar reunião');
