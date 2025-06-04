@@ -35,12 +35,59 @@ import { getInitials } from "@/lib/formatters";
 
 interface TeamTableViewProps {
   members: TeamMember[];
+  onEditMember: (member: TeamMember) => void;
   onDeleteMember: (id: string) => void;
+  onContactMember: (member: TeamMember) => void;
+  onViewTasks: (member: TeamMember) => void;
+  sortField?: string;
+  sortDirection?: 'asc' | 'desc';
+  onSort?: (field: string) => void;
 }
 
-export const TeamTableView = ({ members, onDeleteMember }: TeamTableViewProps) => {
-  const getStatusColor = (status: string) => {
-    return status === "active" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800";
+const TeamTableView = ({
+  members,
+  onEditMember,
+  onDeleteMember,
+  onContactMember,
+  onViewTasks,
+  sortField,
+  sortDirection,
+  onSort
+}: TeamTableViewProps) => {
+  const getStatusBadge = (status: 'active' | 'inactive') => {
+    return status === 'active' ? (
+      <Badge variant="default" className="bg-green-100 text-green-800">
+        Ativo
+      </Badge>
+    ) : (
+      <Badge variant="secondary" className="bg-gray-100 text-gray-800">
+        Inativo
+      </Badge>
+    );
+  };
+
+  const calculateProgress = (completed: number, assigned: number) => {
+    if (assigned === 0) return 0;
+    return Math.round((completed / assigned) * 100);
+  };
+
+  const handleSort = (field: string) => {
+    if (onSort) {
+      onSort(field);
+    }
+  };
+
+  const getSortIcon = (field: string) => {
+    if (sortField === field) {
+      return (
+        <ArrowUpDown 
+          className={`h-4 w-4 ml-1 ${
+            sortDirection === 'asc' ? 'rotate-180' : ''
+          }`} 
+        />
+      );
+    }
+    return <ArrowUpDown className="h-4 w-4 ml-1 opacity-0 group-hover:opacity-50" />;
   };
 
   return (
@@ -48,130 +95,151 @@ export const TeamTableView = ({ members, onDeleteMember }: TeamTableViewProps) =
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="min-w-[200px]">
-              <Button variant="ghost" className="p-0 hover:bg-transparent">
-                <span>Colaborador</span>
-                <ArrowUpDown size={14} className="ml-2" />
-              </Button>
+            <TableHead 
+              className="cursor-pointer hover:bg-muted/50 group"
+              onClick={() => handleSort('name')}
+            >
+              <div className="flex items-center">
+                Membro
+                {getSortIcon('name')}
+              </div>
             </TableHead>
-            <TableHead className="hidden md:table-cell">Cargo/Departamento</TableHead>
-            <TableHead className="hidden md:table-cell">Contato</TableHead>
-            <TableHead>
-              <Button variant="ghost" className="p-0 hover:bg-transparent">
-                <span>Produtividade</span>
-                <ArrowUpDown size={14} className="ml-2" />
-              </Button>
+            <TableHead 
+              className="cursor-pointer hover:bg-muted/50 group"
+              onClick={() => handleSort('role')}
+            >
+              <div className="flex items-center">
+                Cargo
+                {getSortIcon('role')}
+              </div>
             </TableHead>
-            <TableHead className="hidden md:table-cell">Status</TableHead>
-            <TableHead></TableHead>
+            <TableHead 
+              className="cursor-pointer hover:bg-muted/50 group"
+              onClick={() => handleSort('department')}
+            >
+              <div className="flex items-center">
+                Departamento
+                {getSortIcon('department')}
+              </div>
+            </TableHead>
+            <TableHead>Contato</TableHead>
+            <TableHead 
+              className="cursor-pointer hover:bg-muted/50 group"
+              onClick={() => handleSort('status')}
+            >
+              <div className="flex items-center">
+                Status
+                {getSortIcon('status')}
+              </div>
+            </TableHead>
+            <TableHead>Tarefas</TableHead>
+            <TableHead className="text-right">Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {members.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
-                Nenhum colaborador encontrado
+          {members.map((member) => (
+            <TableRow key={member.id} className="hover:bg-muted/50">
+              <TableCell>
+                <div className="flex items-center space-x-3">
+                  <Avatar className="h-10 w-10">
+                    <AvatarImage src={member.avatar_url} alt={member.name} />
+                    <AvatarFallback className="bg-primary/10 text-primary">
+                      {getInitials(member.name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <div className="font-medium">{member.name}</div>
+                    <div className="text-sm text-muted-foreground">{member.email}</div>
+                  </div>
+                </div>
               </TableCell>
-            </TableRow>
-          ) : (
-            members.map((member) => (
-              <TableRow key={member.id}>
-                <TableCell>
-                  <div className="flex items-center gap-3">
-                    <Avatar>
-                      <AvatarImage src={member.avatar || undefined} alt={member.name} />
-                      <AvatarFallback>{getInitials(member.name)}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <div className="font-medium">{member.name}</div>
-                      <div className="md:hidden text-xs text-muted-foreground">
-                        {member.role}
-                      </div>
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell className="hidden md:table-cell">
-                  <div>{member.role}</div>
-                  <div className="text-xs text-muted-foreground">{member.department}</div>
-                </TableCell>
-                <TableCell className="hidden md:table-cell">
-                  <div className="flex items-center gap-1 text-sm">
-                    <Mail size={14} className="text-muted-foreground" />
-                    <span>{member.email}</span>
-                  </div>
+              <TableCell>
+                <div className="font-medium">{member.role}</div>
+              </TableCell>
+              <TableCell>
+                <div className="text-muted-foreground">
+                  {member.department || 'Não definido'}
+                </div>
+              </TableCell>
+              <TableCell>
+                <div className="space-y-1">
                   {member.phone && (
-                    <div className="flex items-center gap-1 text-sm mt-1">
-                      <Phone size={14} className="text-muted-foreground" />
-                      <span>{member.phone}</span>
+                    <div className="flex items-center text-sm text-muted-foreground">
+                      <Phone className="h-3 w-3 mr-1" />
+                      {member.phone}
                     </div>
                   )}
-                </TableCell>
-                <TableCell>
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-sm">
-                      <span>Tarefas</span>
-                      <span className="font-medium">{member.tasksCompleted}/{member.tasksAssigned}</span>
-                    </div>
-                    <Progress 
-                      value={member.tasksAssigned > 0 ? (member.tasksCompleted / member.tasksAssigned) * 100 : 0} 
-                      className="h-2"
-                    />
+                  <div className="flex items-center text-sm text-muted-foreground">
+                    <Mail className="h-3 w-3 mr-1" />
+                    {member.email}
                   </div>
-                </TableCell>
-                <TableCell className="hidden md:table-cell">
-                  <Badge variant="outline" className={getStatusColor(member.status)}>
-                    {member.status === "active" ? "Ativo" : "Inativo"}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <MemberActions memberId={member.id} onDelete={onDeleteMember} />
-                </TableCell>
-              </TableRow>
-            ))
-          )}
+                </div>
+              </TableCell>
+              <TableCell>
+                {getStatusBadge(member.status)}
+              </TableCell>
+              <TableCell>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span>{member.tasksCompleted}/{member.tasksAssigned}</span>
+                    <span className="text-muted-foreground">
+                      {calculateProgress(member.tasksCompleted, member.tasksAssigned)}%
+                    </span>
+                  </div>
+                  <Progress 
+                    value={calculateProgress(member.tasksCompleted, member.tasksAssigned)} 
+                    className="h-2"
+                  />
+                </div>
+              </TableCell>
+              <TableCell className="text-right">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem 
+                      onClick={() => onEditMember(member)}
+                      className="cursor-pointer"
+                    >
+                      <Pencil className="h-4 w-4 mr-2" />
+                      Editar
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => onViewTasks(member)}
+                      className="cursor-pointer"
+                    >
+                      <CheckSquare className="h-4 w-4 mr-2" />
+                      Ver Tarefas
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => onContactMember(member)}
+                      className="cursor-pointer"
+                    >
+                      <MessageSquare className="h-4 w-4 mr-2" />
+                      Contatar
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem 
+                      onClick={() => onDeleteMember(member.id)}
+                      className="text-destructive cursor-pointer"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Remover
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </TableCell>
+            </TableRow>
+          ))}
         </TableBody>
       </Table>
     </div>
   );
 };
 
-interface MemberActionsProps {
-  memberId: string;
-  onDelete: (id: string) => void;
-}
-
-const MemberActions = ({ memberId, onDelete }: MemberActionsProps) => {
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon">
-          <MoreHorizontal size={16} />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuLabel>Ações</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem className="gap-2 cursor-pointer">
-          <Pencil size={14} />
-          Editar
-        </DropdownMenuItem>
-        <DropdownMenuItem className="gap-2 cursor-pointer">
-          <CheckSquare size={14} />
-          Ver Tarefas
-        </DropdownMenuItem>
-        <DropdownMenuItem className="gap-2 cursor-pointer">
-          <MessageSquare size={14} />
-          Enviar Feedback
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem
-          onClick={() => onDelete(memberId)}
-          className="text-red-600 focus:text-red-600 gap-2 cursor-pointer"
-        >
-          <Trash2 size={14} />
-          Remover
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-};
+export default TeamTableView;

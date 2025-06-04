@@ -50,7 +50,7 @@ export const MobileNav = ({ isOpen, setIsOpen }: MobileNavProps) => {
           </Button>
         </div>
         
-        <Sidebar open={true} setOpen={setIsOpen} />
+        <Sidebar open={true} onOpenChange={setIsOpen} />
       </div>
     </>
   );

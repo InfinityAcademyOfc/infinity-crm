@@ -17,7 +17,7 @@ const MainLayout = () => {
 
   return (
     <div className="flex min-h-screen bg-background">
-      <Sidebar open={isSidebarOpen} setOpen={setIsSidebarOpen} />
+      <Sidebar open={isSidebarOpen} onOpenChange={setIsSidebarOpen} />
 
       <div className="flex flex-col flex-1">
         <TopNav 

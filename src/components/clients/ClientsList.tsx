@@ -9,9 +9,9 @@ import {
   Search, 
   Filter, 
   MoreHorizontal,
+  Users,
   Phone,
   Mail,
-  MapPin,
   Edit,
   Trash2
 } from 'lucide-react';
@@ -22,25 +22,17 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useRealClientData } from '@/hooks/useRealClientData';
-import ClientForm from './ClientForm';
-import type { Client } from '@/hooks/useRealClientData';
+import { formatDate } from '@/lib/formatters';
 
 const ClientsList = () => {
-  const { clients, loading, deleteClient } = useRealClientData();
+  const { clients, loading } = useRealClientData();
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState<string>('all');
-  const [showForm, setShowForm] = useState(false);
-  const [editingClient, setEditingClient] = useState<Client | undefined>();
 
-  const filteredClients = clients.filter(client => {
-    const matchesSearch = client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         client.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         client.phone?.includes(searchTerm);
-    
-    const matchesFilter = filterStatus === 'all' || client.status === filterStatus;
-    
-    return matchesSearch && matchesFilter;
-  });
+  const filteredClients = clients.filter(client =>
+    client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    client.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    client.phone?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -51,24 +43,8 @@ const ClientsList = () => {
       case 'prospect':
         return <Badge variant="outline">Prospect</Badge>;
       default:
-        return <Badge variant="secondary">{status}</Badge>;
+        return <Badge variant="outline">{status}</Badge>;
     }
-  };
-
-  const handleEdit = (client: Client) => {
-    setEditingClient(client);
-    setShowForm(true);
-  };
-
-  const handleDelete = async (client: Client) => {
-    if (window.confirm(`Tem certeza que deseja excluir o cliente ${client.name}?`)) {
-      await deleteClient(client.id);
-    }
-  };
-
-  const handleCloseForm = () => {
-    setShowForm(false);
-    setEditingClient(undefined);
   };
 
   if (loading) {
@@ -93,10 +69,10 @@ const ClientsList = () => {
         <div>
           <h1 className="text-3xl font-bold">Clientes</h1>
           <p className="text-muted-foreground">
-            Gerencie seus clientes e relacionamentos
+            Gerencie sua base de clientes
           </p>
         </div>
-        <Button onClick={() => setShowForm(true)}>
+        <Button>
           <Plus className="h-4 w-4 mr-2" />
           Novo Cliente
         </Button>
@@ -105,7 +81,7 @@ const ClientsList = () => {
       <Card>
         <CardHeader>
           <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-            <CardTitle>Lista de Clientes ({filteredClients.length})</CardTitle>
+            <CardTitle>Clientes ({filteredClients.length})</CardTitle>
             <div className="flex gap-2 w-full md:w-auto">
               <div className="relative flex-1 md:w-64">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -116,45 +92,25 @@ const ClientsList = () => {
                   className="pl-10"
                 />
               </div>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline">
-                    <Filter className="h-4 w-4 mr-2" />
-                    Status
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem onClick={() => setFilterStatus('all')}>
-                    Todos
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setFilterStatus('active')}>
-                    Ativos
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setFilterStatus('inactive')}>
-                    Inativos
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setFilterStatus('prospect')}>
-                    Prospects
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <Button variant="outline">
+                <Filter className="h-4 w-4 mr-2" />
+                Filtros
+              </Button>
             </div>
           </div>
         </CardHeader>
         <CardContent className="p-0">
           {filteredClients.length === 0 ? (
             <div className="text-center py-12">
+              <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <p className="text-muted-foreground text-lg">
-                {searchTerm || filterStatus !== 'all' 
+                {searchTerm 
                   ? 'Nenhum cliente encontrado com os filtros aplicados'
                   : 'Nenhum cliente cadastrado ainda'
                 }
               </p>
-              {!searchTerm && filterStatus === 'all' && (
-                <Button 
-                  onClick={() => setShowForm(true)}
-                  className="mt-4"
-                >
+              {!searchTerm && (
+                <Button className="mt-4">
                   <Plus className="h-4 w-4 mr-2" />
                   Cadastrar Primeiro Cliente
                 </Button>
@@ -174,7 +130,7 @@ const ClientsList = () => {
                         )}
                       </div>
                       
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-6 text-sm text-muted-foreground">
                         {client.email && (
                           <div className="flex items-center gap-2">
                             <Mail className="h-4 w-4" />
@@ -187,20 +143,15 @@ const ClientsList = () => {
                             <span>{client.phone}</span>
                           </div>
                         )}
-                        {(client.city || client.state) && (
+                        <div className="flex items-center gap-2">
+                          <span>Cadastrado em {formatDate(client.created_at)}</span>
+                        </div>
+                        {client.last_contact && (
                           <div className="flex items-center gap-2">
-                            <MapPin className="h-4 w-4" />
-                            <span>{[client.city, client.state].filter(Boolean).join(', ')}</span>
+                            <span>Último contato: {formatDate(client.last_contact)}</span>
                           </div>
                         )}
                       </div>
-                      
-                      {client.contact && (
-                        <div className="mt-2 text-sm">
-                          <span className="text-muted-foreground">Contato: </span>
-                          <span>{client.contact}</span>
-                        </div>
-                      )}
                     </div>
 
                     <DropdownMenu>
@@ -210,14 +161,11 @@ const ClientsList = () => {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleEdit(client)}>
+                        <DropdownMenuItem>
                           <Edit className="h-4 w-4 mr-2" />
                           Editar
                         </DropdownMenuItem>
-                        <DropdownMenuItem 
-                          onClick={() => handleDelete(client)}
-                          className="text-destructive"
-                        >
+                        <DropdownMenuItem className="text-destructive">
                           <Trash2 className="h-4 w-4 mr-2" />
                           Excluir
                         </DropdownMenuItem>
@@ -230,16 +178,6 @@ const ClientsList = () => {
           )}
         </CardContent>
       </Card>
-
-      {showForm && (
-        <ClientForm
-          client={editingClient}
-          onClose={handleCloseForm}
-          onSuccess={() => {
-            handleCloseForm();
-          }}
-        />
-      )}
     </div>
   );
 };

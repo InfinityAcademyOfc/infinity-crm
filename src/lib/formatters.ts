@@ -15,3 +15,12 @@ export const formatDateTime = (date: string | Date): string => {
   const d = new Date(date);
   return d.toLocaleString('pt-BR');
 };
+
+export const getInitials = (name: string): string => {
+  return name
+    .split(' ')
+    .map(part => part.charAt(0))
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+};
