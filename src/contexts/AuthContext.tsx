@@ -11,6 +11,9 @@ interface Profile {
   role: string;
   status: string;
   avatar?: string;
+  avatar_url?: string;
+  phone?: string;
+  department?: string;
   company_id?: string;
 }
 
@@ -28,8 +31,9 @@ interface AuthContextType {
   profile: Profile | null;
   company: Company | null;
   loading: boolean;
+  isCompanyAccount: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, name: string, isCompany?: boolean) => Promise<void>;
+  signUp: (email: string, password: string, name: string, isCompany?: boolean) => Promise<{ user?: User; companyId?: string }>;
   signOut: () => Promise<void>;
 }
 
@@ -49,6 +53,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [profile, setProfile] = useState<Profile | null>(null);
   const [company, setCompany] = useState<Company | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const isCompanyAccount = !!company && !profile;
 
   const fetchUserData = async (userId: string) => {
     try {
@@ -161,7 +167,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signUp = async (email: string, password: string, name: string, isCompany = true) => {
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -178,6 +184,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     toast.success('Conta criada com sucesso!');
+    
+    return {
+      user: data.user,
+      companyId: isCompany ? data.user?.id : undefined
+    };
   };
 
   const signOut = async () => {
@@ -201,6 +212,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     profile,
     company,
     loading,
+    isCompanyAccount,
     signIn,
     signUp,
     signOut,

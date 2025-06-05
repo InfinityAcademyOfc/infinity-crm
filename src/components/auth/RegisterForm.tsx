@@ -11,11 +11,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from "@/contexts/AuthContext";
-import { planService } from '@/services/api/planService';
-import { Plan, PlanWithFeatures } from '@/types/plan';
-import PricingSection from '@/components/pricing/PricingSection';
-import Checkout from '@/components/pricing/Checkout';
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from 'sonner';
 
 const passwordRules = "Ao menos 8 caracteres, letras maiúsculas, minúsculas, número e caractere especial";
@@ -37,24 +32,14 @@ const registerSchema = z.object({
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
-enum RegistrationStep {
-  FORM = 'form',
-  PLAN = 'plan',
-  CHECKOUT = 'checkout',
-}
-
 export const RegisterForm = () => {
   const { signUp } = useAuth();
   const [searchParams] = useSearchParams();
-  const initialPlanId = searchParams.get('plan');
   
   const [userType, setUserType] = useState('company');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [registrationStep, setRegistrationStep] = useState<RegistrationStep>(RegistrationStep.FORM);
-  const [selectedPlanId, setSelectedPlanId] = useState<string | null>(initialPlanId);
-  const [createdCompanyId, setCreatedCompanyId] = useState<string | null>(null);
 
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -70,33 +55,15 @@ export const RegisterForm = () => {
   const handleFormSubmit = async (values: RegisterFormValues) => {
     setIsSubmitting(true);
     try {
-      if (userType === 'company') {
-        // Para empresa, criar o usuário e ir para seleção de plano
-        const { user, companyId } = await signUp(
-          values.email, 
-          values.password, 
-          values.name, 
-          userType === 'company'
-        );
-        
-        if (user && companyId) {
-          setCreatedCompanyId(companyId);
-          // Se já veio com um plano da URL, pular direto para checkout
-          if (selectedPlanId) {
-            setRegistrationStep(RegistrationStep.CHECKOUT);
-          } else {
-            setRegistrationStep(RegistrationStep.PLAN);
-          }
-        }
-      } else {
-        // Para colaborador, registrar e ir para área de espera
-        await signUp(
-          values.email, 
-          values.password, 
-          values.name, 
-          userType === 'company'
-        );
-        // O redirecionamento será tratado pelo AuthContext
+      const result = await signUp(
+        values.email, 
+        values.password, 
+        values.name, 
+        userType === 'company'
+      );
+      
+      if (result.user) {
+        toast.success('Conta criada com sucesso!');
       }
     } catch (error) {
       console.error("Registration error:", error);
@@ -104,84 +71,6 @@ export const RegisterForm = () => {
       setIsSubmitting(false);
     }
   };
-
-  const handlePlanSelection = (planId: string) => {
-    setSelectedPlanId(planId);
-    setRegistrationStep(RegistrationStep.CHECKOUT);
-  };
-
-  const handleBackToPlans = () => {
-    setRegistrationStep(RegistrationStep.PLAN);
-  };
-
-  const handleSkipPayment = () => {
-    toast.info("Redirecionando para o CRM. Você pode atualizar seu plano mais tarde.");
-    // Redirecionamento para o CRM será tratado pelo AuthContext
-  };
-
-  // Mostrar diferentes conteúdos com base na etapa de registro
-  if (registrationStep === RegistrationStep.PLAN) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center mb-6">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-white"
-            onClick={() => setRegistrationStep(RegistrationStep.FORM)}
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Voltar
-          </Button>
-          <h2 className="text-2xl font-bold text-white text-center flex-1">Escolha um plano</h2>
-        </div>
-        
-        <PricingSection 
-          onSelectPlan={handlePlanSelection} 
-          selectedPlanId={selectedPlanId} 
-        />
-      </div>
-    );
-  }
-
-  if (registrationStep === RegistrationStep.CHECKOUT) {
-    if (!selectedPlanId || !createdCompanyId) {
-      return <div>Erro ao processar pagamento. Plano ou empresa não encontrados.</div>;
-    }
-
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center mb-6">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-white"
-            onClick={handleBackToPlans}
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Voltar
-          </Button>
-          <h2 className="text-2xl font-bold text-white text-center flex-1">Finalizar assinatura</h2>
-        </div>
-        
-        <Checkout 
-          planId={selectedPlanId} 
-          companyId={createdCompanyId} 
-          onBack={handleBackToPlans}
-        />
-        
-        <div className="text-center mt-4">
-          <Button
-            variant="ghost" 
-            className="text-primary hover:text-primary/80"
-            onClick={handleSkipPayment}
-          >
-            Pular pagamento por enquanto
-          </Button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <Tabs defaultValue="company" className="w-full" onValueChange={setUserType}>
@@ -378,7 +267,7 @@ export const RegisterForm = () => {
                   </svg>
                   Processando...
                 </span>
-              ) : userType === 'company' ? "Próximo: Escolha de Plano" : "Criar Conta"}
+              ) : "Criar Conta"}
             </span>
             <span className="absolute inset-0 bg-gradient-to-r from-primary via-primary to-primary/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
           </Button>
