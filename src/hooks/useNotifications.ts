@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -22,7 +22,7 @@ export const useNotifications = () => {
   const [loading, setLoading] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     if (!user?.id) {
       setNotifications([]);
       setUnreadCount(0);
@@ -38,7 +38,12 @@ export const useNotifications = () => {
         .order('created_at', { ascending: false })
         .limit(50);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao buscar notificações:', error);
+        setNotifications([]);
+        setUnreadCount(0);
+        return;
+      }
       
       const validatedData = (data || []).map(notification => ({
         ...notification,
@@ -56,7 +61,7 @@ export const useNotifications = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id]);
 
   const markAsRead = async (id: string) => {
     try {
@@ -118,7 +123,7 @@ export const useNotifications = () => {
     if (user?.id) {
       fetchNotifications();
     }
-  }, [user?.id]);
+  }, [fetchNotifications]);
 
   return {
     notifications,

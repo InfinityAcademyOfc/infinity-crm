@@ -33,16 +33,23 @@ import TeamManagement from './pages/TeamManagement';
 import Meetings from './pages/Meetings';
 import Settings from './pages/Settings';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+    },
+  },
+});
 
 function App() {
   return (
-    <BrowserRouter>
+    <QueryClientProvider client={queryClient}>
       <ThemeProvider defaultTheme="dark">
         <AuthProvider>
           <WhatsAppSessionProvider>
             <WhatsAppProvider>
-              <QueryClientProvider client={queryClient}>
+              <BrowserRouter>
                 <Routes>
                   {/* Public routes */}
                   <Route path="/" element={<Index />} />
@@ -82,12 +89,12 @@ function App() {
 
                 <Toaster />
                 <SonnerToaster position="top-right" />
-              </QueryClientProvider>
+              </BrowserRouter>
             </WhatsAppProvider>
           </WhatsAppSessionProvider>
         </AuthProvider>
       </ThemeProvider>
-    </BrowserRouter>
+    </QueryClientProvider>
   );
 }
 

@@ -16,7 +16,10 @@ const MainLayout = () => {
 
   return (
     <div className="flex min-h-screen bg-background">
-      <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
+      {/* Desktop Sidebar */}
+      <div className="hidden md:block">
+        <Sidebar isOpen={true} setIsOpen={setIsSidebarOpen} />
+      </div>
 
       <div className="flex flex-col flex-1">
         <TopNav 
@@ -25,11 +28,12 @@ const MainLayout = () => {
           notificationCount={unreadCount}
         />
         
+        {/* Mobile Navigation */}
         <MobileNav isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
         
-        <div className="flex-1 p-4 md:p-6 pb-16">
+        <main className="flex-1 p-4 md:p-6 pb-16">
           <Outlet />
-        </div>
+        </main>
         
         {user && <FloatingChat />}
       </div>

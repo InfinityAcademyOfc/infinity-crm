@@ -5,7 +5,7 @@ import { BarChart3, Users, DollarSign, TrendingUp } from 'lucide-react';
 import { useRealData } from '@/hooks/useRealData';
 
 export default function FunctionalDashboard() {
-  const { leads, clients, transactions, loading } = useRealData();
+  const { leads = [], clients = [], transactions = [], loading, error } = useRealData();
 
   if (loading) {
     return (
@@ -22,6 +22,7 @@ export default function FunctionalDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">--</div>
+                <div className="h-4 bg-gray-200 rounded animate-pulse mt-2"></div>
               </CardContent>
             </Card>
           ))}
@@ -30,13 +31,24 @@ export default function FunctionalDashboard() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="p-6 space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold mb-2">Dashboard</h1>
+          <p className="text-red-500">Erro ao carregar dados: {error}</p>
+        </div>
+      </div>
+    );
+  }
+
   const totalRevenue = transactions
     .filter(t => t.type === 'income')
-    .reduce((sum, t) => sum + Number(t.amount), 0);
+    .reduce((sum, t) => sum + Number(t.amount || 0), 0);
 
   const totalExpenses = transactions
     .filter(t => t.type === 'expense')
-    .reduce((sum, t) => sum + Number(t.amount), 0);
+    .reduce((sum, t) => sum + Number(t.amount || 0), 0);
 
   return (
     <div className="p-6 space-y-6">
@@ -123,13 +135,18 @@ export default function FunctionalDashboard() {
                   </div>
                 </div>
               ))}
+              {leads.length === 0 && (
+                <p className="text-sm text-muted-foreground">
+                  Nenhuma atividade recente
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Vendas Recentes</CardTitle>
+            <CardTitle>Transações Recentes</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -141,11 +158,16 @@ export default function FunctionalDashboard() {
                   <div className="flex-1">
                     <p className="text-sm font-medium">{transaction.description}</p>
                     <p className="text-xs text-muted-foreground">
-                      R$ {Number(transaction.amount).toLocaleString('pt-BR')}
+                      R$ {Number(transaction.amount || 0).toLocaleString('pt-BR')}
                     </p>
                   </div>
                 </div>
               ))}
+              {transactions.length === 0 && (
+                <p className="text-sm text-muted-foreground">
+                  Nenhuma transação recente
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>
