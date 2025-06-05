@@ -5,7 +5,7 @@ import { BarChart3, Users, DollarSign, TrendingUp } from 'lucide-react';
 import { useRealData } from '@/hooks/useRealData';
 
 export default function FunctionalDashboard() {
-  const { leads = [], clients = [], transactions = [], loading, error } = useRealData();
+  const { leads, clients, transactions, loading, error } = useRealData();
 
   if (loading) {
     return (

@@ -23,11 +23,7 @@ export const useNotifications = () => {
   const [unreadCount, setUnreadCount] = useState(0);
 
   const fetchNotifications = useCallback(async () => {
-    if (!user?.id) {
-      setNotifications([]);
-      setUnreadCount(0);
-      return;
-    }
+    if (!user?.id || loading) return;
 
     setLoading(true);
     try {
@@ -40,8 +36,6 @@ export const useNotifications = () => {
 
       if (error) {
         console.error('Erro ao buscar notificações:', error);
-        setNotifications([]);
-        setUnreadCount(0);
         return;
       }
       
@@ -56,12 +50,10 @@ export const useNotifications = () => {
       setUnreadCount(validatedData.filter(n => !n.read).length);
     } catch (error) {
       console.error('Erro ao buscar notificações:', error);
-      setNotifications([]);
-      setUnreadCount(0);
     } finally {
       setLoading(false);
     }
-  }, [user?.id]);
+  }, [user?.id, loading]);
 
   const markAsRead = async (id: string) => {
     try {
@@ -123,7 +115,7 @@ export const useNotifications = () => {
     if (user?.id) {
       fetchNotifications();
     }
-  }, [fetchNotifications]);
+  }, [user?.id]);
 
   return {
     notifications,
