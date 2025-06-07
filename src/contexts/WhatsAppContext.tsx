@@ -1,95 +1,72 @@
 
 import React, { createContext, useState, useContext, useEffect, useCallback } from "react";
 import { toast } from "sonner";
-import { WhatsAppContact, WhatsAppMessage, WhatsAppConnectionStatus, WhatsAppSession, WhatsAppContextType } from "@/types/whatsapp";
+import { WhatsAppContact, WhatsAppMessage, WhatsAppConnectionStatus, WhatsAppSession } from "@/types/whatsapp";
+import { useWhatsAppSessions } from "@/hooks/useWhatsAppSessions";
+
+interface WhatsAppContextType {
+  selectedContact: WhatsAppContact | null;
+  setSelectedContact: (contact: WhatsAppContact | null) => void;
+  contacts: WhatsAppContact[];
+  messages: WhatsAppMessage[];
+  loadingMessages: boolean;
+  sessionId: string | null;
+  connectionStatus: WhatsAppConnectionStatus;
+  sendMessage: (to: string, body: string) => Promise<void>;
+  disconnect: () => Promise<void>;
+  connect: (sessionId: string) => Promise<void>;
+  refreshData: () => Promise<void>;
+  fetchMessages: (contactId: string, sessionId: string) => Promise<void>;
+  
+  // Propriedades para WhatsAppIntegration.tsx
+  currentSession: string | null;
+  setCurrentSession: (sessionId: string | null) => void;
+  sessions: WhatsAppSession[];
+  loadingSessions: boolean;
+  refreshSessions: () => Promise<void>;
+  createNewSession: () => string;
+  isApiAvailable: boolean;
+}
 
 const WhatsAppContext = createContext<WhatsAppContextType>({} as WhatsAppContextType);
 
-const API_URL = import.meta.env.VITE_API_URL || "";
-
 export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
-  const [sessions, setSessions] = useState<WhatsAppSession[]>([]);
-  const [loadingSessions, setLoadingSessions] = useState(true);
-  const [currentSession, setCurrentSession] = useState<string | null>(
-    () => localStorage.getItem("wa-session-id") || null
-  );
-  const [connectionStatus, setConnectionStatus] = useState<WhatsAppConnectionStatus>("not_started");
-  const [isApiAvailable, setIsApiAvailable] = useState<boolean>(false);
+  const { 
+    currentSession: sessionId, 
+    connectionStatus, 
+    connectSession,
+    disconnectSession,
+    refreshSessions,
+    sessions,
+    loadingSessions,
+    createNewSession,
+    setCurrentSession,
+    isApiAvailable
+  } = useWhatsAppSessions();
   
   const [selectedContact, setSelectedContact] = useState<WhatsAppContact | null>(null);
-  const [contacts, setContacts] = useState<WhatsAppContact[]>([
-    { id: "1", name: "João Silva", phone: "+5511999998888" },
-    { id: "2", name: "Maria Oliveira", phone: "+5511987654321" },
-    { id: "3", name: "Suporte Infinity CRM", phone: "+5511912345678" }
-  ]);
+  const [contacts, setContacts] = useState<WhatsAppContact[]>([]);
   const [messages, setMessages] = useState<WhatsAppMessage[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
-
-  const refreshSessions = useCallback(async () => {
-    setLoadingSessions(true);
-    try {
-      // Mock sessions para desenvolvimento
-      const mockSessions: WhatsAppSession[] = [
-        { id: "session_1", name: "WhatsApp Principal", status: "connected" },
-        { id: "session_2", name: "WhatsApp Suporte", status: "disconnected" }
-      ];
-      setSessions(mockSessions);
-      setIsApiAvailable(true);
-    } catch (error) {
-      console.warn("Erro ao carregar sessões:", error);
-      setIsApiAvailable(false);
-    } finally {
-      setLoadingSessions(false);
-    }
-  }, []);
-
-  const connectSession = useCallback(async (sessionId: string) => {
-    try {
-      setConnectionStatus("loading");
-      setCurrentSession(sessionId);
-      localStorage.setItem("wa-session-id", sessionId);
-      
-      // Simular conexão
-      setTimeout(() => {
-        setConnectionStatus("connected");
-        toast.success("WhatsApp conectado com sucesso!");
-      }, 2000);
-    } catch (error) {
-      console.warn("Erro ao conectar sessão:", error);
-      setConnectionStatus("error");
-    }
-  }, []);
-
-  const disconnectSession = useCallback(async (sessionId: string) => {
-    try {
-      setConnectionStatus("not_started");
-      setSelectedContact(null);
-      setMessages([]);
-      toast.success("Sessão desconectada");
-    } catch (error) {
-      console.warn("Erro ao desconectar sessão:", error);
-    }
-  }, []);
-
-  const createNewSession = useCallback(() => {
-    const newSessionId = `session_${Date.now()}`;
-    setCurrentSession(newSessionId);
-    localStorage.setItem("wa-session-id", newSessionId);
-    setConnectionStatus("not_started");
-    refreshSessions();
-    return newSessionId;
-  }, [refreshSessions]);
-
+  
+  // URL da API
+  const API_URL = import.meta.env.VITE_API_URL || "";
+  const isConnected = connectionStatus === "connected" && !!sessionId;
+  
   const sendMessage = useCallback(async (to: string, body: string) => {
-    if (!currentSession || connectionStatus !== "connected") {
-      toast.error("WhatsApp não conectado");
+    if (!sessionId || !isConnected) {
+      toast.error("Nenhuma sessão WhatsApp conectada");
       return;
     }
     
     try {
+      // ID temporário para a mensagem
+      const tempId = `temp-${Date.now()}`;
+      
+      // Adiciona mensagem à UI imediatamente para melhor UX
       const tempMessage: WhatsAppMessage = {
-        id: `temp-${Date.now()}`,
-        session_id: currentSession,
+        id: tempId,
+        session_id: sessionId,
         number: to,
         message: body,
         from_me: true,
@@ -97,63 +74,163 @@ export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
       };
       
       setMessages(prev => [...prev, tempMessage]);
-      toast.success("Mensagem enviada");
+      
+      // Envia através da API
+      const response = await fetch(`${API_URL}/sessions/${sessionId}/send`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ number: to, message: body }),
+        signal: AbortSignal.timeout(10000) // 10 segundo timeout
+      });
+      
+      if (!response.ok) {
+        throw new Error('Falha ao enviar mensagem');
+      }
+      
+      // Aguarda um pouco e busca mensagens atualizadas
+      setTimeout(() => {
+        if (selectedContact) {
+          fetchMessages(selectedContact.phone, sessionId);
+        }
+      }, 1000);
+      
     } catch (error) {
       console.warn('Erro ao enviar mensagem:', error);
-      toast.error("Erro ao enviar mensagem");
+      toast.error("Falha ao enviar mensagem");
     }
-  }, [currentSession, connectionStatus]);
+  }, [sessionId, isConnected, selectedContact, API_URL]);
   
   const fetchMessages = useCallback(async (contactId: string, sessionId: string) => {
-    if (!sessionId || !contactId) return;
+    if (!sessionId || !contactId || !API_URL || !isConnected) return;
     
     try {
       setLoadingMessages(true);
+      const messagesResponse = await fetch(`${API_URL}/sessions/${sessionId}/messages/${contactId}`, {
+        signal: AbortSignal.timeout(8000) // 8 segundo timeout
+      });
       
-      // Mock messages
+      if (messagesResponse.ok) {
+        const messagesData = await messagesResponse.json();
+        setMessages(messagesData);
+      } else {
+        console.warn("Erro ao buscar mensagens:", messagesResponse.status);
+        
+        // Se a API retornar 404, use dados locais (fallback)
+        if (messagesResponse.status === 404) {
+          // Simular mensagens locais para uma melhor experiência do usuário
+          const mockMessages = [
+            {
+              id: `local-${Date.now()}-1`,
+              session_id: sessionId,
+              number: contactId,
+              message: "👋 Bem-vindo ao chat do WhatsApp",
+              from_me: false,
+              created_at: new Date().toISOString()
+            }
+          ];
+          setMessages(mockMessages);
+        }
+      }
+    } catch (error) {
+      console.warn("Erro ao buscar mensagens:", error);
+      
+      // Fallback para dados locais em caso de erro de rede
       const mockMessages = [
         {
-          id: `msg-${Date.now()}-1`,
+          id: `local-${Date.now()}-1`,
           session_id: sessionId,
           number: contactId,
-          message: "👋 Olá! Como posso ajudar?",
+          message: "👋 Bem-vindo ao chat do WhatsApp",
           from_me: false,
           created_at: new Date().toISOString()
         }
       ];
       setMessages(mockMessages);
-    } catch (error) {
-      console.warn("Erro ao buscar mensagens:", error);
     } finally {
       setLoadingMessages(false);
     }
-  }, []);
+  }, [isConnected, API_URL]);
   
   const refreshData = useCallback(async () => {
-    if (!currentSession) return;
+    if (!sessionId || !API_URL || !isConnected) return;
     
     try {
-      // Refresh contacts and messages
+      // Buscar contatos
+      const contactsResponse = await fetch(`${API_URL}/sessions/${sessionId}/contacts`, {
+        signal: AbortSignal.timeout(8000)
+      });
+      
+      if (contactsResponse.ok) {
+        const contactsData = await contactsResponse.json();
+        setContacts(contactsData);
+      } else if (contactsResponse.status === 404) {
+        // Fallback para dados simulados
+        const mockContacts = [
+          { id: "1", name: "João Silva", phone: "+5511999998888" },
+          { id: "2", name: "Maria Oliveira", phone: "+5511987654321" },
+          { id: "3", name: "Suporte Infinity CRM", phone: "+5511912345678" }
+        ];
+        setContacts(mockContacts);
+      }
+      
+      // Buscar mensagens se um contato estiver selecionado
       if (selectedContact) {
-        await fetchMessages(selectedContact.phone, currentSession);
+        await fetchMessages(selectedContact.phone, sessionId);
       }
     } catch (error) {
-      console.warn("Erro ao atualizar dados:", error);
+      console.warn("Erro ao atualizar dados do WhatsApp:", error);
+      
+      // Fallback para dados simulados em caso de erro
+      const mockContacts = [
+        { id: "1", name: "João Silva", phone: "+5511999998888" },
+        { id: "2", name: "Maria Oliveira", phone: "+5511987654321" },
+        { id: "3", name: "Suporte Infinity CRM", phone: "+5511912345678" }
+      ];
+      setContacts(mockContacts);
     }
-  }, [currentSession, selectedContact, fetchMessages]);
+  }, [sessionId, selectedContact, fetchMessages, isConnected, API_URL]);
 
   const connect = useCallback(async (id: string) => {
-    await connectSession(id);
-  }, [connectSession]);
+    if (!API_URL) return;
+    
+    try {
+      await connectSession(id);
+    } catch (error) {
+      console.warn("Erro ao conectar sessão:", error);
+    }
+  }, [connectSession, API_URL]);
 
   const disconnect = useCallback(async () => {
-    if (!currentSession) return;
-    await disconnectSession(currentSession);
-  }, [currentSession, disconnectSession]);
+    if (!sessionId || !API_URL) return;
+    
+    try {
+      await disconnectSession(sessionId);
+      setSelectedContact(null);
+      setMessages([]);
+      toast.success("Sessão desconectada com sucesso");
+    } catch (error) {
+      console.warn("Erro ao desconectar sessão:", error);
+    }
+  }, [sessionId, disconnectSession, API_URL]);
 
+  // Atualiza dados periodicamente quando conectado
   useEffect(() => {
-    refreshSessions();
-  }, [refreshSessions]);
+    if (isConnected) {
+      refreshData();
+      const interval = setInterval(refreshData, 15000);
+      return () => clearInterval(interval);
+    }
+  }, [isConnected, refreshData]);
+
+  // Limpa contato selecionado quando a sessão muda ou desconecta
+  useEffect(() => {
+    if (!isConnected) {
+      setSelectedContact(null);
+      setMessages([]);
+    }
+  }, [isConnected, sessionId]);
 
   return (
     <WhatsAppContext.Provider
@@ -163,20 +240,20 @@ export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
         contacts,
         messages,
         loadingMessages,
-        sessionId: currentSession, // Para compatibilidade
+        sessionId,
         connectionStatus,
         sendMessage,
         disconnect,
         connect,
         refreshData,
         fetchMessages,
-        currentSession,
+        
+        // Propriedades para WhatsAppIntegration.tsx
+        currentSession: sessionId,
         setCurrentSession,
         sessions,
         loadingSessions,
         refreshSessions,
-        connectSession,
-        disconnectSession,
         createNewSession,
         isApiAvailable
       }}

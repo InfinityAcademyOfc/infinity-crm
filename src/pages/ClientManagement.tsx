@@ -1,220 +1,130 @@
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAuth } from '@/contexts/AuthContext';
+import { useRealClientData } from '@/hooks/useRealClientData';
+import { LoadingPage } from '@/components/ui/loading-spinner';
+import { SectionHeader } from '@/components/ui/section-header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Search, Filter, Users, Phone, Mail, MapPin, Edit, Trash } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { useRealClientData } from '@/hooks/useRealClientData';
-import ClientFormDialog from '@/components/forms/ClientFormDialog';
+import { Search, Plus, Filter } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { ClientList } from '@/components/clients/ClientList';
+import { ClientAnalytics } from '@/components/clients/ClientAnalytics';
+import NewClientDialog from '@/components/clients/NewClientDialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const ClientManagement = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [showClientForm, setShowClientForm] = useState(false);
-  const { clients, loading, deleteClient } = useRealClientData();
+  const { user, company, loading: authLoading } = useAuth();
+  const { clients, analytics, loading, refetch } = useRealClientData();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [newClientDialogOpen, setNewClientDialogOpen] = useState(false);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active': return 'bg-green-100 text-green-800';
-      case 'prospect': return 'bg-blue-100 text-blue-800';
-      case 'inactive': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const filteredClients = clients.filter(client =>
-    client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (client.email && client.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (client.segment && client.segment.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
-
-  const handleDeleteClient = async (id: string) => {
-    if (window.confirm('Tem certeza que deseja excluir este cliente?')) {
-      await deleteClient(id);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="p-6 space-y-6">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/4 mb-2"></div>
-          <div className="h-4 bg-gray-200 rounded w-1/3"></div>
-        </div>
-      </div>
-    );
+  if (authLoading) {
+    return <LoadingPage message="Verificando autenticação..." />;
   }
 
-  return (
-    <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">Gestão de Clientes</h1>
-          <p className="text-muted-foreground">Gerencie seus clientes e prospects</p>
-        </div>
-        <Button onClick={() => setShowClientForm(true)}>
-          <Plus className="w-4 h-4 mr-2" />
-          Novo Cliente
-        </Button>
-      </div>
+  if (!user || !company) {
+    return <LoadingPage message="Acesso não autorizado" />;
+  }
 
-      {/* Filtros e Busca */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+  const filteredClients = clients.filter(client =>
+    client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    client.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    client.phone?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  return (
+    <div className="space-y-6 animate-fade-in">
+      <SectionHeader 
+        title="Gestão de Clientes" 
+        description="Gerencie sua base de clientes e acompanhe relacionamentos"
+        actions={
+          <>
+            <div className="relative w-64">
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Buscar clientes..."
-                className="pl-10"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 focus-ring"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <Button variant="outline">
-              <Filter className="w-4 h-4 mr-2" />
+            <Button variant="outline" className="hover-scale transition-all duration-200">
+              <Filter className="h-4 w-4 mr-2" />
               Filtros
             </Button>
-          </div>
-        </CardContent>
-      </Card>
+            <Button 
+              onClick={() => setNewClientDialogOpen(true)}
+              className="hover-scale transition-all duration-200"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Novo Cliente
+            </Button>
+          </>
+        }
+      />
 
-      {/* Estatísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total de Clientes</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{clients.length}</div>
-            <p className="text-xs text-muted-foreground">Total cadastrados</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Clientes Ativos</CardTitle>
-            <Users className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {clients.filter(c => c.status === 'active').length}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {clients.length > 0 ? Math.round((clients.filter(c => c.status === 'active').length / clients.length) * 100) : 0}% do total
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Prospects</CardTitle>
-            <Users className="h-4 w-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {clients.filter(c => c.status === 'prospect').length}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {clients.length > 0 ? Math.round((clients.filter(c => c.status === 'prospect').length / clients.length) * 100) : 0}% do total
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Novos este Mês</CardTitle>
-            <Users className="h-4 w-4 text-purple-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {clients.filter(c => {
-                const created = new Date(c.created_at);
-                const now = new Date();
-                return created.getMonth() === now.getMonth() && created.getFullYear() === now.getFullYear();
-              }).length}
-            </div>
-            <p className="text-xs text-muted-foreground">Últimos 30 dias</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Lista de Clientes */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Lista de Clientes</CardTitle>
-          <CardDescription>
-            {filteredClients.length} de {clients.length} clientes
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {filteredClients.map((client) => (
-              <div key={client.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent transition-colors">
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                    <Users className="w-6 h-6 text-primary" />
-                  </div>
-                  <div>
-                    <h4 className="font-medium">{client.name}</h4>
-                    <p className="text-sm text-muted-foreground">{client.segment || 'Sem segmento'}</p>
-                    <div className="flex items-center space-x-4 mt-1">
-                      {client.email && (
-                        <div className="flex items-center space-x-1">
-                          <Mail className="w-3 h-3 text-muted-foreground" />
-                          <span className="text-xs text-muted-foreground">{client.email}</span>
-                        </div>
-                      )}
-                      {client.phone && (
-                        <div className="flex items-center space-x-1">
-                          <Phone className="w-3 h-3 text-muted-foreground" />
-                          <span className="text-xs text-muted-foreground">{client.phone}</span>
-                        </div>
-                      )}
-                      {(client.city || client.state) && (
-                        <div className="flex items-center space-x-1">
-                          <MapPin className="w-3 h-3 text-muted-foreground" />
-                          <span className="text-xs text-muted-foreground">
-                            {[client.city, client.state].filter(Boolean).join(', ')}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
+      {loading ? (
+        <div className="grid gap-4 md:grid-cols-3">
+          {[...Array(6)].map((_, i) => (
+            <Card key={i} className="animate-pulse">
+              <CardContent className="p-6">
+                <div className="space-y-3">
+                  <div className="h-4 bg-muted rounded w-3/4"></div>
+                  <div className="h-3 bg-muted rounded w-1/2"></div>
+                  <div className="h-3 bg-muted rounded w-2/3"></div>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Badge className={getStatusColor(client.status)}>
-                    {client.status === 'active' ? 'Ativo' : client.status === 'prospect' ? 'Prospect' : 'Inativo'}
-                  </Badge>
-                  <Button variant="ghost" size="sm">
-                    <Edit className="w-4 h-4" />
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={() => handleDeleteClient(client.id)}
-                  >
-                    <Trash className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            ))}
-            {filteredClients.length === 0 && (
-              <div className="text-center py-8 text-muted-foreground">
-                {searchTerm ? 'Nenhum cliente encontrado com os filtros aplicados.' : 'Nenhum cliente cadastrado ainda.'}
-              </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : filteredClients.length === 0 ? (
+        <Card className="animate-scale-in">
+          <CardContent className="p-8 text-center">
+            <div className="mx-auto w-24 h-24 bg-muted rounded-full flex items-center justify-center mb-4">
+              <Search className="h-12 w-12 text-muted-foreground" />
+            </div>
+            <h3 className="text-lg font-medium mb-2">
+              {searchQuery ? 'Nenhum cliente encontrado' : 'Nenhum cliente cadastrado'}
+            </h3>
+            <p className="text-muted-foreground mb-4">
+              {searchQuery 
+                ? 'Tente ajustar os filtros de busca' 
+                : 'Comece adicionando seu primeiro cliente ao sistema'
+              }
+            </p>
+            {!searchQuery && (
+              <Button 
+                onClick={() => setNewClientDialogOpen(true)}
+                className="hover-scale transition-all duration-200"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Adicionar Primeiro Cliente
+              </Button>
             )}
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      ) : (
+        <Tabs defaultValue="list" className="animate-fade-in">
+          <TabsList>
+            <TabsTrigger value="list">Lista de Clientes</TabsTrigger>
+            <TabsTrigger value="analytics">Análises</TabsTrigger>
+          </TabsList>
 
-      <ClientFormDialog
-        open={showClientForm}
-        onOpenChange={setShowClientForm}
-        onSuccess={() => {
-          // Os dados são atualizados automaticamente pelo hook
-        }}
+          <TabsContent value="list" className="animate-fade-in">
+            <ClientList clients={filteredClients} />
+          </TabsContent>
+
+          <TabsContent value="analytics" className="animate-fade-in">
+            <ClientAnalytics analytics={analytics} />
+          </TabsContent>
+        </Tabs>
+      )}
+
+      <NewClientDialog
+        open={newClientDialogOpen}
+        onOpenChange={setNewClientDialogOpen}
+        onClientCreated={refetch}
       />
     </div>
   );

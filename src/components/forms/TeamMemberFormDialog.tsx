@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useAuth } from "@/contexts/AuthContext";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
@@ -16,39 +17,43 @@ interface TeamMemberFormDialogProps {
 }
 
 const TeamMemberFormDialog = ({ open, onOpenChange, onSuccess }: TeamMemberFormDialogProps) => {
+  const { user } = useAuth();
   const { createTeamMember } = useTeamMembers();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     phone: "",
-    role: "",
+    role: "user",
     department: "",
     status: "active"
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+    if (!user) return;
+
     try {
       setLoading(true);
 
       await createTeamMember({
-        name: formData.name || null,
+        name: formData.name,
         email: formData.email,
-        phone: formData.phone || null,
+        phone: formData.phone,
         role: formData.role,
-        department: formData.department || null,
+        department: formData.department,
         avatar: null,
         status: formData.status
       });
 
+      toast.success('Membro da equipe adicionado com sucesso!');
+      
       // Reset form
       setFormData({
         name: "",
         email: "",
         phone: "",
-        role: "",
+        role: "user",
         department: "",
         status: "active"
       });
@@ -57,8 +62,8 @@ const TeamMemberFormDialog = ({ open, onOpenChange, onSuccess }: TeamMemberFormD
       if (onSuccess) onSuccess();
 
     } catch (error: any) {
-      console.error('Erro ao criar membro:', error);
-      toast.error('Erro ao criar membro da equipe');
+      console.error('Erro ao adicionar membro:', error);
+      toast.error('Erro ao adicionar membro da equipe');
     } finally {
       setLoading(false);
     }
@@ -68,17 +73,18 @@ const TeamMemberFormDialog = ({ open, onOpenChange, onSuccess }: TeamMemberFormD
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Novo Membro da Equipe</DialogTitle>
+          <DialogTitle>Novo Colaborador</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Nome Completo</Label>
+            <Label htmlFor="name">Nome Completo *</Label>
             <Input
               id="name"
               value={formData.name}
               onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-              placeholder="Nome completo do membro"
+              placeholder="Nome completo do colaborador"
+              required
             />
           </div>
 
@@ -89,7 +95,7 @@ const TeamMemberFormDialog = ({ open, onOpenChange, onSuccess }: TeamMemberFormD
               type="email"
               value={formData.email}
               onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-              placeholder="email@exemplo.com"
+              placeholder="email@empresa.com"
               required
             />
           </div>
@@ -106,7 +112,7 @@ const TeamMemberFormDialog = ({ open, onOpenChange, onSuccess }: TeamMemberFormD
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="role">Cargo *</Label>
+              <Label htmlFor="role">Cargo</Label>
               <Select value={formData.role} onValueChange={(value) => setFormData(prev => ({ ...prev, role: value }))}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione o cargo" />
@@ -115,41 +121,34 @@ const TeamMemberFormDialog = ({ open, onOpenChange, onSuccess }: TeamMemberFormD
                   <SelectItem value="admin">Administrador</SelectItem>
                   <SelectItem value="manager">Gerente</SelectItem>
                   <SelectItem value="user">Usuário</SelectItem>
-                  <SelectItem value="analyst">Analista</SelectItem>
-                  <SelectItem value="assistant">Assistente</SelectItem>
+                  <SelectItem value="viewer">Visualizador</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="department">Departamento</Label>
-              <Select value={formData.department} onValueChange={(value) => setFormData(prev => ({ ...prev, department: value }))}>
+              <Label htmlFor="status">Status</Label>
+              <Select value={formData.status} onValueChange={(value) => setFormData(prev => ({ ...prev, status: value }))}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione o departamento" />
+                  <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="vendas">Vendas</SelectItem>
-                  <SelectItem value="marketing">Marketing</SelectItem>
-                  <SelectItem value="financeiro">Financeiro</SelectItem>
-                  <SelectItem value="operacoes">Operações</SelectItem>
-                  <SelectItem value="ti">Tecnologia</SelectItem>
-                  <SelectItem value="rh">Recursos Humanos</SelectItem>
+                  <SelectItem value="active">Ativo</SelectItem>
+                  <SelectItem value="inactive">Inativo</SelectItem>
+                  <SelectItem value="pending">Pendente</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="status">Status</Label>
-            <Select value={formData.status} onValueChange={(value) => setFormData(prev => ({ ...prev, status: value }))}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione o status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="active">Ativo</SelectItem>
-                <SelectItem value="inactive">Inativo</SelectItem>
-              </SelectContent>
-            </Select>
+            <Label htmlFor="department">Departamento</Label>
+            <Input
+              id="department"
+              value={formData.department}
+              onChange={(e) => setFormData(prev => ({ ...prev, department: e.target.value }))}
+              placeholder="Ex: Vendas, Marketing, Desenvolvimento"
+            />
           </div>
 
           <div className="flex justify-end space-x-2 pt-4">
@@ -168,7 +167,7 @@ const TeamMemberFormDialog = ({ open, onOpenChange, onSuccess }: TeamMemberFormD
                   Salvando...
                 </>
               ) : (
-                'Criar Membro'
+                'Adicionar Colaborador'
               )}
             </Button>
           </div>

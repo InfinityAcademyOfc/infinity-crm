@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 
 export interface TeamMember {
   id: string;
-  name: string | null;
+  name: string;
   email: string;
   phone: string | null;
   role: string;
@@ -16,35 +16,46 @@ export interface TeamMember {
   company_id: string | null;
   created_at: string;
   updated_at: string;
+  tasksAssigned: number;
+  tasksCompleted: number;
+  joinedDate?: string;
 }
 
 export const useTeamMembers = () => {
-  const { company } = useAuth();
+  const { user, company } = useAuth();
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchTeamMembers = async () => {
     if (!company?.id) return;
 
-    setLoading(true);
     try {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('company_id', company.id)
-        .order('created_at', { ascending: false });
+        .order('name');
 
       if (error) throw error;
-      setTeamMembers(data || []);
+      
+      // Transform data to include required properties
+      const transformedMembers: TeamMember[] = (data || []).map(member => ({
+        ...member,
+        tasksAssigned: 0, // Can be calculated from tasks table
+        tasksCompleted: 0, // Can be calculated from tasks table
+        joinedDate: member.created_at
+      }));
+      
+      setTeamMembers(transformedMembers);
     } catch (error) {
-      console.error('Erro ao buscar equipe:', error);
+      console.error('Erro ao buscar membros da equipe:', error);
       toast.error('Erro ao carregar membros da equipe');
     } finally {
       setLoading(false);
     }
   };
 
-  const createTeamMember = async (member: Omit<TeamMember, 'id' | 'created_at' | 'updated_at' | 'company_id'>) => {
+  const createTeamMember = async (member: Omit<TeamMember, 'id' | 'created_at' | 'updated_at' | 'company_id' | 'tasksAssigned' | 'tasksCompleted'>) => {
     if (!company?.id) return;
 
     try {
@@ -59,11 +70,18 @@ export const useTeamMembers = () => {
 
       if (error) throw error;
       
-      setTeamMembers(prev => [data, ...prev]);
+      const newMember: TeamMember = {
+        ...data,
+        tasksAssigned: 0,
+        tasksCompleted: 0,
+        joinedDate: data.created_at
+      };
+      
+      setTeamMembers(prev => [...prev, newMember]);
       toast.success('Membro da equipe adicionado com sucesso!');
-      return data;
+      return newMember;
     } catch (error) {
-      console.error('Erro ao criar membro:', error);
+      console.error('Erro ao criar membro da equipe:', error);
       toast.error('Erro ao adicionar membro da equipe');
       throw error;
     }
@@ -80,12 +98,19 @@ export const useTeamMembers = () => {
 
       if (error) throw error;
       
-      setTeamMembers(prev => prev.map(m => m.id === id ? data : m));
-      toast.success('Membro atualizado com sucesso!');
-      return data;
+      const updatedMember: TeamMember = {
+        ...data,
+        tasksAssigned: 0,
+        tasksCompleted: 0,
+        joinedDate: data.created_at
+      };
+      
+      setTeamMembers(prev => prev.map(m => m.id === id ? updatedMember : m));
+      toast.success('Membro da equipe atualizado com sucesso!');
+      return updatedMember;
     } catch (error) {
-      console.error('Erro ao atualizar membro:', error);
-      toast.error('Erro ao atualizar membro');
+      console.error('Erro ao atualizar membro da equipe:', error);
+      toast.error('Erro ao atualizar membro da equipe');
       throw error;
     }
   };
@@ -100,10 +125,10 @@ export const useTeamMembers = () => {
       if (error) throw error;
       
       setTeamMembers(prev => prev.filter(m => m.id !== id));
-      toast.success('Membro removido com sucesso!');
+      toast.success('Membro da equipe removido com sucesso!');
     } catch (error) {
-      console.error('Erro ao excluir membro:', error);
-      toast.error('Erro ao remover membro');
+      console.error('Erro ao remover membro da equipe:', error);
+      toast.error('Erro ao remover membro da equipe');
       throw error;
     }
   };

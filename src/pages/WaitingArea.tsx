@@ -1,64 +1,71 @@
 
 import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Clock, Mail, CheckCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { ArrowLeft } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import ThemeToggle from '@/components/theme/ThemeToggle';
 
 const WaitingArea = () => {
-  const { signOut, user } = useAuth();
-
+  const { profile, signOut } = useAuth();
+  
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-black via-gray-900 to-black p-4">
-      <Card className="w-full max-w-md bg-black/40 border-white/10 backdrop-blur-lg">
-        <CardHeader className="text-center">
-          <div className="mx-auto mb-4 w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center">
-            <Clock className="w-8 h-8 text-primary" />
-          </div>
-          <CardTitle className="text-white">Conta em Análise</CardTitle>
-          <CardDescription className="text-white/70">
-            Sua conta de colaborador foi criada com sucesso
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6 text-center">
-          <div className="space-y-4">
-            <div className="flex items-center space-x-3 text-white/80">
-              <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
-              <span className="text-sm">Conta criada com sucesso</span>
-            </div>
-            <div className="flex items-center space-x-3 text-white/80">
-              <Mail className="w-5 h-5 text-blue-500 flex-shrink-0" />
-              <span className="text-sm">Aguardando convite de uma empresa</span>
-            </div>
-            <div className="flex items-center space-x-3 text-white/60">
-              <Clock className="w-5 h-5 flex-shrink-0" />
-              <span className="text-sm">Acesso será liberado em breve</span>
-            </div>
-          </div>
-          
-          <div className="bg-white/5 rounded-lg p-4 text-left">
-            <h4 className="font-medium text-white mb-2">Próximos passos:</h4>
-            <ul className="text-sm text-white/70 space-y-1">
-              <li>• Entre em contato com o administrador da empresa</li>
-              <li>• Aguarde o convite por email</li>
-              <li>• Verifique sua caixa de entrada regularmente</li>
-            </ul>
-          </div>
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-black via-gray-900 to-black text-white overflow-hidden">
+      <div className="fixed inset-0 z-0 bg-[url('/grid-pattern.svg')] opacity-5"></div>
+      
+      <div className="fixed inset-0 z-0">
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl"></div>
+      </div>
+      
+      <header className="container relative z-10 px-4 py-6 flex items-center justify-between">
+        <Link to="/" className="inline-flex items-center text-primary hover:underline">
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Voltar para a página inicial
+        </Link>
+        <div className="flex items-center gap-4">
+          <ThemeToggle />
+          <Button variant="outline" className="border-white/20 text-white hover:bg-white/5" onClick={signOut}>
+            Sair
+          </Button>
+        </div>
+      </header>
 
-          <div className="pt-4 border-t border-white/10">
-            <p className="text-xs text-white/60 mb-3">
-              Logado como: {user?.email}
-            </p>
-            <Button 
-              variant="outline" 
-              onClick={signOut}
-              className="w-full border-white/20 text-white hover:bg-white/5"
-            >
-              Fazer logout
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <main className="flex-1 flex items-center justify-center p-4 relative z-10">
+        <div className="w-full max-w-lg">
+          <Card className="bg-black/40 border-white/10 backdrop-blur-lg shadow-[0_0_25px_rgba(130,80,223,0.2)]">
+            <CardHeader>
+              <CardTitle className="text-2xl text-center text-white">Área de Espera</CardTitle>
+              <CardDescription className="text-center text-white/70">
+                Aguardando convite de uma empresa
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="text-center py-8">
+                <div className="w-24 h-24 rounded-full bg-primary/20 mx-auto flex items-center justify-center mb-4">
+                  <span className="text-4xl">🙋</span>
+                </div>
+                <h3 className="text-xl font-medium text-white mt-4">Olá, {profile?.name || 'Colaborador'}</h3>
+                <p className="text-white/70 mt-2">
+                  {profile?.email}
+                </p>
+              </div>
+              
+              <div className="bg-primary/10 rounded-lg p-4 border border-primary/20">
+                <p className="text-white text-center">
+                  Seu cadastro foi realizado com sucesso! Aguarde o convite de uma empresa para acessar o Infinity CRM.
+                </p>
+              </div>
+            </CardContent>
+            <CardFooter className="flex justify-center border-t border-white/10 pt-4">
+              <Button variant="ghost" className="text-primary" onClick={signOut}>
+                Sair da conta
+              </Button>
+            </CardFooter>
+          </Card>
+        </div>
+      </main>
     </div>
   );
 };

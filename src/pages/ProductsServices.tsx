@@ -1,233 +1,216 @@
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAuth } from '@/contexts/AuthContext';
+import { useRealProducts } from '@/hooks/useRealProducts';
+import { LoadingPage } from '@/components/ui/loading-spinner';
+import { SectionHeader } from '@/components/ui/section-header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Search, Package, Settings, BarChart3, Edit, Trash } from 'lucide-react';
+import { Search, Plus, Package, Edit, Trash2 } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { useRealProducts } from '@/hooks/useRealProducts';
-import ProductFormDialog from '@/components/forms/ProductFormDialog';
+import { useToast } from '@/hooks/use-toast';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 const ProductsServices = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [showProductForm, setShowProductForm] = useState(false);
-  const { products, loading, deleteProduct } = useRealProducts();
+  const { user, company, loading: authLoading } = useAuth();
+  const { products, loading, createProduct, updateProduct, deleteProduct } = useRealProducts();
+  const [searchQuery, setSearchQuery] = useState('');
+  const { toast } = useToast();
 
-  const filteredProducts = products.filter(product =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (product.category && product.category.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  if (authLoading) {
+    return <LoadingPage message="Verificando autenticação..." />;
+  }
 
-  const categoryCounts = products.reduce((acc, product) => {
-    const category = product.category || 'Sem categoria';
-    acc[category] = (acc[category] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
+  if (!user || !company) {
+    return <LoadingPage message="Acesso não autorizado" />;
+  }
 
-  const handleDeleteProduct = async (id: string) => {
-    if (window.confirm('Tem certeza que deseja excluir este produto?')) {
-      await deleteProduct(id);
+  const handleCreateSampleProduct = async () => {
+    try {
+      await createProduct({
+        name: 'Produto de Exemplo',
+        description: 'Descrição do produto ou serviço oferecido',
+        price: 99.90,
+        category: 'Serviços',
+        stock: 10
+      });
+    } catch (error) {
+      console.error('Erro ao criar produto:', error);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="p-6 space-y-6">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/4 mb-2"></div>
-          <div className="h-4 bg-gray-200 rounded w-1/3"></div>
-        </div>
-      </div>
-    );
-  }
+  const handleDeleteProduct = async (id: string) => {
+    try {
+      await deleteProduct(id);
+      toast({
+        title: "Produto removido",
+        description: "O produto foi removido com sucesso."
+      });
+    } catch (error) {
+      console.error('Erro ao deletar produto:', error);
+    }
+  };
+
+  const filteredProducts = products.filter(product =>
+    product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    product.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    product.category?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const getStockStatus = (stock: number) => {
+    if (stock === 0) return { label: 'Sem estoque', color: 'bg-red-500' };
+    if (stock <= 5) return { label: 'Estoque baixo', color: 'bg-yellow-500' };
+    return { label: 'Em estoque', color: 'bg-green-500' };
+  };
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">Produtos & Serviços</h1>
-          <p className="text-muted-foreground">Gerencie seu catálogo de produtos e serviços</p>
-        </div>
-        <Button onClick={() => setShowProductForm(true)}>
-          <Plus className="w-4 h-4 mr-2" />
-          Novo Produto
-        </Button>
-      </div>
-
-      {/* Estatísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total de Produtos</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{products.length}</div>
-            <p className="text-xs text-muted-foreground">Produtos cadastrados</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Com Preço</CardTitle>
-            <Package className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {products.filter(p => p.price && p.price > 0).length}
+    <div className="space-y-6 animate-fade-in">
+      <SectionHeader 
+        title="Produtos e Serviços" 
+        description="Gerencie seu catálogo de produtos e serviços"
+        actions={
+          <>
+            <div className="relative w-64">
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar produtos..."
+                className="pl-10 focus-ring"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
             </div>
-            <p className="text-xs text-muted-foreground">Produtos precificados</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Com Estoque</CardTitle>
-            <BarChart3 className="h-4 w-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {products.filter(p => p.stock && p.stock > 0).length}
-            </div>
-            <p className="text-xs text-muted-foreground">Em estoque</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Valor Total</CardTitle>
-            <BarChart3 className="h-4 w-4 text-purple-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              R$ {products.reduce((acc, p) => acc + (p.price || 0) * (p.stock || 0), 0).toLocaleString()}
-            </div>
-            <p className="text-xs text-muted-foreground">Valor em estoque</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Tabs defaultValue="products" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="products">Produtos</TabsTrigger>
-          <TabsTrigger value="categories">Categorias</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="products" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <div>
-                  <CardTitle>Lista de Produtos</CardTitle>
-                  <CardDescription>Gerencie seus produtos e serviços</CardDescription>
-                </div>
-                <div className="flex gap-2">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Buscar produtos..."
-                      className="pl-10 w-64"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                  </div>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {filteredProducts.map((product) => (
-                  <div key={product.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent transition-colors">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                        <Package className="w-6 h-6 text-primary" />
-                      </div>
-                      <div>
-                        <h4 className="font-medium">{product.name}</h4>
-                        <p className="text-sm text-muted-foreground">{product.description || 'Sem descrição'}</p>
-                        <div className="flex items-center space-x-4 mt-1">
-                          {product.category && (
-                            <Badge variant="outline">{product.category}</Badge>
-                          )}
-                          {product.stock && (
-                            <span className="text-xs text-muted-foreground">
-                              Estoque: {product.stock}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-right space-y-2">
-                      <div className="flex items-center space-x-2">
-                        <Button variant="ghost" size="sm">
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => handleDeleteProduct(product.id)}
-                        >
-                          <Trash className="w-4 h-4" />
-                        </Button>
-                      </div>
-                      <div>
-                        {product.price && (
-                          <div className="font-bold">R$ {product.price.toLocaleString()}</div>
-                        )}
-                        <div className="text-sm text-muted-foreground">
-                          {new Date(product.created_at).toLocaleDateString()}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                {filteredProducts.length === 0 && (
-                  <div className="text-center py-8 text-muted-foreground">
-                    {searchTerm ? 'Nenhum produto encontrado.' : 'Nenhum produto cadastrado ainda.'}
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="categories" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Categorias</CardTitle>
-              <CardDescription>Organize seus produtos por categorias</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {Object.entries(categoryCounts).map(([category, count]) => (
-                  <Card key={category}>
-                    <CardContent className="pt-6 text-center">
-                      <h3 className="font-bold text-lg">{category}</h3>
-                      <p className="text-sm text-muted-foreground mb-2">
-                        {count} produto{count !== 1 ? 's' : ''}
-                      </p>
-                    </CardContent>
-                  </Card>
-                ))}
-                {Object.keys(categoryCounts).length === 0 && (
-                  <div className="col-span-full text-center py-8 text-muted-foreground">
-                    Nenhuma categoria encontrada.
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-
-      <ProductFormDialog
-        open={showProductForm}
-        onOpenChange={setShowProductForm}
-        onSuccess={() => {
-          // Os dados são atualizados automaticamente pelo hook
-        }}
+            <Button 
+              onClick={handleCreateSampleProduct}
+              className="hover-scale transition-all duration-200"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Novo Produto
+            </Button>
+          </>
+        }
       />
+
+      {loading ? (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {[...Array(6)].map((_, i) => (
+            <Card key={i} className="animate-pulse">
+              <CardHeader>
+                <div className="h-4 bg-muted rounded w-3/4"></div>
+                <div className="h-3 bg-muted rounded w-1/2"></div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="h-3 bg-muted rounded"></div>
+                  <div className="h-6 bg-muted rounded w-20"></div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : filteredProducts.length === 0 ? (
+        <Card className="animate-scale-in">
+          <CardContent className="p-8 text-center">
+            <div className="mx-auto w-24 h-24 bg-muted rounded-full flex items-center justify-center mb-4">
+              <Package className="h-12 w-12 text-muted-foreground" />
+            </div>
+            <h3 className="text-lg font-medium mb-2">
+              {searchQuery ? 'Nenhum produto encontrado' : 'Nenhum produto cadastrado'}
+            </h3>
+            <p className="text-muted-foreground mb-4">
+              {searchQuery 
+                ? 'Tente ajustar os filtros de busca' 
+                : 'Comece adicionando produtos ou serviços ao seu catálogo'
+              }
+            </p>
+            {!searchQuery && (
+              <Button 
+                onClick={handleCreateSampleProduct}
+                className="hover-scale transition-all duration-200"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Adicionar Primeiro Produto
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {filteredProducts.map((product, index) => {
+            const stockStatus = getStockStatus(product.stock || 0);
+            
+            return (
+              <Card 
+                key={product.id} 
+                className="hover-lift transition-all duration-200 animate-scale-in"
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                <CardHeader className="flex flex-row items-start justify-between space-y-0">
+                  <div className="flex-1">
+                    <CardTitle className="text-lg font-medium">{product.name}</CardTitle>
+                    {product.category && (
+                      <Badge variant="outline" className="mt-2">
+                        {product.category}
+                      </Badge>
+                    )}
+                  </div>
+                  
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm">
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem>
+                        <Edit className="h-4 w-4 mr-2" />
+                        Editar
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        onClick={() => handleDeleteProduct(product.id)}
+                        className="text-red-600"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Excluir
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </CardHeader>
+                
+                <CardContent className="space-y-4">
+                  {product.description && (
+                    <p className="text-sm text-muted-foreground line-clamp-2">
+                      {product.description}
+                    </p>
+                  )}
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="text-2xl font-bold text-primary">
+                      R$ {Number(product.price || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      <div className={`w-2 h-2 rounded-full ${stockStatus.color}`} />
+                      <span className="text-xs text-muted-foreground">
+                        {stockStatus.label}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="text-sm text-muted-foreground">
+                    Estoque: {product.stock || 0} unidades
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };

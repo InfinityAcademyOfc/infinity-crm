@@ -1,9 +1,11 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { User, Session } from '@supabase/supabase-js';
+import { registerUser } from '@/lib/registerUser';
+import { hydrateUser } from '@/lib/hydrateUser';
 import { Company, CompanyProfile } from '@/types/company';
 import { UserProfile } from '@/types/user';
 import { CompanySubscription, Plan } from '@/types/plan';
@@ -23,7 +25,7 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   refreshUserData: () => Promise<void>;
   isCompanyAccount: boolean;
-  isCompany: boolean;
+  isCompany: boolean; // Added this property to match usage
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -43,73 +45,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [isCompanyAccount, setIsCompanyAccount] = useState(false);
   const navigate = useNavigate();
 
-  const hydrateUserData = async (currentUser: User) => {
-    try {
-      // Primeiro tenta buscar perfil de empresa
-      const { data: companyData } = await supabase
-        .from('profiles_companies')
-        .select('*')
-        .eq('id', currentUser.id)
-        .single();
-
-      if (companyData) {
-        setCompanyProfile(companyData);
-        setIsCompanyAccount(true);
-        
-        // Busca dados da empresa
-        const { data: companyInfo } = await supabase
-          .from('companies')
-          .select('*')
-          .eq('owner_id', currentUser.id)
-          .single();
-        
-        if (companyInfo) {
-          setCompany(companyInfo);
-        }
-      } else {
-        // Busca perfil de usuário colaborador
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', currentUser.id)
-          .single();
-
-        if (profileData) {
-          setProfile(profileData);
-          
-          // Se tem empresa associada, busca dados da empresa
-          if (profileData.company_id) {
-            const { data: companyInfo } = await supabase
-              .from('companies')
-              .select('*')
-              .eq('id', profileData.company_id)
-              .single();
-            
-            if (companyInfo) {
-              setCompany(companyInfo);
-            }
-          }
-        }
-      }
-    } catch (error) {
-      console.error("Erro ao hidratar dados do usuário:", error);
-    }
-  };
-
   const refreshUserData = async () => {
     if (!user) return;
-    await hydrateUserData(user);
+    
+    try {
+      const hydrationResult = await hydrateUser();
+      setProfile(hydrationResult.profile);
+      setCompanyProfile(hydrationResult.companyProfile);
+      setCompany(hydrationResult.company);
+      setSubscription(hydrationResult.subscription);
+      setPlan(hydrationResult.plan);
+      setIsCompanyAccount(!!hydrationResult.companyProfile);
+    } catch (error) {
+      console.error("Error refreshing user data:", error);
+    }
   };
 
   useEffect(() => {
     let isMounted = true;
     
-    // Configura listener de mudanças de autenticação
-    const { data: { subscription: authSubscription } } = supabase.auth.onAuthStateChange(
+    // Set up the auth state listener
+    const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (!isMounted) return;
-        
-        console.log('Auth event:', event);
         
         setSession(session);
         setUser(session?.user ?? null);
@@ -122,40 +80,76 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           setPlan(null);
           setIsCompanyAccount(false);
           setLoading(false);
-          navigate('/login');
+          navigate('/');
         } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
           if (session?.user) {
-            await hydrateUserData(session.user);
-            setLoading(false);
+            // Use setTimeout to prevent deadlock with Supabase auth
+            setTimeout(async () => {
+              if (!isMounted) return;
+              
+              try {
+                const hydrationResult = await hydrateUser();
+                setProfile(hydrationResult.profile);
+                setCompanyProfile(hydrationResult.companyProfile);
+                setCompany(hydrationResult.company);
+                setSubscription(hydrationResult.subscription);
+                setPlan(hydrationResult.plan);
+                setIsCompanyAccount(!!hydrationResult.companyProfile);
+                setLoading(false);
+                
+                // Lógica para direcionar com base no tipo de conta
+                if (hydrationResult.companyProfile) {
+                  // É uma conta empresarial - vai para o CRM
+                  navigate('/app');
+                } else if (hydrationResult.profile?.role === 'user' && !hydrationResult.profile?.company_id) {
+                  // É um colaborador sem empresa associada - vai para área de espera
+                  navigate('/waiting');
+                } else if (hydrationResult.profile?.role === 'user' && hydrationResult.profile?.company_id) {
+                  // É um colaborador com empresa associada - vai para o CRM
+                  navigate('/app');
+                }
+              } catch (error) {
+                console.error("Error in hydration:", error);
+                setLoading(false);
+              }
+            }, 0);
           }
         } else if (event === 'INITIAL_SESSION') {
-          if (session?.user) {
-            await hydrateUserData(session.user);
-          }
           setLoading(false);
         }
       }
     );
 
-    // Verifica sessão inicial
+    // Check for an existing session
     const initSession = async () => {
-      try {
-        const { data } = await supabase.auth.getSession();
-        
-        if (!isMounted) return;
-        
-        setSession(data.session);
-        setUser(data.session?.user ?? null);
-        
-        if (data.session?.user) {
-          await hydrateUserData(data.session.user);
-        }
-      } catch (error) {
-        console.error("Erro ao verificar sessão inicial:", error);
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
+      const { data } = await supabase.auth.getSession();
+      
+      if (!isMounted) return;
+      
+      setSession(data.session);
+      setUser(data.session?.user ?? null);
+      
+      if (data.session?.user) {
+        // Use setTimeout to prevent deadlock with Supabase auth
+        setTimeout(async () => {
+          if (!isMounted) return;
+          
+          try {
+            const hydrationResult = await hydrateUser();
+            setProfile(hydrationResult.profile);
+            setCompanyProfile(hydrationResult.companyProfile);
+            setCompany(hydrationResult.company);
+            setSubscription(hydrationResult.subscription);
+            setPlan(hydrationResult.plan);
+            setIsCompanyAccount(!!hydrationResult.companyProfile);
+          } catch (error) {
+            console.error("Error in initial hydration:", error);
+          } finally {
+            setLoading(false);
+          }
+        }, 0);
+      } else {
+        setLoading(false);
       }
     };
 
@@ -163,7 +157,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
     return () => {
       isMounted = false;
-      authSubscription.unsubscribe();
+      authListener.subscription.unsubscribe();
     };
   }, [navigate]);
 
@@ -185,7 +179,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     } catch (error: any) {
       setError(error.message);
       toast.error(error.message);
-      throw error;
+      throw error; // Re-throw to handle in the component
     } finally {
       setLoading(false);
     }
@@ -196,33 +190,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       setLoading(true);
       setError(null);
 
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: { 
-            name,
-            is_company: isCompany
-          }
-        }
-      });
-
-      if (error) {
-        throw error;
-      }
-
+      const result = await registerUser({ email, password, name, isCompany });
+      
       if (isCompany) {
-        toast.success("Conta empresarial criada com sucesso!");
-        return { user: data.user };
+        return { 
+          user: result.user, 
+          companyId: result.companyId 
+        };
       } else {
         toast.success("Cadastro realizado! Aguardando convite de uma empresa.");
         navigate('/waiting');
-        return { user: data.user };
+        return { user: result.user };
       }
     } catch (error: any) {
       setError(error.message);
       toast.error(error.message);
-      throw error;
+      throw error; // Re-throw to handle in the component
     } finally {
       setLoading(false);
     }
@@ -257,7 +240,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         signOut,
         refreshUserData,
         isCompanyAccount,
-        isCompany: isCompanyAccount
+        isCompany: isCompanyAccount // Added this property
       }}
     >
       {children}
