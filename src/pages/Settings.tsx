@@ -2,17 +2,20 @@
 import { useState } from "react";
 import { SectionHeader } from "@/components/ui/section-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User, Bell, Shield, Settings as SettingsIcon, Zap, PieChart, CreditCard } from "lucide-react";
+import { User, Bell, Shield, Settings as SettingsIcon, Zap, PieChart, CreditCard, Building2 } from "lucide-react";
 import ProfileSettings from "@/components/settings/ProfileSettings";
+import CompanySettings from "@/components/settings/CompanySettings";
 import NotificationSettings from "@/components/settings/NotificationSettings";
 import SecuritySettings from "@/components/settings/SecuritySettings";
 import SystemSettings from "@/components/settings/SystemSettings";
 import AutomationSettings from "@/components/settings/AutomationSettings";
 import DashboardSettings from "@/components/settings/DashboardSettings";
 import PlansSettings from "@/components/settings/PlansSettings";
+import { useProfile } from "@/hooks/useProfile";
 
 const Settings = () => {
   const [activeTab, setActiveTab] = useState("profile");
+  const { isCompanyAccount } = useProfile();
 
   return (
     <div className="space-y-6">
@@ -26,11 +29,17 @@ const Settings = () => {
         onValueChange={setActiveTab} 
         className="space-y-4"
       >
-        <TabsList className="grid grid-cols-3 md:grid-cols-7 max-w-5xl">
+        <TabsList className="grid grid-cols-3 md:grid-cols-8 max-w-5xl">
           <TabsTrigger value="profile" className="flex items-center gap-2">
             <User size={16} />
             <span className="hidden sm:inline">Perfil</span>
           </TabsTrigger>
+          {isCompanyAccount && (
+            <TabsTrigger value="company" className="flex items-center gap-2">
+              <Building2 size={16} />
+              <span className="hidden sm:inline">Empresa</span>
+            </TabsTrigger>
+          )}
           <TabsTrigger value="plans" className="flex items-center gap-2">
             <CreditCard size={16} />
             <span className="hidden sm:inline">Planos</span>
@@ -60,6 +69,12 @@ const Settings = () => {
         <TabsContent value="profile">
           <ProfileSettings />
         </TabsContent>
+        
+        {isCompanyAccount && (
+          <TabsContent value="company">
+            <CompanySettings />
+          </TabsContent>
+        )}
         
         <TabsContent value="plans">
           <PlansSettings />

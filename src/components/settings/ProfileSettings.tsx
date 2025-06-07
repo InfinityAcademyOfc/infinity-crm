@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Camera } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,40 +7,42 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
-import { userService } from "@/services/api/userService";
+import { useProfile } from "@/hooks/useProfile";
 
 const ProfileSettings = () => {
   const { toast } = useToast();
-  const { user, profile, refreshUserData } = useAuth();
+  const { 
+    profile, 
+    companyProfile, 
+    loading, 
+    updateProfile, 
+    updateCompanyProfile,
+    uploadAvatar,
+    removeAvatar,
+    isCompanyAccount 
+  } = useProfile();
   
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    role: "",
-    phone: ""
+    phone: "",
+    department: ""
   });
   
-  const [profileImage, setProfileImage] = useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    if (profile) {
+    const currentProfile = isCompanyAccount ? companyProfile : profile;
+    if (currentProfile) {
       setFormData({
-        name: profile.name || "",
-        email: profile.email || "",
-        role: profile.role || "",
-        phone: profile.phone || ""
+        name: currentProfile.name || "",
+        email: currentProfile.email || "",
+        phone: currentProfile.phone || "",
+        department: !isCompanyAccount ? (profile?.department || "") : ""
       });
-      
-      // Use either avatar or avatar_url
-      if (profile.avatar || profile.avatar_url) {
-        setProfileImage(profile.avatar || profile.avatar_url);
-      }
     }
-  }, [profile]);
+  }, [profile, companyProfile, isCompanyAccount]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
@@ -51,44 +54,16 @@ const ProfileSettings = () => {
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !user) return;
+    if (!file) return;
     
+    setUploadingImage(true);
     try {
-      setUploadingImage(true);
-      
-      // Create a unique file path
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
-      const filePath = `avatars/${fileName}`;
-      
-      // Upload the file to Supabase Storage
-      const { error: uploadError } = await supabase.storage
-        .from('profiles')
-        .upload(filePath, file);
-        
-      if (uploadError) throw uploadError;
-      
-      // Get the public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('profiles')
-        .getPublicUrl(filePath);
-        
-      // Update the profile with the new avatar URL
-      if (user.id) {
-        const updatedProfile = await userService.updateAvatar(user.id, publicUrl);
-        if (updatedProfile) {
-          setProfileImage(publicUrl);
-          // Refresh user data in context
-          await refreshUserData();
-        }
-      }
-      
+      await uploadAvatar(file);
       toast({
         title: "Imagem atualizada",
         description: "Sua foto de perfil foi atualizada com sucesso."
       });
     } catch (error) {
-      console.error("Erro ao fazer upload da imagem:", error);
       toast({
         title: "Erro ao atualizar imagem",
         description: "Não foi possível atualizar sua foto de perfil.",
@@ -100,36 +75,13 @@ const ProfileSettings = () => {
   };
 
   const handleRemoveImage = async () => {
-    if (!user?.id || !(profile?.avatar || profile?.avatar_url)) return;
-    
     try {
-      // Extract file name from URL
-      const avatarUrl = profile.avatar || profile.avatar_url;
-      if (!avatarUrl) return;
-      
-      const urlParts = avatarUrl.split('/');
-      const fileName = urlParts[urlParts.length - 1];
-      const filePath = `avatars/${fileName}`;
-      
-      // Remove file from storage (optional, can keep old files)
-      await supabase.storage
-        .from('profiles')
-        .remove([filePath]);
-      
-      // Update profile to remove avatar reference
-      const updatedProfile = await userService.updateAvatar(user.id, "");
-      
-      if (updatedProfile) {
-        setProfileImage(null);
-        await refreshUserData();
-      }
-      
+      await removeAvatar();
       toast({
         title: "Imagem removida",
         description: "Sua foto de perfil foi removida com sucesso."
       });
     } catch (error) {
-      console.error("Erro ao remover imagem:", error);
       toast({
         title: "Erro ao remover imagem",
         description: "Não foi possível remover sua foto de perfil.",
@@ -139,25 +91,26 @@ const ProfileSettings = () => {
   };
 
   const handleSaveProfile = async () => {
-    if (!user?.id) return;
-    
+    setIsSaving(true);
     try {
-      setIsSaving(true);
-      
-      const updatedProfile = await userService.updateUserProfile(user.id, {
-        name: formData.name,
-        phone: formData.phone
-      });
-      
-      if (updatedProfile) {
-        await refreshUserData();
-        toast({
-          title: "Perfil atualizado",
-          description: "Suas informações foram atualizadas com sucesso."
+      if (isCompanyAccount && companyProfile) {
+        await updateCompanyProfile({
+          name: formData.name,
+          phone: formData.phone
+        });
+      } else if (profile) {
+        await updateProfile({
+          name: formData.name,
+          phone: formData.phone,
+          department: formData.department
         });
       }
+      
+      toast({
+        title: "Perfil atualizado",
+        description: "Suas informações foram atualizadas com sucesso."
+      });
     } catch (error) {
-      console.error("Erro ao atualizar perfil:", error);
       toast({
         title: "Erro ao atualizar perfil",
         description: "Não foi possível atualizar suas informações.",
@@ -168,7 +121,6 @@ const ProfileSettings = () => {
     }
   };
 
-  // Obter as iniciais do nome para o avatar fallback
   const getInitials = () => {
     if (!formData.name) return "U";
     
@@ -178,16 +130,21 @@ const ProfileSettings = () => {
     return `${nameParts[0].charAt(0)}${nameParts[nameParts.length - 1].charAt(0)}`.toUpperCase();
   };
 
+  const currentProfile = isCompanyAccount ? companyProfile : profile;
+  const avatarUrl = currentProfile?.avatar_url;
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Informações do Perfil</CardTitle>
+        <CardTitle>
+          {isCompanyAccount ? "Informações da Empresa" : "Informações do Perfil"}
+        </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="flex flex-col md:flex-row gap-6">
           <div className="flex flex-col items-center space-y-4">
             <Avatar className="w-32 h-32">
-              <AvatarImage src={profileImage || "/avatar-placeholder.jpg"} alt="Foto de perfil" className="object-cover" />
+              <AvatarImage src={avatarUrl || ""} alt="Foto de perfil" className="object-cover" />
               <AvatarFallback className="text-2xl">{getInitials()}</AvatarFallback>
             </Avatar>
             
@@ -196,8 +153,15 @@ const ProfileSettings = () => {
                 <Camera size={16} />
                 {uploadingImage ? "Carregando..." : "Alterar foto"}
               </Label>
-              <Input id="picture" type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={uploadingImage} />
-              {profileImage && (
+              <Input 
+                id="picture" 
+                type="file" 
+                accept="image/*" 
+                className="hidden" 
+                onChange={handleImageUpload} 
+                disabled={uploadingImage} 
+              />
+              {avatarUrl && (
                 <Button variant="link" size="sm" onClick={handleRemoveImage} className="mt-2">
                   Remover foto
                 </Button>
@@ -207,12 +171,14 @@ const ProfileSettings = () => {
           
           <div className="flex-1 space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Nome completo</Label>
+              <Label htmlFor="name">
+                {isCompanyAccount ? "Nome da Empresa" : "Nome completo"}
+              </Label>
               <Input 
                 id="name" 
                 value={formData.name} 
                 onChange={handleInputChange} 
-                placeholder="Seu nome completo"
+                placeholder={isCompanyAccount ? "Nome da empresa" : "Seu nome completo"}
               />
             </div>
             
@@ -229,16 +195,6 @@ const ProfileSettings = () => {
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="role">Cargo</Label>
-              <Input 
-                id="role" 
-                value={formData.role} 
-                disabled 
-                className="bg-muted"
-              />
-            </div>
-            
-            <div className="space-y-2">
               <Label htmlFor="phone">Telefone</Label>
               <Input 
                 id="phone" 
@@ -247,6 +203,18 @@ const ProfileSettings = () => {
                 placeholder="(00) 00000-0000"
               />
             </div>
+
+            {!isCompanyAccount && (
+              <div className="space-y-2">
+                <Label htmlFor="department">Departamento</Label>
+                <Input 
+                  id="department" 
+                  value={formData.department} 
+                  onChange={handleInputChange} 
+                  placeholder="Seu departamento"
+                />
+              </div>
+            )}
           </div>
         </div>
         
@@ -254,7 +222,7 @@ const ProfileSettings = () => {
           <Button 
             className="mt-4" 
             onClick={handleSaveProfile} 
-            disabled={isSaving}
+            disabled={isSaving || loading}
           >
             {isSaving ? "Salvando..." : "Salvar Alterações"}
           </Button>

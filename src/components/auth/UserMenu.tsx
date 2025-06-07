@@ -17,11 +17,11 @@ import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 
 export function UserMenu() {
-  const { user, signOut, profile } = useAuth();
+  const { user, profile, companyProfile, signOut, isCompanyAccount } = useAuth();
   
-  // Obter as iniciais do nome do usuário ou usar um fallback
   const getUserInitials = () => {
-    const name = profile?.name || user?.user_metadata?.name || 'U';
+    const currentProfile = isCompanyAccount ? companyProfile : profile;
+    const name = currentProfile?.name || user?.user_metadata?.name || 'U';
     
     const nameParts = name.split(' ');
     if (nameParts.length === 1) return nameParts[0].charAt(0).toUpperCase();
@@ -38,9 +38,18 @@ export function UserMenu() {
     }
   };
 
-  // Get avatar from either avatar or avatar_url property
   const getAvatarUrl = () => {
-    return profile?.avatar || profile?.avatar_url || user?.user_metadata?.avatar_url;
+    const currentProfile = isCompanyAccount ? companyProfile : profile;
+    return currentProfile?.avatar_url || user?.user_metadata?.avatar_url;
+  };
+
+  const getDisplayName = () => {
+    const currentProfile = isCompanyAccount ? companyProfile : profile;
+    return currentProfile?.name || user?.user_metadata?.name || 'Usuário';
+  };
+
+  const getAccountType = () => {
+    return isCompanyAccount ? 'Empresa' : 'Colaborador';
   };
 
   return (
@@ -54,7 +63,14 @@ export function UserMenu() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
-        <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
+        <DropdownMenuLabel>
+          <div className="flex flex-col space-y-1">
+            <p className="text-sm font-medium leading-none">{getDisplayName()}</p>
+            <p className="text-xs leading-none text-muted-foreground">
+              {getAccountType()}
+            </p>
+          </div>
+        </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem asChild>
