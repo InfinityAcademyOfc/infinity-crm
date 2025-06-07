@@ -1,5 +1,6 @@
-// Basic WhatsApp types
-export type WhatsAppConnectionStatus = 'connected' | 'disconnected' | 'qr' | 'error' | 'not_started' | 'loading';
+
+// Tipos básicos para o WhatsApp
+export type WhatsAppConnectionStatus = 'connected' | 'disconnected' | 'qr' | 'error' | 'not_started';
 
 export type WhatsAppSession = {
   id: string;
@@ -9,9 +10,9 @@ export type WhatsAppSession = {
 
 export type WhatsAppContact = {
   id: string;
-  name: string;
-  phone: string;
-  number?: string; // For backward compatibility
+  name?: string;
+  phone?: string;
+  number?: string;
 };
 
 export type WhatsAppMessage = {
@@ -21,11 +22,9 @@ export type WhatsAppMessage = {
   message: string;
   from_me: boolean;
   created_at: string;
-  from?: string; // Added for compatibility
-  to?: string;   // Added for compatibility
 };
 
-// State properties interface
+// Tipos para o contexto separados em categorias
 export interface WhatsAppStateProps {
   currentSession: string | null;
   sessions: WhatsAppSession[];
@@ -37,16 +36,15 @@ export interface WhatsAppStateProps {
   loadingMessages: boolean;
 }
 
-// Action methods interface
 export interface WhatsAppActionsProps {
   setCurrentSession: (sessionId: string | null) => void;
   setSelectedContact: (contact: WhatsAppContact | null) => void;
   refreshSessions: () => Promise<void>;
   connectSession: (sessionId: string) => Promise<void>;
   disconnectSession: (sessionId: string) => Promise<void>;
-  sendMessage: (to: string, body: string) => Promise<void>;
+  sendMessage: (message: string) => Promise<void>;
   createNewSession: () => string;
 }
 
-// Complete context type
+// Tipo combinado para o contexto completo
 export interface WhatsAppContextType extends WhatsAppStateProps, WhatsAppActionsProps {}

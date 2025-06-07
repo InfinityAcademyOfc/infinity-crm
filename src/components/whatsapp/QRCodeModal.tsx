@@ -1,6 +1,7 @@
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import QRCodeScanner from "./QRCodeScanner";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { useQRCode } from "@/hooks/useQRCode";
 
 interface QRCodeModalProps {
@@ -12,20 +13,17 @@ interface QRCodeModalProps {
 
 const QRCodeModal = ({ open, onOpenChange, sessionId, onLogin }: QRCodeModalProps) => {
   const { status } = useQRCode(sessionId);
-  const hasLoggedIn = useRef(false);
-
+  
+  // Auto-fechar o modal quando conectado
   useEffect(() => {
-    if (status === "connected" && !hasLoggedIn.current) {
-      hasLoggedIn.current = true;
-      onLogin?.();
-
-      setTimeout(() => {
-        onOpenChange(false);
-        hasLoggedIn.current = false;
-      }, 500); // leve atraso para garantir atualização de status
+    if (status === "connected" && onLogin) {
+      // Primeiro chama o callback de login para atualizar o estado
+      onLogin();
+      // Depois fecha o modal
+      setTimeout(() => onOpenChange(false), 100);
     }
   }, [status, onLogin, onOpenChange]);
-
+  
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
