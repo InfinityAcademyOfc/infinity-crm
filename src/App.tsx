@@ -1,88 +1,257 @@
+import React, { useEffect, lazy, Suspense, startTransition } from 'react';
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import MainLayout from "@/layouts/MainLayout";
+import { AuthProvider } from '@/contexts/AuthContext';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import LoadingScreen from '@/components/ui/loading-screen';
+import { useThemeManager } from '@/hooks/useThemeManager';
+import PageTransition from '@/components/ui/page-transition';
 
-import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { ThemeProvider } from "./components/ui/theme-provider";
-import { AuthProvider } from './contexts/AuthContext';
-import { WhatsAppProvider } from './contexts/WhatsAppContext';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Toaster } from "./components/ui/toaster";
+// Import custom animations
+import "./styles/theme.css";
+import "./styles/animations.css";
+import "./styles/base.css";
+import "./styles/cards.css";
+import "./styles/navigation.css";
+import "./styles/responsive.css";
+import "./styles/scrollbars.css";
+import "./styles/org-chart.css";
+import "./styles/tags.css";
+import "./styles/whatsapp.css";
+import "./styles/kanban.css";
+import "./styles/dashboard.css";
 
-import ProtectedRoute from "./components/auth/ProtectedRoute";
-import MainLayout from "./layouts/MainLayout";
+// Lazy-loaded components with proper error handling and better performance
+// Use a consistent pattern that will return a proper default export
+const Dashboard = lazy(() => 
+  import('@/pages/Dashboard')
+    .then(module => ({ default: module.default }))
+    .catch(() => {
+      console.error('Failed to load Dashboard component');
+      return { default: () => <div>Error loading Dashboard</div> };
+    })
+);
 
-// Auth pages
-import Login from './pages/Login';
-import Register from './pages/Register';
-import WaitingArea from './pages/WaitingArea';
-import Pricing from './pages/Pricing';
+// Apply the same pattern to all lazy-loaded components
+const SalesFunnel = lazy(() => 
+  import('@/pages/SalesFunnel')
+    .then(module => ({ default: module.default }))
+);
 
-// App pages
-import Dashboard from './pages/Dashboard';
-import SalesFunnel from './pages/SalesFunnel';
-import ClientManagement from './pages/ClientManagement';
-import FinanceManagement from './pages/FinanceManagement';
-import ProductsServices from './pages/ProductsServices';
-import LeadImport from './pages/LeadImport';
-import WhatsAppIntegrationPage from './pages/WhatsAppIntegration';
-import AdsIntegrationPage from './pages/AdsIntegrationPage';
-import ProductionManagement from './pages/ProductionManagement';
-import TeamManagement from './pages/TeamManagement';
-import Meetings from './pages/Meetings';
-import Settings from './pages/Settings';
+const ClientManagement = lazy(() => 
+  import('@/pages/ClientManagement')
+    .then(module => ({ default: module.default }))
+);
 
-const queryClient = new QueryClient();
+const FinanceManagement = lazy(() => 
+  import('@/pages/FinanceManagement')
+    .then(module => ({ default: module.default }))
+);
+
+const ProductsServices = lazy(() => 
+  import('@/pages/ProductsServices')
+    .then(module => ({ default: module.default }))
+);
+
+const LeadImport = lazy(() => 
+  import('@/pages/LeadImport')
+    .then(module => ({ default: module.default }))
+);
+
+const ProductionManagement = lazy(() => 
+  import('@/pages/ProductionManagement')
+    .then(module => ({ default: module.default }))
+);
+
+const TeamManagement = lazy(() => 
+  import('@/pages/TeamManagement')
+    .then(module => ({ default: module.default }))
+);
+
+const Meetings = lazy(() => 
+  import('@/pages/Meetings')
+    .then(module => ({ default: module.default }))
+);
+
+const Settings = lazy(() => 
+  import('@/pages/Settings')
+    .then(module => ({ default: module.default }))
+);
+
+const UserSettings = lazy(() => 
+  import('@/pages/UserSettings')
+    .then(module => ({ default: module.default }))
+);
+
+const WhatsAppIntegration = lazy(() => 
+  import('@/pages/WhatsAppIntegration')
+    .then(module => ({ default: module.default }))
+);
+
+const AdsIntegrationPage = lazy(() => 
+  import('@/pages/AdsIntegrationPage')
+    .then(module => ({ default: module.default }))
+);
+
+const Index = lazy(() => 
+  import('@/pages/Index')
+    .then(module => ({ default: module.default }))
+);
+
+const Login = lazy(() => 
+  import('@/pages/Login')
+    .then(module => ({ default: module.default }))
+);
+
+const Register = lazy(() => 
+  import('@/pages/Register')
+    .then(module => ({ default: module.default }))
+);
+
+const NotFound = lazy(() => 
+  import('@/pages/NotFound')
+    .then(module => ({ default: module.default }))
+);
+
+const WaitingArea = lazy(() => 
+  import('@/pages/WaitingArea')
+    .then(module => ({ default: module.default }))
+);
+
+// Custom route change handler for animations
+const RouteChangeHandler = () => {
+  const location = useLocation();
+  
+  useEffect(() => {
+    // Scroll to top on route change
+    window.scrollTo(0, 0);
+  }, [location]);
+  
+  return null;
+};
+
+// Configure query client with better caching and retry logic
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      retry: 1,
+      refetchOnWindowFocus: false, // Disable refetch on window focus for better performance
+      refetchOnReconnect: true,
+    }
+  }
+});
 
 function App() {
+  // Use our theme manager hook
+  const { isLoaded } = useThemeManager();
+
+  if (!isLoaded) {
+    return <LoadingScreen />;
+  }
+
+  const handleNavigation = (callback: () => void) => {
+    startTransition(() => {
+      callback();
+    });
+  };
+
   return (
-    <BrowserRouter>
-      <ThemeProvider defaultTheme="dark">
-        <AuthProvider>
-          <WhatsAppProvider>
-            <QueryClientProvider client={queryClient}>
-              <Routes>
-                {/* Public routes */}
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route path="/pricing" element={<Pricing />} />
-                <Route path="/waiting" element={<WaitingArea />} />
-
-                {/* Protected routes with MainLayout */}
-                <Route path="/" element={<ProtectedRoute />}>
-                  <Route element={<MainLayout />}>
-                    <Route index element={<Navigate to="/app" replace />} />
-                    
-                    {/* App routes */}
-                    <Route path="/app" element={<Dashboard />} />
-                    <Route path="/app/sales-funnel" element={<SalesFunnel />} />
-                    <Route path="/app/clients" element={<ClientManagement />} />
-                    <Route path="/app/finance" element={<FinanceManagement />} />
-                    <Route path="/app/products" element={<ProductsServices />} />
-                    <Route path="/app/lead-import" element={<LeadImport />} />
-                    
-                    {/* Integration routes */}
-                    <Route path="/app/whatsapp" element={<WhatsAppIntegrationPage />} />
-                    <Route path="/app/ads-integration" element={<AdsIntegrationPage />} />
-                    
-                    {/* Management routes */}
-                    <Route path="/app/production" element={<ProductionManagement />} />
-                    <Route path="/app/team" element={<TeamManagement />} />
-                    <Route path="/app/meetings" element={<Meetings />} />
-                    
-                    {/* Settings */}
-                    <Route path="/app/settings" element={<Settings />} />
-                  </Route>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <BrowserRouter>
+          <RouteChangeHandler />
+          <Toaster />
+          <Sonner />
+          <AuthProvider>
+            <Routes>
+              {/* Public Routes */}
+              <Route path="/" element={<Suspense fallback={<LoadingScreen />}><Index /></Suspense>} />
+              <Route path="/login" element={<Suspense fallback={<LoadingScreen />}><Login /></Suspense>} />
+              <Route path="/register" element={<Suspense fallback={<LoadingScreen />}><Register /></Suspense>} />
+              <Route path="/waiting" element={<Suspense fallback={<LoadingScreen />}><WaitingArea /></Suspense>} />
+              
+              {/* Protected Routes */}
+              <Route element={<ProtectedRoute />}>
+                <Route path="/app" element={<MainLayout />}>
+                  <Route index element={
+                    <Suspense fallback={<LoadingScreen minimal />}>
+                      <Dashboard />
+                    </Suspense>
+                  } />
+                  <Route path="sales-funnel" element={
+                    <Suspense fallback={<LoadingScreen minimal />}>
+                      <SalesFunnel />
+                    </Suspense>
+                  } />
+                  <Route path="clients" element={
+                    <Suspense fallback={<LoadingScreen />}>
+                      <ClientManagement />
+                    </Suspense>
+                  } />
+                  <Route path="finance" element={
+                    <Suspense fallback={<LoadingScreen />}>
+                      <FinanceManagement />
+                    </Suspense>
+                  } />
+                  <Route path="products" element={
+                    <Suspense fallback={<LoadingScreen />}>
+                      <ProductsServices />
+                    </Suspense>
+                  } />
+                  <Route path="lead-import" element={
+                    <Suspense fallback={<LoadingScreen />}>
+                      <LeadImport />
+                    </Suspense>
+                  } />
+                  <Route path="production" element={
+                    <Suspense fallback={<LoadingScreen />}>
+                      <ProductionManagement />
+                    </Suspense>
+                  } />
+                  <Route path="team" element={
+                    <Suspense fallback={<LoadingScreen />}>
+                      <TeamManagement />
+                    </Suspense>
+                  } />
+                  <Route path="meetings" element={
+                    <Suspense fallback={<LoadingScreen />}>
+                      <Meetings />
+                    </Suspense>
+                  } />
+                  <Route path="settings" element={
+                    <Suspense fallback={<LoadingScreen />}>
+                      <Settings />
+                    </Suspense>
+                  } />
+                  <Route path="user-settings" element={
+                    <Suspense fallback={<LoadingScreen />}>
+                      <UserSettings />
+                    </Suspense>
+                  } />
+                  <Route path="whatsapp" element={
+                    <Suspense fallback={<LoadingScreen />}>
+                      <WhatsAppIntegration />
+                    </Suspense>
+                  } />
+                  <Route path="ads-integration" element={
+                    <Suspense fallback={<LoadingScreen />}>
+                      <AdsIntegrationPage />
+                    </Suspense>
+                  } />
                 </Route>
-
-                {/* Catch all - redirect to app */}
-                <Route path="*" element={<Navigate to="/app" replace />} />
-              </Routes>
-
-              <Toaster />
-            </QueryClientProvider>
-          </WhatsAppProvider>
-        </AuthProvider>
-      </ThemeProvider>
-    </BrowserRouter>
+              </Route>
+              
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </AuthProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
   );
 }
 

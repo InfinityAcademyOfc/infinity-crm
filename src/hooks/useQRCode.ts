@@ -1,79 +1,76 @@
 
-import { useEffect, useRef, useState } from "react";
-import { WhatsAppConnectionStatus } from "@/types/whatsapp";
+import { useState, useEffect } from "react";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
-interface QRCodeHookReturn {
-  qrCodeData: string | null;
-  status: WhatsAppConnectionStatus;
-  loading: boolean;
-}
+export type WhatsAppConnectionStatus =
+  | "not_started"
+  | "qr"
+  | "connected"
+  | "disconnected"
+  | "error";
 
-export function useQRCode(sessionId: string): QRCodeHookReturn {
+export const useQRCode = (sessionId: string) => {
+  const [loading, setLoading] = useState(true);
   const [qrCodeData, setQrCodeData] = useState<string | null>(null);
-  const [status, setStatus] = useState<WhatsAppConnectionStatus>("loading");
-  const [loading, setLoading] = useState<boolean>(true);
-  const intervalRef = useRef<number | null>(null);
-  const mountedRef = useRef<boolean>(true);
+  const [status, setStatus] = useState<WhatsAppConnectionStatus>("not_started");
 
   useEffect(() => {
-    mountedRef.current = true;
+    if (!sessionId) return;
 
-    if (!API_URL || !sessionId) {
-      setStatus("error");
-      setQrCodeData(null);
-      setLoading(false);
-      return;
-    }
+    let intervalId: NodeJS.Timeout;
+    let firstTimeoutId: NodeJS.Timeout;
 
     const fetchQrCode = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`${API_URL}/sessions/${sessionId}/status`);
-        const data = await res.json();
 
-        if (!mountedRef.current) return;
-
-        if (data.status === "connected") {
-          clearInterval(intervalRef.current!);
-          setStatus("connected");
-          setQrCodeData(null);
-        } else if (data.status === "qr") {
-          setStatus("qr");
-          setQrCodeData(data.qr_code || null);
-        } else if (data.status === "not_started") {
-          setStatus("not_started");
-          setQrCodeData(null);
-        } else {
+        if (!API_URL) {
+          console.error("API URL is not defined");
           setStatus("error");
-          setQrCodeData(null);
-        }
-      } catch (err) {
-        if (mountedRef.current) {
-          setStatus("error");
-          setQrCodeData(null);
-        }
-      } finally {
-        if (mountedRef.current) {
           setLoading(false);
+          return;
         }
+
+        const statusRes = await fetch(`${API_URL}/sessions/${sessionId}/status`);
+        if (!statusRes.ok)
+          throw new Error(`Failed to fetch status: ${statusRes.status}`);
+
+        const statusData = await statusRes.json();
+        console.log("WhatsApp connection status:", statusData.status);
+
+        setStatus(statusData.status as WhatsAppConnectionStatus);
+
+        if (statusData.status === "qr") {
+          const qrRes = await fetch(`${API_URL}/sessions/${sessionId}/qrcode`);
+          if (!qrRes.ok)
+            throw new Error(`Failed to fetch QR code: ${qrRes.status}`);
+
+          const qrData = await qrRes.json();
+          console.log("QR Code response:", qrData);
+          setQrCodeData(qrData.qr || qrData.qrCode || qrData.code || null);
+        } else {
+          setQrCodeData(null);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar status/QR da sessão:", error);
+        setStatus("error");
+        setQrCodeData(null);
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchQrCode();
-    intervalRef.current = window.setInterval(fetchQrCode, 4000);
+    firstTimeoutId = setTimeout(() => {
+      fetchQrCode();
+      intervalId = setInterval(fetchQrCode, 10000);
+    }, 2000);
 
     return () => {
-      mountedRef.current = false;
-      if (intervalRef.current !== null) {
-        clearInterval(intervalRef.current);
-      }
+      clearTimeout(firstTimeoutId);
+      clearInterval(intervalId);
     };
   }, [sessionId]);
 
-  return { qrCodeData, status, loading };
-}
-
-// Reexportar o tipo usado
-export type { WhatsAppConnectionStatus } from "@/types/whatsapp";
+  return { loading, qrCodeData, status };
+};

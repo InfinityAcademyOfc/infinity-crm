@@ -1,45 +1,37 @@
 
 import React, { useState, useEffect, Suspense } from "react";
-import { Outlet, useNavigate, useLocation } from "react-router-dom";
-import { ChevronLeft, Menu } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Outlet } from "react-router-dom";
 import Sidebar from "@/components/navigation/Sidebar";
 import { TopNav } from "@/components/layout/TopNav";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import UnifiedChatButton from "@/components/chat/UnifiedChatButton";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
+import { ChevronLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import LoadingScreen from "@/components/ui/loading-screen";
 import { MobileNav } from "@/components/layout/MobileNav";
 
 const MainLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const navigate = useNavigate();
-  const location = useLocation();
-  const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
-
+  const [isMobileView, setIsMobileView] = useState(false);
+  
   useEffect(() => {
-    function handleResize() {
+    const handleResize = () => {
       const mobile = window.innerWidth < 768;
       setIsMobileView(mobile);
+      
       if (mobile && sidebarOpen) {
         setSidebarOpen(false);
       }
-    }
+    };
     
     window.addEventListener("resize", handleResize);
     handleResize(); // Call on initial render
     
     return () => window.removeEventListener("resize", handleResize);
   }, [sidebarOpen]);
-
-  useEffect(() => {
-    if (isMobileView) {
-      setSidebarOpen(false);
-      setMobileOpen(false);
-    }
-  }, [location.pathname, isMobileView]);
 
   return (
     <SidebarProvider>
@@ -67,37 +59,8 @@ const MainLayout = () => {
           />
           
           <main className="flex-1 overflow-auto">
-            <div className="container p-4 md:p-6">
-              <ErrorBoundary
-                fallback={
-                  <div className="p-6 bg-destructive/10 rounded-lg">
-                    <h2 className="text-xl font-bold text-destructive mb-2">
-                      Algo deu errado
-                    </h2>
-                    <p className="mb-4">
-                      Ocorreu um erro ao renderizar este componente.
-                    </p>
-                    <div className="flex gap-4">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => navigate(-1)}
-                        className="flex items-center"
-                      >
-                        <ChevronLeft className="mr-2 h-4 w-4" />
-                        Voltar
-                      </Button>
-                      <Button
-                        onClick={() => window.location.reload()}
-                        size="sm"
-                        variant="default"
-                      >
-                        Tentar novamente
-                      </Button>
-                    </div>
-                  </div>
-                }
-              >
+            <div className="container p-4 md:p-6 px-0">
+              <ErrorBoundary>
                 <Suspense fallback={<LoadingScreen minimal />}>
                   <Outlet />
                 </Suspense>
