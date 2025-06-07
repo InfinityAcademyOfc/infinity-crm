@@ -1,11 +1,13 @@
+
 import React, { Suspense, lazy, useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { ChartSkeleton } from "@/components/dashboard/DashboardSkeletons";
 import WelcomeCard from "@/components/dashboard/WelcomeCard";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
-import { useRealData } from "@/hooks/useRealData";
-import { useNotifications } from "@/hooks/useNotifications";
+import { updateDashboardData, useModuleSync } from "@/services/moduleSyncService";
+import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+import { useNotifications } from "@/hooks/useNotifications";
 
 // Lazy load heavy components
 const StatsSection = lazy(() => import("@/components/dashboard/StatsSection"));
@@ -17,134 +19,152 @@ const DREChart = lazy(() => import("@/components/dashboard/DREChart"));
 
 const Dashboard = () => {
   const { profile, company } = useAuth();
+  const [isLoaded, setIsLoaded] = useState(false);
   const { notifySystemEvent } = useNotifications();
   
-  // Use real data hook
+  // Module sync state
   const { 
     leads, 
     clients, 
     tasks, 
     products, 
-    meetings,
-    teamMembers,
-    transactions,
-    loading: dataLoading,
-    refetch
-  } = useRealData();
+    syncAllModules, 
+    lastSyncTime, 
+    isSyncing
+  } = useModuleSync();
   
   // State for filtered sales data
   const [filteredSalesData, setFilteredSalesData] = useState<any[]>([]);
-  const [filterPeriod, setFilterPeriod] = useState("6");
+  const [filterPeriod, setFilterPeriod] = useState("6"); // Default to 6 months
   const [filterCollaborator, setFilterCollaborator] = useState("all");
   const [filterProduct, setFilterProduct] = useState("all");
   
-  // Activity data from real tasks
+  // Activity data
   const [activities, setActivities] = useState<any[]>([]);
 
-  // Process real data when it changes
+  // Efeito para carregar dados do Supabase quando o usuário está autenticado
   useEffect(() => {
-    if (dataLoading) return;
+    if (!company?.id) return;
     
-    try {
-      // Convert leads to sales data for charts
-      const leadSalesData = leads.map((lead) => ({
-        name: new Date(lead.created_at).toLocaleDateString('pt-BR', { month: 'short' }),
-        value: lead.value || 0,
-        leads: 1,
-        date: new Date(lead.created_at)
-      }));
-      
-      // Group by month
-      const groupedByMonth = leadSalesData.reduce((acc: any, curr: any) => {
-        const month = curr.name;
-        if (!acc[month]) {
-          acc[month] = { name: month, value: 0, leads: 0, date: curr.date };
-        }
-        acc[month].value += curr.value;
-        acc[month].leads += curr.leads;
-        return acc;
-      }, {});
-      
-      // Convert back to array and sort by date
-      const salesData = Object.values(groupedByMonth).sort((a: any, b: any) => 
-        new Date(a.date).getTime() - new Date(b.date).getTime()
-      );
-      
-      // Prepare activities from real tasks
-      const activityData = tasks.slice(0, 5).map(task => ({
-        id: task.id,
-        type: 'task',
-        title: task.title,
-        time: new Date(task.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-        relatedTo: task.client_id ? `Cliente: ${clients.find(c => c.id === task.client_id)?.name || 'Cliente'}` : 'Interno',
-        status: task.status,
-        priority: task.priority || 'medium'
-      }));
-      
-      setActivities(activityData);
-      setFilteredSalesData(salesData);
-      
-      // Show success notification
-      if (leads.length > 0 || tasks.length > 0) {
-        toast.success(`Dashboard atualizado com ${leads.length} leads e ${tasks.length} tarefas`);
+    // Função para buscar dados do Supabase
+    const fetchData = async () => {
+      try {
+        // Exibir notificação de carregamento
+        toast.loading("Carregando dados do dashboard...");
         
-        // System notification
-        notifySystemEvent(
+        // Use updateDashboardData to fetch all data from Supabase
+        await updateDashboardData(company.id);
+        
+        // Get the latest state
+        const { leads: currentLeads, tasks: currentTasks } = useModuleSync.getState();
+        
+        // Converter leads para formato de vendas para o gráfico
+        const leadSalesData = currentLeads.map((lead) => ({
+          name: new Date(lead.created_at).toLocaleDateString('pt-BR', { month: 'short' }),
+          value: lead.value || 0,
+          leads: 1
+        }));
+        
+        // Agrupar por mês
+        const groupedByMonth = leadSalesData.reduce((acc: any, curr: any) => {
+          const month = curr.name;
+          if (!acc[month]) {
+            acc[month] = { name: month, value: 0, leads: 0 };
+          }
+          acc[month].value += curr.value;
+          acc[month].leads += curr.leads;
+          return acc;
+        }, {});
+        
+        // Converter de volta para array e ordenar por mês
+        const salesData = Object.values(groupedByMonth);
+        
+        // Preparar atividades para o dashboard
+        const activityData = currentTasks.map(task => ({
+          id: task.id,
+          type: 'task',
+          title: task.title,
+          time: new Date(task.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+          relatedTo: task.client || 'Interno',
+          status: task.status,
+          priority: task.priority || 'medium'
+        })).slice(0, 5);
+        
+        setActivities(activityData);
+        setFilteredSalesData(salesData.length > 0 ? salesData : []);
+        setIsLoaded(true);
+        
+        // Mostrar notificação de sucesso e remover loading
+        toast.dismiss();
+        toast.success("Dashboard atualizado com sucesso!");
+        
+        // Notificar sobre a atualização do dashboard
+        await notifySystemEvent(
           "Dashboard atualizado", 
-          `Dashboard carregado com dados de ${leads.length} leads, ${clients.length} clientes e ${tasks.length} tarefas.`
+          `Dashboard atualizado com dados de ${currentLeads.length} leads e ${currentTasks.length} tarefas.`
         );
+      } catch (error) {
+        console.error("Erro ao carregar dados:", error);
+        toast.dismiss();
+        toast.error("Erro ao carregar dados do dashboard");
+        setIsLoaded(true);
       }
-    } catch (error) {
-      console.error("Erro ao processar dados:", error);
-      toast.error("Erro ao processar dados do dashboard");
-    }
-  }, [leads, clients, tasks, dataLoading, notifySystemEvent]);
+    };
+    
+    fetchData();
+  }, [company, notifySystemEvent]);
   
-  // Filter sales data based on selected filters
+  // Filter sales data based on selected period, collaborator and product
   useEffect(() => {
-    if (dataLoading || !leads.length) return;
-    
-    // Apply filters to sales data
-    let filteredLeads = [...leads];
-    
-    // Filter by collaborator
-    if (filterCollaborator !== "all") {
-      filteredLeads = filteredLeads.filter(lead => lead.assigned_to === filterCollaborator);
-    }
+    if (!isLoaded || filteredSalesData.length === 0 || !leads.length) return;
     
     // Filter by time period
-    if (filterPeriod !== "all") {
-      const monthsToShow = parseInt(filterPeriod);
-      const cutoffDate = new Date();
-      cutoffDate.setMonth(cutoffDate.getMonth() - monthsToShow);
-      filteredLeads = filteredLeads.filter(lead => new Date(lead.created_at) >= cutoffDate);
-    }
-    
-    // Convert to chart data
-    const chartData = filteredLeads.map((lead) => ({
+    const allSalesData = leads.map((lead) => ({
       name: new Date(lead.created_at).toLocaleDateString('pt-BR', { month: 'short' }),
       value: lead.value || 0,
-      leads: 1,
-      date: new Date(lead.created_at)
+      leads: 1
     }));
     
-    // Group by month
-    const groupedData = chartData.reduce((acc: any, curr: any) => {
+    // Agrupar por mês
+    const groupedByMonth = allSalesData.reduce((acc: any, curr: any) => {
       const month = curr.name;
       if (!acc[month]) {
-        acc[month] = { name: month, value: 0, leads: 0, date: curr.date };
+        acc[month] = { name: month, value: 0, leads: 0 };
       }
       acc[month].value += curr.value;
       acc[month].leads += curr.leads;
       return acc;
     }, {});
     
-    const finalData = Object.values(groupedData).sort((a: any, b: any) => 
-      new Date(a.date).getTime() - new Date(b.date).getTime()
-    );
+    // Converter de volta para array
+    let salesData = Object.values(groupedByMonth);
     
-    setFilteredSalesData(finalData);
-  }, [filterPeriod, filterCollaborator, filterProduct, leads, dataLoading]);
+    // Apply period filter based on exact count of months
+    if (filterPeriod === "3" || filterPeriod === "6" || filterPeriod === "12") {
+      const monthsToShow = parseInt(filterPeriod);
+      salesData = salesData.slice(-monthsToShow); // Take only the last N months
+    }
+    
+    // Apply collaborator filter if not "all"
+    if (filterCollaborator !== "all") {
+      salesData = salesData.filter(() => {
+        // Em uma implementação real, filtrar pelos dados reais do colaborador
+        // Por enquanto, manter todos os dados
+        return true;
+      });
+    }
+    
+    // Apply product filter if not "all"
+    if (filterProduct !== "all") {
+      salesData = salesData.filter(() => {
+        // Em uma implementação real, filtrar pelos produtos
+        // Por enquanto, manter todos os dados
+        return true;
+      });
+    }
+    
+    setFilteredSalesData(salesData);
+  }, [filterPeriod, filterCollaborator, filterProduct, isLoaded, leads]);
 
   // Filter handlers for SalesChart
   const handlePeriodChange = (period: string) => {
@@ -159,20 +179,21 @@ const Dashboard = () => {
     setFilterProduct(product);
   };
   
-  // Manual refresh function
+  // Função para forçar atualização dos dados
   const handleRefreshDashboard = async () => {
-    if (!company?.id) return;
+    if (!company?.id || isSyncing) return;
     
-    toast.loading("Atualizando dados...");
+    toast.loading("Sincronizando dados...");
     
     try {
-      await refetch();
+      await updateDashboardData(company.id);
       toast.dismiss();
       toast.success("Dashboard atualizado com sucesso!");
       
+      // Notificar sobre a atualização manual
       await notifySystemEvent(
         "Dashboard atualizado manualmente", 
-        `Dashboard atualizado manualmente em ${new Date().toLocaleString('pt-BR')}.`
+        `Dashboard atualizado manualmente com dados em ${new Date().toLocaleString('pt-BR')}.`
       );
     } catch (error) {
       console.error("Erro ao atualizar dashboard:", error);
@@ -180,14 +201,64 @@ const Dashboard = () => {
       toast.error("Erro ao atualizar dashboard");
     }
   };
+  
+  // Atualizar dados via Realtime Subscription
+  useEffect(() => {
+    if (!company?.id) return;
+    
+    // Inscrever para atualizações de leads em tempo real
+    const leadsChannel = supabase
+      .channel('leads-changes')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'leads', filter: `company_id=eq.${company.id}` }, 
+        payload => {
+          console.log("Alteração em leads detectada:", payload);
+          // Recarregar dados
+          updateDashboardData(company.id);
+        }
+      )
+      .subscribe();
+      
+    // Inscrever para atualizações de clients em tempo real
+    const clientsChannel = supabase
+      .channel('clients-changes')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'clients', filter: `company_id=eq.${company.id}` }, 
+        payload => {
+          console.log("Alteração em clientes detectada:", payload);
+          // Recarregar dados
+          updateDashboardData(company.id);
+        }
+      )
+      .subscribe();
+      
+    // Inscrever para atualizações de tasks em tempo real
+    const tasksChannel = supabase
+      .channel('tasks-changes')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'tasks', filter: `company_id=eq.${company.id}` }, 
+        payload => {
+          console.log("Alteração em tarefas detectada:", payload);
+          // Recarregar dados
+          updateDashboardData(company.id);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(leadsChannel);
+      supabase.removeChannel(clientsChannel);
+      supabase.removeChannel(tasksChannel);
+    };
+  }, [company]);
 
   return (
     <DashboardLayout
       welcomeSection={<WelcomeCard />}
       onRefresh={handleRefreshDashboard}
-      lastUpdated={new Date().toLocaleString('pt-BR')}
-      isRefreshing={dataLoading}
-      funnelSection={<></>}
+      lastUpdated={lastSyncTime ? new Date(lastSyncTime).toLocaleString('pt-BR') : undefined}
+      isRefreshing={isSyncing}
+      funnelSection={<></>} // Empty to remove this section
       integratedFunnelSection={
         <Suspense fallback={<ChartSkeleton />}>
           <IntegratedFunnel leadData={leads} />
@@ -197,7 +268,7 @@ const Dashboard = () => {
         <>
           <Suspense fallback={<ChartSkeleton />}>
             <SalesChart 
-              data={filteredSalesData} 
+              data={isLoaded ? filteredSalesData : []} 
               onPeriodChange={handlePeriodChange}
               onCollaboratorChange={handleCollaboratorChange}
               onProductChange={handleProductChange}
@@ -207,7 +278,7 @@ const Dashboard = () => {
             />
           </Suspense>
           <Suspense fallback={<ChartSkeleton />}>
-            <DREChart transactions={transactions} />
+            <DREChart />
           </Suspense>
         </>
       }

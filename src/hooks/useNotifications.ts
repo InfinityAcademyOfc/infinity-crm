@@ -1,14 +1,16 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
-import { realTimeService } from '@/services/realTimeService';
+import { toast } from 'sonner';
 
 export interface Notification {
   id: string;
+  user_id: string;
+  company_id?: string;
   title: string;
   message: string;
-  type: 'info' | 'success' | 'warning' | 'error';
+  type?: string;
   read: boolean;
   link?: string;
   created_at: string;
@@ -16,136 +18,194 @@ export interface Notification {
 }
 
 export const useNotifications = () => {
-  const { user, company } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
+  const { user, company } = useAuth();
 
-  const fetchNotifications = async () => {
-    if (!user?.id) return;
-
+  // Função para buscar notificações
+  const fetchNotifications = useCallback(async () => {
+    if (!user) return;
+    
     try {
+      setLoading(true);
+      
+      // Buscar notificações do usuário que não expiraram ou que não têm data de expiração
       const { data, error } = await supabase
         .from('notifications')
         .select('*')
         .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(50);
-
-      if (error) throw error;
-
-      const validNotifications = (data || []).filter(notification => {
-        if (!notification.expires_at) return true;
-        return new Date(notification.expires_at) > new Date();
-      });
-
-      setNotifications(validNotifications);
-      setUnreadCount(validNotifications.filter(n => !n.read).length);
+        .or(`expires_at.gt.${new Date().toISOString()},expires_at.is.null`)
+        .order('created_at', { ascending: false });
+        
+      if (error) {
+        console.error("Erro ao carregar notificações:", error);
+        throw error;
+      }
+      
+      setNotifications(data as Notification[]);
+      const unread = data.filter(item => !item.read).length;
+      setUnreadCount(unread);
     } catch (error) {
-      console.error('Erro ao buscar notificações:', error);
+      console.error("Erro ao carregar notificações:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
-  const markAsRead = async (notificationId: string) => {
+  // Carregar notificações iniciais
+  useEffect(() => {
+    if (!user) return;
+
+    fetchNotifications();
+    
+    // Configurar subscription para atualizações em tempo real
+    const notificationsSubscription = supabase
+      .channel('notifications-changes')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
+        payload => {
+          console.log('Notificação atualizada:', payload);
+          fetchNotifications();
+        }
+      )
+      .subscribe();
+      
+    return () => {
+      supabase.removeChannel(notificationsSubscription);
+    };
+  }, [user, fetchNotifications]);
+
+  // Marcar notificação como lida
+  const markAsRead = async (id: string) => {
+    if (!user) return;
+    
     try {
+      // Atualizar otimisticamente na UI
+      setNotifications(prev => 
+        prev.map(notification => 
+          notification.id === id 
+            ? { ...notification, read: true } 
+            : notification
+        )
+      );
+      
+      setUnreadCount(prev => Math.max(0, prev - 1));
+      
+      // Atualizar no Supabase
       const { error } = await supabase
         .from('notifications')
         .update({ read: true })
-        .eq('id', notificationId);
-
-      if (error) throw error;
-
-      setNotifications(prev =>
-        prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
-      );
-      setUnreadCount(prev => Math.max(0, prev - 1));
+        .eq('id', id)
+        .eq('user_id', user.id);
+        
+      if (error) {
+        console.error("Erro ao marcar notificação como lida:", error);
+        throw error;
+      }
     } catch (error) {
-      console.error('Erro ao marcar notificação como lida:', error);
+      console.error("Erro ao marcar notificação como lida:", error);
+      toast.error("Não foi possível atualizar a notificação");
+      
+      // Reverter mudança otimista em caso de erro
+      fetchNotifications();
     }
   };
 
+  // Marcar todas como lidas
   const markAllAsRead = async () => {
-    if (!user?.id) return;
-
+    if (!user) return;
+    
     try {
+      // Atualizar otimisticamente na UI
+      setNotifications(prev => 
+        prev.map(notification => ({ ...notification, read: true }))
+      );
+      
+      setUnreadCount(0);
+      
+      // Atualizar no Supabase
       const { error } = await supabase
         .from('notifications')
         .update({ read: true })
         .eq('user_id', user.id)
-        .eq('read', false);
-
-      if (error) throw error;
-
-      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-      setUnreadCount(0);
+        .is('read', false); // Atualiza apenas não-lidas
+        
+      if (error) {
+        console.error("Erro ao marcar todas notificações como lidas:", error);
+        throw error;
+      }
+      
+      return true;
     } catch (error) {
-      console.error('Erro ao marcar todas como lidas:', error);
+      console.error("Erro ao marcar todas notificações como lidas:", error);
+      toast.error("Não foi possível atualizar as notificações");
+      
+      // Reverter mudança otimista em caso de erro
+      fetchNotifications();
+      throw error;
     }
   };
 
-  const createNotification = async (
+  // Adicionar uma nova notificação
+  const addNotification = async (
+    type: string,
     title: string,
     message: string,
-    type: 'info' | 'success' | 'warning' | 'error' = 'info',
     link?: string,
-    expiresIn?: number // minutos
+    expiresAt?: Date
   ) => {
-    if (!user?.id) return;
-
+    if (!user) return;
+    
     try {
-      const expiresAt = expiresIn 
-        ? new Date(Date.now() + expiresIn * 60 * 1000).toISOString()
-        : null;
-
-      const { error } = await supabase
+      const newNotification: Omit<Notification, 'id' | 'created_at' | 'read'> = {
+        user_id: user.id,
+        company_id: company?.id,
+        type,
+        title,
+        message,
+        link,
+        expires_at: expiresAt?.toISOString()
+      };
+      
+      // Inserir no Supabase
+      const { data, error } = await supabase
         .from('notifications')
-        .insert([{
-          user_id: user.id,
-          company_id: company?.id,
-          title,
-          message,
-          type,
-          link,
-          expires_at: expiresAt,
-          read: false
-        }]);
-
-      if (error) throw error;
+        .insert({...newNotification, read: false})
+        .select()
+        .single();
+        
+      if (error) {
+        console.error("Erro ao adicionar notificação:", error);
+        throw error;
+      }
+      
+      // Atualizar localmente (a subscription já deve atualizar automaticamente)
+      return data as Notification;
     } catch (error) {
-      console.error('Erro ao criar notificação:', error);
+      console.error("Erro ao adicionar notificação:", error);
+      toast.error("Não foi possível criar a notificação");
+      throw error;
     }
   };
 
-  const notifySystemEvent = async (title: string, message: string) => {
-    await createNotification(title, message, 'info', undefined, 60); // Expira em 1 hora
+  // Criar uma utilidade para adicionar uma notificação de sistema
+  const notifySystemEvent = async (
+    title: string, 
+    message: string, 
+    moduleLink?: string
+  ) => {
+    return addNotification('system', title, message, moduleLink);
   };
 
-  useEffect(() => {
-    if (user?.id) {
-      fetchNotifications();
-
-      // Configurar real-time para notificações
-      const unsubscribe = realTimeService.subscribe('notifications', (event) => {
-        if (event.type === 'INSERT' && event.new?.user_id === user.id) {
-          setNotifications(prev => [event.new, ...prev]);
-          setUnreadCount(prev => prev + 1);
-        }
-      });
-
-      return unsubscribe;
-    }
-  }, [user?.id]);
-
-  return {
-    notifications,
-    loading,
+  return { 
+    notifications, 
     unreadCount,
+    loading,
     markAsRead,
     markAllAsRead,
-    createNotification,
+    addNotification,
     notifySystemEvent,
-    refetch: fetchNotifications
+    fetchNotifications
   };
 };

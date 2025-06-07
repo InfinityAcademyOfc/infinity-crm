@@ -1,128 +1,193 @@
-
 import React, { useState, useEffect } from "react";
+import { Camera } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Loader2, Upload, Save } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "sonner";
-import { supabase } from "@/lib/supabase";
-
-interface ProfileData {
-  name: string;
-  email: string;
-  phone: string;
-  department: string;
-  avatar: string;
-  company_name?: string;
-}
+import { supabase } from "@/integrations/supabase/client";
 
 const ProfileSettings = () => {
-  const { user, profile, company, isCompany } = useAuth();
-  const [profileData, setProfileData] = useState<ProfileData>({
+  const { toast } = useToast();
+  const { user, profile, refreshUserData } = useAuth();
+  
+  const [formData, setFormData] = useState({
     name: "",
     email: "",
-    phone: "",
-    department: "",
-    avatar: "",
-    company_name: ""
+    role: "",
+    phone: ""
   });
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
+  
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    if (user && (profile || company)) {
-      const data = isCompany ? company : profile;
-      setProfileData({
-        name: data?.name || "",
-        email: data?.email || user.email || "",
-        phone: data?.phone || "",
-        department: data?.department || "",
-        avatar: data?.avatar || "",
-        company_name: isCompany ? data?.name : company?.name || ""
+    if (profile) {
+      setFormData({
+        name: profile.name || "",
+        email: profile.email || "",
+        role: profile.role || "",
+        phone: profile.phone || ""
       });
-      setLoading(false);
+      
+      // Use either avatar or avatar_url
+      if (profile.avatar || profile.avatar_url) {
+        setProfileImage(profile.avatar || profile.avatar_url);
+      }
     }
-  }, [user, profile, company, isCompany]);
+  }, [profile]);
 
-  const handleInputChange = (field: keyof ProfileData, value: string) => {
-    setProfileData(prev => ({ ...prev, [field]: value }));
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [id]: value
+    }));
   };
 
-  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
     if (!file || !user) return;
-
+    
     try {
-      setUploading(true);
+      setUploadingImage(true);
       
+      // Create a unique file path
       const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}-${Math.random()}.${fileExt}`;
+      const fileName = `${user.id}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
       const filePath = `avatars/${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(filePath);
-
-      setProfileData(prev => ({ ...prev, avatar: publicUrl }));
-      toast.success("Avatar atualizado com sucesso!");
-    } catch (error) {
-      console.error("Erro ao fazer upload do avatar:", error);
-      toast.error("Erro ao fazer upload do avatar");
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const handleSave = async () => {
-    if (!user) return;
-
-    try {
-      setSaving(true);
       
-      const tableName = isCompany ? "profiles_companies" : "profiles";
-      const updateData = {
-        name: profileData.name,
-        phone: profileData.phone,
-        avatar: profileData.avatar,
-        ...(isCompany ? {} : { department: profileData.department }),
-        updated_at: new Date().toISOString()
-      };
-
-      const { error } = await supabase
-        .from(tableName)
-        .update(updateData)
-        .eq("id", user.id);
-
-      if (error) throw error;
-
-      toast.success("Perfil atualizado com sucesso!");
+      // Upload the file to Supabase Storage
+      const { error: uploadError, data } = await supabase.storage
+        .from('profiles')
+        .upload(filePath, file);
+        
+      if (uploadError) throw uploadError;
+      
+      // Get the public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('profiles')
+        .getPublicUrl(filePath);
+        
+      // Update the profile with the new avatar URL
+      if (user.id) {
+        const { error } = await supabase
+          .from('profiles')
+          .update({ avatar: publicUrl })
+          .eq('id', user.id);
+        
+        if (error) throw error;
+        
+        setProfileImage(publicUrl);
+        // Refresh user data in context
+        await refreshUserData();
+      }
+      
+      toast({
+        title: "Imagem atualizada",
+        description: "Sua foto de perfil foi atualizada com sucesso."
+      });
     } catch (error) {
-      console.error("Erro ao salvar perfil:", error);
-      toast.error("Erro ao salvar perfil");
+      console.error("Erro ao fazer upload da imagem:", error);
+      toast({
+        title: "Erro ao atualizar imagem",
+        description: "Não foi possível atualizar sua foto de perfil.",
+        variant: "destructive"
+      });
     } finally {
-      setSaving(false);
+      setUploadingImage(false);
     }
   };
 
-  if (loading) {
-    return (
-      <Card>
-        <CardContent className="p-6 flex justify-center items-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </CardContent>
-      </Card>
-    );
-  }
+  const handleRemoveImage = async () => {
+    if (!user?.id || !(profile?.avatar || profile?.avatar_url)) return;
+    
+    try {
+      const avatarUrl = profile.avatar || profile.avatar_url;
+      if (!avatarUrl) return;
+      
+      // Extract file name from URL
+      const urlParts = avatarUrl.split('/');
+      const fileName = urlParts[urlParts.length - 1];
+      const filePath = `avatars/${fileName}`;
+      
+      // Remove file from storage (optional, can keep old files)
+      await supabase.storage
+        .from('profiles')
+        .remove([filePath]);
+      
+      // Update profile to remove avatar reference
+      const { error } = await supabase
+        .from('profiles')
+        .update({ avatar: null })
+        .eq('id', user.id);
+      
+      if (error) throw error;
+      
+      setProfileImage(null);
+      await refreshUserData();
+      
+      toast({
+        title: "Imagem removida",
+        description: "Sua foto de perfil foi removida com sucesso."
+      });
+    } catch (error) {
+      console.error("Erro ao remover imagem:", error);
+      toast({
+        title: "Erro ao remover imagem",
+        description: "Não foi possível remover sua foto de perfil.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    if (!user?.id) return;
+    
+    try {
+      setIsSaving(true);
+      
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          name: formData.name,
+          phone: formData.phone,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id);
+      
+      if (error) throw error;
+      
+      await refreshUserData();
+      
+      toast({
+        title: "Perfil atualizado",
+        description: "Suas informações foram atualizadas com sucesso."
+      });
+    } catch (error) {
+      console.error("Erro ao atualizar perfil:", error);
+      toast({
+        title: "Erro ao atualizar perfil",
+        description: "Não foi possível atualizar suas informações.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Obter as iniciais do nome para o avatar fallback
+  const getInitials = () => {
+    if (!formData.name) return "U";
+    
+    const nameParts = formData.name.split(' ');
+    if (nameParts.length === 1) return nameParts[0].charAt(0).toUpperCase();
+    
+    return `${nameParts[0].charAt(0)}${nameParts[nameParts.length - 1].charAt(0)}`.toUpperCase();
+  };
 
   return (
     <Card>
@@ -130,114 +195,79 @@ const ProfileSettings = () => {
         <CardTitle>Informações do Perfil</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="flex items-center space-x-4">
-          <Avatar className="h-20 w-20">
-            <AvatarImage src={profileData.avatar} />
-            <AvatarFallback>
-              {profileData.name.split(' ').map(n => n[0]).join('').toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-          <div>
-            <Label htmlFor="avatar-upload" className="cursor-pointer">
-              <Button variant="outline" size="sm" disabled={uploading}>
-                {uploading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Enviando...
-                  </>
-                ) : (
-                  <>
-                    <Upload className="mr-2 h-4 w-4" />
-                    Alterar Avatar
-                  </>
-                )}
-              </Button>
-            </Label>
-            <input
-              id="avatar-upload"
-              type="file"
-              accept="image/*"
-              onChange={handleAvatarUpload}
-              className="hidden"
-            />
+        <div className="flex flex-col md:flex-row gap-6">
+          <div className="flex flex-col items-center space-y-4">
+            <Avatar className="w-32 h-32">
+              <AvatarImage src={profileImage || "/avatar-placeholder.jpg"} alt="Foto de perfil" className="object-cover" />
+              <AvatarFallback className="text-2xl">{getInitials()}</AvatarFallback>
+            </Avatar>
+            
+            <div className="flex flex-col items-center">
+              <Label htmlFor="picture" className="cursor-pointer bg-primary text-white px-4 py-2 rounded-md flex items-center gap-2 hover:bg-primary/90 transition-colors">
+                <Camera size={16} />
+                {uploadingImage ? "Carregando..." : "Alterar foto"}
+              </Label>
+              <Input id="picture" type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={uploadingImage} />
+              {profileImage && (
+                <Button variant="link" size="sm" onClick={handleRemoveImage} className="mt-2">
+                  Remover foto
+                </Button>
+              )}
+            </div>
           </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">
-              {isCompany ? "Nome da Empresa" : "Nome Completo"}
-            </Label>
-            <Input
-              id="name"
-              value={profileData.name}
-              onChange={(e) => handleInputChange("name", e.target.value)}
-              placeholder={isCompany ? "Digite o nome da empresa" : "Digite seu nome completo"}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={profileData.email}
-              disabled
-              className="bg-gray-100"
-            />
-            <p className="text-xs text-muted-foreground">
-              O email não pode ser alterado aqui
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="phone">Telefone</Label>
-            <Input
-              id="phone"
-              value={profileData.phone}
-              onChange={(e) => handleInputChange("phone", e.target.value)}
-              placeholder="(11) 99999-9999"
-            />
-          </div>
-
-          {!isCompany && (
+          
+          <div className="flex-1 space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="department">Cargo/Departamento</Label>
-              <Input
-                id="department"
-                value={profileData.department}
-                onChange={(e) => handleInputChange("department", e.target.value)}
-                placeholder="Ex: Desenvolvedor, Vendas, Marketing"
+              <Label htmlFor="name">Nome completo</Label>
+              <Input 
+                id="name" 
+                value={formData.name} 
+                onChange={handleInputChange} 
+                placeholder="Seu nome completo"
               />
             </div>
-          )}
-
-          {!isCompany && profileData.company_name && (
+            
             <div className="space-y-2">
-              <Label htmlFor="company">Empresa</Label>
-              <Input
-                id="company"
-                value={profileData.company_name}
-                disabled
-                className="bg-gray-100"
+              <Label htmlFor="email">Email</Label>
+              <Input 
+                id="email" 
+                type="email" 
+                value={formData.email} 
+                disabled 
+                className="bg-muted"
+              />
+              <p className="text-xs text-muted-foreground">O email não pode ser alterado</p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="role">Cargo</Label>
+              <Input 
+                id="role" 
+                value={formData.role} 
+                disabled 
+                className="bg-muted"
               />
             </div>
-          )}
+            
+            <div className="space-y-2">
+              <Label htmlFor="phone">Telefone</Label>
+              <Input 
+                id="phone" 
+                value={formData.phone} 
+                onChange={handleInputChange} 
+                placeholder="(00) 00000-0000"
+              />
+            </div>
+          </div>
         </div>
-
+        
         <div className="flex justify-end">
-          <Button onClick={handleSave} disabled={saving}>
-            {saving ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Salvando...
-              </>
-            ) : (
-              <>
-                <Save className="mr-2 h-4 w-4" />
-                Salvar Alterações
-              </>
-            )}
+          <Button 
+            className="mt-4" 
+            onClick={handleSaveProfile} 
+            disabled={isSaving}
+          >
+            {isSaving ? "Salvando..." : "Salvar Alterações"}
           </Button>
         </div>
       </CardContent>
