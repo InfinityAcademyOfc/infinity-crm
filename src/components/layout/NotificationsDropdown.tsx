@@ -7,18 +7,11 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuLab
 import { useNotifications } from "@/hooks/useNotifications";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
 
 export default function NotificationsDropdown() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
-  const { 
-    notifications, 
-    unreadCount, 
-    markAsRead, 
-    markAllAsRead, 
-    loading 
-  } = useNotifications();
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
 
   const handleNotificationClick = (notification: any) => {
     setOpen(false);
@@ -30,15 +23,6 @@ export default function NotificationsDropdown() {
     if (notification.link) {
       navigate(notification.link);
     }
-  };
-
-  const handleMarkAllAsRead = () => {
-    markAllAsRead().then(() => {
-      toast.success("Todas as notificações foram marcadas como lidas");
-    }).catch((error) => {
-      console.error("Erro ao marcar notificações como lidas:", error);
-      toast.error("Ocorreu um erro ao marcar as notificações como lidas");
-    });
   };
 
   const hasNotifications = notifications.length > 0;
@@ -70,8 +54,7 @@ export default function NotificationsDropdown() {
               variant="ghost" 
               size="sm" 
               className="h-7 text-xs flex gap-1 items-center"
-              onClick={handleMarkAllAsRead}
-              disabled={loading}
+              onClick={() => markAllAsRead()}
             >
               <CheckCheck className="h-3.5 w-3.5" />
               Marcar todas como lidas
@@ -80,11 +63,7 @@ export default function NotificationsDropdown() {
         </div>
         
         <ScrollArea className="max-h-72">
-          {loading ? (
-            <div className="p-4 text-center text-sm text-muted-foreground">
-              Carregando notificações...
-            </div>
-          ) : notifications.length === 0 ? (
+          {notifications.length === 0 ? (
             <div className="p-4 text-center text-sm text-muted-foreground">
               Nenhuma notificação.
             </div>

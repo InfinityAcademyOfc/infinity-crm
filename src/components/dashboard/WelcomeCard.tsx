@@ -3,15 +3,18 @@ import React from "react";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { useAuth } from "@/contexts/AuthContext";
 
-const WelcomeCard = () => {
-  // Usar diretamente o contexto de autenticação para obter informações do usuário
-  const { profile, company } = useAuth();
-  
-  // Formatar nome para saudação - priorizar nome da empresa, depois nome do perfil
-  const displayName = company?.name || profile?.name || "visitante";
-  const formattedName = displayName.split(' ')[0]; // Pegar apenas o primeiro nome
+interface WelcomeCardProps {
+  userName: string;
+}
+
+const WelcomeCard = ({
+  userName
+}: WelcomeCardProps) => {
+  // Formatar nome para saudação
+  const formattedName = userName 
+    ? userName.split(' ')[0] // Pegar apenas o primeiro nome
+    : "visitante";
   
   return (
     <Card className="bg-gradient-to-r from-primary/20 to-blue-600/20 border-none shadow-lg transition-all duration-300 hover:shadow-xl">
