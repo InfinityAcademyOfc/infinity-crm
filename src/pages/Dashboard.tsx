@@ -1,12 +1,13 @@
 
 import React, { Suspense, lazy, useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { mockSalesData, mockFunnelData, mockTodayActivities } from "@/data/mockData";
 import { ChartSkeleton } from "@/components/dashboard/DashboardSkeletons";
 import WelcomeCard from "@/components/dashboard/WelcomeCard";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { updateDashboardData, useModuleSync } from "@/services/moduleSyncService";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { Lead } from "@/types/lead";
 
 // Lazy load heavy components
 const StatsSection = lazy(() => import("@/components/dashboard/StatsSection"));
@@ -14,7 +15,7 @@ const SalesChart = lazy(() => import("@/components/dashboard/SalesChart"));
 const FinanceChart = lazy(() => import("@/components/dashboard/FinanceChart"));
 const ActivitiesSection = lazy(() => import("@/components/dashboard/ActivitiesSection"));
 const IntegratedFunnel = lazy(() => import("@/components/dashboard/IntegratedFunnel"));
-const DREChart = lazy(() => import("@/components/dashboard/DREChart"));
+const DREChart = lazy(() => import("@/components/dashboard/DREChart")); // Novo componente DRE
 
 const Dashboard = () => {
   const { profile, company } = useAuth();
@@ -23,30 +24,26 @@ const Dashboard = () => {
   // Module sync state
   const { leads, clients, tasks, products, syncAllModules } = useModuleSync();
   
-  // State for filtered sales data
+  // New state for filtered sales data
   const [filteredSalesData, setFilteredSalesData] = useState<any[]>([]);
   const [filterPeriod, setFilterPeriod] = useState("6"); // Default to 6 months
   const [filterCollaborator, setFilterCollaborator] = useState("all");
   const [filterProduct, setFilterProduct] = useState("all");
   
-  // Activity data
-  const [activities, setActivities] = useState<any[]>([]);
-  
-  // Get user display name
-  const userName = profile?.name || company?.name || "usuário";
+  const userName = profile?.name || "usuário";
   
   // Efeito para carregar dados do Supabase quando o usuário está autenticado
   useEffect(() => {
-    if (!company?.id) return;
+    if (!company) return;
     
     // Função para buscar dados do Supabase
     const fetchData = async () => {
       try {
-        // Use updateDashboardData to fetch all data from Supabase
+        // Use updateDashboardData instead of individual fetch methods
         await updateDashboardData(company.id);
         
         // Get the latest state
-        const { leads: currentLeads, tasks: currentTasks } = useModuleSync.getState();
+        const { leads: currentLeads } = useModuleSync.getState();
         
         // Converter leads para formato de vendas para o gráfico
         const leadSalesData = currentLeads.map((lead) => ({
@@ -66,26 +63,17 @@ const Dashboard = () => {
           return acc;
         }, {});
         
-        // Converter de volta para array e ordenar por mês
+        // Converter de volta para array
         const salesData = Object.values(groupedByMonth);
         
-        // Preparar atividades para o dashboard
-        const activityData = currentTasks.map(task => ({
-          id: task.id,
-          type: 'task',
-          title: task.title,
-          time: new Date(task.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-          relatedTo: task.client || 'Interno',
-          status: task.status,
-          priority: task.priority || 'medium'
-        })).slice(0, 5);
+        // Se não houver dados reais, usar os mockados
+        setFilteredSalesData(salesData.length > 0 ? salesData : mockSalesData);
         
-        setActivities(activityData);
-        setFilteredSalesData(salesData.length > 0 ? salesData : []);
         setIsLoaded(true);
       } catch (error) {
         console.error("Erro ao carregar dados:", error);
-        toast.error("Erro ao carregar dados do dashboard");
+        // Fallback para dados mockados em caso de erro
+        setFilteredSalesData(mockSalesData);
         setIsLoaded(true);
       }
     };
@@ -95,7 +83,7 @@ const Dashboard = () => {
   
   // Filter sales data based on selected period, collaborator and product
   useEffect(() => {
-    if (!isLoaded || filteredSalesData.length === 0) return;
+    if (!isLoaded) return;
     
     // Filter by time period
     let filteredByDate = [...filteredSalesData];
@@ -110,22 +98,25 @@ const Dashboard = () => {
     let filteredByCollab = filteredByDate;
     if (filterCollaborator !== "all") {
       // In a real implementation, this would filter by collaborator ID
-      // For now, we'll filter based on what data we have
-      filteredByCollab = filteredByDate.filter((item) => {
-        const lead = leads.find(lead => lead.assigned_to === filterCollaborator);
-        return lead ? true : false;
-      });
+      // For mock data, we'll just filter even/odd entries as an example
+      filteredByCollab = filteredByDate.filter((_, index) => 
+        filterCollaborator === "user1" ? index % 2 === 0 : index % 2 === 1
+      );
     }
     
     // Apply product filter if not "all"
     let finalFiltered = filteredByCollab;
     if (filterProduct !== "all") {
-      // Filter by product would require more detailed data
-      finalFiltered = filteredByCollab;
+      // In a real implementation, this would filter by product ID
+      // For mock data, we'll just filter by value range as an example
+      finalFiltered = filteredByCollab.filter(item => 
+        filterProduct === "product1" ? item.value < 50000 : item.value >= 50000
+      );
     }
     
-    setFilteredSalesData(finalFiltered);
-  }, [filterPeriod, filterCollaborator, filterProduct, isLoaded, leads]);
+    // Se não houver dados filtrados, mantenha o array vazio ao invés de dados mockados
+    setFilteredSalesData(finalFiltered.length ? finalFiltered : []);
+  }, [isLoaded, filterPeriod, filterCollaborator, filterProduct, filteredSalesData]);
 
   // Filter handlers for SalesChart
   const handlePeriodChange = (period: string) => {
@@ -142,7 +133,7 @@ const Dashboard = () => {
   
   // Atualizar dados via Realtime Subscription
   useEffect(() => {
-    if (!company?.id) return;
+    if (!company) return;
     
     // Inscrever para atualizações de leads em tempo real
     const leadsChannel = supabase
@@ -196,7 +187,7 @@ const Dashboard = () => {
       funnelSection={<></>} // Empty to remove this section
       integratedFunnelSection={
         <Suspense fallback={<ChartSkeleton />}>
-          <IntegratedFunnel leadData={leads} />
+          <IntegratedFunnel />
         </Suspense>
       }
       salesAndFinanceSection={
@@ -218,7 +209,7 @@ const Dashboard = () => {
         </>
       }
       activitiesSection={
-        <ActivitiesSection activities={activities} />
+        <ActivitiesSection activities={isLoaded ? mockTodayActivities : []} />
       }
     />
   );

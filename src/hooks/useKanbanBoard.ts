@@ -1,196 +1,192 @@
 
-import { useState, useCallback, useEffect } from 'react';
-import { KanbanCardItem, KanbanColumnItem } from '@/components/kanban/types';
-import { useAuth } from '@/contexts/AuthContext';
-import { kanbanPersistenceService } from '@/services/kanbanPersistenceService';
+import { useState } from "react";
+import { KanbanCardItem, KanbanColumnItem } from "@/components/kanban/types";
+import { useToast } from "@/hooks/use-toast";
 
 export function useKanbanBoard(
-  initialColumns: KanbanColumnItem[] = [],
-  onColumnUpdate?: (columns: KanbanColumnItem[]) => void,
-  kanbanType: 'sales' | 'production' | 'clients' = 'sales'
+  initialColumns: KanbanColumnItem[],
+  onColumnUpdate?: (columns: KanbanColumnItem[]) => void
 ) {
-  const [columns, setColumns] = useState<KanbanColumnItem[]>(initialColumns);
+  const { toast } = useToast();
   const [activeCard, setActiveCard] = useState<KanbanCardItem | null>(null);
   const [activeColumn, setActiveColumn] = useState<string | null>(null);
-  const [zoomLevel, setZoomLevel] = useState(1);
+  const [zoomLevel, setZoomLevel] = useState<number>(0.75);
   const [isAddColumnOpen, setIsAddColumnOpen] = useState(false);
   const [isEditColumnOpen, setIsEditColumnOpen] = useState(false);
-  const [newColumnTitle, setNewColumnTitle] = useState('');
-  const [newColumnColor, setNewColumnColor] = useState('#4f46e5');
+  const [newColumnTitle, setNewColumnTitle] = useState("");
+  const [newColumnColor, setNewColumnColor] = useState("bg-gray-200 dark:bg-gray-700");
   const [selectedColumn, setSelectedColumn] = useState<KanbanColumnItem | null>(null);
-  const [filterByAssignee, setFilterByAssignee] = useState('all');
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [filterByAssignee, setFilterByAssignee] = useState<string | null>(null);
+  const [isExpanded, setIsExpanded] = useState(false);
 
-  const { user, company } = useAuth();
+  const increaseZoom = () => {
+    setZoomLevel(prev => Math.min(prev + 0.25, 2));
+  };
 
-  // Carregar estado salvo do kanban
-  useEffect(() => {
-    const loadSavedState = async () => {
-      if (!user?.id || !company?.id) return;
+  const decreaseZoom = () => {
+    setZoomLevel(prev => Math.max(prev - 0.25, 0.5));
+  };
+  
+  const toggleExpand = () => {
+    setIsExpanded(prev => !prev);
+  };
 
-      try {
-        const savedState = await kanbanPersistenceService.loadKanbanState(
-          user.id,
-          company.id,
-          kanbanType
-        );
-
-        if (savedState) {
-          setColumns(savedState);
-        }
-      } catch (error) {
-        console.error('Erro ao carregar estado do kanban:', error);
-      }
-    };
-
-    loadSavedState();
-  }, [user?.id, company?.id, kanbanType]);
-
-  // Configurar salvamento automático
-  useEffect(() => {
-    if (!user?.id || !company?.id) return;
-
-    // Salvar o estado atual quando as colunas mudam
-    const saveCurrentState = () => {
-      try {
-        kanbanPersistenceService.saveKanbanState(
-          user.id,
-          company.id,
-          kanbanType,
-          columns
-        );
-      } catch (error) {
-        console.error('Erro ao salvar estado do kanban:', error);
-      }
-    };
-
-    // Debounce para não salvar a cada pequena alteração
-    const debounceTimeout = setTimeout(saveCurrentState, 1000);
-
-    return () => clearTimeout(debounceTimeout);
-  }, [columns, user?.id, company?.id, kanbanType]);
-
-  const increaseZoom = () => setZoomLevel(prev => Math.min(prev + 0.1, 1.5));
-  const decreaseZoom = () => setZoomLevel(prev => Math.max(prev - 0.1, 0.5));
-  const toggleExpand = () => setIsExpanded(prev => !prev);
-
-  const handleDragStart = useCallback((card: KanbanCardItem, columnId: string) => {
+  const handleDragStart = (card: KanbanCardItem, columnId: string) => {
     setActiveCard(card);
     setActiveColumn(columnId);
-  }, []);
+  };
 
-  const handleDrop = useCallback((
-    e: React.DragEvent,
-    targetColumnId: string,
-    columns: KanbanColumnItem[],
+  const handleDrop = (
+    e: React.DragEvent, 
+    targetColumnId: string, 
+    columns: KanbanColumnItem[], 
     setColumns: React.Dispatch<React.SetStateAction<KanbanColumnItem[]>>
   ) => {
     e.preventDefault();
     
     if (!activeCard || !activeColumn) return;
-
-    const updatedColumns = columns.map(column => {
-      // Remove da coluna original
-      if (column.id === activeColumn) {
+    
+    // Remove the card from the source column
+    const updatedColumns = columns.map(col => {
+      if (col.id === activeColumn) {
         return {
-          ...column,
-          cards: column.cards.filter(card => card.id !== activeCard.id)
+          ...col,
+          cards: col.cards.filter(card => card.id !== activeCard.id)
         };
       }
-      
-      // Adiciona na nova coluna
-      if (column.id === targetColumnId) {
-        return {
-          ...column,
-          cards: [...column.cards, { ...activeCard, status: targetColumnId }]
-        };
-      }
-      
-      return column;
+      return col;
     });
     
-    setColumns(updatedColumns);
+    // Add the card to the target column
+    const newColumns = updatedColumns.map(col => {
+      if (col.id === targetColumnId) {
+        return {
+          ...col,
+          cards: [...col.cards, activeCard]
+        };
+      }
+      return col;
+    });
     
+    setColumns(newColumns);
     if (onColumnUpdate) {
-      onColumnUpdate(updatedColumns);
+      onColumnUpdate(newColumns);
+    }
+    
+    // Show a toast notification for the move
+    const sourceColumn = columns.find(col => col.id === activeColumn);
+    const targetColumn = columns.find(col => col.id === targetColumnId);
+    
+    if (sourceColumn && targetColumn && sourceColumn.id !== targetColumn.id) {
+      toast({
+        title: "Card movido com sucesso",
+        description: `${activeCard.title} movido de ${sourceColumn.title} para ${targetColumn.title}`,
+      });
     }
     
     setActiveCard(null);
     setActiveColumn(null);
-  }, [activeCard, activeColumn, onColumnUpdate]);
+  };
 
-  const handleAddColumn = useCallback((
-    columns: KanbanColumnItem[],
+  const handleAddColumn = (
+    columns: KanbanColumnItem[], 
     setColumns: React.Dispatch<React.SetStateAction<KanbanColumnItem[]>>
   ) => {
-    if (!newColumnTitle) return;
+    if (!newColumnTitle.trim()) {
+      toast({
+        title: "Erro",
+        description: "O título da coluna não pode estar vazio",
+        variant: "destructive"
+      });
+      return;
+    }
     
     const newColumn: KanbanColumnItem = {
-      id: `col_${Date.now()}`,
+      id: `col-${Date.now()}`,
       title: newColumnTitle,
-      color: newColumnColor,
-      cards: []
+      cards: [],
+      color: newColumnColor
     };
     
-    const updatedColumns = [...columns, newColumn];
-    setColumns(updatedColumns);
-    
-    if (onColumnUpdate) {
-      onColumnUpdate(updatedColumns);
-    }
-    
-    setNewColumnTitle('');
-    setNewColumnColor('#4f46e5');
+    setColumns([...columns, newColumn]);
+    setNewColumnTitle("");
+    setNewColumnColor("bg-gray-200 dark:bg-gray-700");
     setIsAddColumnOpen(false);
-  }, [newColumnTitle, newColumnColor, onColumnUpdate]);
-
-  const handleDeleteColumn = useCallback((
-    columnId: string,
-    columns: KanbanColumnItem[],
+    
+    toast({
+      title: "Coluna adicionada",
+      description: `A coluna ${newColumnTitle} foi adicionada com sucesso`
+    });
+  };
+  
+  const handleDeleteColumn = (
+    columnId: string, 
+    columns: KanbanColumnItem[], 
     setColumns: React.Dispatch<React.SetStateAction<KanbanColumnItem[]>>
   ) => {
-    const updatedColumns = columns.filter(col => col.id !== columnId);
-    setColumns(updatedColumns);
+    const column = columns.find(col => col.id === columnId);
+    if (!column) return;
     
-    if (onColumnUpdate) {
-      onColumnUpdate(updatedColumns);
+    if (column.cards.length > 0) {
+      toast({
+        title: "Erro",
+        description: "Não é possível excluir uma coluna que contém cartões",
+        variant: "destructive"
+      });
+      return;
     }
-  }, [onColumnUpdate]);
-
-  const openEditColumn = useCallback((column: KanbanColumnItem) => {
+    
+    setColumns(columns.filter(col => col.id !== columnId));
+    
+    toast({
+      title: "Coluna removida",
+      description: `A coluna ${column.title} foi removida com sucesso`
+    });
+  };
+  
+  const openEditColumn = (column: KanbanColumnItem) => {
     setSelectedColumn(column);
     setNewColumnTitle(column.title);
-    setNewColumnColor(column.color || '#4f46e5');
+    setNewColumnColor(column.color || "bg-gray-200 dark:bg-gray-700");
     setIsEditColumnOpen(true);
-  }, []);
-
-  const handleEditColumn = useCallback((
-    columns: KanbanColumnItem[],
+  };
+  
+  const handleEditColumn = (
+    columns: KanbanColumnItem[], 
     setColumns: React.Dispatch<React.SetStateAction<KanbanColumnItem[]>>
   ) => {
-    if (!selectedColumn || !newColumnTitle) return;
+    if (!selectedColumn) return;
     
-    const updatedColumns = columns.map(col => 
-      col.id === selectedColumn.id 
-        ? { ...col, title: newColumnTitle, color: newColumnColor }
-        : col
-    );
-    
-    setColumns(updatedColumns);
-    
-    if (onColumnUpdate) {
-      onColumnUpdate(updatedColumns);
+    if (!newColumnTitle.trim()) {
+      toast({
+        title: "Erro",
+        description: "O título da coluna não pode estar vazio",
+        variant: "destructive"
+      });
+      return;
     }
     
-    setSelectedColumn(null);
-    setNewColumnTitle('');
-    setNewColumnColor('#4f46e5');
+    const updatedColumns = columns.map(col => {
+      if (col.id === selectedColumn.id) {
+        return {
+          ...col,
+          title: newColumnTitle,
+          color: newColumnColor
+        };
+      }
+      return col;
+    });
+    
+    setColumns(updatedColumns);
     setIsEditColumnOpen(false);
-  }, [selectedColumn, newColumnTitle, newColumnColor, onColumnUpdate]);
+    
+    toast({
+      title: "Coluna atualizada",
+      description: `A coluna foi atualizada com sucesso`
+    });
+  };
 
   return {
-    columns,
-    setColumns,
     activeCard,
     activeColumn,
     zoomLevel,

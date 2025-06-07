@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { userService } from "@/services/api/userService";
 
 const ProfileSettings = () => {
   const { toast } = useToast();
@@ -61,7 +62,7 @@ const ProfileSettings = () => {
       const filePath = `avatars/${fileName}`;
       
       // Upload the file to Supabase Storage
-      const { error: uploadError, data } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('profiles')
         .upload(filePath, file);
         
@@ -74,16 +75,12 @@ const ProfileSettings = () => {
         
       // Update the profile with the new avatar URL
       if (user.id) {
-        const { error } = await supabase
-          .from('profiles')
-          .update({ avatar: publicUrl })
-          .eq('id', user.id);
-        
-        if (error) throw error;
-        
-        setProfileImage(publicUrl);
-        // Refresh user data in context
-        await refreshUserData();
+        const updatedProfile = await userService.updateAvatar(user.id, publicUrl);
+        if (updatedProfile) {
+          setProfileImage(publicUrl);
+          // Refresh user data in context
+          await refreshUserData();
+        }
       }
       
       toast({
@@ -106,10 +103,10 @@ const ProfileSettings = () => {
     if (!user?.id || !(profile?.avatar || profile?.avatar_url)) return;
     
     try {
+      // Extract file name from URL
       const avatarUrl = profile.avatar || profile.avatar_url;
       if (!avatarUrl) return;
       
-      // Extract file name from URL
       const urlParts = avatarUrl.split('/');
       const fileName = urlParts[urlParts.length - 1];
       const filePath = `avatars/${fileName}`;
@@ -120,15 +117,12 @@ const ProfileSettings = () => {
         .remove([filePath]);
       
       // Update profile to remove avatar reference
-      const { error } = await supabase
-        .from('profiles')
-        .update({ avatar: null })
-        .eq('id', user.id);
+      const updatedProfile = await userService.updateAvatar(user.id, "");
       
-      if (error) throw error;
-      
-      setProfileImage(null);
-      await refreshUserData();
+      if (updatedProfile) {
+        setProfileImage(null);
+        await refreshUserData();
+      }
       
       toast({
         title: "Imagem removida",
@@ -150,23 +144,18 @@ const ProfileSettings = () => {
     try {
       setIsSaving(true);
       
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          name: formData.name,
-          phone: formData.phone,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', user.id);
-      
-      if (error) throw error;
-      
-      await refreshUserData();
-      
-      toast({
-        title: "Perfil atualizado",
-        description: "Suas informações foram atualizadas com sucesso."
+      const updatedProfile = await userService.updateUserProfile(user.id, {
+        name: formData.name,
+        phone: formData.phone
       });
+      
+      if (updatedProfile) {
+        await refreshUserData();
+        toast({
+          title: "Perfil atualizado",
+          description: "Suas informações foram atualizadas com sucesso."
+        });
+      }
     } catch (error) {
       console.error("Erro ao atualizar perfil:", error);
       toast({
