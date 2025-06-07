@@ -1,202 +1,336 @@
 
-import React from 'react';
-import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Calendar, DollarSign, User } from 'lucide-react';
-
-export interface KanbanCard {
-  id: string;
-  title: string;
-  description?: string;
-  priority: 'low' | 'medium' | 'high';
-  assignedTo?: string;
-  dueDate?: string;
-  value?: number;
-  tags?: string[];
-}
-
-export interface KanbanColumnItem {
-  id: string;
-  title: string;
-  cards: KanbanCard[];
-  color: string;
-}
+import { useState, useRef, useEffect } from "react";
+import { cn } from "@/lib/utils";
+import { useKanbanBoard } from "@/hooks/useKanbanBoard";
+import KanbanControls from "./KanbanControls";
+import KanbanColumnDialog from "./KanbanColumnDialog";
+import KanbanColumnList from "./KanbanColumnList";
+import { KanbanCardItem, KanbanColumnItem } from "./types";
+import { 
+  getUniqueAssignees, 
+  filterColumnsByAssignee, 
+  getResponsiveColumnWidth,
+  getContainerHeight
+} from "./utils/kanbanUtils";
+import { useToast } from "@/hooks/use-toast";
 
 interface KanbanBoardProps {
   columns: KanbanColumnItem[];
-  setColumns: (columns: KanbanColumnItem[]) => void;
+  setColumns: React.Dispatch<React.SetStateAction<KanbanColumnItem[]>>;
+  onAddCard?: (columnId: string) => void;
+  onEditCard?: (cardId: string, columnId: string) => void;
+  onDeleteCard?: (cardId: string, columnId: string) => void;
+  onColumnUpdate?: (columns: KanbanColumnItem[]) => void;
+  cardContent?: (card: KanbanCardItem) => React.ReactNode;
+  modern?: boolean;
 }
 
-export default function KanbanBoard({ columns, setColumns }: KanbanBoardProps) {
-  const handleDragEnd = (result: DropResult) => {
-    if (!result.destination) return;
+const KanbanBoard = ({
+  columns,
+  setColumns,
+  onAddCard,
+  onEditCard,
+  onDeleteCard,
+  onColumnUpdate,
+  cardContent,
+  modern = true,
+}: KanbanBoardProps) => {
+  const {
+    activeCard,
+    activeColumn,
+    zoomLevel,
+    isAddColumnOpen,
+    isEditColumnOpen,
+    newColumnTitle,
+    newColumnColor,
+    selectedColumn,
+    filterByAssignee,
+    isExpanded,
+    setIsAddColumnOpen,
+    setIsEditColumnOpen,
+    setNewColumnTitle,
+    setNewColumnColor,
+    setFilterByAssignee,
+    increaseZoom,
+    decreaseZoom,
+    toggleExpand,
+    handleDragStart: originalHandleDragStart,
+    handleDrop,
+    handleAddColumn,
+    handleDeleteColumn,
+    openEditColumn,
+    handleEditColumn
+  } = useKanbanBoard(columns, onColumnUpdate);
 
-    const { source, destination, draggableId } = result;
+  // Refs e estado para funcionalidade de arrastar o quadro
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startPosition, setStartPosition] = useState({ x: 0, y: 0 });
+  const [scrollPosition, setScrollPosition] = useState({ x: 0, y: 0 });
+  const { toast } = useToast();
 
-    if (source.droppableId === destination.droppableId && source.index === destination.index) {
+  // Get unique assignees from all cards
+  const assignees = getUniqueAssignees(columns);
+
+  // Adapter for handleDragStart to work with string ID instead of KanbanCardItem object
+  const handleDragStart = (cardId: string, columnId: string) => {
+    const column = columns.find(col => col.id === columnId);
+    if (!column) return;
+    
+    const card = column.cards.find(card => card.id === cardId);
+    if (!card) return;
+    
+    originalHandleDragStart(card, columnId);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDropEvent = (e: React.DragEvent, targetColumnId: string) => {
+    handleDrop(e, targetColumnId, columns, setColumns);
+  };
+
+  const handleAddColumnEvent = () => {
+    handleAddColumn(columns, setColumns);
+  };
+
+  const handleDeleteColumnEvent = (columnId: string) => {
+    handleDeleteColumn(columnId, columns, setColumns);
+  };
+
+  const handleEditColumnEvent = () => {
+    handleEditColumn(columns, setColumns);
+  };
+
+  // Event handlers for drag-to-pan funcionality (horizontal and vertical)
+  const handleMouseDown = (e: React.MouseEvent) => {
+    // Only start drag if it's not on a kanban card (check for data-draggable attribute)
+    if ((e.target as HTMLElement).closest('[data-draggable="true"]')) {
       return;
     }
-
-    const sourceColumn = columns.find(col => col.id === source.droppableId);
-    const destColumn = columns.find(col => col.id === destination.droppableId);
-
-    if (!sourceColumn || !destColumn) return;
-
-    const sourceCards = Array.from(sourceColumn.cards);
-    const destCards = sourceColumn === destColumn ? sourceCards : Array.from(destColumn.cards);
     
-    const [movedCard] = sourceCards.splice(source.index, 1);
-    destCards.splice(destination.index, 0, movedCard);
-
-    const newColumns = columns.map(column => {
-      if (column.id === source.droppableId) {
-        return { ...column, cards: sourceCards };
-      }
-      if (column.id === destination.droppableId) {
-        return { ...column, cards: destCards };
-      }
-      return column;
+    setIsDragging(true);
+    setStartPosition({ x: e.clientX, y: e.clientY });
+    setScrollPosition({
+      x: containerRef.current?.scrollLeft || 0,
+      y: containerRef.current?.scrollTop || 0,
     });
-
-    setColumns(newColumns);
   };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'high':
-        return 'destructive';
-      case 'medium':
-        return 'secondary';
-      case 'low':
-        return 'outline';
-      default:
-        return 'secondary';
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !containerRef.current) return;
+    
+    // Calcular a diferença com a posição inicial
+    const deltaX = startPosition.x - e.clientX;
+    const deltaY = startPosition.y - e.clientY;
+    
+    // Aplicar a rolagem horizontal e vertical
+    containerRef.current.scrollLeft = scrollPosition.x + deltaX;
+    containerRef.current.scrollTop = scrollPosition.y + deltaY;
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  // O mesmo para eventos de toque
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if ((e.target as HTMLElement).closest('[data-draggable="true"]')) {
+      return;
     }
+    
+    setIsDragging(true);
+    setStartPosition({ x: e.touches[0].clientX, y: e.touches[0].clientY });
+    setScrollPosition({
+      x: containerRef.current?.scrollLeft || 0,
+      y: containerRef.current?.scrollTop || 0,
+    });
   };
 
-  const getPriorityLabel = (priority: string) => {
-    switch (priority) {
-      case 'high':
-        return 'Alta';
-      case 'medium':
-        return 'Média';
-      case 'low':
-        return 'Baixa';
-      default:
-        return priority;
-    }
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging || !containerRef.current) return;
+    
+    // Calcular a diferença com a posição inicial
+    const deltaX = startPosition.x - e.touches[0].clientX;
+    const deltaY = startPosition.y - e.touches[0].clientY;
+    
+    // Aplicar a rolagem horizontal e vertical
+    containerRef.current.scrollLeft = scrollPosition.x + deltaX;
+    containerRef.current.scrollTop = scrollPosition.y + deltaY;
   };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+  };
+  
+  // Funcionalidade para mover e duplicar cards
+  const [moveCardDialogOpen, setMoveCardDialogOpen] = useState(false);
+  const [cardToMove, setCardToMove] = useState<{cardId: string, columnId: string} | null>(null);
+  const [moveAction, setMoveAction] = useState<'move' | 'duplicate'>('move');
+
+  const handleMoveCardRequest = (cardId: string, columnId: string, action: 'move' | 'duplicate') => {
+    setCardToMove({ cardId, columnId });
+    setMoveAction(action);
+    setMoveCardDialogOpen(true);
+  };
+
+  const handleMoveCard = (targetColumnId: string) => {
+    if (!cardToMove) return;
+    
+    const { cardId, columnId } = cardToMove;
+    
+    // Find source column and card
+    const sourceColumn = columns.find(col => col.id === columnId);
+    if (!sourceColumn) return;
+    
+    const cardIndex = sourceColumn.cards.findIndex(card => card.id === cardId);
+    if (cardIndex === -1) return;
+    
+    const card = sourceColumn.cards[cardIndex];
+    
+    // Update columns based on action type
+    const updatedColumns = columns.map(col => {
+      // Add card to target column
+      if (col.id === targetColumnId) {
+        return {
+          ...col,
+          cards: [...col.cards, { ...card, id: moveAction === 'duplicate' ? `${card.id}-copy-${Date.now()}` : card.id }]
+        };
+      }
+      
+      // If moving (not duplicating), remove from source column
+      if (moveAction === 'move' && col.id === columnId) {
+        return {
+          ...col,
+          cards: col.cards.filter((_, i) => i !== cardIndex)
+        };
+      }
+      
+      return col;
+    });
+    
+    setColumns(updatedColumns);
+    setMoveCardDialogOpen(false);
+    setCardToMove(null);
+    
+    const actionText = moveAction === 'move' ? 'movido' : 'duplicado';
+    toast({
+      title: `Card ${actionText}`,
+      description: `O card foi ${actionText} com sucesso.`,
+      duration: 2000,
+    });
+  };
+
+  // Filtrar colunas com base no responsável
+  const filteredColumns = filterColumnsByAssignee(columns, filterByAssignee);
+
+  // Calcular largura responsiva da coluna
+  const columnWidth = getResponsiveColumnWidth(filteredColumns, zoomLevel, isExpanded);
+  
+  // Calcular altura do container
+  const containerHeight = getContainerHeight(isExpanded);
+
+  // Otimizar renderização
+  useEffect(() => {
+    // Forçar um refresh do quadro quando o componente é montado
+    const timer = setTimeout(() => {
+      if (containerRef.current) {
+        // Técnica para forçar um reflow
+        containerRef.current.style.opacity = '0.99';
+        setTimeout(() => {
+          if (containerRef.current) containerRef.current.style.opacity = '1';
+        }, 10);
+      }
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
-    <DragDropContext onDragEnd={handleDragEnd}>
-      <div className="flex gap-6 h-full overflow-x-auto pb-4">
-        {columns.map((column) => (
-          <div key={column.id} className="flex-shrink-0 w-80">
-            <div className="mb-4">
-              <div className="flex items-center gap-2 mb-2">
-                <div 
-                  className="w-3 h-3 rounded-full" 
-                  style={{ backgroundColor: column.color }}
-                />
-                <h3 className="font-semibold">{column.title}</h3>
-                <Badge variant="outline" className="ml-auto">
-                  {column.cards.length}
-                </Badge>
-              </div>
-            </div>
+    <div className={cn("transition-all duration-300", isExpanded ? "scale-100" : "scale-95")}>
+      <KanbanControls 
+        zoomLevel={zoomLevel}
+        increaseZoom={increaseZoom}
+        decreaseZoom={decreaseZoom}
+        onAddColumn={() => setIsAddColumnOpen(true)}
+        assignees={assignees}
+        filterByAssignee={filterByAssignee}
+        setFilterByAssignee={setFilterByAssignee}
+        toggleExpand={toggleExpand}
+        isExpanded={isExpanded}
+      />
 
-            <Droppable droppableId={column.id}>
-              {(provided, snapshot) => (
-                <div
-                  ref={provided.innerRef}
-                  {...provided.droppableProps}
-                  className={`space-y-3 min-h-[200px] p-2 rounded-lg border-2 border-dashed transition-colors ${
-                    snapshot.isDraggingOver 
-                      ? 'border-primary bg-primary/5' 
-                      : 'border-transparent'
-                  }`}
-                >
-                  {column.cards.map((card, index) => (
-                    <Draggable key={card.id} draggableId={card.id} index={index}>
-                      {(provided, snapshot) => (
-                        <Card
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          {...provided.dragHandleProps}
-                          className={`cursor-move transition-shadow ${
-                            snapshot.isDragging ? 'shadow-lg' : 'hover:shadow-md'
-                          }`}
-                        >
-                          <CardHeader className="pb-2">
-                            <div className="flex justify-between items-start">
-                              <CardTitle className="text-sm font-medium line-clamp-2">
-                                {card.title}
-                              </CardTitle>
-                              <Badge variant={getPriorityColor(card.priority)} className="ml-2">
-                                {getPriorityLabel(card.priority)}
-                              </Badge>
-                            </div>
-                          </CardHeader>
-                          
-                          <CardContent className="pt-0 space-y-2">
-                            {card.description && (
-                              <p className="text-xs text-muted-foreground line-clamp-2">
-                                {card.description}
-                              </p>
-                            )}
-                            
-                            {card.value && (
-                              <div className="flex items-center text-xs text-green-600">
-                                <DollarSign className="h-3 w-3 mr-1" />
-                                R$ {card.value.toLocaleString('pt-BR')}
-                              </div>
-                            )}
-                            
-                            <div className="flex items-center justify-between">
-                              {card.dueDate && (
-                                <div className="flex items-center text-xs text-muted-foreground">
-                                  <Calendar className="h-3 w-3 mr-1" />
-                                  {new Date(card.dueDate).toLocaleDateString('pt-BR')}
-                                </div>
-                              )}
-                              
-                              {card.assignedTo && (
-                                <Avatar className="h-6 w-6">
-                                  <AvatarFallback className="text-xs">
-                                    {card.assignedTo.substring(0, 2).toUpperCase()}
-                                  </AvatarFallback>
-                                </Avatar>
-                              )}
-                            </div>
-                            
-                            {card.tags && card.tags.length > 0 && (
-                              <div className="flex flex-wrap gap-1">
-                                {card.tags.slice(0, 2).map((tag, i) => (
-                                  <Badge key={i} variant="secondary" className="text-xs">
-                                    {tag}
-                                  </Badge>
-                                ))}
-                                {card.tags.length > 2 && (
-                                  <Badge variant="secondary" className="text-xs">
-                                    +{card.tags.length - 2}
-                                  </Badge>
-                                )}
-                              </div>
-                            )}
-                          </CardContent>
-                        </Card>
-                      )}
-                    </Draggable>
-                  ))}
-                  {provided.placeholder}
-                </div>
-              )}
-            </Droppable>
-          </div>
-        ))}
+      <div 
+        ref={containerRef}
+        className="kanban-container overflow-x-auto overflow-y-auto pb-4"
+        style={{ 
+          height: containerHeight,
+          cursor: isDragging ? 'grabbing' : 'grab',
+          userSelect: isDragging ? 'none' : 'auto',
+        }}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        <KanbanColumnList 
+          columns={columns}
+          filteredColumns={filteredColumns}
+          columnWidth={columnWidth}
+          onAddCard={onAddCard}
+          onEditCard={onEditCard}
+          onDeleteCard={onDeleteCard}
+          handleDragStart={handleDragStart}
+          handleDragOver={handleDragOver}
+          handleDrop={handleDropEvent}
+          openEditColumn={openEditColumn}
+          handleDeleteColumn={handleDeleteColumnEvent}
+          cardContent={cardContent}
+          modern={modern}
+          containerHeight={containerHeight}
+          onMoveCard={handleMoveCardRequest}
+        />
       </div>
-    </DragDropContext>
+
+      {/* Add Column Dialog */}
+      <KanbanColumnDialog 
+        isOpen={isAddColumnOpen}
+        onOpenChange={setIsAddColumnOpen}
+        title="Adicionar Nova Coluna"
+        columnTitle={newColumnTitle}
+        setColumnTitle={setNewColumnTitle}
+        columnColor={newColumnColor}
+        setColumnColor={setNewColumnColor}
+        onSave={handleAddColumnEvent}
+      />
+
+      {/* Edit Column Dialog */}
+      <KanbanColumnDialog 
+        isOpen={isEditColumnOpen}
+        onOpenChange={setIsEditColumnOpen}
+        title="Editar Coluna"
+        columnTitle={newColumnTitle}
+        setColumnTitle={setNewColumnTitle}
+        columnColor={newColumnColor}
+        setColumnColor={setNewColumnColor}
+        onSave={handleEditColumnEvent}
+        isEdit={true}
+      />
+
+      {/* Move/Duplicate Card Dialog */}
+      <KanbanColumnDialog 
+        isOpen={moveCardDialogOpen}
+        onOpenChange={setMoveCardDialogOpen}
+        title={moveAction === 'move' ? "Mover Card" : "Duplicar Card"}
+        targetColumns={columns.filter(col => !cardToMove || col.id !== cardToMove.columnId)}
+        onSelectColumn={handleMoveCard}
+      />
+    </div>
   );
-}
+};
+
+export default KanbanBoard;
