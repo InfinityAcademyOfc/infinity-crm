@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { SectionHeader } from "@/components/ui/section-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User, Bell, Shield, Settings as SettingsIcon, Zap, PieChart, CreditCard, MessageCircle } from "lucide-react";
+import { User, Bell, Shield, Settings as SettingsIcon, Zap, PieChart, CreditCard } from "lucide-react";
 import ProfileSettings from "@/components/settings/ProfileSettings";
 import NotificationSettings from "@/components/settings/NotificationSettings";
 import SecuritySettings from "@/components/settings/SecuritySettings";
@@ -10,7 +10,6 @@ import SystemSettings from "@/components/settings/SystemSettings";
 import AutomationSettings from "@/components/settings/AutomationSettings";
 import DashboardSettings from "@/components/settings/DashboardSettings";
 import PlansSettings from "@/components/settings/PlansSettings";
-import WhatsAppSettings from "@/components/settings/WhatsAppSettings";
 
 const Settings = () => {
   const [activeTab, setActiveTab] = useState("profile");
@@ -27,7 +26,7 @@ const Settings = () => {
         onValueChange={setActiveTab} 
         className="space-y-4"
       >
-        <TabsList className="grid grid-cols-3 md:grid-cols-8 gap-1 max-w-5xl overflow-x-auto">
+        <TabsList className="grid grid-cols-3 md:grid-cols-7 max-w-5xl">
           <TabsTrigger value="profile" className="flex items-center gap-2">
             <User size={16} />
             <span className="hidden sm:inline">Perfil</span>
@@ -51,10 +50,6 @@ const Settings = () => {
           <TabsTrigger value="dashboard" className="flex items-center gap-2">
             <PieChart size={16} />
             <span className="hidden sm:inline">Dashboard</span>
-          </TabsTrigger>
-          <TabsTrigger value="whatsapp" className="flex items-center gap-2">
-            <MessageCircle size={16} />
-            <span className="hidden sm:inline">WhatsApp</span>
           </TabsTrigger>
           <TabsTrigger value="system" className="flex items-center gap-2">
             <SettingsIcon size={16} />
@@ -84,10 +79,6 @@ const Settings = () => {
         
         <TabsContent value="dashboard">
           <DashboardSettings />
-        </TabsContent>
-        
-        <TabsContent value="whatsapp">
-          <WhatsAppSettings />
         </TabsContent>
         
         <TabsContent value="system">
