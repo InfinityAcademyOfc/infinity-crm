@@ -1,123 +1,102 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useRealClientData } from './useRealClientData';
+import { useRealProducts } from './useRealProducts';
+import { useTeamMembers } from './useTeamMembers';
+import { useFinancialData } from './useFinancialData';
+import { useMeetings } from './useMeetings';
+import { useActivities } from './useActivities';
+import { useGoals } from './useGoals';
 import { supabase } from '@/lib/supabase';
-
-interface Lead {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  status: 'new' | 'contacted' | 'qualified' | 'proposal' | 'negotiation' | 'won' | 'lost';
-  priority: 'high' | 'medium' | 'low';
-  source: string;
-  company_id: string;
-  created_at: string;
-  updated_at: string;
-}
-
-interface Client {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  status: 'active' | 'inactive' | 'prospect';
-  company_id: string;
-  created_at: string;
-  updated_at: string;
-}
-
-interface Transaction {
-  id: string;
-  type: 'income' | 'expense';
-  amount: number;
-  description: string;
-  company_id: string;
-  created_at: string;
-}
+import { Lead } from '@/types/lead';
+import { Task } from '@/types/task';
 
 export const useRealData = () => {
-  const { company, user } = useAuth();
+  const { company } = useAuth();
   const [leads, setLeads] = useState<Lead[]>([]);
-  const [clients, setClients] = useState<Client[]>([]);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+
+  // Use existing hooks
+  const { clients, loading: clientsLoading, refetch: refetchClients } = useRealClientData();
+  const { products, loading: productsLoading, refetch: refetchProducts } = useRealProducts();
+  const { teamMembers, loading: teamLoading, refetch: refetchTeam } = useTeamMembers();
+  const { transactions, loading: transactionsLoading, refetch: refetchTransactions } = useFinancialData();
+  const { meetings, loading: meetingsLoading, refetch: refetchMeetings } = useMeetings();
+  const { activities, loading: activitiesLoading, refetch: refetchActivities } = useActivities();
+  const { goals, loading: goalsLoading, refetch: refetchGoals } = useGoals();
+
+  const fetchLeads = async () => {
+    if (!company?.id) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('leads')
+        .select('*')
+        .eq('company_id', company.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setLeads(data || []);
+    } catch (error) {
+      console.error('Erro ao buscar leads:', error);
+    }
+  };
+
+  const fetchTasks = async () => {
+    if (!company?.id) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('company_id', company.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setTasks(data || []);
+    } catch (error) {
+      console.error('Erro ao buscar tarefas:', error);
+    }
+  };
+
+  const refetch = async () => {
+    setLoading(true);
+    await Promise.all([
+      fetchLeads(),
+      fetchTasks(),
+      refetchClients(),
+      refetchProducts(),
+      refetchTeam(),
+      refetchTransactions(),
+      refetchMeetings(),
+      refetchActivities(),
+      refetchGoals()
+    ]);
+    setLoading(false);
+  };
 
   useEffect(() => {
-    let mounted = true;
+    if (company?.id) {
+      refetch();
+    }
+  }, [company]);
 
-    const fetchData = async () => {
-      if (!company?.id && !user?.id) {
-        if (mounted) {
-          setLoading(false);
-        }
-        return;
-      }
-
-      setLoading(true);
-      setError(null);
-
-      try {
-        const companyId = company?.id || user?.id;
-
-        // Fetch leads
-        const { data: leadsData } = await supabase
-          .from('leads')
-          .select('*')
-          .eq('company_id', companyId)
-          .order('created_at', { ascending: false });
-
-        // Fetch clients
-        const { data: clientsData } = await supabase
-          .from('clients')
-          .select('*')
-          .eq('company_id', companyId)
-          .order('created_at', { ascending: false });
-
-        // Fetch transactions
-        const { data: transactionsData } = await supabase
-          .from('financial_transactions')
-          .select('*')
-          .eq('company_id', companyId)
-          .order('created_at', { ascending: false });
-
-        if (mounted) {
-          setLeads(leadsData || []);
-          setClients(clientsData || []);
-          setTransactions(transactionsData || []);
-        }
-      } catch (error: any) {
-        console.error('Error fetching data:', error);
-        if (mounted) {
-          setError('Erro ao carregar dados');
-        }
-      } finally {
-        if (mounted) {
-          setLoading(false);
-        }
-      }
-    };
-
-    fetchData();
-
-    return () => {
-      mounted = false;
-    };
-  }, [company?.id, user?.id]);
+  const allLoading = loading || clientsLoading || productsLoading || teamLoading || 
+                   transactionsLoading || meetingsLoading || activitiesLoading || goalsLoading;
 
   return {
     leads,
     clients,
+    tasks,
+    products,
+    meetings,
+    teamMembers,
     transactions,
-    loading,
-    error,
-    // Mock data for missing entities
-    tasks: [],
-    products: [],
-    meetings: [],
-    teamMembers: [],
-    activities: [],
-    goals: []
+    activities,
+    goals,
+    loading: allLoading,
+    refetch
   };
 };

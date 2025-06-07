@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
@@ -11,7 +11,7 @@ export interface Goal {
   target_value: number;
   current_value: number;
   target_date: string;
-  status: 'active' | 'completed' | 'paused' | 'cancelled';
+  status: string;
   company_id: string;
   created_by: string | null;
   created_at: string;
@@ -32,18 +32,10 @@ export const useGoals = () => {
         .from('goals')
         .select('*')
         .eq('company_id', company.id)
-        .order('created_at', { ascending: false });
+        .order('target_date', { ascending: true });
 
       if (error) throw error;
-      
-      const validatedData = (data || []).map(goal => ({
-        ...goal,
-        status: (['active', 'completed', 'paused', 'cancelled'].includes(goal.status) 
-          ? goal.status 
-          : 'active') as 'active' | 'completed' | 'paused' | 'cancelled'
-      })) as Goal[];
-
-      setGoals(validatedData);
+      setGoals(data || []);
     } catch (error) {
       console.error('Erro ao buscar metas:', error);
       toast.error('Erro ao carregar metas');
@@ -52,7 +44,7 @@ export const useGoals = () => {
     }
   };
 
-  const createGoal = async (goal: Omit<Goal, 'id' | 'company_id' | 'created_at' | 'updated_at'>) => {
+  const createGoal = async (goal: Omit<Goal, 'id' | 'created_at' | 'updated_at' | 'company_id'>) => {
     if (!company?.id) return;
 
     try {
@@ -67,16 +59,9 @@ export const useGoals = () => {
 
       if (error) throw error;
       
-      const validatedData = {
-        ...data,
-        status: (['active', 'completed', 'paused', 'cancelled'].includes(data.status) 
-          ? data.status 
-          : 'active') as 'active' | 'completed' | 'paused' | 'cancelled'
-      } as Goal;
-
-      setGoals(prev => [validatedData, ...prev]);
+      setGoals(prev => [...prev, data].sort((a, b) => new Date(a.target_date).getTime() - new Date(b.target_date).getTime()));
       toast.success('Meta criada com sucesso!');
-      return validatedData;
+      return data;
     } catch (error) {
       console.error('Erro ao criar meta:', error);
       toast.error('Erro ao criar meta');
@@ -95,16 +80,9 @@ export const useGoals = () => {
 
       if (error) throw error;
       
-      const validatedData = {
-        ...data,
-        status: (['active', 'completed', 'paused', 'cancelled'].includes(data.status) 
-          ? data.status 
-          : 'active') as 'active' | 'completed' | 'paused' | 'cancelled'
-      } as Goal;
-
-      setGoals(prev => prev.map(g => g.id === id ? validatedData : g));
+      setGoals(prev => prev.map(g => g.id === id ? data : g));
       toast.success('Meta atualizada com sucesso!');
-      return validatedData;
+      return data;
     } catch (error) {
       console.error('Erro ao atualizar meta:', error);
       toast.error('Erro ao atualizar meta');

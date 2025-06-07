@@ -5,27 +5,35 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Calendar, DollarSign, User } from 'lucide-react';
-import { KanbanColumnItem, KanbanCardItem } from './types';
+
+export interface KanbanCard {
+  id: string;
+  title: string;
+  description?: string;
+  priority: 'low' | 'medium' | 'high';
+  assignedTo?: string;
+  dueDate?: string;
+  value?: number;
+  tags?: string[];
+}
+
+export interface KanbanColumnItem {
+  id: string;
+  title: string;
+  cards: KanbanCard[];
+  color: string;
+}
 
 interface KanbanBoardProps {
   columns: KanbanColumnItem[];
   setColumns: (columns: KanbanColumnItem[]) => void;
-  onAddCard?: (columnId: string) => void;
-  onEditCard?: (cardId: string, columnId: string) => void;
-  onDeleteCard?: (cardId: string, columnId: string) => void;
 }
 
-export default function KanbanBoard({ 
-  columns, 
-  setColumns, 
-  onAddCard,
-  onEditCard,
-  onDeleteCard 
-}: KanbanBoardProps) {
+export default function KanbanBoard({ columns, setColumns }: KanbanBoardProps) {
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
 
-    const { source, destination } = result;
+    const { source, destination, draggableId } = result;
 
     if (source.droppableId === destination.droppableId && source.index === destination.index) {
       return;
@@ -55,7 +63,7 @@ export default function KanbanBoard({
     setColumns(newColumns);
   };
 
-  const getPriorityColor = (priority?: string) => {
+  const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'high':
         return 'destructive';
@@ -68,7 +76,7 @@ export default function KanbanBoard({
     }
   };
 
-  const getPriorityLabel = (priority?: string) => {
+  const getPriorityLabel = (priority: string) => {
     switch (priority) {
       case 'high':
         return 'Alta';
@@ -77,18 +85,8 @@ export default function KanbanBoard({
       case 'low':
         return 'Baixa';
       default:
-        return 'Normal';
+        return priority;
     }
-  };
-
-  const getAssigneeInitials = (assignedTo: string | { id: string; name: string; avatar?: string; role?: string } | undefined): string => {
-    if (!assignedTo) return '';
-    
-    if (typeof assignedTo === 'string') {
-      return assignedTo.substring(0, 2).toUpperCase();
-    }
-    
-    return assignedTo.name.substring(0, 2).toUpperCase();
   };
 
   return (
@@ -136,11 +134,9 @@ export default function KanbanBoard({
                               <CardTitle className="text-sm font-medium line-clamp-2">
                                 {card.title}
                               </CardTitle>
-                              {card.priority && (
-                                <Badge variant={getPriorityColor(card.priority)} className="ml-2">
-                                  {getPriorityLabel(card.priority)}
-                                </Badge>
-                              )}
+                              <Badge variant={getPriorityColor(card.priority)} className="ml-2">
+                                {getPriorityLabel(card.priority)}
+                              </Badge>
                             </div>
                           </CardHeader>
                           
@@ -169,7 +165,7 @@ export default function KanbanBoard({
                               {card.assignedTo && (
                                 <Avatar className="h-6 w-6">
                                   <AvatarFallback className="text-xs">
-                                    {getAssigneeInitials(card.assignedTo)}
+                                    {card.assignedTo.substring(0, 2).toUpperCase()}
                                   </AvatarFallback>
                                 </Avatar>
                               )}
@@ -179,7 +175,7 @@ export default function KanbanBoard({
                               <div className="flex flex-wrap gap-1">
                                 {card.tags.slice(0, 2).map((tag, i) => (
                                   <Badge key={i} variant="secondary" className="text-xs">
-                                    {typeof tag === 'string' ? tag : tag.label}
+                                    {tag}
                                   </Badge>
                                 ))}
                                 {card.tags.length > 2 && (

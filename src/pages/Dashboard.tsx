@@ -2,8 +2,6 @@
 import React from 'react';
 import FunctionalDashboard from '@/components/dashboard/FunctionalDashboard';
 
-const Dashboard = () => {
+export default function Dashboard() {
   return <FunctionalDashboard />;
-};
-
-export default Dashboard;
+}

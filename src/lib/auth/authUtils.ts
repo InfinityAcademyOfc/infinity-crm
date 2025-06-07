@@ -1,8 +1,8 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { registerUser } from "../registerUser";
 
+// Função para fazer login
 export const loginUser = async (email: string, password: string) => {
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
@@ -19,19 +19,35 @@ export const loginUser = async (email: string, password: string) => {
   };
 };
 
-export const registerUserWithAuth = async (
+// Função para cadastrar novo usuário
+export const registerUser = async (
   email: string,
   password: string,
-  name: string
+  name: string,
+  isCompany: boolean
 ) => {
-  return await registerUser({
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    name,
-    isCompany: true
+    options: {
+      data: {
+        name,
+        is_company: isCompany,
+      },
+    },
   });
+
+  if (error) {
+    throw error;
+  }
+
+  return {
+    user: data.user,
+    session: data.session,
+  };
 };
 
+// Função para logout
 export const logoutUser = async () => {
   const { error } = await supabase.auth.signOut();
   

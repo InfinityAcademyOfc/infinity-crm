@@ -1,20 +1,20 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
 export interface FinancialTransaction {
   id: string;
-  type: 'income' | 'expense';
+  type: string;
   amount: number;
   description: string;
   category: string | null;
   date: string;
-  status: 'completed' | 'pending' | 'cancelled';
-  reference_id: string | null;
+  status: string;
   company_id: string;
   created_by: string | null;
+  reference_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -36,19 +36,7 @@ export const useFinancialData = () => {
         .order('date', { ascending: false });
 
       if (error) throw error;
-      
-      // Validar e converter dados
-      const validatedData = (data || []).map(transaction => ({
-        ...transaction,
-        type: (['income', 'expense'].includes(transaction.type) 
-          ? transaction.type 
-          : 'income') as 'income' | 'expense',
-        status: (['completed', 'pending', 'cancelled'].includes(transaction.status) 
-          ? transaction.status 
-          : 'completed') as 'completed' | 'pending' | 'cancelled'
-      })) as FinancialTransaction[];
-
-      setTransactions(validatedData);
+      setTransactions(data || []);
     } catch (error) {
       console.error('Erro ao buscar transações:', error);
       toast.error('Erro ao carregar dados financeiros');
@@ -57,7 +45,7 @@ export const useFinancialData = () => {
     }
   };
 
-  const createTransaction = async (transaction: Omit<FinancialTransaction, 'id' | 'company_id' | 'created_at' | 'updated_at'>) => {
+  const createTransaction = async (transaction: Omit<FinancialTransaction, 'id' | 'created_at' | 'updated_at' | 'company_id'>) => {
     if (!company?.id) return;
 
     try {
@@ -72,19 +60,9 @@ export const useFinancialData = () => {
 
       if (error) throw error;
       
-      const validatedData = {
-        ...data,
-        type: (['income', 'expense'].includes(data.type) 
-          ? data.type 
-          : 'income') as 'income' | 'expense',
-        status: (['completed', 'pending', 'cancelled'].includes(data.status) 
-          ? data.status 
-          : 'completed') as 'completed' | 'pending' | 'cancelled'
-      } as FinancialTransaction;
-
-      setTransactions(prev => [validatedData, ...prev]);
+      setTransactions(prev => [data, ...prev]);
       toast.success('Transação criada com sucesso!');
-      return validatedData;
+      return data;
     } catch (error) {
       console.error('Erro ao criar transação:', error);
       toast.error('Erro ao criar transação');
@@ -103,19 +81,9 @@ export const useFinancialData = () => {
 
       if (error) throw error;
       
-      const validatedData = {
-        ...data,
-        type: (['income', 'expense'].includes(data.type) 
-          ? data.type 
-          : 'income') as 'income' | 'expense',
-        status: (['completed', 'pending', 'cancelled'].includes(data.status) 
-          ? data.status 
-          : 'completed') as 'completed' | 'pending' | 'cancelled'
-      } as FinancialTransaction;
-
-      setTransactions(prev => prev.map(t => t.id === id ? validatedData : t));
+      setTransactions(prev => prev.map(t => t.id === id ? data : t));
       toast.success('Transação atualizada com sucesso!');
-      return validatedData;
+      return data;
     } catch (error) {
       console.error('Erro ao atualizar transação:', error);
       toast.error('Erro ao atualizar transação');

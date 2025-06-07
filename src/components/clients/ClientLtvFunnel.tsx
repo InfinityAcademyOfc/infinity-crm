@@ -1,10 +1,10 @@
-
 import React, { useState } from "react";
 import KanbanBoard from "@/components/kanban/KanbanBoard";
 import { KanbanColumnItem } from "@/components/kanban/types";
 import { SectionHeader } from "@/components/ui/section-header";
 import { useToast } from "@/hooks/use-toast";
-
+import { Download } from "lucide-react";
+import { Button } from "@/components/ui/button";
 const initialColumns: KanbanColumnItem[] = [{
   id: "ltv-new",
   title: "Novos Clientes",
@@ -12,7 +12,6 @@ const initialColumns: KanbanColumnItem[] = [{
     id: "ltv-card-1",
     title: "Empresa ABC",
     description: "Primeiro contrato de serviços",
-    priority: "medium",
     tags: [{
       label: "Tecnologia",
       color: "bg-blue-100 text-blue-800"
@@ -29,7 +28,6 @@ const initialColumns: KanbanColumnItem[] = [{
     id: "ltv-card-2",
     title: "Startup XYZ",
     description: "Desenvolvimento de software",
-    priority: "high",
     tags: [{
       label: "Startup",
       color: "bg-purple-100 text-purple-800"
@@ -50,7 +48,6 @@ const initialColumns: KanbanColumnItem[] = [{
     id: "ltv-card-3",
     title: "Consultoria ABC",
     description: "Renovação de contrato mensal",
-    priority: "medium",
     tags: [{
       label: "Consultoria",
       color: "bg-yellow-100 text-yellow-800"
@@ -67,7 +64,6 @@ const initialColumns: KanbanColumnItem[] = [{
     id: "ltv-card-4",
     title: "Indústria ACME",
     description: "Contrato de manutenção",
-    priority: "low",
     tags: [{
       label: "Indústria",
       color: "bg-blue-100 text-blue-800"
@@ -88,7 +84,6 @@ const initialColumns: KanbanColumnItem[] = [{
     id: "ltv-card-5",
     title: "TechSoft",
     description: "Expansão de serviços para novas áreas",
-    priority: "high",
     tags: [{
       label: "Tecnologia",
       color: "bg-blue-100 text-blue-800"
@@ -109,7 +104,6 @@ const initialColumns: KanbanColumnItem[] = [{
     id: "ltv-card-6",
     title: "Global Shop",
     description: "Parceiro estratégico há 5 anos",
-    priority: "medium",
     tags: [{
       label: "Varejo",
       color: "bg-pink-100 text-pink-800"
@@ -130,7 +124,6 @@ const initialColumns: KanbanColumnItem[] = [{
     id: "ltv-card-7",
     title: "Mega Corp",
     description: "Indicações frequentes, participação em cases",
-    priority: "high",
     tags: [{
       label: "Corporativo",
       color: "bg-gray-100 text-gray-800"
@@ -145,12 +138,15 @@ const initialColumns: KanbanColumnItem[] = [{
     }
   }]
 }];
-
 const ClientLtvFunnel = () => {
   const [columns, setColumns] = useState<KanbanColumnItem[]>(initialColumns);
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
 
+  // Function to export data
   const handleExport = () => {
+    // Prepare export data
     const exportData = {
       funnel: "LTV",
       columns: columns.map(col => ({
@@ -166,6 +162,7 @@ const ClientLtvFunnel = () => {
       exportDate: new Date().toISOString()
     };
 
+    // Create JSON file and download it
     const jsonString = JSON.stringify(exportData, null, 2);
     const blob = new Blob([jsonString], {
       type: 'application/json'
@@ -178,25 +175,21 @@ const ClientLtvFunnel = () => {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    
     toast({
       title: "Exportação concluída",
       description: "Os dados do funil LTV foram exportados com sucesso."
     });
   };
-
-  return (
-    <div className="space-y-4">
-      <SectionHeader 
-        title="Funil de Valor do Cliente (LTV)" 
-        description="Visualize e gerencie o ciclo de vida e valor de seus clientes" 
-      />
+  return <div className="space-y-4">
+      <SectionHeader title="Funil de Valor do Cliente (LTV)" description="Visualize e gerencie o ciclo de vida e valor de seus clientes" />
+      
+      <div className="flex justify-end mb-4">
+        
+      </div>
       
       <div className="overflow-x-auto pb-4">
         <KanbanBoard columns={columns} setColumns={setColumns} />
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default ClientLtvFunnel;

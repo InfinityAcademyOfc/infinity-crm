@@ -1,35 +1,36 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
 export interface Client {
   id: string;
   name: string;
-  email: string;
-  phone: string;
-  contact: string;
-  segment: string;
-  status: 'active' | 'inactive' | 'prospect';
-  street: string;
-  city: string;
-  state: string;
-  zip: string;
+  email: string | null;
+  phone: string | null;
+  street: string | null;
+  city: string | null;
+  state: string | null;
+  zip: string | null;
+  segment: string | null;
+  status: string;
+  contact: string | null;
   company_id: string;
-  last_contact: string | null;
   created_at: string;
   updated_at: string;
+  last_contact: string | null;
 }
 
 export const useRealClientData = () => {
+  const { company } = useAuth();
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
-  const { company } = useAuth();
 
   const fetchClients = async () => {
     if (!company?.id) return;
 
+    setLoading(true);
     try {
       const { data, error } = await supabase
         .from('clients')
@@ -37,21 +38,8 @@ export const useRealClientData = () => {
         .eq('company_id', company.id)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Erro ao buscar clientes:', error);
-        toast.error('Erro ao carregar clientes');
-        return;
-      }
-
-      // Type assertion with validation for status
-      const validatedData = (data || []).map(client => ({
-        ...client,
-        status: (['active', 'inactive', 'prospect'].includes(client.status) 
-          ? client.status 
-          : 'active') as 'active' | 'inactive' | 'prospect'
-      })) as Client[];
-
-      setClients(validatedData);
+      if (error) throw error;
+      setClients(data || []);
     } catch (error) {
       console.error('Erro ao buscar clientes:', error);
       toast.error('Erro ao carregar clientes');
@@ -60,76 +48,49 @@ export const useRealClientData = () => {
     }
   };
 
-  const createClient = async (clientData: Omit<Client, 'id' | 'company_id' | 'created_at' | 'updated_at'>) => {
-    if (!company?.id) {
-      toast.error('Empresa não encontrada');
-      return;
-    }
+  const createClient = async (client: Omit<Client, 'id' | 'created_at' | 'updated_at' | 'company_id'>) => {
+    if (!company?.id) return;
 
     try {
       const { data, error } = await supabase
         .from('clients')
-        .insert([
-          {
-            ...clientData,
-            company_id: company.id
-          }
-        ])
+        .insert([{
+          ...client,
+          company_id: company.id
+        }])
         .select()
         .single();
 
-      if (error) {
-        console.error('Erro ao criar cliente:', error);
-        toast.error('Erro ao criar cliente');
-        return;
-      }
-
-      const validatedData = {
-        ...data,
-        status: (['active', 'inactive', 'prospect'].includes(data.status) 
-          ? data.status 
-          : 'active') as 'active' | 'inactive' | 'prospect'
-      } as Client;
-
-      setClients(prev => [validatedData, ...prev]);
+      if (error) throw error;
+      
+      setClients(prev => [data, ...prev]);
       toast.success('Cliente criado com sucesso!');
-      return validatedData;
+      return data;
     } catch (error) {
       console.error('Erro ao criar cliente:', error);
       toast.error('Erro ao criar cliente');
+      throw error;
     }
   };
 
-  const updateClient = async (id: string, clientData: Partial<Client>) => {
+  const updateClient = async (id: string, updates: Partial<Client>) => {
     try {
       const { data, error } = await supabase
         .from('clients')
-        .update(clientData)
+        .update(updates)
         .eq('id', id)
         .select()
         .single();
 
-      if (error) {
-        console.error('Erro ao atualizar cliente:', error);
-        toast.error('Erro ao atualizar cliente');
-        return;
-      }
-
-      const validatedData = {
-        ...data,
-        status: (['active', 'inactive', 'prospect'].includes(data.status) 
-          ? data.status 
-          : 'active') as 'active' | 'inactive' | 'prospect'
-      } as Client;
-
-      setClients(prev => prev.map(client => 
-        client.id === id ? validatedData : client
-      ));
+      if (error) throw error;
+      
+      setClients(prev => prev.map(c => c.id === id ? data : c));
       toast.success('Cliente atualizado com sucesso!');
-      return validatedData;
+      return data;
     } catch (error) {
       console.error('Erro ao atualizar cliente:', error);
       toast.error('Erro ao atualizar cliente');
+      throw error;
     }
   };
 
@@ -140,28 +101,20 @@ export const useRealClientData = () => {
         .delete()
         .eq('id', id);
 
-      if (error) {
-        console.error('Erro ao deletar cliente:', error);
-        toast.error('Erro ao deletar cliente');
-        return;
-      }
-
-      setClients(prev => prev.filter(client => client.id !== id));
-      toast.success('Cliente removido com sucesso!');
+      if (error) throw error;
+      
+      setClients(prev => prev.filter(c => c.id !== id));
+      toast.success('Cliente excluído com sucesso!');
     } catch (error) {
-      console.error('Erro ao deletar cliente:', error);
-      toast.error('Erro ao deletar cliente');
+      console.error('Erro ao excluir cliente:', error);
+      toast.error('Erro ao excluir cliente');
+      throw error;
     }
-  };
-
-  const refetch = () => {
-    setLoading(true);
-    fetchClients();
   };
 
   useEffect(() => {
     fetchClients();
-  }, [company?.id]);
+  }, [company]);
 
   return {
     clients,
@@ -169,6 +122,6 @@ export const useRealClientData = () => {
     createClient,
     updateClient,
     deleteClient,
-    refetch
+    refetch: fetchClients
   };
 };

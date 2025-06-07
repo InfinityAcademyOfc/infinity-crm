@@ -1,169 +1,270 @@
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, FolderOpen, FileText, Brain, Calendar, Users } from 'lucide-react';
-import { useProductionWorkspace } from '@/hooks/useProductionWorkspace';
-import ProductionProjectDialog from './ProductionProjectDialog';
-import AdvancedProjectEditor from './AdvancedProjectEditor';
-import { useAuth } from '@/contexts/AuthContext';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { 
+  Plus, 
+  Search, 
+  Filter, 
+  Grid, 
+  List,
+  FileText,
+  Brain,
+  Presentation,
+  Kanban
+} from 'lucide-react';
+import { useProductionWorkspace, ProductionProject } from '@/hooks/useProductionWorkspace';
+import ProductionEditor from './ProductionEditor';
 
-const ProductionWorkspace = () => {
+const projectTypes = {
+  document: { icon: FileText, label: 'Documento', color: 'blue' },
+  mindmap: { icon: Brain, label: 'Mapa Mental', color: 'purple' },
+  kanban: { icon: Kanban, label: 'Kanban', color: 'green' },
+  presentation: { icon: Presentation, label: 'Apresentação', color: 'orange' }
+};
+
+const statusConfig = {
+  draft: { label: 'Rascunho', color: 'secondary' },
+  in_progress: { label: 'Em Progresso', color: 'default' },
+  review: { label: 'Em Revisão', color: 'destructive' },
+  completed: { label: 'Concluído', color: 'outline' }
+};
+
+export default function ProductionWorkspace() {
   const { 
     projects, 
     loadingProjects, 
-    activeProject, 
-    setActiveProject, 
-    createProject 
+    createProject, 
+    isCreating,
+    activeProject,
+    setActiveProject 
   } = useProductionWorkspace();
   
-  const { user } = useAuth();
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
-  const getProjectIcon = (type: string) => {
-    switch (type) {
-      case 'document':
-        return <FileText className="h-5 w-5" />;
-      case 'mindmap':
-        return <Brain className="h-5 w-5" />;
-      case 'kanban':
-        return <Calendar className="h-5 w-5" />;
-      case 'presentation':
-        return <Users className="h-5 w-5" />;
-      default:
-        return <FileText className="h-5 w-5" />;
-    }
-  };
+  const filteredProjects = projects.filter(project =>
+    project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    project.description?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-  const getProjectTypeLabel = (type: string) => {
-    switch (type) {
-      case 'document':
-        return 'Documento';
-      case 'mindmap':
-        return 'Mapa Mental';
-      case 'kanban':
-        return 'Kanban';
-      case 'presentation':
-        return 'Apresentação';
-      default:
-        return type;
-    }
-  };
-
-  const handleCreateProject = async (projectData: {
-    name: string;
-    description: string;
-    type: 'document' | 'mindmap' | 'kanban' | 'presentation';
-  }) => {
-    if (!user?.id) return;
-    
-    const newProject = await createProject({
-      ...projectData,
+  const handleCreateProject = (type: keyof typeof projectTypes) => {
+    const projectData = {
+      name: `Novo ${projectTypes[type].label}`,
+      description: `Projeto ${projectTypes[type].label} criado em ${new Date().toLocaleDateString('pt-BR')}`,
+      type,
       status: 'draft' as const,
-      data: {},
-      created_by: user.id
-    });
+      data: {}
+    };
     
-    if (newProject) {
-      setActiveProject(newProject);
-      setShowCreateDialog(false);
-    }
+    createProject(projectData);
+    setShowCreateModal(false);
   };
+
+  const handleOpenProject = (project: ProductionProject) => {
+    setActiveProject(project);
+  };
+
+  if (activeProject) {
+    return (
+      <ProductionEditor 
+        project={activeProject} 
+        onClose={() => setActiveProject(null)} 
+      />
+    );
+  }
 
   if (loadingProjects) {
     return (
       <div className="p-6">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="h-32 bg-gray-200 rounded"></div>
-            ))}
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[...Array(6)].map((_, i) => (
+            <Card key={i} className="animate-pulse">
+              <CardContent className="p-6">
+                <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
+                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       </div>
     );
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Workspace de Produção</h1>
-          <p className="text-muted-foreground">
-            Crie e gerencie documentos, mapas mentais, kanbans e apresentações
-          </p>
+    <div className="h-full flex flex-col">
+      {/* Header */}
+      <div className="border-b p-6">
+        <div className="flex justify-between items-center mb-4">
+          <div>
+            <h1 className="text-2xl font-bold">Gestão de Produção</h1>
+            <p className="text-muted-foreground">
+              Crie e gerencie documentos, mapas mentais, apresentações e kanbans
+            </p>
+          </div>
+          
+          <Button onClick={() => setShowCreateModal(true)} disabled={isCreating}>
+            <Plus className="h-4 w-4 mr-2" />
+            Novo Projeto
+          </Button>
         </div>
-        <Button onClick={() => setShowCreateDialog(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Novo Projeto
-        </Button>
+
+        <div className="flex items-center gap-4">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar projetos..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm">
+              <Filter className="h-4 w-4 mr-1" />
+              Filtros
+            </Button>
+            
+            <div className="flex border rounded-md">
+              <Button
+                variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('grid')}
+                className="rounded-r-none"
+              >
+                <Grid className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={viewMode === 'list' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('list')}
+                className="rounded-l-none"
+              >
+                <List className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Projects List */}
-        <div className="lg:col-span-1">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FolderOpen className="h-5 w-5" />
-                Projetos ({projects.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 max-h-96 overflow-y-auto">
-              {projects.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <p>Nenhum projeto encontrado</p>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => setShowCreateDialog(true)}
-                    className="mt-2"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Criar Primeiro Projeto
-                  </Button>
-                </div>
-              ) : (
-                projects.map((project) => (
-                  <div
-                    key={project.id}
-                    className={`p-3 rounded-lg border cursor-pointer transition-colors ${
-                      activeProject?.id === project.id 
-                        ? 'bg-primary/10 border-primary' 
-                        : 'hover:bg-muted'
-                    }`}
-                    onClick={() => setActiveProject(project)}
-                  >
-                    <div className="flex items-center gap-3">
-                      {getProjectIcon(project.type)}
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-medium truncate">{project.name}</h4>
-                        <p className="text-sm text-muted-foreground">
-                          {getProjectTypeLabel(project.type)}
-                        </p>
+      {/* Content */}
+      <div className="flex-1 p-6">
+        {filteredProjects.length === 0 ? (
+          <div className="text-center py-12">
+            {projects.length === 0 ? (
+              <div className="text-muted-foreground">
+                <h3 className="text-lg font-medium mb-2">Nenhum projeto criado</h3>
+                <p className="mb-4">Comece criando seu primeiro projeto</p>
+                <Button onClick={() => setShowCreateModal(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Criar Projeto
+                </Button>
+              </div>
+            ) : (
+              <div className="text-muted-foreground">
+                <h3 className="text-lg font-medium mb-2">Nenhum projeto encontrado</h3>
+                <p>Tente usar outros termos de busca</p>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className={
+            viewMode === 'grid' 
+              ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+              : "space-y-4"
+          }>
+            {filteredProjects.map((project) => {
+              const typeConfig = projectTypes[project.type as keyof typeof projectTypes];
+              const IconComponent = typeConfig.icon;
+              
+              return (
+                <Card 
+                  key={project.id} 
+                  className="hover:shadow-md transition-shadow cursor-pointer"
+                  onClick={() => handleOpenProject(project)}
+                >
+                  <CardContent className="p-6">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-lg bg-${typeConfig.color}-50`}>
+                          <IconComponent className={`h-5 w-5 text-${typeConfig.color}-600`} />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold">{project.name}</h3>
+                          <p className="text-sm text-muted-foreground">
+                            {typeConfig.label}
+                          </p>
+                        </div>
                       </div>
+                      
+                      <Badge variant={statusConfig[project.status as keyof typeof statusConfig]?.color as any}>
+                        {statusConfig[project.status as keyof typeof statusConfig]?.label}
+                      </Badge>
                     </div>
-                  </div>
-                ))
-              )}
+
+                    {project.description && (
+                      <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+                        {project.description}
+                      </p>
+                    )}
+
+                    <div className="flex justify-between items-center text-xs text-muted-foreground">
+                      <span>
+                        Criado em {new Date(project.created_at).toLocaleDateString('pt-BR')}
+                      </span>
+                      <span>
+                        Atualizado {new Date(project.updated_at).toLocaleDateString('pt-BR')}
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Create Project Modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <Card className="w-full max-w-2xl">
+            <CardContent className="p-6">
+              <h2 className="text-xl font-bold mb-4">Criar Novo Projeto</h2>
+              <p className="text-muted-foreground mb-6">
+                Escolha o tipo de projeto que deseja criar
+              </p>
+              
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                {Object.entries(projectTypes).map(([type, config]) => {
+                  const IconComponent = config.icon;
+                  return (
+                    <Button
+                      key={type}
+                      variant="outline"
+                      className="h-24 flex-col gap-2"
+                      onClick={() => handleCreateProject(type as keyof typeof projectTypes)}
+                      disabled={isCreating}
+                    >
+                      <IconComponent className="h-8 w-8" />
+                      <span>{config.label}</span>
+                    </Button>
+                  );
+                })}
+              </div>
+              
+              <div className="flex justify-end">
+                <Button variant="outline" onClick={() => setShowCreateModal(false)}>
+                  Cancelar
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </div>
-
-        {/* Advanced Editor Area */}
-        <div className="lg:col-span-2">
-          <AdvancedProjectEditor />
-        </div>
-      </div>
-
-      <ProductionProjectDialog
-        open={showCreateDialog}
-        onOpenChange={setShowCreateDialog}
-        onSuccess={handleCreateProject}
-      />
+      )}
     </div>
   );
-};
-
-export default ProductionWorkspace;
+}

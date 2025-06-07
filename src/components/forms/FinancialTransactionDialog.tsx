@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useFinancialData } from "@/hooks/useFinancialData";
 import { useAuth } from "@/contexts/AuthContext";
@@ -21,12 +22,12 @@ const FinancialTransactionDialog = ({ open, onOpenChange, onSuccess }: Financial
   const { createTransaction } = useFinancialData();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    type: "income" as "income" | "expense",
+    type: "income",
     amount: "",
     description: "",
     category: "",
     date: new Date().toISOString().split('T')[0],
-    status: "completed" as "completed" | "pending" | "cancelled"
+    status: "completed"
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -79,7 +80,7 @@ const FinancialTransactionDialog = ({ open, onOpenChange, onSuccess }: Financial
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="type">Tipo *</Label>
-              <Select value={formData.type} onValueChange={(value: "income" | "expense") => setFormData(prev => ({ ...prev, type: value }))}>
+              <Select value={formData.type} onValueChange={(value) => setFormData(prev => ({ ...prev, type: value }))}>
                 <SelectTrigger>
                   <SelectValue placeholder="Tipo da transação" />
                 </SelectTrigger>
@@ -146,7 +147,7 @@ const FinancialTransactionDialog = ({ open, onOpenChange, onSuccess }: Financial
 
           <div className="space-y-2">
             <Label htmlFor="status">Status</Label>
-            <Select value={formData.status} onValueChange={(value: "completed" | "pending" | "cancelled") => setFormData(prev => ({ ...prev, status: value }))}>
+            <Select value={formData.status} onValueChange={(value) => setFormData(prev => ({ ...prev, status: value }))}>
               <SelectTrigger>
                 <SelectValue placeholder="Status" />
               </SelectTrigger>

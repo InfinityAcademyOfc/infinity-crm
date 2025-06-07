@@ -24,28 +24,22 @@ const TeamMemberFormDialog = ({ open, onOpenChange, onSuccess }: TeamMemberFormD
     phone: "",
     role: "",
     department: "",
-    status: "active" as "active" | "inactive"
+    status: "active"
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.email || !formData.role) {
-      toast.error('Email e cargo são obrigatórios');
-      return;
-    }
-
     try {
       setLoading(true);
 
       await createTeamMember({
-        name: formData.name || formData.email.split('@')[0],
+        name: formData.name || null,
         email: formData.email,
-        phone: formData.phone,
+        phone: formData.phone || null,
         role: formData.role,
-        department: formData.department,
+        department: formData.department || null,
         avatar: null,
-        avatar_url: null,
         status: formData.status
       });
 
@@ -147,7 +141,7 @@ const TeamMemberFormDialog = ({ open, onOpenChange, onSuccess }: TeamMemberFormD
 
           <div className="space-y-2">
             <Label htmlFor="status">Status</Label>
-            <Select value={formData.status} onValueChange={(value: "active" | "inactive") => setFormData(prev => ({ ...prev, status: value }))}>
+            <Select value={formData.status} onValueChange={(value) => setFormData(prev => ({ ...prev, status: value }))}>
               <SelectTrigger>
                 <SelectValue placeholder="Selecione o status" />
               </SelectTrigger>

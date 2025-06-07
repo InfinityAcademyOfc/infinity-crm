@@ -1,31 +1,27 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 
-export interface Notification {
+interface Notification {
   id: string;
   title: string;
   message: string;
-  type: 'info' | 'success' | 'warning' | 'error';
+  type: string;
   read: boolean;
-  link?: string | null;
-  user_id: string;
-  company_id?: string | null;
   created_at: string;
-  expires_at?: string | null;
+  link?: string;
 }
 
 export const useNotifications = () => {
-  const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [loading, setLoading] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
-  const fetchNotifications = useCallback(async () => {
-    if (!user?.id || loading) return;
+  const fetchNotifications = async () => {
+    if (!user) return;
 
-    setLoading(true);
     try {
       const { data, error } = await supabase
         .from('notifications')
@@ -34,39 +30,29 @@ export const useNotifications = () => {
         .order('created_at', { ascending: false })
         .limit(50);
 
-      if (error) {
-        console.error('Erro ao buscar notificações:', error);
-        return;
-      }
-      
-      const validatedData = (data || []).map(notification => ({
-        ...notification,
-        type: (['info', 'success', 'warning', 'error'].includes(notification.type) 
-          ? notification.type 
-          : 'info') as 'info' | 'success' | 'warning' | 'error'
-      })) as Notification[];
+      if (error) throw error;
 
-      setNotifications(validatedData);
-      setUnreadCount(validatedData.filter(n => !n.read).length);
+      setNotifications(data || []);
+      setUnreadCount((data || []).filter(n => !n.read).length);
     } catch (error) {
       console.error('Erro ao buscar notificações:', error);
     } finally {
       setLoading(false);
     }
-  }, [user?.id, loading]);
+  };
 
-  const markAsRead = async (id: string) => {
+  const markAsRead = async (notificationId: string) => {
     try {
       const { error } = await supabase
         .from('notifications')
         .update({ read: true })
-        .eq('id', id);
+        .eq('id', notificationId);
 
       if (error) throw error;
-      
-      setNotifications(prev => prev.map(n => 
-        n.id === id ? { ...n, read: true } : n
-      ));
+
+      setNotifications(prev =>
+        prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
+      );
       setUnreadCount(prev => Math.max(0, prev - 1));
     } catch (error) {
       console.error('Erro ao marcar notificação como lida:', error);
@@ -74,7 +60,7 @@ export const useNotifications = () => {
   };
 
   const markAllAsRead = async () => {
-    if (!user?.id) return;
+    if (!user) return;
 
     try {
       const { error } = await supabase
@@ -84,46 +70,26 @@ export const useNotifications = () => {
         .eq('read', false);
 
       if (error) throw error;
-      
-      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+
+      setNotifications(prev =>
+        prev.map(n => ({ ...n, read: true }))
+      );
       setUnreadCount(0);
     } catch (error) {
       console.error('Erro ao marcar todas as notificações como lidas:', error);
     }
   };
 
-  const deleteNotification = async (id: string) => {
-    try {
-      const { error } = await supabase
-        .from('notifications')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-      
-      setNotifications(prev => prev.filter(n => n.id !== id));
-      setUnreadCount(prev => {
-        const notification = notifications.find(n => n.id === id);
-        return notification && !notification.read ? prev - 1 : prev;
-      });
-    } catch (error) {
-      console.error('Erro ao excluir notificação:', error);
-    }
-  };
-
   useEffect(() => {
-    if (user?.id) {
-      fetchNotifications();
-    }
-  }, [user?.id]);
+    fetchNotifications();
+  }, [user]);
 
   return {
     notifications,
-    loading,
     unreadCount,
+    loading,
+    fetchNotifications,
     markAsRead,
-    markAllAsRead,
-    deleteNotification,
-    refetch: fetchNotifications
+    markAllAsRead
   };
 };

@@ -13,19 +13,7 @@ export const taskService = {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      
-      // Validate and transform data to ensure proper types
-      const validatedData = (data || []).map(task => ({
-        ...task,
-        priority: (['high', 'medium', 'low'].includes(task.priority) 
-          ? task.priority 
-          : 'medium') as 'high' | 'medium' | 'low',
-        status: (['pending', 'in_progress', 'completed', 'cancelled'].includes(task.status) 
-          ? task.status 
-          : 'pending') as 'pending' | 'in_progress' | 'completed' | 'cancelled'
-      })) as Task[];
-
-      return validatedData;
+      return data || [];
     } catch (error) {
       console.error("Erro ao buscar tarefas:", error);
       toast.error("Erro ao carregar tarefas");
@@ -42,20 +30,7 @@ export const taskService = {
         .maybeSingle();
 
       if (error) throw error;
-      if (!data) return null;
-
-      // Validate and transform data
-      const validatedData = {
-        ...data,
-        priority: (['high', 'medium', 'low'].includes(data.priority) 
-          ? data.priority 
-          : 'medium') as 'high' | 'medium' | 'low',
-        status: (['pending', 'in_progress', 'completed', 'cancelled'].includes(data.status) 
-          ? data.status 
-          : 'pending') as 'pending' | 'in_progress' | 'completed' | 'cancelled'
-      } as Task;
-
-      return validatedData;
+      return data;
     } catch (error) {
       console.error("Erro ao buscar tarefa:", error);
       toast.error("Erro ao carregar dados da tarefa");
@@ -72,20 +47,8 @@ export const taskService = {
         .maybeSingle();
 
       if (error) throw error;
-      if (!data) return null;
-
-      const validatedData = {
-        ...data,
-        priority: (['high', 'medium', 'low'].includes(data.priority) 
-          ? data.priority 
-          : 'medium') as 'high' | 'medium' | 'low',
-        status: (['pending', 'in_progress', 'completed', 'cancelled'].includes(data.status) 
-          ? data.status 
-          : 'pending') as 'pending' | 'in_progress' | 'completed' | 'cancelled'
-      } as Task;
-
       toast.success("Tarefa criada com sucesso");
-      return validatedData;
+      return data;
     } catch (error) {
       console.error("Erro ao criar tarefa:", error);
       toast.error("Erro ao criar tarefa");
@@ -103,20 +66,8 @@ export const taskService = {
         .maybeSingle();
 
       if (error) throw error;
-      if (!data) return null;
-
-      const validatedData = {
-        ...data,
-        priority: (['high', 'medium', 'low'].includes(data.priority) 
-          ? data.priority 
-          : 'medium') as 'high' | 'medium' | 'low',
-        status: (['pending', 'in_progress', 'completed', 'cancelled'].includes(data.status) 
-          ? data.status 
-          : 'pending') as 'pending' | 'in_progress' | 'completed' | 'cancelled'
-      } as Task;
-
       toast.success("Tarefa atualizada com sucesso");
-      return validatedData;
+      return data;
     } catch (error) {
       console.error("Erro ao atualizar tarefa:", error);
       toast.error("Erro ao atualizar tarefa");

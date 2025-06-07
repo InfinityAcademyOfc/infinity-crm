@@ -1,87 +1,158 @@
 
-import React from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { useLocation } from "react-router-dom";
+import { LayoutDashboard, Filter, Users, DollarSign, Package, Upload, ClipboardList, UserCog, Video, Settings, MessageCircle, Zap } from "lucide-react";
+import NavSection from "./NavSection";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { 
-  Home, 
-  BarChart2, 
-  Users, 
-  FileText, 
-  Settings,
-  Package, 
-  Calendar, 
-  MessageSquare,
-  UserPlus,
-  X
-} from "lucide-react";
 
 interface SidebarProps {
-  isOpen: boolean;
-  setIsOpen: (open: boolean) => void;
+  open: boolean;
+  setOpen: (open: boolean) => void;
 }
 
-const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
-  const navigate = useNavigate();
+const mainMenuItems = [
+  {
+    icon: <LayoutDashboard size={18} />,
+    label: "Dashboard",
+    to: "/app",
+    end: true
+  },
+  {
+    icon: <Filter size={18} />,
+    label: "Funil de Vendas",
+    to: "/app/sales-funnel"
+  },
+  {
+    icon: <Users size={18} />,
+    label: "Clientes",
+    to: "/app/clients"
+  },
+  {
+    icon: <DollarSign size={18} />,
+    label: "Financeiro",
+    to: "/app/finance"
+  },
+  {
+    icon: <Package size={18} />,
+    label: "Produtos/Serviços",
+    to: "/app/products"
+  },
+  {
+    icon: <Upload size={18} />,
+    label: "Importar",
+    to: "/app/lead-import"
+  }
+];
+
+const integrationItems = [
+  {
+    icon: <MessageCircle size={18} />,
+    label: "WhatsApp",
+    to: "/app/whatsapp"
+  },
+  {
+    icon: <Zap size={18} />,
+    label: "Anúncios",
+    to: "/app/ads-integration"
+  }
+];
+
+const managementItems = [
+  {
+    icon: <ClipboardList size={18} />,
+    label: "Produção",
+    to: "/app/production"
+  },
+  {
+    icon: <UserCog size={18} />,
+    label: "Equipe",
+    to: "/app/team"
+  },
+  {
+    icon: <Video size={18} />,
+    label: "Reuniões",
+    to: "/app/meetings"
+  }
+];
+
+const systemItems = [
+  {
+    icon: <Settings size={18} />,
+    label: "Configurações",
+    to: "/app/settings"
+  }
+];
+
+const Sidebar = ({
+  open,
+  setOpen
+}: SidebarProps) => {
   const location = useLocation();
+  const sidebarRef = useRef<HTMLDivElement>(null);
+  const [isMobile, setIsMobile] = useState(false);
   
-  const menuItems = [
-    { icon: Home, label: "Dashboard", path: "/app" },
-    { icon: BarChart2, label: "Funil de Vendas", path: "/app/sales-funnel" },
-    { icon: Users, label: "Clientes", path: "/app/clients" },
-    { icon: Package, label: "Produtos", path: "/app/products" },
-    { icon: FileText, label: "Financeiro", path: "/app/finance" },
-    { icon: Calendar, label: "Reuniões", path: "/app/meetings" },
-    { icon: MessageSquare, label: "WhatsApp", path: "/app/whatsapp" },
-    { icon: UserPlus, label: "Equipe", path: "/app/team" },
-    { icon: Settings, label: "Configurações", path: "/app/settings" },
-  ];
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
   
+  useEffect(() => {
+    if (isMobile) {
+      setOpen(false);
+    }
+  }, [location.pathname, isMobile, setOpen]);
+
   return (
-    <aside
+    <div 
+      ref={sidebarRef} 
       className={cn(
-        "fixed inset-y-0 left-0 z-50 flex flex-col w-64 bg-background border-r transition-transform md:translate-x-0 duration-300 md:sticky",
-        isOpen ? "translate-x-0" : "-translate-x-full"
+        "h-full bg-background/95 backdrop-blur-md border-r shadow-lg",
+        "flex flex-col overflow-hidden transition-all duration-300 ease-in-out",
+        "fixed left-0 top-0 z-50",
+        isMobile ? 
+          open ? "w-64 translate-x-0" : "w-0 -translate-x-full" 
+          : 
+          open ? "w-64 relative" : "w-16 relative",
+        "dark:bg-gray-900/90 dark:border-gray-800",
+        "bg-gradient-to-b from-background/95 to-background/98"
       )}
     >
-      <div className="flex items-center justify-between h-14 px-4 border-b">
-        <h2 className="text-lg font-semibold">Infinity CRM</h2>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setIsOpen(false)}
-          className="md:hidden"
-        >
-          <X className="h-5 w-5" />
-          <span className="sr-only">Close sidebar</span>
-        </Button>
+      <div className="flex-1 overflow-y-auto p-4 py-[30px] pt-14">
+        <NavSection 
+          title="Menu Principal" 
+          items={mainMenuItems} 
+          isCollapsed={!open} 
+          onItemClick={() => isMobile && setOpen(false)} 
+        />
+        <NavSection 
+          title="Integrações" 
+          items={integrationItems} 
+          isCollapsed={!open} 
+          onItemClick={() => isMobile && setOpen(false)}
+          className="mt-6" 
+        />
+        <NavSection 
+          title="Gestão" 
+          items={managementItems} 
+          isCollapsed={!open} 
+          onItemClick={() => isMobile && setOpen(false)}
+          className="mt-6" 
+        />
+        <NavSection 
+          title="Sistema" 
+          items={systemItems} 
+          isCollapsed={!open} 
+          onItemClick={() => isMobile && setOpen(false)}
+          className="mt-6 mb-4" 
+        />
       </div>
-      
-      <ScrollArea className="flex-1 py-4">
-        <nav className="px-2 space-y-1">
-          {menuItems.map((item) => (
-            <Button
-              key={item.path}
-              variant={location.pathname === item.path ? "secondary" : "ghost"}
-              className={cn(
-                "w-full justify-start gap-3",
-                location.pathname === item.path ? "bg-muted" : ""
-              )}
-              onClick={() => {
-                navigate(item.path);
-                if (window.innerWidth < 768) {
-                  setIsOpen(false);
-                }
-              }}
-            >
-              <item.icon className="h-5 w-5" />
-              {item.label}
-            </Button>
-          ))}
-        </nav>
-      </ScrollArea>
-    </aside>
+    </div>
   );
 };
 

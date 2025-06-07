@@ -1,177 +1,199 @@
-
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useState, useCallback, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
 export interface ProductionProject {
   id: string;
   name: string;
-  description: string | null;
+  description?: string;
   type: 'document' | 'mindmap' | 'kanban' | 'presentation';
   status: 'draft' | 'in_progress' | 'review' | 'completed';
-  data: any;
-  company_id: string;
-  created_by: string;
-  collaborators?: string[];
-  folder_id?: string;
   created_at: string;
   updated_at: string;
+  created_by: string;
+  collaborators: string[];
+  data: any;
+  folder_id?: string;
 }
 
 export interface ProductionFolder {
   id: string;
   name: string;
-  company_id: string;
+  parent_id?: string;
   created_at: string;
-  updated_at: string;
+  created_by: string;
 }
 
-export const useProductionWorkspace = () => {
-  const [projects, setProjects] = useState<ProductionProject[]>([]);
-  const [loadingProjects, setLoadingProjects] = useState(true);
-  const [isCreating, setIsCreating] = useState(false);
+export interface CollaborationSession {
+  id: string;
+  project_id: string;
+  user_id: string;
+  cursor_position?: any;
+  last_activity: string;
+  is_active: boolean;
+}
+
+export function useProductionWorkspace() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [activeProject, setActiveProject] = useState<ProductionProject | null>(null);
-  const { company, user } = useAuth();
+  const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
 
-  const fetchProjects = async () => {
-    if (!company?.id) return;
-
-    try {
+  // Fetch projects
+  const { data: projects = [], isLoading: loadingProjects } = useQuery({
+    queryKey: ['production-projects'],
+    queryFn: async () => {
+      if (!user) return [];
+      
       const { data, error } = await supabase
         .from('production_projects')
         .select('*')
-        .eq('company_id', company.id)
+        .or(`created_by.eq.${user.id},collaborators.cs.{${user.id}}`)
         .order('updated_at', { ascending: false });
+      
+      if (error) throw error;
+      return data as ProductionProject[];
+    },
+    enabled: !!user
+  });
 
-      if (error) {
-        console.error('Erro ao buscar projetos:', error);
-        toast.error('Erro ao carregar projetos');
-        return;
-      }
+  // Fetch folders
+  const { data: folders = [] } = useQuery({
+    queryKey: ['production-folders'],
+    queryFn: async () => {
+      if (!user) return [];
+      
+      const { data, error } = await supabase
+        .from('production_folders')
+        .select('*')
+        .eq('created_by', user.id)
+        .order('name');
+      
+      if (error) throw error;
+      return data as ProductionFolder[];
+    },
+    enabled: !!user
+  });
 
-      // Transform and validate data
-      const validatedData = (data || []).map(project => ({
-        ...project,
-        type: (['document', 'mindmap', 'kanban', 'presentation'].includes(project.type) 
-          ? project.type 
-          : 'document') as 'document' | 'mindmap' | 'kanban' | 'presentation',
-        status: (['draft', 'in_progress', 'review', 'completed'].includes(project.status) 
-          ? project.status 
-          : 'draft') as 'draft' | 'in_progress' | 'review' | 'completed',
-        collaborators: project.collaborators || [],
-        created_by: project.created_by || user?.id || ''
-      })) as ProductionProject[];
-
-      setProjects(validatedData);
-    } catch (error) {
-      console.error('Erro ao buscar projetos:', error);
-      toast.error('Erro ao carregar projetos');
-    } finally {
-      setLoadingProjects(false);
-    }
-  };
-
-  const createProject = async (projectData: Omit<ProductionProject, 'id' | 'company_id' | 'created_at' | 'updated_at'>) => {
-    if (!company?.id || !user?.id) return null;
-
-    setIsCreating(true);
-    try {
+  // Create project mutation
+  const createProjectMutation = useMutation({
+    mutationFn: async (projectData: Partial<ProductionProject>) => {
+      if (!user) throw new Error('User not authenticated');
+      
       const { data, error } = await supabase
         .from('production_projects')
-        .insert([{
+        .insert({
           ...projectData,
-          company_id: company.id,
-          created_by: user.id
-        }])
+          created_by: user.id,
+          collaborators: [user.id]
+        })
         .select()
         .single();
-
+      
       if (error) throw error;
-
-      const newProject = {
-        ...data,
-        type: data.type as 'document' | 'mindmap' | 'kanban' | 'presentation',
-        status: data.status as 'draft' | 'in_progress' | 'review' | 'completed',
-        collaborators: data.collaborators || []
-      } as ProductionProject;
-
-      setProjects(prev => [newProject, ...prev]);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['production-projects'] });
       toast.success('Projeto criado com sucesso!');
-      return newProject;
-    } catch (error) {
-      console.error('Erro ao criar projeto:', error);
-      toast.error('Erro ao criar projeto');
-      return null;
-    } finally {
-      setIsCreating(false);
+    },
+    onError: (error) => {
+      toast.error('Erro ao criar projeto: ' + error.message);
     }
-  };
+  });
 
-  const updateProject = async (id: string, updates: Partial<ProductionProject>) => {
-    try {
-      const { data, error } = await supabase
+  // Update project mutation
+  const updateProjectMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<ProductionProject> }) => {
+      const { error } = await supabase
         .from('production_projects')
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single();
-
+        .update(data)
+        .eq('id', id);
+      
       if (error) throw error;
-
-      const updatedProject = {
-        ...data,
-        type: data.type as 'document' | 'mindmap' | 'kanban' | 'presentation',
-        status: data.status as 'draft' | 'in_progress' | 'review' | 'completed',
-        collaborators: data.collaborators || []
-      } as ProductionProject;
-
-      setProjects(prev => prev.map(p => p.id === id ? updatedProject : p));
-      if (activeProject?.id === id) {
-        setActiveProject(updatedProject);
-      }
-      toast.success('Projeto atualizado com sucesso!');
-      return updatedProject;
-    } catch (error) {
-      console.error('Erro ao atualizar projeto:', error);
-      toast.error('Erro ao atualizar projeto');
-      return null;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['production-projects'] });
     }
-  };
+  });
 
-  const deleteProject = async (id: string) => {
-    try {
+  // Delete project mutation
+  const deleteProjectMutation = useMutation({
+    mutationFn: async (id: string) => {
       const { error } = await supabase
         .from('production_projects')
         .delete()
         .eq('id', id);
-
+      
       if (error) throw error;
-
-      setProjects(prev => prev.filter(p => p.id !== id));
-      if (activeProject?.id === id) {
-        setActiveProject(null);
-      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['production-projects'] });
       toast.success('Projeto excluído com sucesso!');
-    } catch (error) {
-      console.error('Erro ao excluir projeto:', error);
-      toast.error('Erro ao excluir projeto');
     }
-  };
+  });
 
-  useEffect(() => {
-    fetchProjects();
-  }, [company]);
+  // Create folder mutation
+  const createFolderMutation = useMutation({
+    mutationFn: async (folderData: Partial<ProductionFolder>) => {
+      if (!user) throw new Error('User not authenticated');
+      
+      const { data, error } = await supabase
+        .from('production_folders')
+        .insert({
+          ...folderData,
+          created_by: user.id
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['production-folders'] });
+      toast.success('Pasta criada com sucesso!');
+    }
+  });
+
+  const createProject = useCallback((data: Partial<ProductionProject>) => {
+    createProjectMutation.mutate(data);
+  }, [createProjectMutation]);
+
+  const updateProject = useCallback((id: string, data: Partial<ProductionProject>) => {
+    updateProjectMutation.mutate({ id, data });
+  }, [updateProjectMutation]);
+
+  const deleteProject = useCallback((id: string) => {
+    deleteProjectMutation.mutate(id);
+  }, [deleteProjectMutation]);
+
+  const createFolder = useCallback((data: Partial<ProductionFolder>) => {
+    createFolderMutation.mutate(data);
+  }, [createFolderMutation]);
+
+  // Auto-save functionality
+  const autoSave = useCallback((projectId: string, data: any) => {
+    updateProject(projectId, { data, updated_at: new Date().toISOString() });
+  }, [updateProject]);
 
   return {
     projects,
-    loadingProjects,
-    isCreating,
+    folders,
     activeProject,
     setActiveProject,
+    selectedFolder,
+    setSelectedFolder,
+    loadingProjects,
     createProject,
     updateProject,
     deleteProject,
-    refetch: fetchProjects
+    createFolder,
+    autoSave,
+    isCreating: createProjectMutation.isPending,
+    isUpdating: updateProjectMutation.isPending,
+    isDeleting: deleteProjectMutation.isPending
   };
-};
+}
