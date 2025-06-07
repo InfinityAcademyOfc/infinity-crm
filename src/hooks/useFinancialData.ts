@@ -11,23 +11,21 @@ export interface FinancialTransaction {
   description: string;
   category: string | null;
   date: string;
-  status: string;
+  status: 'pending' | 'completed' | 'cancelled';
   reference_id: string | null;
   created_by: string | null;
   created_at: string;
   updated_at: string;
-  company_id: string;
 }
 
 export const useFinancialData = () => {
-  const { company } = useAuth();
+  const { user, company } = useAuth();
   const [transactions, setTransactions] = useState<FinancialTransaction[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchTransactions = async () => {
     if (!company?.id) return;
 
-    setLoading(true);
     try {
       const { data, error } = await supabase
         .from('financial_transactions')
@@ -39,21 +37,22 @@ export const useFinancialData = () => {
       setTransactions(data || []);
     } catch (error) {
       console.error('Erro ao buscar transações:', error);
-      toast.error('Erro ao carregar transações financeiras');
+      toast.error('Erro ao carregar dados financeiros');
     } finally {
       setLoading(false);
     }
   };
 
-  const createTransaction = async (transaction: Omit<FinancialTransaction, 'id' | 'created_at' | 'updated_at' | 'company_id'>) => {
-    if (!company?.id) return;
+  const createTransaction = async (transaction: Omit<FinancialTransaction, 'id' | 'created_at' | 'updated_at'>) => {
+    if (!company?.id || !user?.id) return;
 
     try {
       const { data, error } = await supabase
         .from('financial_transactions')
         .insert([{
           ...transaction,
-          company_id: company.id
+          company_id: company.id,
+          created_by: user.id
         }])
         .select()
         .single();
@@ -109,26 +108,6 @@ export const useFinancialData = () => {
     }
   };
 
-  // Calculate financial metrics
-  const calculateMetrics = () => {
-    const totalIncome = transactions
-      .filter(t => t.type === 'income')
-      .reduce((sum, t) => sum + Number(t.amount), 0);
-    
-    const totalExpenses = transactions
-      .filter(t => t.type === 'expense')
-      .reduce((sum, t) => sum + Number(t.amount), 0);
-    
-    const balance = totalIncome - totalExpenses;
-
-    return {
-      totalIncome,
-      totalExpenses,
-      balance,
-      transactionCount: transactions.length
-    };
-  };
-
   useEffect(() => {
     fetchTransactions();
   }, [company]);
@@ -139,7 +118,6 @@ export const useFinancialData = () => {
     createTransaction,
     updateTransaction,
     deleteTransaction,
-    refetch: fetchTransactions,
-    metrics: calculateMetrics()
+    refetch: fetchTransactions
   };
 };

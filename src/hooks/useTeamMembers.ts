@@ -16,9 +16,6 @@ export interface TeamMember {
   company_id: string | null;
   created_at: string;
   updated_at: string;
-  tasksAssigned: number;
-  tasksCompleted: number;
-  joinedDate?: string;
 }
 
 export const useTeamMembers = () => {
@@ -37,16 +34,7 @@ export const useTeamMembers = () => {
         .order('name');
 
       if (error) throw error;
-      
-      // Transform data to include required properties
-      const transformedMembers: TeamMember[] = (data || []).map(member => ({
-        ...member,
-        tasksAssigned: 0, // Can be calculated from tasks table
-        tasksCompleted: 0, // Can be calculated from tasks table
-        joinedDate: member.created_at
-      }));
-      
-      setTeamMembers(transformedMembers);
+      setTeamMembers(data || []);
     } catch (error) {
       console.error('Erro ao buscar membros da equipe:', error);
       toast.error('Erro ao carregar membros da equipe');
@@ -55,7 +43,7 @@ export const useTeamMembers = () => {
     }
   };
 
-  const createTeamMember = async (member: Omit<TeamMember, 'id' | 'created_at' | 'updated_at' | 'company_id' | 'tasksAssigned' | 'tasksCompleted'>) => {
+  const createTeamMember = async (member: Omit<TeamMember, 'id' | 'created_at' | 'updated_at' | 'company_id'>) => {
     if (!company?.id) return;
 
     try {
@@ -70,16 +58,9 @@ export const useTeamMembers = () => {
 
       if (error) throw error;
       
-      const newMember: TeamMember = {
-        ...data,
-        tasksAssigned: 0,
-        tasksCompleted: 0,
-        joinedDate: data.created_at
-      };
-      
-      setTeamMembers(prev => [...prev, newMember]);
+      setTeamMembers(prev => [...prev, data]);
       toast.success('Membro da equipe adicionado com sucesso!');
-      return newMember;
+      return data;
     } catch (error) {
       console.error('Erro ao criar membro da equipe:', error);
       toast.error('Erro ao adicionar membro da equipe');
@@ -98,16 +79,9 @@ export const useTeamMembers = () => {
 
       if (error) throw error;
       
-      const updatedMember: TeamMember = {
-        ...data,
-        tasksAssigned: 0,
-        tasksCompleted: 0,
-        joinedDate: data.created_at
-      };
-      
-      setTeamMembers(prev => prev.map(m => m.id === id ? updatedMember : m));
+      setTeamMembers(prev => prev.map(m => m.id === id ? data : m));
       toast.success('Membro da equipe atualizado com sucesso!');
-      return updatedMember;
+      return data;
     } catch (error) {
       console.error('Erro ao atualizar membro da equipe:', error);
       toast.error('Erro ao atualizar membro da equipe');

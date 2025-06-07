@@ -18,30 +18,38 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/lib/supabase";
+
+// Dummy team members for demonstration
+const teamMembers = [
+  { id: "user1", name: "Carlos Silva", avatar: "/avatar-placeholder.jpg" },
+  { id: "user2", name: "Ana Oliveira", avatar: "/placeholder.svg" },
+  { id: "user3", name: "Miguel Santos", avatar: "/placeholder.svg" },
+  { id: "user4", name: "Juliana Costa", avatar: "/placeholder.svg" },
+];
 
 interface NewMeetingDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onMeetingCreated?: () => void;
 }
 
-const NewMeetingDialog = ({ open, onOpenChange, onMeetingCreated }: NewMeetingDialogProps) => {
+const NewMeetingDialog = ({ open, onOpenChange }: NewMeetingDialogProps) => {
   const [title, setTitle] = useState("");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
+  const [duration, setDuration] = useState("60");
   const [description, setDescription] = useState("");
-  const [participants, setParticipants] = useState("1");
-  const [loading, setLoading] = useState(false);
-  
+  const [participants, setParticipants] = useState<string[]>([]);
+  const [responsible, setResponsible] = useState("");
+  const [isCurrentUserResponsible, setIsCurrentUserResponsible] = useState(false);
   const { toast } = useToast();
-  const { company } = useAuth();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Validation
     if (!title || !date || !time) {
       toast({
         title: "Campos obrigatórios",
@@ -51,56 +59,46 @@ const NewMeetingDialog = ({ open, onOpenChange, onMeetingCreated }: NewMeetingDi
       return;
     }
 
-    if (!company?.id) {
-      toast({
-        title: "Erro",
-        description: "Empresa não encontrada.",
-        variant: "destructive"
-      });
-      return;
-    }
+    // Determine responsible person
+    const finalResponsible = isCurrentUserResponsible ? "user1" : responsible;
 
-    setLoading(true);
+    // Create meeting object
+    const meeting = {
+      title,
+      date,
+      time,
+      duration: `${duration} min`,
+      description,
+      participants: participants.map(id => {
+        const member = teamMembers.find(m => m.id === id);
+        return { name: member?.name || "", avatar: member?.avatar || "" };
+      }),
+      responsible: finalResponsible ? 
+        teamMembers.find(m => m.id === finalResponsible) : 
+        { id: "user1", name: "Carlos Silva", avatar: "/avatar-placeholder.jpg" }
+    };
     
-    try {
-      const { error } = await supabase
-        .from('meetings')
-        .insert({
-          title,
-          date,
-          time,
-          description,
-          participants: parseInt(participants),
-          company_id: company.id,
-          status: 'scheduled'
-        });
-
-      if (error) throw error;
-      
-      toast({
-        title: "Reunião agendada",
-        description: `${title} foi agendada para ${new Date(date).toLocaleDateString('pt-BR')} às ${time}.`
-      });
-      
-      onOpenChange(false);
-      onMeetingCreated?.();
-      
-      // Reset form fields
-      setTitle("");
-      setDate("");
-      setTime("");
-      setDescription("");
-      setParticipants("1");
-    } catch (error) {
-      console.error('Erro ao criar reunião:', error);
-      toast({
-        title: "Erro",
-        description: "Erro ao agendar reunião.",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
+    // Log the new meeting (would be saved to a database in a real app)
+    console.log("New meeting created:", meeting);
+    
+    // Show success toast
+    toast({
+      title: "Reunião agendada",
+      description: `${title} foi agendada para ${date} às ${time}.`
+    });
+    
+    // Close dialog and reset form
+    onOpenChange(false);
+    
+    // Reset form fields
+    setTitle("");
+    setDate("");
+    setTime("");
+    setDuration("60");
+    setDescription("");
+    setParticipants([]);
+    setResponsible("");
+    setIsCurrentUserResponsible(false);
   };
 
   return (
@@ -144,17 +142,17 @@ const NewMeetingDialog = ({ open, onOpenChange, onMeetingCreated }: NewMeetingDi
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="participants">Número de Participantes</Label>
-            <Select value={participants} onValueChange={setParticipants}>
+            <Label htmlFor="duration">Duração (minutos)</Label>
+            <Select value={duration} onValueChange={setDuration}>
               <SelectTrigger>
-                <SelectValue placeholder="Selecionar quantidade" />
+                <SelectValue placeholder="Selecionar duração" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="1">1 pessoa</SelectItem>
-                <SelectItem value="2">2 pessoas</SelectItem>
-                <SelectItem value="3">3 pessoas</SelectItem>
-                <SelectItem value="4">4 pessoas</SelectItem>
-                <SelectItem value="5">5+ pessoas</SelectItem>
+                <SelectItem value="15">15 minutos</SelectItem>
+                <SelectItem value="30">30 minutos</SelectItem>
+                <SelectItem value="60">1 hora</SelectItem>
+                <SelectItem value="90">1 hora e 30 minutos</SelectItem>
+                <SelectItem value="120">2 horas</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -169,14 +167,94 @@ const NewMeetingDialog = ({ open, onOpenChange, onMeetingCreated }: NewMeetingDi
               rows={3}
             />
           </div>
+
+          <div className="space-y-2">
+            <Label>Responsável *</Label>
+            <div className="flex items-center gap-2 mb-2">
+              <Switch
+                checked={isCurrentUserResponsible}
+                onCheckedChange={setIsCurrentUserResponsible}
+                id="self-responsible"
+              />
+              <Label htmlFor="self-responsible" className="cursor-pointer">
+                Eu sou o responsável
+              </Label>
+            </div>
+            
+            {!isCurrentUserResponsible && (
+              <Select value={responsible} onValueChange={setResponsible} disabled={isCurrentUserResponsible}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecionar responsável" />
+                </SelectTrigger>
+                <SelectContent>
+                  {teamMembers.map((member) => (
+                    <SelectItem key={member.id} value={member.id}>
+                      <div className="flex items-center gap-2">
+                        <Avatar className="h-6 w-6">
+                          <AvatarImage src={member.avatar} alt={member.name} />
+                          <AvatarFallback>{member.name.substring(0, 2)}</AvatarFallback>
+                        </Avatar>
+                        <span>{member.name}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+          
+          <div className="space-y-2">
+            <Label>Participantes</Label>
+            <Select>
+              <SelectTrigger>
+                <SelectValue placeholder="Adicionar participantes" />
+              </SelectTrigger>
+              <SelectContent>
+                {teamMembers.map((member) => (
+                  <SelectItem key={member.id} value={member.id}>
+                    <div className="flex items-center gap-2">
+                      <Avatar className="h-6 w-6">
+                        <AvatarImage src={member.avatar} alt={member.name} />
+                        <AvatarFallback>{member.name.substring(0, 2)}</AvatarFallback>
+                      </Avatar>
+                      <span>{member.name}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            
+            <div className="flex flex-wrap gap-2 mt-2">
+              {participants.map((participantId) => {
+                const participant = teamMembers.find(m => m.id === participantId);
+                return participant ? (
+                  <div
+                    key={participant.id}
+                    className="flex items-center gap-1 bg-secondary/30 px-2 py-1 rounded-md"
+                  >
+                    <Avatar className="h-5 w-5">
+                      <AvatarImage src={participant.avatar} alt={participant.name} />
+                      <AvatarFallback>{participant.name.substring(0, 2)}</AvatarFallback>
+                    </Avatar>
+                    <span className="text-xs">{participant.name}</span>
+                    <button
+                      type="button"
+                      onClick={() => setParticipants(participants.filter(id => id !== participant.id))}
+                      className="text-gray-500 hover:text-gray-700 ml-1"
+                    >
+                      &times;
+                    </button>
+                  </div>
+                ) : null;
+              })}
+            </div>
+          </div>
           
           <DialogFooter className="mt-6">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? "Agendando..." : "Agendar Reunião"}
-            </Button>
+            <Button type="submit">Agendar Reunião</Button>
           </DialogFooter>
         </form>
       </DialogContent>

@@ -1,231 +1,115 @@
-
-@tailwind base;
-@tailwind components;
 @tailwind utilities;
 
 @layer utilities {
-  /* Enhanced Animation Classes */
-  .animate-fade-in {
-    animation: fadeIn 0.3s ease-out forwards;
+  .animate-progress-bar {
+    animation: progress 2s linear infinite;
+    background: linear-gradient(
+      90deg,
+      hsl(var(--primary)) 0%,
+      hsl(var(--primary)/0.7) 50%,
+      hsl(var(--primary)) 100%
+    );
+    background-size: 200% 100%;
   }
-
-  .animate-fade-out {
-    animation: fadeOut 0.3s ease-out forwards;
-  }
-
-  .animate-scale-in {
-    animation: scaleIn 0.2s ease-out forwards;
-  }
-
-  .animate-scale-out {
-    animation: scaleOut 0.2s ease-out forwards;
-  }
-
-  .animate-slide-in-right {
-    animation: slideInRight 0.3s ease-out forwards;
-  }
-
-  .animate-slide-in-left {
-    animation: slideInLeft 0.3s ease-out forwards;
-  }
-
-  .animate-slide-in-up {
-    animation: slideInUp 0.3s ease-out forwards;
-  }
-
-  .animate-bounce-in {
-    animation: bounceIn 0.5s ease-out forwards;
-  }
-
-  .hover-scale {
-    transition: transform 0.2s ease-out;
-  }
-
-  .hover-scale:hover {
-    transform: scale(1.02);
-  }
-
-  .hover-lift {
-    transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
-  }
-
-  .hover-lift:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-  }
-
-  .glass-effect {
-    backdrop-filter: blur(10px);
-    background: rgba(255, 255, 255, 0.8);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-  }
-
-  .dark .glass-effect {
-    background: rgba(0, 0, 0, 0.8);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+  .animate-progress-indeterminate {
+    animation: progress-indeterminate 2s infinite linear;
   }
 }
 
-/* Keyframes */
+@keyframes progress {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes progress-indeterminate {
+  0% {
+    transform: translateX(-100%);
+    width: 50%;
+  }
+  50% {
+    transform: translateX(0%);
+    width: 50%;
+  }
+  100% {
+    transform: translateX(100%);
+    width: 50%;
+  }
+}
+
+/* Adding smooth fade animations for elements */
+.fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(10px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 
-@keyframes fadeOut {
-  from {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  to {
-    opacity: 0;
-    transform: translateY(10px);
-  }
+.slide-up {
+  animation: slideUp 0.4s ease-out forwards;
 }
 
-@keyframes scaleIn {
+@keyframes slideUp {
   from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes scaleOut {
-  from {
-    opacity: 1;
-    transform: scale(1);
-  }
-  to {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-}
-
-@keyframes slideInRight {
-  from {
-    opacity: 0;
-    transform: translateX(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes slideInLeft {
-  from {
-    opacity: 0;
-    transform: translateX(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes slideInUp {
-  from {
-    opacity: 0;
     transform: translateY(20px);
+    opacity: 0;
   }
   to {
-    opacity: 1;
     transform: translateY(0);
-  }
-}
-
-@keyframes bounceIn {
-  0% {
-    opacity: 0;
-    transform: scale(0.3);
-  }
-  50% {
     opacity: 1;
-    transform: scale(1.05);
-  }
-  70% {
-    transform: scale(0.95);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
   }
 }
 
-/* Button and Interactive Elements */
-.btn-primary {
-  @apply bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-200 hover-scale;
+/* Add drag and drop animation */
+.dragging {
+  opacity: 0.5;
+  transform: scale(1.05);
+  z-index: 999;
 }
 
-.btn-secondary {
-  @apply bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-all duration-200 hover-scale;
+.drop-target {
+  background-color: rgba(var(--primary-rgb), 0.1);
+  border: 2px dashed hsl(var(--primary));
 }
 
-/* Card Animations */
-.card-hover {
-  @apply transition-all duration-200 hover:shadow-lg hover-lift;
+/* Add collaborator cursor animation */
+@keyframes cursorBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
 }
 
-/* Loading States */
-.skeleton {
-  @apply animate-pulse bg-muted rounded;
+.cursor-blink {
+  animation: cursorBlink 1s infinite;
 }
 
-/* Smooth Scrolling */
-.smooth-scroll {
-  scroll-behavior: smooth;
+/* Add collaboration highlight animation */
+@keyframes highlightFade {
+  0% { background-color: rgba(var(--primary-rgb), 0.3); }
+  100% { background-color: transparent; }
 }
 
-/* Focus Styles */
-.focus-ring {
-  @apply focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200;
+.collaboration-highlight {
+  animation: highlightFade 2s ease-out forwards;
 }
 
-/* Form Elements */
-.form-input {
-  @apply focus-ring transition-all duration-200;
-}
-
-/* Table Animations */
-.table-row {
-  @apply hover:bg-muted/50 transition-all duration-150;
-}
-
-/* Modal and Dialog Animations */
-.modal-overlay {
-  @apply animate-fade-in;
-}
-
-.modal-content {
-  @apply animate-scale-in;
-}
-
-/* Notification Animations */
-.notification-enter {
-  @apply animate-slide-in-right;
-}
-
-.notification-exit {
-  @apply animate-slide-out-right;
-}
-
-/* Responsive Animation Controls */
+/* Reduced animation for users who prefer reduced motion */
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+  .fade-in,
+  .slide-up,
+  .animate-progress-bar,
+  .animate-progress-indeterminate,
+  .dragging,
+  .cursor-blink,
+  .collaboration-highlight {
+    animation: none;
   }
 }
