@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { MessageCircle, Users, MessageSquare, X, Maximize2, Minimize2, PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -42,8 +43,7 @@ const UnifiedChatButton = ({ defaultOpen = false }: { defaultOpen?: boolean }) =
   const [loadingContacts, setLoadingContacts] = useState(false);
   const [loadingMessages, setLoadingMessages] = useState(false);
   
-  // Fix: remove useToastHook which doesn't exist
-  const { toast: triggerToast } = useToast(); // Renamed to avoid conflict with sonner's toast
+  const { useToastHook } = useToast(); // Rename to avoid confusion with sonner's toast
   const isMobile = useIsMobile();
   const { user, company, profile } = useAuth();
   

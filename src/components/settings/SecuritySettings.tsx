@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,7 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Eye, EyeOff, Save, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { settingsService } from "@/services/settings";
+import { settingsService } from "@/services/settingsService";
 
 const SecuritySettings = () => {
   const [currentPassword, setCurrentPassword] = useState("");

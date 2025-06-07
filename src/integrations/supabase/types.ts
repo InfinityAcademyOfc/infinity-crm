@@ -9,41 +9,6 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      automation_rules: {
-        Row: {
-          company_id: string
-          created_at: string | null
-          id: string
-          rules: Json | null
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          company_id: string
-          created_at?: string | null
-          id?: string
-          rules?: Json | null
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          company_id?: string
-          created_at?: string | null
-          id?: string
-          rules?: Json | null
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "automation_rules_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       chatbots: {
         Row: {
           active: boolean | null
@@ -501,42 +466,6 @@ export type Database = {
           },
         ]
       }
-      notification_preferences: {
-        Row: {
-          client_activities: boolean | null
-          created_at: string | null
-          email_alerts: boolean | null
-          id: string
-          meeting_reminders: boolean | null
-          new_leads: boolean | null
-          payments: boolean | null
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          client_activities?: boolean | null
-          created_at?: string | null
-          email_alerts?: boolean | null
-          id?: string
-          meeting_reminders?: boolean | null
-          new_leads?: boolean | null
-          payments?: boolean | null
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          client_activities?: boolean | null
-          created_at?: string | null
-          email_alerts?: boolean | null
-          id?: string
-          meeting_reminders?: boolean | null
-          new_leads?: boolean | null
-          payments?: boolean | null
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
       notifications: {
         Row: {
           company_id: string | null
@@ -912,7 +841,6 @@ export type Database = {
         Row: {
           company_id: string | null
           created_at: string | null
-          dashboard_config: Json | null
           id: string
           language: string | null
           notifications_enabled: boolean | null
@@ -923,7 +851,6 @@ export type Database = {
         Insert: {
           company_id?: string | null
           created_at?: string | null
-          dashboard_config?: Json | null
           id?: string
           language?: string | null
           notifications_enabled?: boolean | null
@@ -934,7 +861,6 @@ export type Database = {
         Update: {
           company_id?: string | null
           created_at?: string | null
-          dashboard_config?: Json | null
           id?: string
           language?: string | null
           notifications_enabled?: boolean | null
