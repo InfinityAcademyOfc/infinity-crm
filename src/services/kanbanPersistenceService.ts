@@ -32,6 +32,14 @@ export const kanbanPersistenceService = {
     }
 
     try {
+      // Use local storage for persistence until kanban_states table is created in Supabase
+      localStorage.setItem(
+        `kanban_state_${userId}_${companyId}_${kanbanType}`, 
+        JSON.stringify(columns)
+      );
+      
+      // This code is commented out until the kanban_states table exists
+      /*
       // Verificar se já existe um estado salvo
       const { data: existingState } = await supabase
         .from('kanban_states')
@@ -63,19 +71,10 @@ export const kanbanPersistenceService = {
             updated_at: new Date().toISOString()
           });
       }
-      
-      // Mantém uma cópia no localStorage para acesso offline
-      localStorage.setItem(
-        `kanban_state_${userId}_${companyId}_${kanbanType}`, 
-        JSON.stringify(columns)
-      );
+      */
     } catch (error) {
       console.error('Erro ao salvar estado do kanban:', error);
-      // Fallback para localStorage em caso de erro de conexão
-      localStorage.setItem(
-        `kanban_state_${userId}_${companyId}_${kanbanType}`, 
-        JSON.stringify(columns)
-      );
+      throw error;
     }
   },
 
@@ -93,6 +92,12 @@ export const kanbanPersistenceService = {
     }
 
     try {
+      // Use local storage until kanban_states table is created in Supabase
+      const savedState = localStorage.getItem(`kanban_state_${userId}_${companyId}_${kanbanType}`);
+      return savedState ? JSON.parse(savedState) : null;
+      
+      // This code is commented out until the kanban_states table exists
+      /*
       const { data, error } = await supabase
         .from('kanban_states')
         .select('state')
@@ -105,19 +110,11 @@ export const kanbanPersistenceService = {
         throw error;
       }
 
-      // Se encontrou dados no Supabase, retorna
-      if (data?.state) {
-        return data.state as KanbanColumnItem[];
-      }
-      
-      // Fallback para localStorage (migração ou modo offline)
-      const savedState = localStorage.getItem(`kanban_state_${userId}_${companyId}_${kanbanType}`);
-      return savedState ? JSON.parse(savedState) : null;
+      return data?.state || null;
+      */
     } catch (error) {
       console.error('Erro ao carregar estado do kanban:', error);
-      // Fallback para localStorage em caso de erro
-      const savedState = localStorage.getItem(`kanban_state_${userId}_${companyId}_${kanbanType}`);
-      return savedState ? JSON.parse(savedState) : null;
+      return null;
     }
   },
 

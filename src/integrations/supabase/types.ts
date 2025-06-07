@@ -256,44 +256,6 @@ export type Database = {
           },
         ]
       }
-      kanban_states: {
-        Row: {
-          company_id: string
-          created_at: string | null
-          id: string
-          kanban_type: string
-          state: Json
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          company_id: string
-          created_at?: string | null
-          id?: string
-          kanban_type: string
-          state: Json
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          company_id?: string
-          created_at?: string | null
-          id?: string
-          kanban_type?: string
-          state?: Json
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "kanban_states_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       leads: {
         Row: {
           assigned_to: string | null
@@ -459,53 +421,6 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "meetings_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      notifications: {
-        Row: {
-          company_id: string | null
-          created_at: string | null
-          expires_at: string | null
-          id: string
-          link: string | null
-          message: string
-          read: boolean | null
-          title: string
-          type: string | null
-          user_id: string
-        }
-        Insert: {
-          company_id?: string | null
-          created_at?: string | null
-          expires_at?: string | null
-          id?: string
-          link?: string | null
-          message: string
-          read?: boolean | null
-          title: string
-          type?: string | null
-          user_id: string
-        }
-        Update: {
-          company_id?: string | null
-          created_at?: string | null
-          expires_at?: string | null
-          id?: string
-          link?: string | null
-          message?: string
-          read?: boolean | null
-          title?: string
-          type?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "notifications_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
@@ -830,47 +745,6 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "tasks_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      user_settings: {
-        Row: {
-          company_id: string | null
-          created_at: string | null
-          id: string
-          language: string | null
-          notifications_enabled: boolean | null
-          theme: string | null
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          company_id?: string | null
-          created_at?: string | null
-          id?: string
-          language?: string | null
-          notifications_enabled?: boolean | null
-          theme?: string | null
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          company_id?: string | null
-          created_at?: string | null
-          id?: string
-          language?: string | null
-          notifications_enabled?: boolean | null
-          theme?: string | null
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_settings_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"

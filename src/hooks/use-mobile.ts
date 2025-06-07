@@ -1,28 +1,26 @@
 
 import { useState, useEffect } from 'react';
 
-/**
- * Hook para verificar se o dispositivo está em modo mobile
- * @param breakpoint Tamanho da tela em pixels para considerar como mobile (padrão: 768)
- */
-export function useIsMobile(breakpoint = 768): boolean {
-  const [isMobile, setIsMobile] = useState(false);
-  
+const MOBILE_BREAKPOINT = 768;
+
+export const useIsMobile = () => {
+  const [isMobile, setIsMobile] = useState<boolean>(
+    typeof window !== 'undefined' ? window.innerWidth < MOBILE_BREAKPOINT : false
+  );
+
   useEffect(() => {
-    // Inicialização
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < breakpoint);
+    if (typeof window === 'undefined') return;
+    
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
     };
+
+    window.addEventListener('resize', handleResize);
+    // Initial check
+    handleResize();
     
-    // Verificar inicialmente
-    checkMobile();
-    
-    // Adicionar listener para redimensionamento
-    window.addEventListener('resize', checkMobile);
-    
-    // Cleanup
-    return () => window.removeEventListener('resize', checkMobile);
-  }, [breakpoint]);
-  
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   return isMobile;
-}
+};

@@ -25,7 +25,6 @@ interface WhatsAppContextType {
   loadingSessions: boolean;
   refreshSessions: () => Promise<void>;
   createNewSession: () => string;
-  isApiAvailable: boolean;
 }
 
 const WhatsAppContext = createContext<WhatsAppContextType>({} as WhatsAppContextType);
@@ -40,8 +39,7 @@ export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
     sessions,
     loadingSessions,
     createNewSession,
-    setCurrentSession,
-    isApiAvailable
+    setCurrentSession
   } = useWhatsAppSessions();
   
   const [selectedContact, setSelectedContact] = useState<WhatsAppContact | null>(null);
@@ -49,7 +47,7 @@ export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
   const [messages, setMessages] = useState<WhatsAppMessage[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
   
-  // URL da API
+  // URL da API mais confiável
   const API_URL = import.meta.env.VITE_API_URL || "";
   const isConnected = connectionStatus === "connected" && !!sessionId;
   
@@ -82,7 +80,6 @@ export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ number: to, message: body }),
-        signal: AbortSignal.timeout(10000) // 10 segundo timeout
       });
       
       if (!response.ok) {
@@ -107,47 +104,16 @@ export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
     
     try {
       setLoadingMessages(true);
-      const messagesResponse = await fetch(`${API_URL}/sessions/${sessionId}/messages/${contactId}`, {
-        signal: AbortSignal.timeout(8000) // 8 segundo timeout
-      });
+      const messagesResponse = await fetch(`${API_URL}/sessions/${sessionId}/messages/${contactId}`);
       
       if (messagesResponse.ok) {
         const messagesData = await messagesResponse.json();
         setMessages(messagesData);
       } else {
         console.warn("Erro ao buscar mensagens:", messagesResponse.status);
-        
-        // Se a API retornar 404, use dados locais (fallback)
-        if (messagesResponse.status === 404) {
-          // Simular mensagens locais para uma melhor experiência do usuário
-          const mockMessages = [
-            {
-              id: `local-${Date.now()}-1`,
-              session_id: sessionId,
-              number: contactId,
-              message: "👋 Bem-vindo ao chat do WhatsApp",
-              from_me: false,
-              created_at: new Date().toISOString()
-            }
-          ];
-          setMessages(mockMessages);
-        }
       }
     } catch (error) {
       console.warn("Erro ao buscar mensagens:", error);
-      
-      // Fallback para dados locais em caso de erro de rede
-      const mockMessages = [
-        {
-          id: `local-${Date.now()}-1`,
-          session_id: sessionId,
-          number: contactId,
-          message: "👋 Bem-vindo ao chat do WhatsApp",
-          from_me: false,
-          created_at: new Date().toISOString()
-        }
-      ];
-      setMessages(mockMessages);
     } finally {
       setLoadingMessages(false);
     }
@@ -158,21 +124,10 @@ export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
     
     try {
       // Buscar contatos
-      const contactsResponse = await fetch(`${API_URL}/sessions/${sessionId}/contacts`, {
-        signal: AbortSignal.timeout(8000)
-      });
-      
+      const contactsResponse = await fetch(`${API_URL}/sessions/${sessionId}/contacts`);
       if (contactsResponse.ok) {
         const contactsData = await contactsResponse.json();
         setContacts(contactsData);
-      } else if (contactsResponse.status === 404) {
-        // Fallback para dados simulados
-        const mockContacts = [
-          { id: "1", name: "João Silva", phone: "+5511999998888" },
-          { id: "2", name: "Maria Oliveira", phone: "+5511987654321" },
-          { id: "3", name: "Suporte Infinity CRM", phone: "+5511912345678" }
-        ];
-        setContacts(mockContacts);
       }
       
       // Buscar mensagens se um contato estiver selecionado
@@ -181,14 +136,6 @@ export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (error) {
       console.warn("Erro ao atualizar dados do WhatsApp:", error);
-      
-      // Fallback para dados simulados em caso de erro
-      const mockContacts = [
-        { id: "1", name: "João Silva", phone: "+5511999998888" },
-        { id: "2", name: "Maria Oliveira", phone: "+5511987654321" },
-        { id: "3", name: "Suporte Infinity CRM", phone: "+5511912345678" }
-      ];
-      setContacts(mockContacts);
     }
   }, [sessionId, selectedContact, fetchMessages, isConnected, API_URL]);
 
@@ -254,8 +201,7 @@ export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
         sessions,
         loadingSessions,
         refreshSessions,
-        createNewSession,
-        isApiAvailable
+        createNewSession
       }}
     >
       {children}

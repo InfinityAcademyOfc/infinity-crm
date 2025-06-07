@@ -1,35 +1,29 @@
-
 // Basic WhatsApp types
 export type WhatsAppConnectionStatus = 'connected' | 'disconnected' | 'qr' | 'error' | 'not_started' | 'loading';
 
-export interface WhatsAppSession {
+export type WhatsAppSession = {
   id: string;
   name?: string;
   status: string; // 'CONNECTED' | 'DISCONNECTED' etc.
-}
+};
 
-export interface WhatsAppContact {
+export type WhatsAppContact = {
   id: string;
   name: string;
   phone: string;
-  number?: string; // Para compatibilidade
-  tags?: string[];
-  profile_id?: string;
-  created_at?: string;
-}
+  number?: string; // For backward compatibility
+};
 
-export interface WhatsAppMessage {
+export type WhatsAppMessage = {
   id: string;
   session_id: string;
   number: string;
   message: string;
   from_me: boolean;
   created_at: string;
-  from?: string; // Para compatibilidade
-  to?: string;   // Para compatibilidade
-  media_url?: string; // Para mensagens com mídia
-  status?: 'sent' | 'delivered' | 'read' | 'failed';
-}
+  from?: string; // Added for compatibility
+  to?: string;   // Added for compatibility
+};
 
 // State properties interface
 export interface WhatsAppStateProps {
@@ -41,7 +35,6 @@ export interface WhatsAppStateProps {
   contacts: WhatsAppContact[];
   messages: WhatsAppMessage[];
   loadingMessages: boolean;
-  isApiAvailable: boolean;
 }
 
 // Action methods interface
@@ -51,7 +44,7 @@ export interface WhatsAppActionsProps {
   refreshSessions: () => Promise<void>;
   connectSession: (sessionId: string) => Promise<void>;
   disconnectSession: (sessionId: string) => Promise<void>;
-  sendMessage: (to: string, body: string, mediaUrl?: string) => Promise<void>;
+  sendMessage: (to: string, body: string) => Promise<void>;
   createNewSession: () => string;
 }
 
