@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { profileService } from '@/services/profileService';
-import { CompanySettings } from '@/types/profile';
+import { CompanySettings, CompanySettingsData } from '@/types/profile';
 
 export const useCompanySettings = () => {
   const { company } = useAuth();
@@ -27,7 +27,7 @@ export const useCompanySettings = () => {
     }
   };
 
-  const updateSettings = async (newSettings: any) => {
+  const updateSettings = async (newSettings: CompanySettingsData) => {
     if (!company?.id) return null;
 
     setLoading(true);

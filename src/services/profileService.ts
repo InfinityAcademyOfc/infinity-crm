@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { Profile, CompanyProfile, CompanySettings } from "@/types/profile";
+import { Profile, CompanyProfile, CompanySettings, CompanySettingsData } from "@/types/profile";
 import { toast } from "sonner";
 
 export const profileService = {
@@ -128,14 +128,21 @@ export const profileService = {
         .maybeSingle();
 
       if (error) throw error;
-      return data;
+      
+      if (!data) return null;
+      
+      // Type cast the settings from Json to CompanySettingsData
+      return {
+        ...data,
+        settings: data.settings as CompanySettingsData
+      } as CompanySettings;
     } catch (error) {
       console.error("Erro ao buscar configurações da empresa:", error);
       return null;
     }
   },
 
-  async updateCompanySettings(companyId: string, settings: any): Promise<CompanySettings | null> {
+  async updateCompanySettings(companyId: string, settings: CompanySettingsData): Promise<CompanySettings | null> {
     try {
       const { data, error } = await supabase
         .from('company_settings')
@@ -147,8 +154,14 @@ export const profileService = {
         .single();
 
       if (error) throw error;
+      
       toast.success("Configurações atualizadas com sucesso");
-      return data;
+      
+      // Type cast the settings from Json to CompanySettingsData
+      return {
+        ...data,
+        settings: data.settings as CompanySettingsData
+      } as CompanySettings;
     } catch (error) {
       console.error("Erro ao atualizar configurações:", error);
       toast.error("Erro ao atualizar configurações");

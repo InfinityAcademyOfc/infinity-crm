@@ -28,28 +28,30 @@ export interface CompanyProfile {
   updated_at: string;
 }
 
+export interface CompanySettingsData {
+  company_name?: string;
+  company_description?: string;
+  business_type?: string;
+  contact_email?: string;
+  contact_phone?: string;
+  address?: {
+    street?: string;
+    city?: string;
+    state?: string;
+    zip?: string;
+    country?: string;
+  };
+  preferences?: {
+    timezone?: string;
+    currency?: string;
+    language?: string;
+  };
+}
+
 export interface CompanySettings {
   id: string;
   company_id: string;
-  settings: {
-    company_name?: string;
-    company_description?: string;
-    business_type?: string;
-    contact_email?: string;
-    contact_phone?: string;
-    address?: {
-      street?: string;
-      city?: string;
-      state?: string;
-      zip?: string;
-      country?: string;
-    };
-    preferences?: {
-      timezone?: string;
-      currency?: string;
-      language?: string;
-    };
-  };
+  settings: CompanySettingsData;
   created_at: string;
   updated_at: string;
 }
