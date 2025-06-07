@@ -1,9 +1,7 @@
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import QRCodeScanner from "./QRCodeScanner";
 import { useEffect, useRef } from "react";
 import { useQRCode } from "@/hooks/useQRCode";
-import { Badge } from "@/components/ui/badge";
 
 interface QRCodeModalProps {
   open: boolean;
@@ -17,45 +15,22 @@ const QRCodeModal = ({ open, onOpenChange, sessionId, onLogin }: QRCodeModalProp
   const hasLoggedIn = useRef(false);
 
   useEffect(() => {
-    if (status === "connected" && !hasLoggedIn.current && open) {
+    if (status === "connected" && !hasLoggedIn.current) {
       hasLoggedIn.current = true;
       onLogin?.();
 
       setTimeout(() => {
         onOpenChange(false);
         hasLoggedIn.current = false;
-      }, 1500); // Tempo suficiente para ver a mensagem de sucesso
+      }, 500); // leve atraso para garantir atualização de status
     }
-  }, [status, onLogin, onOpenChange, open]);
-
-  // Obter texto e cor do status
-  const getStatusBadge = () => {
-    switch (status) {
-      case "connected":
-        return <Badge variant="default" className="bg-green-500">Conectado</Badge>;
-      case "qr":
-        return <Badge variant="outline" className="text-blue-500 border-blue-200">QR Code</Badge>;
-      case "disconnected":
-        return <Badge variant="outline" className="text-amber-500 border-amber-200">Desconectado</Badge>;
-      case "loading":
-        return <Badge variant="outline" className="text-blue-500 border-blue-200">Carregando</Badge>;
-      default:
-        return <Badge variant="outline">Iniciando</Badge>;
-    }
-  };
+  }, [status, onLogin, onOpenChange]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <div className="flex justify-between items-center">
-            <DialogTitle>
-              {sessionId.length > 15
-                ? `Conectar: ${sessionId.substring(0, 15)}...`
-                : `Conectar: ${sessionId}`}
-            </DialogTitle>
-            {getStatusBadge()}
-          </div>
+          <DialogTitle>Conectar número: {sessionId}</DialogTitle>
         </DialogHeader>
         <QRCodeScanner sessionId={sessionId} onLogin={onLogin} />
       </DialogContent>

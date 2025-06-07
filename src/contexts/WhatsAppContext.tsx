@@ -1,5 +1,5 @@
 
-import React, { createContext, useState, useContext, useEffect, useCallback } from "react";
+import React, { createContext, useState, useContext, useEffect } from "react";
 import { toast } from "sonner";
 import { WhatsAppContact, WhatsAppMessage, WhatsAppConnectionStatus, WhatsAppSession } from "@/types/whatsapp";
 import { useWhatsAppSessions } from "@/hooks/useWhatsAppSessions";
@@ -18,7 +18,7 @@ interface WhatsAppContextType {
   refreshData: () => Promise<void>;
   fetchMessages: (contactId: string, sessionId: string) => Promise<void>;
   
-  // Propriedades para WhatsAppIntegration.tsx
+  // Adding the missing properties for WhatsAppIntegration.tsx
   currentSession: string | null;
   setCurrentSession: (sessionId: string | null) => void;
   sessions: WhatsAppSession[];
@@ -38,8 +38,7 @@ export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
     refreshSessions,
     sessions,
     loadingSessions,
-    createNewSession,
-    setCurrentSession
+    createNewSession
   } = useWhatsAppSessions();
   
   const [selectedContact, setSelectedContact] = useState<WhatsAppContact | null>(null);
@@ -47,21 +46,17 @@ export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
   const [messages, setMessages] = useState<WhatsAppMessage[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
   
-  // URL da API mais confiável
-  const API_URL = import.meta.env.VITE_API_URL || "";
-  const isConnected = connectionStatus === "connected" && !!sessionId;
-  
-  const sendMessage = useCallback(async (to: string, body: string) => {
-    if (!sessionId || !isConnected) {
+  const sendMessage = async (to: string, body: string) => {
+    if (!sessionId) {
       toast.error("Nenhuma sessão WhatsApp conectada");
       return;
     }
     
     try {
-      // ID temporário para a mensagem
+      // Create a temporary message ID
       const tempId = `temp-${Date.now()}`;
       
-      // Adiciona mensagem à UI imediatamente para melhor UX
+      // Add message to UI immediately for better UX
       const tempMessage: WhatsAppMessage = {
         id: tempId,
         session_id: sessionId,
@@ -73,7 +68,8 @@ export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
       
       setMessages(prev => [...prev, tempMessage]);
       
-      // Envia através da API
+      // Send through API
+      const API_URL = import.meta.env.VITE_API_URL || "";
       const response = await fetch(`${API_URL}/sessions/${sessionId}/send`, {
         method: 'POST',
         headers: {
@@ -83,101 +79,89 @@ export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
       });
       
       if (!response.ok) {
-        throw new Error('Falha ao enviar mensagem');
+        throw new Error('Failed to send message');
       }
       
-      // Aguarda um pouco e busca mensagens atualizadas
-      setTimeout(() => {
-        if (selectedContact) {
-          fetchMessages(selectedContact.phone, sessionId);
-        }
-      }, 1000);
+      // Fetch updated messages (or add real message ID if returned by API)
+      // This is simplified - you might want to update the temp message with real ID
+      refreshData();
       
     } catch (error) {
-      console.warn('Erro ao enviar mensagem:', error);
+      console.error('Error sending message:', error);
       toast.error("Falha ao enviar mensagem");
     }
-  }, [sessionId, isConnected, selectedContact, API_URL]);
+  };
   
-  const fetchMessages = useCallback(async (contactId: string, sessionId: string) => {
-    if (!sessionId || !contactId || !API_URL || !isConnected) return;
+  const fetchMessages = async (contactId: string, sessionId: string) => {
+    if (!sessionId || !contactId) return;
     
     try {
       setLoadingMessages(true);
+      const API_URL = import.meta.env.VITE_API_URL || "";
       const messagesResponse = await fetch(`${API_URL}/sessions/${sessionId}/messages/${contactId}`);
-      
       if (messagesResponse.ok) {
         const messagesData = await messagesResponse.json();
         setMessages(messagesData);
-      } else {
-        console.warn("Erro ao buscar mensagens:", messagesResponse.status);
       }
     } catch (error) {
-      console.warn("Erro ao buscar mensagens:", error);
+      console.error("Error fetching messages:", error);
+      // Don't show error toast for better UX when network issues occur
     } finally {
       setLoadingMessages(false);
     }
-  }, [isConnected, API_URL]);
+  };
   
-  const refreshData = useCallback(async () => {
-    if (!sessionId || !API_URL || !isConnected) return;
+  const refreshData = async () => {
+    if (!sessionId) return;
     
     try {
-      // Buscar contatos
+      // Simplified API calls - in a real app, you'd implement proper API service
+      const API_URL = import.meta.env.VITE_API_URL || "";
+      
+      // Fetch contacts
       const contactsResponse = await fetch(`${API_URL}/sessions/${sessionId}/contacts`);
       if (contactsResponse.ok) {
         const contactsData = await contactsResponse.json();
         setContacts(contactsData);
       }
       
-      // Buscar mensagens se um contato estiver selecionado
+      // Fetch messages if a contact is selected
       if (selectedContact) {
         await fetchMessages(selectedContact.phone, sessionId);
       }
     } catch (error) {
-      console.warn("Erro ao atualizar dados do WhatsApp:", error);
+      console.error("Error refreshing WhatsApp data:", error);
+      // Don't show toast here to avoid spamming with errors
     }
-  }, [sessionId, selectedContact, fetchMessages, isConnected, API_URL]);
+  };
 
-  const connect = useCallback(async (id: string) => {
-    if (!API_URL) return;
-    
+  const connect = async (id: string) => {
     try {
       await connectSession(id);
+      toast.success("Sessão conectada com sucesso");
     } catch (error) {
-      console.warn("Erro ao conectar sessão:", error);
+      toast.error("Erro ao conectar sessão");
     }
-  }, [connectSession, API_URL]);
+  };
 
-  const disconnect = useCallback(async () => {
-    if (!sessionId || !API_URL) return;
-    
+  const disconnect = async () => {
+    if (!sessionId) return;
     try {
       await disconnectSession(sessionId);
       setSelectedContact(null);
       setMessages([]);
       toast.success("Sessão desconectada com sucesso");
     } catch (error) {
-      console.warn("Erro ao desconectar sessão:", error);
+      toast.error("Erro ao desconectar sessão");
     }
-  }, [sessionId, disconnectSession, API_URL]);
+  };
 
-  // Atualiza dados periodicamente quando conectado
-  useEffect(() => {
-    if (isConnected) {
-      refreshData();
-      const interval = setInterval(refreshData, 15000);
-      return () => clearInterval(interval);
-    }
-  }, [isConnected, refreshData]);
-
-  // Limpa contato selecionado quando a sessão muda ou desconecta
-  useEffect(() => {
-    if (!isConnected) {
-      setSelectedContact(null);
-      setMessages([]);
-    }
-  }, [isConnected, sessionId]);
+  // Map sessionId to currentSession for compatibility
+  const currentSession = sessionId;
+  const setCurrentSession = (sid: string | null) => {
+    // Any additional logic can be added here if needed
+    localStorage.setItem("wa-session-id", sid || "");
+  };
 
   return (
     <WhatsAppContext.Provider
@@ -195,8 +179,8 @@ export function WhatsAppProvider({ children }: { children: React.ReactNode }) {
         refreshData,
         fetchMessages,
         
-        // Propriedades para WhatsAppIntegration.tsx
-        currentSession: sessionId,
+        // Added properties for WhatsAppIntegration.tsx
+        currentSession,
         setCurrentSession,
         sessions,
         loadingSessions,

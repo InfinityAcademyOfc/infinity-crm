@@ -27,7 +27,7 @@ const WhatsAppSessionCard = ({
     <Card key={session.id} className={isActive ? "border-primary/50" : ""}>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <div className="font-medium">{session.name || `Sessão: ${session.id.substring(0, 8)}...`}</div>
+          <div className="font-medium">{session.name || `Sessão: ${session.id}`}</div>
           <Badge variant={isConnected ? "default" : "outline"}>
             {isConnected ? "Conectado" : "Desconectado"}
           </Badge>
@@ -62,9 +62,9 @@ const WhatsAppIntegrationPage = () => {
     setCurrentSession,
     sessions,
     loadingSessions,
+    connectionStatus,
     refreshSessions,
-    createNewSession,
-    connectionStatus
+    createNewSession
   } = useWhatsApp();
 
   const [showModal, setShowModal] = useState(false);
@@ -89,10 +89,6 @@ const WhatsAppIntegrationPage = () => {
     }
   }, [sessions, currentSession, setCurrentSession]);
 
-  // Encontrar dados da sessão atual
-  const currentSessionData = sessions?.find((s) => s.id === currentSession);
-  const isCurrentSessionConnected = currentSessionData?.status?.toLowerCase() === "connected";
-
   return (
     <div className="p-6 space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-center gap-4">
@@ -109,13 +105,8 @@ const WhatsAppIntegrationPage = () => {
             size="sm"
             onClick={refreshSessions}
             className="flex items-center gap-1"
-            disabled={loadingSessions}
           >
-            {loadingSessions ? (
-              <Loader size={14} className="animate-spin" />
-            ) : (
-              <RefreshCw size={14} />
-            )}
+            <RefreshCw size={14} />
             Atualizar
           </Button>
 
@@ -131,7 +122,7 @@ const WhatsAppIntegrationPage = () => {
         </div>
       </div>
 
-      {loadingSessions && sessions.length === 0 ? (
+      {loadingSessions ? (
         <div className="flex items-center gap-2 text-muted-foreground">
           <Loader className="animate-spin" size={20} />
           Carregando sessões...
@@ -165,7 +156,7 @@ const WhatsAppIntegrationPage = () => {
         </div>
       )}
 
-      {isCurrentSessionConnected && (
+      {currentSession && (
         <div className="border rounded-lg h-[calc(100vh-15rem)]">
           <ScrollArea className="h-full rounded-md">
             <WhatsAppMenuLayout />
