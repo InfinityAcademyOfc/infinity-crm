@@ -148,7 +148,7 @@ export const profileService = {
         .from('company_settings')
         .upsert({
           company_id: companyId,
-          settings: settings
+          settings: settings as any // Cast to Json type for Supabase
         })
         .select()
         .single();
