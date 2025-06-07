@@ -25,7 +25,6 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   refreshUserData: () => Promise<void>;
   isCompanyAccount: boolean;
-  isCompany: boolean; // Added this property to match usage
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -239,8 +238,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         signUp, 
         signOut,
         refreshUserData,
-        isCompanyAccount,
-        isCompany: isCompanyAccount // Added this property
+        isCompanyAccount
       }}
     >
       {children}
