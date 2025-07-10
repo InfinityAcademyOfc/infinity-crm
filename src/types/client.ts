@@ -16,4 +16,7 @@ export interface Client {
   created_at: string;
   updated_at: string;
   company?: string; // Legacy field, keeping for compatibility
+  // Analytics fields for UI components
+  nps?: number;
+  ltv?: number;
 }

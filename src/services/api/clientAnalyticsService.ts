@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Client } from "@/types/client";
 import { toast } from "sonner";
@@ -48,9 +49,9 @@ export const clientAnalyticsService = {
       if (error) throw error;
       return (data || []).map(item => ({
         ...item,
-        average_order_value: item.average_order_value || 0,
-        churn_probability: item.churn_probability || 0,
-        last_activity_date: item.last_activity_date || new Date().toISOString().split('T')[0]
+        average_order_value: (item as any).average_order_value || 0,
+        churn_probability: (item as any).churn_probability || 0,
+        last_activity_date: (item as any).last_activity_date || new Date().toISOString().split('T')[0]
       }));
     } catch (error) {
       console.error("Erro ao buscar LTV dos clientes:", error);
@@ -76,9 +77,9 @@ export const clientAnalyticsService = {
       toast.success("LTV do cliente atualizado com sucesso");
       return {
         ...result,
-        average_order_value: result.average_order_value || 0,
-        churn_probability: result.churn_probability || 0,
-        last_activity_date: result.last_activity_date || new Date().toISOString().split('T')[0]
+        average_order_value: (result as any).average_order_value || 0,
+        churn_probability: (result as any).churn_probability || 0,
+        last_activity_date: (result as any).last_activity_date || new Date().toISOString().split('T')[0]
       };
     } catch (error) {
       console.error("Erro ao atualizar LTV:", error);

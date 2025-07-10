@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,6 +16,12 @@ import { useClientAnalytics } from "@/hooks/useClientAnalytics";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Client } from "@/types/client";
+
+// Extended client interface for UI components
+interface ClientWithAnalytics extends Client {
+  nps: number;
+  ltv: number;
+}
 
 export const ClientManagementEnhanced = () => {
   const { user, companyProfile } = useAuth();
@@ -98,7 +103,24 @@ export const ClientManagementEnhanced = () => {
     }
   };
 
-  const filteredClients = clients.filter(client => 
+  // Transform clients with analytics data for UI components
+  const getClientsWithAnalytics = (): ClientWithAnalytics[] => {
+    return clients.map(client => {
+      const clientLTVData = clientLTV.find(ltv => ltv.client_id === client.id);
+      const clientNPSData = clientNPS.filter(nps => nps.client_id === client.id);
+      const avgNPS = clientNPSData.length > 0 
+        ? clientNPSData.reduce((sum, nps) => sum + nps.score, 0) / clientNPSData.length 
+        : 0;
+
+      return {
+        ...client,
+        nps: Math.round(avgNPS),
+        ltv: clientLTVData?.calculated_ltv || 0
+      };
+    });
+  };
+
+  const filteredClients = getClientsWithAnalytics().filter(client => 
     client.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
     client.contact?.toLowerCase().includes(searchQuery.toLowerCase()) || 
     client.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||

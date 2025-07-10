@@ -6,21 +6,10 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Phone, Mail, Calendar, MoreHorizontal, FileEdit, Trash2 } from "lucide-react";
-
-interface Client {
-  id: string;
-  name: string;
-  contact: string;
-  email: string;
-  phone: string;
-  status: string;
-  nps: number;
-  ltv: number;
-  nextMeeting?: string;
-}
+import { Client } from "@/types/client";
 
 interface ClientCardProps {
-  client: Client;
+  client: Client & { nps?: number; ltv?: number };
   onDeleteClient: (client: Client) => void;
 }
 
@@ -71,21 +60,19 @@ export const ClientCard: React.FC<ClientCardProps> = ({ client, onDeleteClient }
           <div className="text-muted-foreground">{client.email}</div>
           <div className="text-muted-foreground">{client.phone}</div>
         </div>
-        <div>
-          <div className="text-sm font-medium mb-1 flex justify-between">
-            <span>Satisfação (NPS)</span>
-            <span>{client.nps}/10</span>
+        {client.nps !== undefined && (
+          <div>
+            <div className="text-sm font-medium mb-1 flex justify-between">
+              <span>Satisfação (NPS)</span>
+              <span>{client.nps}/10</span>
+            </div>
+            <Progress value={client.nps * 10} className="h-1.5" />
           </div>
-          <Progress value={client.nps * 10} className="h-1.5" />
-        </div>
-        <div>
-          <div className="text-sm font-medium mb-1">Valor do Cliente (LTV)</div>
-          <div className="font-semibold">R$ {client.ltv.toLocaleString()}</div>
-        </div>
-        {client.nextMeeting && (
-          <div className="text-xs flex items-center text-muted-foreground">
-            <Calendar className="h-3 w-3 mr-1" />
-            Próxima reunião: {new Date(client.nextMeeting).toLocaleDateString()}
+        )}
+        {client.ltv !== undefined && (
+          <div>
+            <div className="text-sm font-medium mb-1">Valor do Cliente (LTV)</div>
+            <div className="font-semibold">R$ {client.ltv.toLocaleString()}</div>
           </div>
         )}
       </CardContent>

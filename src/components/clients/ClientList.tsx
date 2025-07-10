@@ -6,20 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { FileEdit, Trash2, Star, StarHalf, Phone, Mail, Calendar, MoreHorizontal } from "lucide-react";
-
-interface Client {
-  id: string;
-  name: string;
-  contact: string;
-  email: string;
-  phone: string;
-  status: string;
-  nps: number;
-  ltv: number;
-}
+import { Client } from "@/types/client";
 
 interface ClientListProps {
-  clients: Client[];
+  clients: (Client & { nps?: number; ltv?: number })[];
   onDeleteClient: (client: Client) => void;
 }
 
@@ -63,20 +53,30 @@ export const ClientList: React.FC<ClientListProps> = ({ clients, onDeleteClient 
               </Badge>
             </TableCell>
             <TableCell>
-              <div className="flex items-center">
-                {client.nps >= 9 ? (
-                  <Star className="h-4 w-4 text-yellow-500 mr-1" />
-                ) : client.nps >= 7 ? (
-                  <StarHalf className="h-4 w-4 text-yellow-500 mr-1" />
-                ) : (
-                  <Star className="h-4 w-4 text-gray-300 mr-1" />
-                )}
-                <span>{client.nps}/10</span>
-              </div>
+              {client.nps !== undefined ? (
+                <div className="flex items-center">
+                  {client.nps >= 9 ? (
+                    <Star className="h-4 w-4 text-yellow-500 mr-1" />
+                  ) : client.nps >= 7 ? (
+                    <StarHalf className="h-4 w-4 text-yellow-500 mr-1" />
+                  ) : (
+                    <Star className="h-4 w-4 text-gray-300 mr-1" />
+                  )}
+                  <span>{client.nps}/10</span>
+                </div>
+              ) : (
+                <span className="text-muted-foreground">-</span>
+              )}
             </TableCell>
             <TableCell>
-              <div>R$ {client.ltv.toLocaleString()}</div>
-              <Progress value={client.ltv > 50000 ? 100 : (client.ltv / 500)} className="h-1" />
+              {client.ltv !== undefined ? (
+                <div>
+                  <div>R$ {client.ltv.toLocaleString()}</div>
+                  <Progress value={client.ltv > 50000 ? 100 : (client.ltv / 500)} className="h-1" />
+                </div>
+              ) : (
+                <span className="text-muted-foreground">-</span>
+              )}
             </TableCell>
             <TableCell className="text-right">
               <DropdownMenu>
