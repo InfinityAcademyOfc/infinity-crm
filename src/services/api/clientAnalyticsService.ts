@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Client } from "@/types/client";
 import { toast } from "sonner";
@@ -47,7 +46,12 @@ export const clientAnalyticsService = {
         .order('calculated_ltv', { ascending: false });
 
       if (error) throw error;
-      return data || [];
+      return (data || []).map(item => ({
+        ...item,
+        average_order_value: item.average_order_value || 0,
+        churn_probability: item.churn_probability || 0,
+        last_activity_date: item.last_activity_date || new Date().toISOString().split('T')[0]
+      }));
     } catch (error) {
       console.error("Erro ao buscar LTV dos clientes:", error);
       toast.error("Erro ao carregar dados de LTV");
@@ -70,7 +74,12 @@ export const clientAnalyticsService = {
 
       if (error) throw error;
       toast.success("LTV do cliente atualizado com sucesso");
-      return result;
+      return {
+        ...result,
+        average_order_value: result.average_order_value || 0,
+        churn_probability: result.churn_probability || 0,
+        last_activity_date: result.last_activity_date || new Date().toISOString().split('T')[0]
+      };
     } catch (error) {
       console.error("Erro ao atualizar LTV:", error);
       toast.error("Erro ao atualizar LTV do cliente");

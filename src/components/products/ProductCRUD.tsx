@@ -111,8 +111,8 @@ export const ProductCRUD: React.FC<ProductCRUDProps> = ({ companyId }) => {
 
   const getStockStatus = (product: Product) => {
     if (product.is_service) return null;
-    if (product.stock_quantity <= 0) return { label: "Sem Estoque", color: "destructive" };
-    if (product.stock_quantity <= product.stock_minimum) return { label: "Estoque Baixo", color: "warning" };
+    if ((product.stock_quantity || 0) <= 0) return { label: "Sem Estoque", color: "destructive" };
+    if ((product.stock_quantity || 0) <= (product.stock_minimum || 0)) return { label: "Estoque Baixo", color: "warning" };
     return { label: "Em Estoque", color: "success" };
   };
 
@@ -203,7 +203,7 @@ export const ProductCRUD: React.FC<ProductCRUDProps> = ({ companyId }) => {
                           <Badge variant="outline">Serviço</Badge>
                         ) : (
                           <div>
-                            <div className="font-medium">{product.stock_quantity}</div>
+                            <div className="font-medium">{product.stock_quantity || 0}</div>
                             {stockStatus && (
                               <Badge variant={stockStatus.color as any} className="text-xs">
                                 {stockStatus.label}
@@ -213,8 +213,8 @@ export const ProductCRUD: React.FC<ProductCRUDProps> = ({ companyId }) => {
                         )}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={product.is_active ? "default" : "secondary"}>
-                          {product.is_active ? "Ativo" : "Inativo"}
+                        <Badge variant={product.is_active !== false ? "default" : "secondary"}>
+                          {product.is_active !== false ? "Ativo" : "Inativo"}
                         </Badge>
                       </TableCell>
                       <TableCell>
