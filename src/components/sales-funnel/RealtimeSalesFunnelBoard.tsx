@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from "react";
-import { useAuthContext } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { useSalesFunnelRealtime } from "@/hooks/useSalesFunnelRealtime";
 import { DraggableKanbanBoard } from "./DraggableKanbanBoard";
 import { NewLeadFormDialog } from "./NewLeadFormDialog";
@@ -11,15 +10,15 @@ import { Plus, BarChart3 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const RealtimeSalesFunnelBoard = () => {
-  const { user } = useAuthContext();
+  const { user, companyProfile } = useAuth();
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [newLeadOpen, setNewLeadOpen] = useState(false);
   const [editLeadOpen, setEditLeadOpen] = useState(false);
   const [selectedCard, setSelectedCard] = useState<any>(null);
   const [selectedColumnId, setSelectedColumnId] = useState<string>("");
 
-  // Mock company ID - in real app, get from user context
-  const companyId = user?.id || "default-company";
+  // Get company ID from user context
+  const companyId = companyProfile?.company_id || user?.id || "default-company";
 
   const {
     funnelStages,
