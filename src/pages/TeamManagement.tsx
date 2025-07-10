@@ -2,9 +2,10 @@ import { useState } from "react";
 import { TeamTableView } from "@/components/team/TeamTableView";
 import { TeamGridView } from "@/components/team/TeamGridView";
 import TeamOrgChart from "@/components/team/TeamOrgChart";
+import { TeamHierarchyView } from "@/components/team/TeamHierarchyView";
 import { useToast } from "@/hooks/use-toast";
 import { mockTeamMembers } from "@/data/mockData";
-import { Search, Grid, List, LayoutPanelTop } from "lucide-react";
+import { Search, Grid, List, LayoutPanelTop, GitBranch } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -210,7 +211,7 @@ const TeamManagement = () => {
         </div>
       </div>
 
-      <Tabs defaultValue="org">
+      <Tabs defaultValue="hierarchy">
         <TabsList>
           <TabsTrigger value="grid">
             <Grid className="h-4 w-4 mr-2" />
@@ -223,6 +224,10 @@ const TeamManagement = () => {
           <TabsTrigger value="org">
             <LayoutPanelTop className="h-4 w-4 mr-2" />
             Organograma
+          </TabsTrigger>
+          <TabsTrigger value="hierarchy">
+            <GitBranch className="h-4 w-4 mr-2" />
+            Hierarquia
           </TabsTrigger>
         </TabsList>
 
@@ -250,6 +255,10 @@ const TeamManagement = () => {
             onEditMember={handleUpdateMember}
             onDeleteMember={handleDeleteMember}
           />
+        </TabsContent>
+
+        <TabsContent value="hierarchy" className="mt-4">
+          <TeamHierarchyView companyId="mock-company-id" />
         </TabsContent>
       </Tabs>
     </div>

@@ -1,10 +1,10 @@
-
 import { useState } from "react";
 import ProductionTabs from "@/components/production/ProductionTabs";
+import { ProjectManagement } from "@/components/production/ProjectManagement";
 import { KanbanColumnItem, KanbanCardItem } from "@/components/kanban/types";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Filter, Download, Plus, RefreshCw } from "lucide-react";
+import { Filter, Download, Plus, RefreshCw, Target } from "lucide-react";
 import { useModuleSync } from "@/services/moduleSyncService";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const ProductionManagement = () => {
   const mockTasksKanbanColumns: KanbanColumnItem[] = [{
@@ -202,6 +203,8 @@ const ProductionManagement = () => {
     });
   };
 
+  const [activeTab, setActiveTab] = useState("projects");
+
   return (
     <div className="space-y-4 sm:space-y-6">
       <Card className="p-2 sm:p-4 backdrop-blur-md shadow-md border border-border/40 bg-transparent">
@@ -229,82 +232,25 @@ const ProductionManagement = () => {
         </div>
       </Card>
       
-      <ProductionTabs columns={columns} setColumns={setColumns} />
-      
-      <Dialog open={isNewTaskDialogOpen} onOpenChange={setIsNewTaskDialogOpen}>
-        <DialogContent className="sm:max-w-[500px] w-[calc(100%-2rem)] p-4 sm:p-6">
-          <DialogHeader>
-            <DialogTitle>Nova Tarefa</DialogTitle>
-            <DialogDescription>
-              Crie uma nova tarefa para adicionar ao kanban e gráfico Gantt
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="title">Título</Label>
-              <Input id="title" value={newTask.title} onChange={e => handleNewTaskChange("title", e.target.value)} placeholder="Título da tarefa" />
-            </div>
-            
-            <div className="grid gap-2">
-              <Label htmlFor="description">Descrição</Label>
-              <Textarea id="description" value={newTask.description} onChange={e => handleNewTaskChange("description", e.target.value)} placeholder="Descrição detalhada da tarefa" />
-            </div>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="client">Cliente</Label>
-                <Input id="client" value={newTask.client} onChange={e => handleNewTaskChange("client", e.target.value)} placeholder="Nome do cliente" />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="priority">Prioridade</Label>
-                <Select value={newTask.priority} onValueChange={(value: "low" | "medium" | "high") => handleNewTaskChange("priority", value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione a prioridade" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="low">Baixa</SelectItem>
-                    <SelectItem value="medium">Média</SelectItem>
-                    <SelectItem value="high">Alta</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="startDate">Data de Início</Label>
-                <Input id="startDate" type="date" value={newTask.startDate} onChange={e => handleNewTaskChange("startDate", e.target.value)} />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="endDate">Data de Término</Label>
-                <Input id="endDate" type="date" value={newTask.endDate} onChange={e => handleNewTaskChange("endDate", e.target.value)} />
-              </div>
-            </div>
-            
-            <div className="grid gap-2">
-              <Label htmlFor="assignee">Responsável</Label>
-              <Select value={newTask.assignee} onValueChange={value => handleNewTaskChange("assignee", value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o responsável" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="user-1">Carlos Silva</SelectItem>
-                  <SelectItem value="user-2">Ana Oliveira</SelectItem>
-                  <SelectItem value="user-3">Miguel Santos</SelectItem>
-                  <SelectItem value="user-4">Julia Costa</SelectItem>
-                  <SelectItem value="user-5">Roberto Alves</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          
-          <DialogFooter className="sm:justify-end">
-            <Button variant="outline" onClick={() => setIsNewTaskDialogOpen(false)}>Cancelar</Button>
-            <Button onClick={handleCreateTask}>Criar Tarefa</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="grid grid-cols-2 w-full md:w-fit mb-6">
+          <TabsTrigger value="projects" className="px-4 text-xs">
+            <Target className="h-4 w-4 mr-2" />
+            Projetos
+          </TabsTrigger>
+          <TabsTrigger value="production" className="px-4 text-xs">
+            Produção
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="projects">
+          <ProjectManagement companyId="mock-company-id" />
+        </TabsContent>
+
+        <TabsContent value="production">
+          <ProductionTabs columns={[]} setColumns={() => {}} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
