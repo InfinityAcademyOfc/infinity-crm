@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -12,23 +12,21 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FunnelStage, SalesLead } from "@/services/api/funnelService";
+import { FunnelStage } from "@/services/api/funnelService";
 
-interface EditLeadDialogProps {
+interface NewLeadFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  activeCard: SalesLead | null;
   funnelStages: FunnelStage[];
-  onUpdate: (updates: Partial<SalesLead>) => void;
+  onSave: (leadData: any, stageId: string) => void;
 }
 
-export const EditLeadDialog = ({
+export const NewLeadFormDialog = ({
   open,
   onOpenChange,
-  activeCard,
   funnelStages,
-  onUpdate,
-}: EditLeadDialogProps) => {
+  onSave,
+}: NewLeadFormDialogProps) => {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -40,52 +38,42 @@ export const EditLeadDialog = ({
     stageId: ""
   });
 
-  useEffect(() => {
-    if (activeCard) {
-      setFormData({
-        name: activeCard.name || "",
-        email: activeCard.email || "",
-        phone: activeCard.phone || "",
-        description: activeCard.description || "",
-        value: activeCard.value ? activeCard.value.toString() : "",
-        source: activeCard.source || "",
-        priority: activeCard.priority || "medium",
-        stageId: activeCard.stage_id || ""
-      });
-    }
-  }, [activeCard]);
+  const resetForm = () => {
+    setFormData({
+      name: "",
+      email: "",
+      phone: "",
+      description: "",
+      value: "",
+      source: "",
+      priority: "medium",
+      stageId: ""
+    });
+  };
 
   const handleClose = () => {
     onOpenChange(false);
+    resetForm();
   };
 
   const handleSave = () => {
     const valueNumber = formData.value ? parseFloat(formData.value.replace(/\./g, "").replace(",", ".")) : 0;
     
-    if (!formData.name) {
+    if (!formData.name || !formData.stageId) {
       return;
     }
-
-    const updates: Partial<SalesLead> = {
+    
+    const leadData = {
       name: formData.name,
       email: formData.email || undefined,
       phone: formData.phone || undefined,
       description: formData.description || undefined,
       value: valueNumber > 0 ? valueNumber : undefined,
       source: formData.source || undefined,
-      priority: formData.priority,
+      priority: formData.priority
     };
-
-    // If stage changed, update it too
-    if (formData.stageId !== activeCard?.stage_id) {
-      const newStage = funnelStages.find(s => s.id === formData.stageId);
-      if (newStage) {
-        updates.stage_id = formData.stageId;
-        updates.stage = newStage.name;
-      }
-    }
     
-    onUpdate(updates);
+    onSave(leadData, formData.stageId);
     handleClose();
   };
 
@@ -101,13 +89,11 @@ export const EditLeadDialog = ({
     setFormData(prev => ({ ...prev, value }));
   };
 
-  if (!activeCard) return null;
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md w-full max-w-[90vw]">
         <DialogHeader>
-          <DialogTitle>Editar Lead</DialogTitle>
+          <DialogTitle>Adicionar Novo Lead</DialogTitle>
         </DialogHeader>
         
         <div className="grid gap-4 py-4 overflow-y-auto max-h-[60vh]">
@@ -118,11 +104,12 @@ export const EditLeadDialog = ({
               value={formData.name}
               onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
               placeholder="Nome da empresa ou cliente"
+              autoFocus
             />
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="stage">Etapa do Funil</Label>
+            <Label htmlFor="stage">Etapa do Funil*</Label>
             <Select value={formData.stageId} onValueChange={(value) => setFormData(prev => ({ ...prev, stageId: value }))}>
               <SelectTrigger id="stage">
                 <SelectValue placeholder="Selecione a etapa" />
@@ -212,8 +199,8 @@ export const EditLeadDialog = ({
           <Button variant="outline" onClick={handleClose}>
             Cancelar
           </Button>
-          <Button onClick={handleSave} disabled={!formData.name}>
-            Salvar Alterações
+          <Button onClick={handleSave} disabled={!formData.name || !formData.stageId}>
+            Salvar Lead
           </Button>
         </DialogFooter>
       </DialogContent>
