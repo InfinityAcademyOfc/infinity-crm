@@ -117,6 +117,27 @@ export const ProjectManagement = ({ companyId }: ProjectManagementProps) => {
     }
   };
 
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'planning': return 'Planejamento';
+      case 'in_progress': return 'Em Progresso';
+      case 'on_hold': return 'Em Espera';
+      case 'completed': return 'Concluído';
+      case 'cancelled': return 'Cancelado';
+      default: return status;
+    }
+  };
+
+  const getPriorityLabel = (priority: string) => {
+    switch (priority) {
+      case 'low': return 'Baixa';
+      case 'medium': return 'Média';
+      case 'high': return 'Alta';
+      case 'urgent': return 'Urgente';
+      default: return priority;
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -289,10 +310,10 @@ export const ProjectManagement = ({ companyId }: ProjectManagementProps) => {
               
               <div className="flex gap-2 mb-4">
                 <Badge className={getStatusColor(project.status)}>
-                  {project.status}
+                  {getStatusLabel(project.status)}
                 </Badge>
                 <Badge variant="outline" className={getPriorityColor(project.priority)}>
-                  {project.priority}
+                  {getPriorityLabel(project.priority)}
                 </Badge>
               </div>
               
