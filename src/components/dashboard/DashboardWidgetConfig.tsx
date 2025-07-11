@@ -48,8 +48,14 @@ const DashboardWidgetConfig = () => {
         .maybeSingle();
 
       if (data?.widget_preferences) {
-        const savedWidgets = data.widget_preferences as WidgetConfig[];
-        setWidgets(savedWidgets);
+        try {
+          const savedWidgets = data.widget_preferences as unknown as WidgetConfig[];
+          if (Array.isArray(savedWidgets)) {
+            setWidgets(savedWidgets);
+          }
+        } catch (error) {
+          console.error('Erro ao parsear widget_preferences:', error);
+        }
       }
     } catch (error) {
       console.error('Erro ao carregar configurações:', error);
@@ -66,7 +72,7 @@ const DashboardWidgetConfig = () => {
         .upsert({
           user_id: user.id,
           company_id: company.id,
-          widget_preferences: widgets,
+          widget_preferences: widgets as unknown as any,
           updated_at: new Date().toISOString()
         });
 

@@ -68,16 +68,33 @@ const AutomationSettings = () => {
         .eq('company_id', company.id);
 
       if (data) {
-        const parsedRules = data.map(item => ({
-          id: item.id,
-          name: item.rules?.name || 'Regra sem nome',
-          description: item.rules?.description || '',
-          active: item.rules?.active ?? true,
-          trigger: item.rules?.trigger || 'lead_created',
-          conditions: item.rules?.conditions || [],
-          actions: item.rules?.actions || [],
-          created_at: item.created_at
-        }));
+        const parsedRules = data.map(item => {
+          try {
+            const ruleData = item.rules as any;
+            return {
+              id: item.id,
+              name: ruleData?.name || 'Regra sem nome',
+              description: ruleData?.description || '',
+              active: ruleData?.active ?? true,
+              trigger: ruleData?.trigger || 'lead_created',
+              conditions: ruleData?.conditions || [],
+              actions: ruleData?.actions || [],
+              created_at: item.created_at
+            };
+          } catch (error) {
+            console.error('Erro ao parsear regra:', error);
+            return {
+              id: item.id,
+              name: 'Regra sem nome',
+              description: '',
+              active: true,
+              trigger: 'lead_created',
+              conditions: [],
+              actions: [],
+              created_at: item.created_at
+            };
+          }
+        });
         setRules(parsedRules);
       }
     } catch (error) {
@@ -100,7 +117,7 @@ const AutomationSettings = () => {
           trigger: rule.trigger,
           conditions: rule.conditions,
           actions: rule.actions
-        }
+        } as any
       };
 
       let error;

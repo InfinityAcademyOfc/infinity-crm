@@ -92,7 +92,7 @@ const NotificationSettings = () => {
         // Mapear dados do banco para o formato do componente
         setPreferences(prev => prev.map(pref => ({
           ...pref,
-          enabled: data[pref.id] ?? pref.enabled
+          enabled: data[pref.id as keyof typeof data] ?? pref.enabled
         })));
       }
     } catch (error) {
@@ -194,7 +194,6 @@ const NotificationSettings = () => {
                       {['app', 'email'].map(channel => (
                         <div key={channel} className="flex items-center gap-1">
                           <Switch
-                            size="sm"
                             checked={pref.channels?.includes(channel)}
                             onCheckedChange={(checked) => {
                               const channels = pref.channels || [];
