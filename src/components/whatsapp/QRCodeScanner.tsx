@@ -4,6 +4,7 @@ import QRCodeInstructions from "@/components/whatsapp/ui/QRCodeInstructions";
 import QRCodeDisplay from "@/components/whatsapp/ui/QRCodeDisplay";
 import { useQRCode } from "@/hooks/useQRCode";
 import { useToast } from "@/hooks/use-toast";
+import { logError } from "@/utils/logger"; // Importar o logger
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -21,7 +22,7 @@ const QRCodeScanner = ({ sessionId, onLogin }: QRCodeScannerProps) => {
       try {
         await fetch(`${API_URL}/sessions/${sessionId}/start`, { method: "POST" });
       } catch (error) {
-        console.error("Erro ao iniciar sessão:", error);
+        logError("Erro ao iniciar sessão:", error, { component: "QRCodeScanner" });
       }
     };
     if (sessionId) start();
@@ -68,3 +69,5 @@ const QRCodeScanner = ({ sessionId, onLogin }: QRCodeScannerProps) => {
 };
 
 export default QRCodeScanner;
+
+
