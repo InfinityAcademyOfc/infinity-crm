@@ -1,13 +1,14 @@
-import { useState, useEffect } from "react";
+
+import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSalesFunnelRealtime } from "@/hooks/useSalesFunnelRealtime";
-import { DraggableKanbanBoard } from "./DraggableKanbanBoard";
 import { NewLeadFormDialog } from "./NewLeadFormDialog";
 import { EditLeadDialog } from "./EditLeadDialog";
 import { FunnelAnalytics } from "./FunnelAnalytics";
+import { FunnelBoard } from "./FunnelBoard";
+import { FunnelStats } from "./FunnelStats";
 import { Button } from "@/components/ui/button";
 import { Plus, BarChart3 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const RealtimeSalesFunnelBoard = () => {
   const { user, companyProfile } = useAuth();
@@ -17,7 +18,6 @@ export const RealtimeSalesFunnelBoard = () => {
   const [selectedCard, setSelectedCard] = useState<any>(null);
   const [selectedColumnId, setSelectedColumnId] = useState<string>("");
 
-  // Get company ID from user context
   const companyId = companyProfile?.company_id || user?.id || "default-company";
 
   const {
@@ -55,7 +55,6 @@ export const RealtimeSalesFunnelBoard = () => {
     }
   };
 
-  // Prepare analytics data
   const funnelStageData = funnelStages.map(stage => ({
     name: stage.name,
     value: salesLeads.filter(lead => lead.stage_id === stage.id).length
@@ -67,6 +66,13 @@ export const RealtimeSalesFunnelBoard = () => {
       .filter(lead => lead.stage_id === stage.id)
       .reduce((sum, lead) => sum + (lead.value || 0), 0)
   }));
+
+  const totalLeads = salesLeads.length;
+  const totalValue = salesLeads.reduce((sum, lead) => sum + (lead.value || 0), 0);
+  const conversionRate = totalLeads > 0 
+    ? Math.round((salesLeads.filter(l => l.stage === 'Ganhos').length / totalLeads) * 100)
+    : 0;
+  const activeStages = funnelStages.length;
 
   if (loading) {
     return (
@@ -115,71 +121,21 @@ export const RealtimeSalesFunnelBoard = () => {
       )}
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total de Leads
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{salesLeads.length}</div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Valor Potencial
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              R$ {salesLeads.reduce((sum, lead) => sum + (lead.value || 0), 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Taxa de Conversão
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {salesLeads.length > 0 
-                ? `${Math.round((salesLeads.filter(l => l.stage === 'Ganhos').length / salesLeads.length) * 100)}%`
-                : '0%'
-              }
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Etapas Ativas
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{funnelStages.length}</div>
-          </CardContent>
-        </Card>
-      </div>
+      <FunnelStats
+        totalLeads={totalLeads}
+        totalValue={totalValue}
+        conversionRate={conversionRate}
+        activeStages={activeStages}
+      />
 
       {/* Kanban Board */}
-      <Card>
-        <CardContent className="p-6">
-          <DraggableKanbanBoard
-            columns={kanbanColumns}
-            onDragEnd={handleDragEnd}
-            onAddCard={handleAddCard}
-            onEditCard={handleEditCard}
-            onDeleteCard={handleDeleteLead}
-          />
-        </CardContent>
-      </Card>
+      <FunnelBoard
+        kanbanColumns={kanbanColumns}
+        onDragEnd={handleDragEnd}
+        onAddCard={handleAddCard}
+        onEditCard={handleEditCard}
+        onDeleteCard={handleDeleteLead}
+      />
 
       {/* Dialogs */}
       <NewLeadFormDialog

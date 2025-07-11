@@ -11,78 +11,20 @@ import {
   DialogTitle
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Video, Filter, Calendar, Search } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from "@/components/ui/select";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import NewMeetingDialog from "@/components/meetings/NewMeetingDialog";
 import MeetingCard from "@/components/meetings/MeetingCard";
 import MeetingVideoContainer from "@/components/meetings/MeetingVideoContainer";
 import MeetingCalendarView from "@/components/meetings/MeetingCalendarView";
-
-// Mock meeting data
-const mockMeetings = [
-  {
-    id: "1",
-    title: "Reunião de Planejamento Semanal",
-    date: "14/04/2025",
-    time: "10:00",
-    duration: "1h",
-    participants: [
-      { name: "Carlos Silva", avatar: "/avatar-placeholder.jpg" },
-      { name: "Ana Oliveira" },
-      { name: "Marcelo Santos" },
-      { name: "Juliana Costa" }
-    ],
-    responsible: { name: "Carlos Silva", avatar: "/avatar-placeholder.jpg" },
-    host: "Carlos Silva",
-    onJoin: () => {} // Default empty function to satisfy the type requirement
-  },
-  {
-    id: "2",
-    title: "Análise de Resultados Q1",
-    date: "15/04/2025",
-    time: "14:30",
-    duration: "1h 30min",
-    participants: [
-      { name: "Carlos Silva", avatar: "/avatar-placeholder.jpg" },
-      { name: "Fernanda Lima" },
-      { name: "Ricardo Gomes" }
-    ],
-    responsible: { name: "Ricardo Gomes" },
-    host: "Ricardo Gomes",
-    onJoin: () => {} // Default empty function to satisfy the type requirement
-  },
-  {
-    id: "3",
-    title: "Apresentação de Novo Produto",
-    date: "18/04/2025",
-    time: "09:00",
-    duration: "2h",
-    participants: [
-      { name: "Carlos Silva", avatar: "/avatar-placeholder.jpg" },
-      { name: "Ana Oliveira" },
-      { name: "Marcelo Santos" },
-      { name: "Juliana Costa" },
-      { name: "Fernando Alves" }
-    ],
-    responsible: { name: "Ana Oliveira" },
-    host: "Ana Oliveira",
-    onJoin: () => {} // Default empty function to satisfy the type requirement
-  }
-];
+import { MeetingHeader } from "@/components/meetings/MeetingHeader";
+import { useMeetingsData, Meeting } from "@/hooks/useMeetingsData";
 
 const Meetings = () => {
   const [isNewMeetingOpen, setIsNewMeetingOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("upcoming");
   const [viewMode, setViewMode] = useState("list");
   const [isInMeeting, setIsInMeeting] = useState(false);
-  const [currentMeeting, setCurrentMeeting] = useState<any>(null);
+  const [currentMeeting, setCurrentMeeting] = useState<Meeting | null>(null);
   const [isLeavingMeeting, setIsLeavingMeeting] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [dateFilter, setDateFilter] = useState("");
@@ -90,38 +32,13 @@ const Meetings = () => {
   const [searchQuery, setSearchQuery] = useState("");
   
   const { toast } = useToast();
+  const { meetings, loading, createInstantMeeting, filterMeetings, getUniqueResponsibles } = useMeetingsData();
 
-  // Get unique responsibles from meetings
-  const responsibles = Array.from(
-    new Set(mockMeetings.map(meeting => meeting.responsible?.name))
-  ).filter(Boolean);
-
-  // Filter meetings based on criteria
-  const filteredMeetings = mockMeetings.filter(meeting => {
-    const matchesSearch = meeting.title.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesDate = dateFilter ? meeting.date === dateFilter : true;
-    const matchesResponsible = responsibleFilter ? 
-      meeting.responsible?.name === responsibleFilter : true;
-    
-    return matchesSearch && matchesDate && matchesResponsible;
-  });
+  const responsibles = getUniqueResponsibles();
+  const filteredMeetings = filterMeetings(searchQuery, dateFilter, responsibleFilter);
 
   const startMeetingNow = () => {
-    // Create a new instant meeting
-    const instantMeeting = {
-      id: `instant-${Date.now()}`,
-      title: "Reunião Instantânea",
-      date: new Date().toLocaleDateString(),
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      duration: "Indeterminado",
-      participants: [
-        { name: "Carlos Silva", avatar: "/avatar-placeholder.jpg" }
-      ],
-      responsible: { name: "Carlos Silva", avatar: "/avatar-placeholder.jpg" },
-      host: "Carlos Silva",
-      onJoin: () => {} // Default empty function to satisfy the type requirement
-    };
-    
+    const instantMeeting = createInstantMeeting();
     setCurrentMeeting(instantMeeting);
     setIsInMeeting(true);
     toast({
@@ -130,7 +47,7 @@ const Meetings = () => {
     });
   };
 
-  const joinMeeting = (meeting: any) => {
+  const joinMeeting = (meeting: Meeting) => {
     setCurrentMeeting(meeting);
     setIsInMeeting(true);
     toast({
@@ -155,6 +72,12 @@ const Meetings = () => {
 
   const cancelLeaveMeeting = () => {
     setIsLeavingMeeting(false);
+  };
+
+  const handleClearFilters = () => {
+    setDateFilter('');
+    setResponsibleFilter('');
+    setSearchQuery('');
   };
 
   // Return meeting interface when in a meeting
@@ -185,109 +108,40 @@ const Meetings = () => {
     );
   }
 
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="h-8 px-2 text-xs bg-card dark:bg-gray-800/60 shadow-sm"
-            onClick={() => setIsFilterOpen(!isFilterOpen)}
-          >
-            <Filter size={16} className="mr-1" />
-            Filtrar
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className={`h-8 px-2 text-xs bg-card dark:bg-gray-800/60 shadow-sm ${viewMode === 'calendar' ? 'bg-primary/20' : ''}`}
-            onClick={() => setViewMode(viewMode === 'calendar' ? 'list' : 'calendar')}
-          >
-            <Calendar size={16} className="mr-1" />
-            Calendário
-          </Button>
-        </div>
-        <div className="flex gap-2 w-full sm:w-auto">
-          <Button 
-            onClick={startMeetingNow}
-            size="sm"
-            className="flex items-center gap-2"
-          >
-            <Video size={16} />
-            Iniciar Agora
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={() => setIsNewMeetingOpen(true)}
-            size="sm"
-            className="flex items-center gap-2"
-          >
-            <Plus size={16} />
-            Nova Reunião
-          </Button>
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="animate-pulse">
+          <div className="h-8 bg-muted rounded w-48 mb-4"></div>
+          <div className="h-32 bg-muted rounded mb-4"></div>
+          <div className="space-y-3">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="h-24 bg-muted rounded"></div>
+            ))}
+          </div>
         </div>
       </div>
-      
-      {/* Filter panel */}
-      {isFilterOpen && (
-        <div className="p-4 border rounded-lg bg-card shadow-sm space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="text-sm font-medium mb-1 block">Pesquisar</label>
-              <div className="relative">
-                <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar reuniões..."
-                  className="pl-8"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-            </div>
-            
-            <div>
-              <label className="text-sm font-medium mb-1 block">Data</label>
-              <Input 
-                type="date" 
-                value={dateFilter} 
-                onChange={(e) => setDateFilter(e.target.value)} 
-              />
-            </div>
-            
-            <div>
-              <label className="text-sm font-medium mb-1 block">Responsável</label>
-              <Select value={responsibleFilter} onValueChange={setResponsibleFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Todos os responsáveis" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">Todos os responsáveis</SelectItem>
-                  {responsibles.map((responsible, index) => (
-                    <SelectItem key={index} value={responsible as string}>
-                      {responsible}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          
-          <div className="flex justify-end">
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => {
-                setDateFilter('');
-                setResponsibleFilter('');
-                setSearchQuery('');
-              }}
-            >
-              Limpar filtros
-            </Button>
-          </div>
-        </div>
-      )}
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <MeetingHeader
+        viewMode={viewMode}
+        isFilterOpen={isFilterOpen}
+        searchQuery={searchQuery}
+        dateFilter={dateFilter}
+        responsibleFilter={responsibleFilter}
+        responsibles={responsibles}
+        onViewModeChange={setViewMode}
+        onStartInstantMeeting={startMeetingNow}
+        onOpenNewMeeting={() => setIsNewMeetingOpen(true)}
+        onToggleFilter={() => setIsFilterOpen(!isFilterOpen)}
+        onSearchChange={setSearchQuery}
+        onDateFilterChange={setDateFilter}
+        onResponsibleFilterChange={setResponsibleFilter}
+        onClearFilters={handleClearFilters}
+      />
 
       {viewMode === 'calendar' ? (
         <MeetingCalendarView meetings={filteredMeetings} onJoinMeeting={joinMeeting} />

@@ -5,10 +5,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button'; 
 import { useFunnelData, getColorsByType, type FunnelType } from '@/hooks/useFunnelData';
-import FunnelChart from './funnel/FunnelChart';
-import ConversionChart from './funnel/ConversionChart';
-import LeakageChart from './funnel/LeakageChart';
-import FunnelSummary from './funnel/FunnelSummary';
+import { FunnelChart, ConversionChart, LeakageChart, FunnelSummary } from './funnel/FunnelComponents';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { useToast } from '@/hooks/use-toast';
 import { ChartSkeleton } from './DashboardSkeletons';
@@ -25,18 +22,15 @@ const IntegratedFunnel = () => {
   const { toast } = useToast();
 
   const handleTabChange = (value: string) => {
-    // Use startTransition to avoid Suspense errors during state updates
     startTransition(() => {
       setActiveTab(value as FunnelType);
     });
   };
 
-  // Fallback if data is still loading
   if (isLoading) {
     return <ChartSkeleton />;
   }
 
-  // Verification check for data
   if (!funnelData || !funnelData[activeTab]) {
     return (
       <Card className="shadow-md border border-border/60 bg-card/90 dark:bg-gray-800/90 backdrop-blur-sm">
@@ -67,10 +61,8 @@ const IntegratedFunnel = () => {
     }
   };
 
-  // Verification for conversion rate
   const conversionRate = funnelData[activeTab]?.conversionRate || 0;
   
-  // Transform funnel data to pie chart format
   const getPieChartData = (type: FunnelType) => {
     if (!funnelData[type] || !funnelData[type].stages) return [];
     
@@ -81,13 +73,12 @@ const IntegratedFunnel = () => {
   };
   
   const COLORS = ['#4361ee', '#7209b7', '#9d4edd', '#3a0ca3', '#4cc9f0'];
-  
+
   const handleExportFunnel = () => {
     try {
       const funnelType = activeTab;
       const currentData = funnelData[funnelType];
       
-      // Prepare data for export
       let exportData: any = {
         funnelType,
         stages: currentData.stages,
@@ -95,7 +86,6 @@ const IntegratedFunnel = () => {
         date: new Date().toISOString()
       };
       
-      // Add extra data based on funnel type
       if (funnelType === 'sales') {
         exportData.salesData = {
           leads: currentData.stages.reduce((acc, stage) => acc + stage.value, 0),
@@ -116,10 +106,7 @@ const IntegratedFunnel = () => {
         };
       }
       
-      // Convert to JSON string
       const jsonString = JSON.stringify(exportData, null, 2);
-      
-      // Create a blob and download it
       const blob = new Blob([jsonString], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -194,7 +181,6 @@ const IntegratedFunnel = () => {
             </TabsTrigger>
           </TabsList>
           
-          {/* Wrap content in Suspense to handle async loading */}
           <Suspense fallback={<ChartSkeleton />}>
             {Object.keys(funnelData).map(type => {
               if (!funnelData[type as FunnelType] || !funnelData[type as FunnelType].stages) {
@@ -263,7 +249,11 @@ const IntegratedFunnel = () => {
                           <TrendingUp className="h-4 w-4 text-green-500" />
                           <h3 className="text-sm font-medium">Conversão por Etapa</h3>
                         </div>
-                        <ConversionChart data={funnelData[type as FunnelType].stages} isDark={isDark} color={getColorsByType(type as FunnelType, isDark)[type as FunnelType]?.efficiency || '#22c55e'} />
+                        <ConversionChart 
+                          data={funnelData[type as FunnelType].stages} 
+                          isDark={isDark} 
+                          color={getColorsByType(type as FunnelType, isDark)[type as FunnelType]?.efficiency || '#22c55e'} 
+                        />
                       </Card>
                       
                       <Card className="p-4 shadow-sm hover:shadow-md transition-all duration-300 bg-card/50 overflow-hidden">
@@ -271,7 +261,11 @@ const IntegratedFunnel = () => {
                           <TrendingUp className="h-4 w-4 text-red-500" />
                           <h3 className="text-sm font-medium">Fugas por Etapa</h3>
                         </div>
-                        <LeakageChart data={funnelData[type as FunnelType].stages} isDark={isDark} color={getColorsByType(type as FunnelType, isDark)[type as FunnelType]?.leakage || '#ef4444'} />
+                        <LeakageChart 
+                          data={funnelData[type as FunnelType].stages} 
+                          isDark={isDark} 
+                          color={getColorsByType(type as FunnelType, isDark)[type as FunnelType]?.leakage || '#ef4444'} 
+                        />
                       </Card>
                       
                       <Card className="p-4 shadow-sm hover:shadow-md transition-all duration-300 bg-card/50 overflow-hidden">
