@@ -16,6 +16,7 @@ import { useClientAnalytics } from "@/hooks/useClientAnalytics";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Client } from "@/types/client";
+import { logError } from "@/utils/logger"; // Importar o logger
 
 // Extended client interface for UI components
 interface ClientWithAnalytics extends Client {
@@ -64,7 +65,7 @@ export const ClientManagementEnhanced = () => {
       setClients(clientsData);
       setLeads(leadsData.filter(lead => lead.stage !== 'Ganhos')); // Only non-converted leads
     } catch (error) {
-      console.error("Erro ao carregar dados:", error);
+      logError("Erro ao carregar dados:", error, { component: "ClientManagementEnhanced" });
       toast({
         title: "Erro",
         description: "Erro ao carregar dados dos clientes",
@@ -295,3 +296,5 @@ export const ClientManagementEnhanced = () => {
     </div>
   );
 };
+
+
