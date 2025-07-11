@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
@@ -6,16 +5,17 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase"; // Importar do index.ts
 import { useToast } from "@/hooks/use-toast";
 import { Bell, Save } from "lucide-react";
+import { logError } from "@/utils/logger"; // Importar o logger
 
 interface NotificationPreference {
   id: string;
   label: string;
   description: string;
   enabled: boolean;
-  frequency?: 'instant' | 'daily' | 'weekly';
+  frequency?: "instant" | "daily" | "weekly";
   channels?: string[];
 }
 
@@ -24,52 +24,52 @@ const NotificationSettings = () => {
   const { toast } = useToast();
   const [preferences, setPreferences] = useState<NotificationPreference[]>([
     {
-      id: 'new_leads',
-      label: 'Novos leads',
-      description: 'Receba notificações quando novos leads forem adicionados',
+      id: "new_leads",
+      label: "Novos leads",
+      description: "Receba notificações quando novos leads forem adicionados",
       enabled: true,
-      frequency: 'instant',
-      channels: ['app', 'email']
+      frequency: "instant",
+      channels: ["app", "email"]
     },
     {
-      id: 'client_activities',
-      label: 'Atividades de clientes',
-      description: 'Receba notificações sobre atividades de clientes',
+      id: "client_activities",
+      label: "Atividades de clientes",
+      description: "Receba notificações sobre atividades de clientes",
       enabled: true,
-      frequency: 'daily',
-      channels: ['app']
+      frequency: "daily",
+      channels: ["app"]
     },
     {
-      id: 'payments',
-      label: 'Pagamentos',
-      description: 'Notificações sobre pagamentos recebidos ou pendentes',
+      id: "payments",
+      label: "Pagamentos",
+      description: "Notificações sobre pagamentos recebidos ou pendentes",
       enabled: false,
-      frequency: 'instant',
-      channels: ['app', 'email']
+      frequency: "instant",
+      channels: ["app", "email"]
     },
     {
-      id: 'meeting_reminders',
-      label: 'Lembretes de reuniões',
-      description: 'Receba lembretes antes das reuniões agendadas',
+      id: "meeting_reminders",
+      label: "Lembretes de reuniões",
+      description: "Receba lembretes antes das reuniões agendadas",
       enabled: true,
-      frequency: 'instant',
-      channels: ['app', 'email']
+      frequency: "instant",
+      channels: ["app", "email"]
     },
     {
-      id: 'task_deadlines',
-      label: 'Prazos de tarefas',
-      description: 'Alertas sobre tarefas próximas do prazo',
+      id: "task_deadlines",
+      label: "Prazos de tarefas",
+      description: "Alertas sobre tarefas próximas do prazo",
       enabled: true,
-      frequency: 'daily',
-      channels: ['app']
+      frequency: "daily",
+      channels: ["app"]
     },
     {
-      id: 'system_updates',
-      label: 'Atualizações do sistema',
-      description: 'Informações sobre novas funcionalidades e manutenções',
+      id: "system_updates",
+      label: "Atualizações do sistema",
+      description: "Informações sobre novas funcionalidades e manutenções",
       enabled: false,
-      frequency: 'weekly',
-      channels: ['email']
+      frequency: "weekly",
+      channels: ["email"]
     }
   ]);
   const [isLoading, setIsLoading] = useState(false);
@@ -83,9 +83,9 @@ const NotificationSettings = () => {
 
     try {
       const { data } = await supabase
-        .from('notification_preferences')
-        .select('*')
-        .eq('user_id', user.id)
+        .from("notification_preferences")
+        .select("*")
+        .eq("user_id", user.id)
         .maybeSingle();
 
       if (data) {
@@ -94,12 +94,12 @@ const NotificationSettings = () => {
           const dbValue = data[pref.id as keyof typeof data];
           return {
             ...pref,
-            enabled: typeof dbValue === 'boolean' ? dbValue : Boolean(dbValue) ?? pref.enabled
+            enabled: typeof dbValue === "boolean" ? dbValue : Boolean(dbValue) ?? pref.enabled
           };
         }));
       }
     } catch (error) {
-      console.error('Erro ao carregar preferências:', error);
+      logError("Erro ao carregar preferências:", error, { component: "NotificationSettings" });
     }
   };
 
@@ -114,7 +114,7 @@ const NotificationSettings = () => {
       }), {});
 
       const { error } = await supabase
-        .from('notification_preferences')
+        .from("notification_preferences")
         .upsert({
           user_id: user.id,
           ...preferencesData,
@@ -124,15 +124,15 @@ const NotificationSettings = () => {
       if (error) throw error;
 
       toast({
-        title: 'Preferências salvas',
-        description: 'Suas configurações de notificação foram atualizadas.'
+        title: "Preferências salvas",
+        description: "Suas configurações de notificação foram atualizadas."
       });
     } catch (error) {
-      console.error('Erro ao salvar preferências:', error);
+      logError("Erro ao salvar preferências:", error, { component: "NotificationSettings" });
       toast({
-        title: 'Erro',
-        description: 'Não foi possível salvar as preferências.',
-        variant: 'destructive'
+        title: "Erro",
+        description: "Não foi possível salvar as preferências.",
+        variant: "destructive"
       });
     } finally {
       setIsLoading(false);
@@ -176,7 +176,7 @@ const NotificationSettings = () => {
                     <Label className="text-sm">Frequência</Label>
                     <Select 
                       value={pref.frequency} 
-                      onValueChange={(frequency: 'instant' | 'daily' | 'weekly') => 
+                      onValueChange={(frequency: "instant" | "daily" | "weekly") => 
                         updatePreference(pref.id, { frequency })
                       }
                     >
@@ -194,7 +194,7 @@ const NotificationSettings = () => {
                   <div className="space-y-2">
                     <Label className="text-sm">Canais</Label>
                     <div className="flex gap-2">
-                      {['app', 'email'].map(channel => (
+                      {["app", "email"].map(channel => (
                         <div key={channel} className="flex items-center gap-1">
                           <Switch
                             checked={pref.channels?.includes(channel)}
@@ -220,7 +220,7 @@ const NotificationSettings = () => {
         <div className="flex justify-end">
           <Button onClick={savePreferences} disabled={isLoading}>
             <Save className="h-4 w-4 mr-2" />
-            {isLoading ? 'Salvando...' : 'Salvar Preferências'}
+            {isLoading ? "Salvando..." : "Salvar Preferências"}
           </Button>
         </div>
       </CardContent>
@@ -229,3 +229,5 @@ const NotificationSettings = () => {
 };
 
 export default NotificationSettings;
+
+
