@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Eye, EyeOff, Building2, User, ArrowLeft } from 'lucide-react';
@@ -15,8 +14,9 @@ import { planService } from '@/services/api/planService';
 import { Plan, PlanWithFeatures } from '@/types/plan';
 import PricingSection from '@/components/pricing/PricingSection';
 import Checkout from '@/components/pricing/Checkout';
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase"; // Importar do index.ts
 import { toast } from 'sonner';
+import { logError } from '@/utils/logger'; // Importar o logger
 
 const passwordRules = "Ao menos 8 caracteres, letras maiúsculas, minúsculas, número e caractere especial";
 
@@ -99,7 +99,7 @@ export const RegisterForm = () => {
         // O redirecionamento será tratado pelo AuthContext
       }
     } catch (error) {
-      console.error("Registration error:", error);
+      logError("Registration error:", error, { component: "RegisterForm" });
     } finally {
       setIsSubmitting(false);
     }
@@ -387,3 +387,4 @@ export const RegisterForm = () => {
     </Tabs>
   );
 };
+
