@@ -1,8 +1,8 @@
-
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { DocumentItem } from '../types';
 import { useDocumentContext } from '../contexts/DocumentContext';
+import { logError } from '@/utils/logger'; // Importar o logger
 
 export const useFolderOperations = () => {
   const { documents, setDocuments, recentColors, setRecentColors } = useDocumentContext();
@@ -25,7 +25,7 @@ export const useFolderOperations = () => {
       }
       return false;
     } catch (error) {
-      console.error("Invalid color format:", error);
+      logError("Invalid color format:", error, { component: "useFolderOperations" });
       return false;
     }
   };
@@ -56,3 +56,4 @@ const toggleExpanded = (items: DocumentItem[], itemId: string): DocumentItem[] =
     return item;
   });
 };
+
