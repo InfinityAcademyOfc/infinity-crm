@@ -1,12 +1,12 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User } from '@supabase/supabase-js';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase'; // Importar do index.ts
 import { hydrateUser } from '@/lib/hydrateUser';
 import { Profile, CompanyProfile } from '@/types/profile';
 import { Company } from '@/types/company';
 import { toast } from 'sonner';
+import { logError } from '@/utils/logger'; // Importar o logger
 
 interface AuthContextType {
   user: User | null;
@@ -49,7 +49,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setCompanyProfile(userCompanyProfile);
       setCompany(userCompany);
     } catch (error) {
-      console.error('Erro ao atualizar dados do usuário:', error);
+      logError('Erro ao atualizar dados do usuário:', error);
     }
   };
 
@@ -74,7 +74,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         try {
           await refreshUserData();
         } catch (error) {
-          console.error('Erro ao carregar dados do usuário:', error);
+          logError('Erro ao carregar dados do usuário:', error);
         }
       } else {
         setProfile(null);
@@ -180,3 +180,4 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     </AuthContext.Provider>
   );
 };
+
