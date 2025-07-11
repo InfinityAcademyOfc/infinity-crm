@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,8 +9,9 @@ import { Switch } from "@/components/ui/switch";
 import { PlusCircle, X, ArrowRight, Save, Zap } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase"; // Importar do index.ts
 import { Badge } from "@/components/ui/badge";
+import { logError } from "@/utils/logger"; // Importar o logger
 
 interface AutomationCondition {
   field: string;
@@ -45,12 +45,12 @@ const AutomationSettings = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const [newRule, setNewRule] = useState<Partial<AutomationRule>>({
-    name: '',
-    description: '',
+    name: "",
+    description: "",
     active: true,
-    trigger: 'lead_created',
-    conditions: [{ field: 'status', operator: 'equals', value: '' }],
-    actions: [{ type: 'move_stage', value: '' }]
+    trigger: "lead_created",
+    conditions: [{ field: "status", operator: "equals", value: "" }],
+    actions: [{ type: "move_stage", value: "" }]
   });
 
   useEffect(() => {
@@ -62,10 +62,10 @@ const AutomationSettings = () => {
 
     try {
       const { data } = await supabase
-        .from('automation_rules')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('company_id', company.id);
+        .from("automation_rules")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("company_id", company.id);
 
       if (data) {
         const parsedRules = data.map(item => {
@@ -73,22 +73,22 @@ const AutomationSettings = () => {
             const ruleData = item.rules as any;
             return {
               id: item.id,
-              name: ruleData?.name || 'Regra sem nome',
-              description: ruleData?.description || '',
+              name: ruleData?.name || "Regra sem nome",
+              description: ruleData?.description || "",
               active: ruleData?.active ?? true,
-              trigger: ruleData?.trigger || 'lead_created',
+              trigger: ruleData?.trigger || "lead_created",
               conditions: ruleData?.conditions || [],
               actions: ruleData?.actions || [],
               created_at: item.created_at
             };
           } catch (error) {
-            console.error('Erro ao parsear regra:', error);
+            logError("Erro ao parsear regra:", error, { component: "AutomationSettings" });
             return {
               id: item.id,
-              name: 'Regra sem nome',
-              description: '',
+              name: "Regra sem nome",
+              description: "",
               active: true,
-              trigger: 'lead_created',
+              trigger: "lead_created",
               conditions: [],
               actions: [],
               created_at: item.created_at
@@ -98,7 +98,7 @@ const AutomationSettings = () => {
         setRules(parsedRules);
       }
     } catch (error) {
-      console.error('Erro ao carregar regras:', error);
+      logError("Erro ao carregar regras:", error, { component: "AutomationSettings" });
     }
   };
 
@@ -123,39 +123,39 @@ const AutomationSettings = () => {
       let error;
       if (editingRule) {
         ({ error } = await supabase
-          .from('automation_rules')
+          .from("automation_rules")
           .update(ruleData)
-          .eq('id', editingRule.id));
+          .eq("id", editingRule.id));
       } else {
         ({ error } = await supabase
-          .from('automation_rules')
+          .from("automation_rules")
           .insert(ruleData));
       }
 
       if (error) throw error;
 
       toast({
-        title: editingRule ? 'Regra atualizada' : 'Regra criada',
-        description: 'A regra de automação foi salva com sucesso.'
+        title: editingRule ? "Regra atualizada" : "Regra criada",
+        description: "A regra de automação foi salva com sucesso."
       });
 
       setShowNewRule(false);
       setEditingRule(null);
       setNewRule({
-        name: '',
-        description: '',
+        name: "",
+        description: "",
         active: true,
-        trigger: 'lead_created',
-        conditions: [{ field: 'status', operator: 'equals', value: '' }],
-        actions: [{ type: 'move_stage', value: '' }]
+        trigger: "lead_created",
+        conditions: [{ field: "status", operator: "equals", value: "" }],
+        actions: [{ type: "move_stage", value: "" }]
       });
       loadAutomationRules();
     } catch (error) {
-      console.error('Erro ao salvar regra:', error);
+      logError("Erro ao salvar regra:", error, { component: "AutomationSettings" });
       toast({
-        title: 'Erro',
-        description: 'Não foi possível salvar a regra.',
-        variant: 'destructive'
+        title: "Erro",
+        description: "Não foi possível salvar a regra.",
+        variant: "destructive"
       });
     } finally {
       setIsLoading(false);
@@ -165,23 +165,23 @@ const AutomationSettings = () => {
   const deleteRule = async (id: string) => {
     try {
       const { error } = await supabase
-        .from('automation_rules')
+        .from("automation_rules")
         .delete()
-        .eq('id', id);
+        .eq("id", id);
 
       if (error) throw error;
 
       toast({
-        title: 'Regra removida',
-        description: 'A regra de automação foi removida com sucesso.'
+        title: "Regra removida",
+        description: "A regra de automação foi removida com sucesso."
       });
       loadAutomationRules();
     } catch (error) {
-      console.error('Erro ao remover regra:', error);
+      logError("Erro ao remover regra:", error, { component: "AutomationSettings" });
       toast({
-        title: 'Erro',
-        description: 'Não foi possível remover a regra.',
-        variant: 'destructive'
+        title: "Erro",
+        description: "Não foi possível remover a regra.",
+        variant: "destructive"
       });
     }
   };
@@ -194,14 +194,14 @@ const AutomationSettings = () => {
   const addCondition = () => {
     setNewRule(prev => ({
       ...prev,
-      conditions: [...(prev.conditions || []), { field: 'status', operator: 'equals', value: '' }]
+      conditions: [...(prev.conditions || []), { field: "status", operator: "equals", value: "" }]
     }));
   };
 
   const addAction = () => {
     setNewRule(prev => ({
       ...prev,
-      actions: [...(prev.actions || []), { type: 'move_stage', value: '' }]
+      actions: [...(prev.actions || []), { type: "move_stage", value: "" }]
     }));
   };
 
@@ -301,7 +301,7 @@ const AutomationSettings = () => {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="font-medium">
-                  {editingRule ? 'Editar Regra' : 'Nova Regra de Automação'}
+                  {editingRule ? "Editar Regra" : "Nova Regra de Automação"}
                 </h3>
                 <Button
                   variant="ghost"
@@ -310,12 +310,12 @@ const AutomationSettings = () => {
                     setShowNewRule(false);
                     setEditingRule(null);
                     setNewRule({
-                      name: '',
-                      description: '',
+                      name: "",
+                      description: "",
                       active: true,
-                      trigger: 'lead_created',
-                      conditions: [{ field: 'status', operator: 'equals', value: '' }],
-                      actions: [{ type: 'move_stage', value: '' }]
+                      trigger: "lead_created",
+                      conditions: [{ field: "status", operator: "equals", value: "" }],
+                      actions: [{ type: "move_stage", value: "" }]
                     });
                   }}
                 >
@@ -327,7 +327,7 @@ const AutomationSettings = () => {
                 <div className="space-y-2">
                   <Label>Nome da Regra</Label>
                   <Input
-                    value={newRule.name || ''}
+                    value={newRule.name || ""}
                     onChange={(e) => setNewRule(prev => ({ ...prev, name: e.target.value }))}
                     placeholder="Ex: Mover leads qualificados"
                   />
@@ -354,7 +354,7 @@ const AutomationSettings = () => {
               <div className="space-y-2">
                 <Label>Descrição (opcional)</Label>
                 <Textarea
-                  value={newRule.description || ''}
+                  value={newRule.description || ""}
                   onChange={(e) => setNewRule(prev => ({ ...prev, description: e.target.value }))}
                   placeholder="Descreva o que esta regra faz..."
                 />
@@ -474,7 +474,7 @@ const AutomationSettings = () => {
                 </Button>
                 <Button onClick={() => saveRule(newRule)} disabled={isLoading}>
                   <Save className="h-4 w-4 mr-2" />
-                  {isLoading ? 'Salvando...' : editingRule ? 'Atualizar' : 'Criar Regra'}
+                  {isLoading ? "Salvando..." : editingRule ? "Atualizar" : "Criar Regra"}
                 </Button>
               </div>
             </div>
@@ -494,3 +494,5 @@ const AutomationSettings = () => {
 };
 
 export default AutomationSettings;
+
+
