@@ -144,4 +144,3 @@ const ChatContent = ({ initialMessages, className }: ChatContentProps) => {
 
 export default ChatContent;
 
-
