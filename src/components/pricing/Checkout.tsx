@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,9 +7,10 @@ import { CreditCard, DollarSign, Banknote } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { planService } from '@/services/api/planService';
 import { PlanWithFeatures } from '@/types/plan';
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase"; // Importar do index.ts
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { logError } from '@/utils/logger'; // Importar o logger
 
 interface PaymentFormProps {
   planId: string;
@@ -32,7 +32,7 @@ const Checkout: React.FC<PaymentFormProps> = ({ planId, companyId, onBack }) => 
         const planData = await planService.getPlanById(planId);
         setPlan(planData);
       } catch (error) {
-        console.error("Error fetching plan:", error);
+        logError("Error fetching plan:", error, { component: "Checkout" });
         toast.error("Não foi possível carregar os detalhes do plano");
       } finally {
         setIsLoading(false);
@@ -83,7 +83,7 @@ const Checkout: React.FC<PaymentFormProps> = ({ planId, companyId, onBack }) => 
       // Redirecionar para o dashboard
       navigate('/app');
     } catch (error: any) {
-      console.error('Error processing payment:', error);
+      logError('Error processing payment:', error, { component: "Checkout" });
       toast.error(error.message || 'Ocorreu um erro ao processar o pagamento');
     } finally {
       setIsProcessing(false);
@@ -274,3 +274,5 @@ const Checkout: React.FC<PaymentFormProps> = ({ planId, companyId, onBack }) => 
 };
 
 export default Checkout;
+
+
