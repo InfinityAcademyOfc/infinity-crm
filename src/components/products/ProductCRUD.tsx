@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,6 +14,7 @@ import { Plus, Search, MoreHorizontal, Package, Edit, Trash2, AlertTriangle } fr
 import { productService } from "@/services/api/productService";
 import { Product } from "@/types/product";
 import { useToast } from "@/hooks/use-toast";
+import { logError } from "@/utils/logger"; // Importar o logger
 
 interface ProductCRUDProps {
   companyId: string;
@@ -40,7 +40,7 @@ export const ProductCRUD: React.FC<ProductCRUDProps> = ({ companyId }) => {
       const data = await productService.getProducts(companyId);
       setProducts(data);
     } catch (error) {
-      console.error("Erro ao carregar produtos:", error);
+      logError("Erro ao carregar produtos:", error, { component: "ProductCRUD" });
     } finally {
       setLoading(false);
     }
@@ -52,17 +52,17 @@ export const ProductCRUD: React.FC<ProductCRUDProps> = ({ companyId }) => {
     const formData = new FormData(form);
 
     const productData = {
-      name: formData.get('name') as string,
-      description: formData.get('description') as string,
-      price: parseFloat(formData.get('price') as string) || 0,
-      cost: parseFloat(formData.get('cost') as string) || 0,
-      category: formData.get('category') as string,
-      sku: formData.get('sku') as string,
-      stock_quantity: parseInt(formData.get('stock_quantity') as string) || 0,
-      stock_minimum: parseInt(formData.get('stock_minimum') as string) || 0,
-      is_service: formData.get('is_service') === 'on',
-      is_active: formData.get('is_active') === 'on',
-      tags: (formData.get('tags') as string)?.split(',').map(tag => tag.trim()).filter(Boolean) || [],
+      name: formData.get("name") as string,
+      description: formData.get("description") as string,
+      price: parseFloat(formData.get("price") as string) || 0,
+      cost: parseFloat(formData.get("cost") as string) || 0,
+      category: formData.get("category") as string,
+      sku: formData.get("sku") as string,
+      stock_quantity: parseInt(formData.get("stock_quantity") as string) || 0,
+      stock_minimum: parseInt(formData.get("stock_minimum") as string) || 0,
+      is_service: formData.get("is_service") === "on",
+      is_active: formData.get("is_active") === "on",
+      tags: (formData.get("tags") as string)?.split(",").map(tag => tag.trim()).filter(Boolean) || [],
       company_id: companyId
     };
 
@@ -83,7 +83,7 @@ export const ProductCRUD: React.FC<ProductCRUDProps> = ({ companyId }) => {
       setEditingProduct(null);
       form.reset();
     } catch (error) {
-      console.error("Erro ao salvar produto:", error);
+      logError("Erro ao salvar produto:", error, { component: "ProductCRUD" });
     }
   };
 
@@ -190,11 +190,11 @@ export const ProductCRUD: React.FC<ProductCRUDProps> = ({ companyId }) => {
                       </TableCell>
                       <TableCell>
                         <div className="font-medium">
-                          R$ {product.price?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '0,00'}
+                          R$ {product.price?.toLocaleString("pt-BR", { minimumFractionDigits: 2 }) || "0,00"}
                         </div>
                         {product.cost && (
                           <div className="text-sm text-muted-foreground">
-                            Custo: R$ {product.cost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            Custo: R$ {product.cost.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                           </div>
                         )}
                       </TableCell>
@@ -358,7 +358,7 @@ export const ProductCRUD: React.FC<ProductCRUDProps> = ({ companyId }) => {
                 id="tags" 
                 name="tags" 
                 placeholder="produto, categoria, tipo..."
-                defaultValue={editingProduct?.tags?.join(', ') || ""}
+                defaultValue={editingProduct?.tags?.join(", ") || ""}
               />
             </div>
 
@@ -419,3 +419,5 @@ export const ProductCRUD: React.FC<ProductCRUDProps> = ({ companyId }) => {
     </div>
   );
 };
+
+
