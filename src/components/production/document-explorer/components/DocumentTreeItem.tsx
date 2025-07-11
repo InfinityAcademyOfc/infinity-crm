@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { TreeItem } from '@/components/ui/tree';
 import { Input } from '@/components/ui/input';
@@ -11,6 +10,7 @@ import { TreeItemIcon } from './tree/TreeItemIcon';
 import { TreeItemActions } from './tree/TreeItemActions';
 import { CustomColorDialog } from './tree/CustomColorDialog';
 import { File } from 'lucide-react';
+import { logError } from '@/utils/logger'; // Importar o logger
 
 const folderColors = [
   // Pastel colors
@@ -113,10 +113,10 @@ const DocumentTreeItem: React.FC<DocumentTreeItemProps> = ({
           setRecentColors(updatedRecentColors);
         }
       } else {
-        console.warn("Invalid color format:", color);
+        logError("Invalid color format:", { color }, { component: "DocumentTreeItem" });
       }
     } catch (error) {
-      console.error("Error setting folder color:", error);
+      logError("Error setting folder color:", error, { component: "DocumentTreeItem" });
     }
   };
 
@@ -126,10 +126,10 @@ const DocumentTreeItem: React.FC<DocumentTreeItemProps> = ({
         handleColorChange(customColor);
         setIsColorDialogOpen(false);
       } else {
-        console.warn("Invalid custom color format:", customColor);
+        logError("Invalid custom color format:", { customColor }, { component: "DocumentTreeItem" });
       }
     } catch (error) {
-      console.error("Error applying custom color:", error);
+      logError("Error applying custom color:", error, { component: "DocumentTreeItem" });
     }
   };
 
@@ -217,6 +217,8 @@ const DocumentTreeItem: React.FC<DocumentTreeItemProps> = ({
       />
     </>
   );
-};
+});
 
 export default DocumentTreeItem;
+
+
