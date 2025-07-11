@@ -9,6 +9,7 @@ import { FunnelChart, ConversionChart, LeakageChart, FunnelSummary } from './fun
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { useToast } from '@/hooks/use-toast';
 import { ChartSkeleton } from './DashboardSkeletons';
+import { logError } from '@/utils/logger'; // Importar o logger
 
 const IntegratedFunnel = () => {
   const {
@@ -122,7 +123,7 @@ const IntegratedFunnel = () => {
         description: `Os dados do funil de ${funnelType === 'sales' ? 'Vendas' : funnelType === 'ltv' ? 'LTV' : 'Produção'} foram exportados com sucesso.`,
       });
     } catch (error) {
-      console.error("Error exporting funnel data:", error);
+      logError("Error exporting funnel data:", error, { component: "IntegratedFunnel" });
       toast({
         title: `Erro na exportação`,
         description: `Ocorreu um erro ao exportar os dados.`,
@@ -189,7 +190,7 @@ const IntegratedFunnel = () => {
               
               return (
                 <TabsContent key={type} value={type} className="space-y-4 animation-fade-in">
-                  <div className="grid grid-cols-1 gap-4 transition-all duration-300">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <Card className="p-4 shadow-sm hover:shadow-md transition-all duration-300 bg-card/50 overflow-hidden">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
@@ -320,3 +321,5 @@ const IntegratedFunnel = () => {
 };
 
 export default IntegratedFunnel;
+
+
