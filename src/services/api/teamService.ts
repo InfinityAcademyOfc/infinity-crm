@@ -4,7 +4,7 @@ import { TeamHierarchy, ProductionProject } from "@/types/team";
 
 export const teamService = {
   async getTeamHierarchy(companyId: string): Promise<TeamHierarchy[]> {
-    // Buscar todos os profiles da empresa
+    // Buscar todos os profiles da empresa (removendo position que não existe ainda)
     const { data: profiles, error } = await supabase
       .from('profiles')
       .select(`
@@ -13,7 +13,6 @@ export const teamService = {
         email,
         role,
         department,
-        position,
         manager_id
       `)
       .eq('company_id', companyId);
@@ -31,6 +30,7 @@ export const teamService = {
     profiles?.forEach(profile => {
       profileMap.set(profile.id, {
         ...profile,
+        position: null, // Adicionar position como null por enquanto
         manager_name: null,
         level: 0
       });
