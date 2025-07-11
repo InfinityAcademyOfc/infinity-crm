@@ -1,9 +1,9 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { logError } from '@/utils/logger'; // Importar o logger
 
 interface CustomColorDialogProps {
   isOpen: boolean;
@@ -37,7 +37,7 @@ export const CustomColorDialog: React.FC<CustomColorDialogProps> = ({
         toast.error('Formato de cor inválido');
       }
     } catch (error) {
-      console.error("Error applying color:", error);
+      logError("Error applying color:", error, { component: "CustomColorDialog" });
       toast.error('Erro ao aplicar cor personalizada');
     }
   };
@@ -75,3 +75,5 @@ export const CustomColorDialog: React.FC<CustomColorDialogProps> = ({
     </Dialog>
   );
 };
+
+
