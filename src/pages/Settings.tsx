@@ -9,7 +9,7 @@ import NotificationSettings from "@/components/settings/NotificationSettings";
 import SecuritySettings from "@/components/settings/SecuritySettings";
 import SystemSettings from "@/components/settings/SystemSettings";
 import AutomationSettings from "@/components/settings/AutomationSettings";
-import DashboardSettings from "@/components/settings/DashboardSettings";
+import DashboardWidgetConfig from "@/components/dashboard/DashboardWidgetConfig";
 import PlansSettings from "@/components/settings/PlansSettings";
 import { useProfile } from "@/hooks/useProfile";
 
@@ -93,7 +93,7 @@ const Settings = () => {
         </TabsContent>
         
         <TabsContent value="dashboard">
-          <DashboardSettings />
+          <DashboardWidgetConfig />
         </TabsContent>
         
         <TabsContent value="system">

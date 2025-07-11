@@ -1,4 +1,3 @@
-
 import React, { Suspense, lazy, useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { mockSalesData, mockFunnelData, mockTodayActivities } from "@/data/mockData";
@@ -8,6 +7,7 @@ import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { updateDashboardData, useModuleSync } from "@/services/moduleSyncService";
 import { supabase } from "@/integrations/supabase/client";
 import { Lead } from "@/types/lead";
+import MetricsWidgets from "@/components/dashboard/MetricsWidgets";
 
 // Lazy load heavy components
 const StatsSection = lazy(() => import("@/components/dashboard/StatsSection"));
@@ -15,7 +15,7 @@ const SalesChart = lazy(() => import("@/components/dashboard/SalesChart"));
 const FinanceChart = lazy(() => import("@/components/dashboard/FinanceChart"));
 const ActivitiesSection = lazy(() => import("@/components/dashboard/ActivitiesSection"));
 const IntegratedFunnel = lazy(() => import("@/components/dashboard/IntegratedFunnel"));
-const DREChart = lazy(() => import("@/components/dashboard/DREChart")); // Novo componente DRE
+const DREChart = lazy(() => import("@/components/dashboard/DREChart"));
 
 const Dashboard = () => {
   const { profile, company } = useAuth();
@@ -26,7 +26,7 @@ const Dashboard = () => {
   
   // New state for filtered sales data
   const [filteredSalesData, setFilteredSalesData] = useState<any[]>([]);
-  const [filterPeriod, setFilterPeriod] = useState("6"); // Default to 6 months
+  const [filterPeriod, setFilterPeriod] = useState("6");
   const [filterCollaborator, setFilterCollaborator] = useState("all");
   const [filterProduct, setFilterProduct] = useState("all");
   
@@ -182,36 +182,45 @@ const Dashboard = () => {
   }, [company]);
 
   return (
-    <DashboardLayout
-      welcomeSection={<WelcomeCard userName={userName} />}
-      funnelSection={<></>} // Empty to remove this section
-      integratedFunnelSection={
+    <div className="space-y-6 animate-fade-in px-[5px]">
+      {/* Welcome Message Card */}
+      <WelcomeCard userName={userName} />
+      
+      {/* Real-time Metrics Widgets */}
+      <MetricsWidgets />
+      
+      {/* First row - Integrated Funnel 100% */}
+      <div className="grid grid-cols-1 gap-6">
         <Suspense fallback={<ChartSkeleton />}>
           <IntegratedFunnel />
         </Suspense>
-      }
-      salesAndFinanceSection={
-        <>
-          <Suspense fallback={<ChartSkeleton />}>
-            <SalesChart 
-              data={isLoaded ? filteredSalesData : []} 
-              onPeriodChange={handlePeriodChange}
-              onCollaboratorChange={handleCollaboratorChange}
-              onProductChange={handleProductChange}
-              filterPeriod={filterPeriod}
-              filterCollaborator={filterCollaborator}
-              filterProduct={filterProduct}
-            />
-          </Suspense>
-          <Suspense fallback={<ChartSkeleton />}>
-            <DREChart />
-          </Suspense>
-        </>
-      }
-      activitiesSection={
-        <ActivitiesSection activities={isLoaded ? mockTodayActivities : []} />
-      }
-    />
+      </div>
+      
+      {/* Second row - Sales Chart 50% + DRE Chart 50% */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Suspense fallback={<ChartSkeleton />}>
+          <SalesChart 
+            data={isLoaded ? filteredSalesData : []} 
+            onPeriodChange={handlePeriodChange}
+            onCollaboratorChange={handleCollaboratorChange}
+            onProductChange={handleProductChange}
+            filterPeriod={filterPeriod}
+            filterCollaborator={filterCollaborator}
+            filterProduct={filterProduct}
+          />
+        </Suspense>
+        <Suspense fallback={<ChartSkeleton />}>
+          <DREChart />
+        </Suspense>
+      </div>
+      
+      {/* Third row - Activities 100% */}
+      <div className="grid grid-cols-1 gap-6">
+        <Suspense fallback={<ChartSkeleton />}>
+          <ActivitiesSection activities={isLoaded ? mockTodayActivities : []} />
+        </Suspense>
+      </div>
+    </div>
   );
 };
 
