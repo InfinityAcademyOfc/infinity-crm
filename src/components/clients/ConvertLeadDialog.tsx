@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -7,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { logError } from "@/utils/logger"; // Importar o logger
 
 interface Lead {
   id: string;
@@ -45,26 +45,26 @@ export const ConvertLeadDialog: React.FC<ConvertLeadDialogProps> = ({
       setLoading(true);
       
       const clientData = {
-        name: formData.get('name') as string,
-        contact: formData.get('contact') as string,
-        email: formData.get('email') as string,
-        phone: formData.get('phone') as string,
-        segment: formData.get('segment') as string,
-        status: 'active',
+        name: formData.get("name") as string,
+        contact: formData.get("contact") as string,
+        email: formData.get("email") as string,
+        phone: formData.get("phone") as string,
+        segment: formData.get("segment") as string,
+        status: "active",
         company_id: lead.company_id,
-        source: 'lead_conversion',
-        notes: formData.get('notes') as string,
-        street: formData.get('street') as string,
-        city: formData.get('city') as string,
-        state: formData.get('state') as string,
-        zip: formData.get('zip') as string
+        source: "lead_conversion",
+        notes: formData.get("notes") as string,
+        street: formData.get("street") as string,
+        city: formData.get("city") as string,
+        state: formData.get("state") as string,
+        zip: formData.get("zip") as string
       };
 
       await onConvert(lead.id, clientData);
       onOpenChange(false);
       form.reset();
     } catch (error) {
-      console.error("Erro ao converter lead:", error);
+      logError("Erro ao converter lead:", error, { component: "ConvertLeadDialog" });
       toast({
         title: "Erro",
         description: "Erro ao converter lead em cliente",
@@ -201,3 +201,5 @@ export const ConvertLeadDialog: React.FC<ConvertLeadDialogProps> = ({
     </Dialog>
   );
 };
+
+
