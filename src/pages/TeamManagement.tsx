@@ -28,6 +28,17 @@ const TeamManagement = () => {
 
   const filteredMembers = filterMembers(searchQuery);
 
+  // Handlers for TeamOrgChart that match the expected signatures
+  const handleAddMemberToDepartment = (departmentId: string) => {
+    console.log(`Adding member to department: ${departmentId}`);
+    // This would typically open a dialog to add a member to the specific department
+  };
+
+  const handleEditMemberById = (memberId: string) => {
+    console.log(`Editing member: ${memberId}`);
+    // This would typically open a dialog to edit the specific member
+  };
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -79,8 +90,8 @@ const TeamManagement = () => {
             onAddDepartment={handleAddDepartment}
             onEditDepartment={handleEditDepartment}
             onDeleteDepartment={handleDeleteDepartment}
-            onAddMember={handleUpdateMember}
-            onEditMember={handleUpdateMember}
+            onAddMember={handleAddMemberToDepartment}
+            onEditMember={handleEditMemberById}
             onDeleteMember={handleDeleteMember}
           />
         </TabsContent>
