@@ -27,6 +27,7 @@ const DocumentContent: React.FC<DocumentContentProps> = ({
     title,
     setTitle,
     isFullscreen,
+    setIsFullscreen,
     editorRef,
     handleSelectionChange,
     handleFormatAction,

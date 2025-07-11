@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Transaction } from "@/types/finance";
+import { Transaction, TransactionType } from "@/types/finance";
 
 export const useFinanceTransactions = () => {
   const { company } = useAuth();
@@ -31,6 +31,7 @@ export const useFinanceTransactions = () => {
       // Transform data to match Transaction interface
       const transformedData: Transaction[] = (data || []).map(item => ({
         ...item,
+        type: item.type as TransactionType, // Ensure type safety
         client: null, // Set default value since it's not in the database
         notes: null   // Set default value since it's not in the database
       }));
@@ -65,6 +66,7 @@ export const useFinanceTransactions = () => {
       // Transform the returned data to match Transaction interface
       const transformedData: Transaction = {
         ...data,
+        type: data.type as TransactionType, // Ensure type safety
         client: null,
         notes: null
       };
