@@ -1,6 +1,6 @@
-
 import React, { useEffect, forwardRef, useRef, useState, useCallback } from "react";
 import FloatingFormatToolbar from "./toolbar/FloatingFormatToolbar";
+import { logError } from "@/utils/logger"; // Importar o logger
 
 interface EditorContentProps {
   content: string;
@@ -59,7 +59,7 @@ const EditorContent = forwardRef<HTMLDivElement, EditorContentProps>(({
         });
         setShowFormatToolbar(true);
       } catch (error) {
-        console.error("Error handling selection change:", error);
+        logError("Error handling selection change:", error, { component: "EditorContent" });
         setShowFormatToolbar(false);
       }
     } else {
@@ -103,7 +103,7 @@ const EditorContent = forwardRef<HTMLDivElement, EditorContentProps>(({
         }
         editorRef.current.focus();
       } catch (error) {
-        console.error("Error handling mouse down:", error);
+        logError("Error handling mouse down:", error, { component: "EditorContent" });
       }
     }
   };
@@ -114,7 +114,7 @@ const EditorContent = forwardRef<HTMLDivElement, EditorContentProps>(({
         const newContent = editorRef.current.innerHTML.replace(/<br>/g, "\n");
         onUpdateContent(newContent);
       } catch (error) {
-        console.error("Error handling input:", error);
+        logError("Error handling input:", error, { component: "EditorContent" });
       }
     }
   };
@@ -125,7 +125,7 @@ const EditorContent = forwardRef<HTMLDivElement, EditorContentProps>(({
       const text = e.clipboardData.getData("text/plain");
       document.execCommand("insertText", false, text);
     } catch (error) {
-      console.error("Error handling paste:", error);
+      logError("Error handling paste:", error, { component: "EditorContent" });
     }
   };
 
@@ -155,7 +155,7 @@ const EditorContent = forwardRef<HTMLDivElement, EditorContentProps>(({
         document.execCommand(action, false, value);
       }
     } catch (error) {
-      console.error(`Error applying format ${action}:`, error);
+      logError(`Error applying format ${action}:`, error, { component: "EditorContent" });
     }
   };
 
@@ -165,7 +165,7 @@ const EditorContent = forwardRef<HTMLDivElement, EditorContentProps>(({
     
     if (!isFocused) {
       blurTimeout = window.setTimeout(() => {
-        if (!document.activeElement?.closest('.floating-format-toolbar')) {
+        if (!document.activeElement?.closest(".floating-format-toolbar")) {
           setShowFormatToolbar(false);
         }
       }, 100);
@@ -240,3 +240,5 @@ const EditorContent = forwardRef<HTMLDivElement, EditorContentProps>(({
 EditorContent.displayName = "EditorContent";
 
 export default EditorContent;
+
+
