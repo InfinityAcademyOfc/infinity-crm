@@ -1,145 +1,122 @@
-import { useCallback, useEffect, useState } from 'react';
+
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useTheme } from 'next-themes';
+import { logError } from '@/utils/logger';
 
 export type FunnelType = 'sales' | 'ltv' | 'production';
 
 export interface FunnelStage {
   name: string;
   value: number;
-  conversion?: number;
   leakage?: number;
+  efficiency?: number;
 }
 
 export interface FunnelData {
   stages: FunnelStage[];
   conversionRate: number;
-  status?: 'improving' | 'declining' | 'stable';
 }
-
-interface FunnelDataState {
-  sales: FunnelData;
-  ltv: FunnelData;
-  production: FunnelData;
-}
-
-export const getColorsByType = (type: FunnelType, isDark: boolean) => {
-  const colorMaps = {
-    sales: {
-      primary: isDark ? '#4361ee' : '#3b82f6',
-      secondary: isDark ? '#3a0ca3' : '#2563eb',
-      efficiency: isDark ? '#22c55e' : '#16a34a',
-      leakage: isDark ? '#ef4444' : '#dc2626',
-    },
-    ltv: {
-      primary: isDark ? '#7209b7' : '#8b5cf6',
-      secondary: isDark ? '#560bad' : '#7c3aed',
-      efficiency: isDark ? '#22c55e' : '#16a34a',
-      leakage: isDark ? '#ef4444' : '#dc2626',
-    },
-    production: {
-      primary: isDark ? '#4cc9f0' : '#06b6d4',
-      secondary: isDark ? '#0096c7' : '#0891b2',
-      efficiency: isDark ? '#22c55e' : '#16a34a',
-      leakage: isDark ? '#ef4444' : '#dc2626',
-    },
-  };
-
-  return colorMaps;
-};
 
 export const useFunnelData = () => {
+  const { theme } = useTheme();
   const [activeTab, setActiveTab] = useState<FunnelType>('sales');
-  const [funnelData, setFunnelData] = useState<FunnelDataState>({
-    sales: {
-      stages: [],
-      conversionRate: 0,
-      status: 'stable'
-    },
-    ltv: {
-      stages: [],
-      conversionRate: 0,
-      status: 'stable'
-    },
-    production: {
-      stages: [],
-      conversionRate: 0,
-      status: 'stable'
-    },
-  });
-  
-  const [isDark, setIsDark] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [lastFetch, setLastFetch] = useState<number>(0);
 
-  useEffect(() => {
-    const isDarkMode = document.documentElement.classList.contains('dark');
-    setIsDark(isDarkMode);
-    
-    const matchMedia = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleChange = (e: MediaQueryListEvent) => setIsDark(e.matches);
-    matchMedia.addEventListener('change', handleChange);
+  // Memoizar o tema para evitar re-renders desnecessários
+  const isDark = useMemo(() => {
+    return theme === 'dark';
+  }, [theme]);
 
-    return () => matchMedia.removeEventListener('change', handleChange);
+  // Dados mockados memoizados
+  const funnelData = useMemo<Record<FunnelType, FunnelData>>(() => {
+    return {
+      sales: {
+        stages: [
+          { name: 'Leads', value: 1250, leakage: 15, efficiency: 85 },
+          { name: 'Qualificados', value: 856, leakage: 22, efficiency: 78 },
+          { name: 'Propostas', value: 423, leakage: 35, efficiency: 65 },
+          { name: 'Negociação', value: 198, leakage: 28, efficiency: 72 },
+          { name: 'Fechamento', value: 89, leakage: 12, efficiency: 88 }
+        ],
+        conversionRate: 7.1
+      },
+      ltv: {
+        stages: [
+          { name: 'Novos Clientes', value: 89, leakage: 8, efficiency: 92 },
+          { name: 'Ativos 30d', value: 82, leakage: 12, efficiency: 88 },
+          { name: 'Recorrentes', value: 65, leakage: 18, efficiency: 82 },
+          { name: 'Advocates', value: 34, leakage: 25, efficiency: 75 },
+          { name: 'VIPs', value: 21, leakage: 15, efficiency: 85 }
+        ],
+        conversionRate: 23.6
+      },
+      production: {
+        stages: [
+          { name: 'Planejamento', value: 45, leakage: 5, efficiency: 95 },
+          { name: 'Desenvolvimento', value: 42, leakage: 18, efficiency: 82 },
+          { name: 'Testes', value: 35, leakage: 22, efficiency: 78 },
+          { name: 'Aprovação', value: 28, leakage: 8, efficiency: 92 },
+          { name: 'Entrega', value: 26, leakage: 3, efficiency: 97 }
+        ],
+        conversionRate: 57.8
+      }
+    };
   }, []);
 
-  const fetchFunnelData = useCallback(async () => {
-    try {
-      setIsLoading(true);
-
-      // Simulate fetching data
-      await new Promise(resolve => setTimeout(resolve, 100));
-
-      setFunnelData({
-        sales: {
-          stages: [
-            { name: 'Leads', value: 240, conversion: 75, leakage: 25 },
-            { name: 'Qualified', value: 180, conversion: 66, leakage: 34 },
-            { name: 'Meetings', value: 120, conversion: 83, leakage: 17 },
-            { name: 'Proposals', value: 100, conversion: 60, leakage: 40 },
-            { name: 'Closed', value: 60, conversion: 100, leakage: 0 },
-          ],
-          conversionRate: 25,
-          status: 'improving'
-        },
-        ltv: {
-          stages: [
-            { name: 'First Sale', value: 200, conversion: 65, leakage: 35 },
-            { name: 'Repeated', value: 130, conversion: 77, leakage: 23 },
-            { name: 'Upsell', value: 100, conversion: 50, leakage: 50 },
-            { name: 'Loyal', value: 50, conversion: 100, leakage: 0 }
-          ],
-          conversionRate: 25,
-          status: 'stable'
-        },
-        production: {
-          stages: [
-            { name: 'Planning', value: 180, conversion: 89, leakage: 11 },
-            { name: 'Execution', value: 160, conversion: 75, leakage: 25 },
-            { name: 'Review', value: 120, conversion: 92, leakage: 8 },
-            { name: 'Delivery', value: 110, conversion: 100, leakage: 0 }
-          ],
-          conversionRate: 61,
-          status: 'improving'
-        }
-      });
-    } catch (error) {
-      console.error('Error fetching funnel data:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
+  // Simular carregamento com cache
   useEffect(() => {
-    fetchFunnelData();
-    
-    // Refresh data every 5 minutes
-    const interval = setInterval(fetchFunnelData, 5 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, [fetchFunnelData]);
+    const loadData = async () => {
+      const now = Date.now();
+      // Cache por 2 minutos
+      if (now - lastFetch < 2 * 60 * 1000) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        // Simular delay de carregamento
+        await new Promise(resolve => setTimeout(resolve, 300));
+        setLastFetch(now);
+      } catch (error) {
+        logError('Erro ao carregar dados do funil', error, { component: 'useFunnelData' });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, [lastFetch]);
+
+  const handleSetActiveTab = useCallback((tab: FunnelType) => {
+    setActiveTab(tab);
+  }, []);
 
   return {
     activeTab,
-    setActiveTab,
+    setActiveTab: handleSetActiveTab,
     funnelData,
     isDark,
     isLoading
   };
+};
+
+export const getColorsByType = (type: FunnelType, isDark: boolean) => {
+  const colors = {
+    sales: {
+      efficiency: isDark ? '#22c55e' : '#16a34a',
+      leakage: isDark ? '#ef4444' : '#dc2626'
+    },
+    ltv: {
+      efficiency: isDark ? '#8b5cf6' : '#7c3aed',
+      leakage: isDark ? '#f59e0b' : '#d97706'
+    },
+    production: {
+      efficiency: isDark ? '#06b6d4' : '#0891b2',
+      leakage: isDark ? '#ec4899' : '#db2777'
+    }
+  };
+
+  return { [type]: colors[type] };
 };

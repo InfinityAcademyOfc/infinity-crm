@@ -1,230 +1,201 @@
 
-import { useState, useEffect } from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import { useToast } from "@/hooks/use-toast";
-import { TeamMember } from "@/types/team";
-import { mockTeamMembers } from "@/data/mockData";
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase';
+import { useToast } from '@/hooks/use-toast';
+import { logError } from '@/utils/logger';
+
+export interface TeamMember {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  department?: string;
+  phone?: string;
+  avatar?: string;
+  status: 'active' | 'inactive';
+  created_at: string;
+}
 
 export interface Department {
   id: string;
   name: string;
+  description?: string;
   members: TeamMember[];
-  children: Department[];
 }
 
 export const useTeamManagement = () => {
-  const { company } = useAuth();
+  const { user, companyProfile } = useAuth();
   const { toast } = useToast();
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
+  const [lastFetch, setLastFetch] = useState<number>(0);
 
-  useEffect(() => {
-    loadTeamData();
-  }, [company]);
+  const companyId = useMemo(() => {
+    return companyProfile?.company_id || user?.id || '';
+  }, [companyProfile, user]);
 
-  const loadTeamData = async () => {
+  const loadMembers = useCallback(async () => {
+    if (!companyId) return;
+
+    const now = Date.now();
+    // Cache por 3 minutos
+    if (now - lastFetch < 3 * 60 * 1000) return;
+
     try {
       setLoading(true);
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('company_id', companyId)
+        .order('name');
+
+      if (error) throw error;
+
+      const membersData: TeamMember[] = (data || []).map(profile => ({
+        id: profile.id,
+        name: profile.name || 'Usuário',
+        email: profile.email,
+        role: profile.role,
+        department: profile.department || undefined,
+        phone: profile.phone || undefined,
+        avatar: profile.avatar || undefined,
+        status: profile.status === 'active' ? 'active' : 'inactive',
+        created_at: profile.created_at || new Date().toISOString()
+      }));
+
+      setMembers(membersData);
       
-      setMembers(mockTeamMembers);
-      setDepartments(generateMockDepartments());
+      // Organizar por departamentos
+      const deptMap = new Map<string, TeamMember[]>();
+      membersData.forEach(member => {
+        const dept = member.department || 'Sem Departamento';
+        if (!deptMap.has(dept)) {
+          deptMap.set(dept, []);
+        }
+        deptMap.get(dept)!.push(member);
+      });
+
+      const departmentsData: Department[] = Array.from(deptMap.entries()).map(([name, members]) => ({
+        id: name.toLowerCase().replace(/\s+/g, '-'),
+        name,
+        members
+      }));
+
+      setDepartments(departmentsData);
+      setLastFetch(now);
     } catch (error) {
-      console.error('Erro ao carregar dados da equipe:', error);
+      logError('Erro ao carregar membros da equipe', error, { 
+        component: 'useTeamManagement',
+        companyId 
+      });
       toast({
         title: "Erro",
-        description: "Erro ao carregar dados da equipe",
+        description: "Não foi possível carregar os membros da equipe",
         variant: "destructive"
       });
     } finally {
       setLoading(false);
     }
-  };
+  }, [companyId, lastFetch, toast]);
 
-  const generateMockDepartments = (): Department[] => {
-    return [
-      {
-        id: "1",
-        name: "Diretoria Executiva",
-        members: mockTeamMembers.filter(m => m.role.includes("Director") || m.role.includes("CEO")),
-        children: [
-          {
-            id: "2",
-            name: "Vendas",
-            members: mockTeamMembers.filter(m => m.department === "Sales" && !m.role.includes("Director")),
-            children: [
-              {
-                id: "5",
-                name: "Vendas Corporativas",
-                members: mockTeamMembers.filter(m => m.department === "Sales" && m.role.includes("Corporate")),
-                children: []
-              },
-              {
-                id: "6",
-                name: "Vendas Varejo",
-                members: mockTeamMembers.filter(m => m.department === "Sales" && m.role.includes("Retail")),
-                children: []
-              }
-            ]
-          },
-          {
-            id: "3",
-            name: "Marketing",
-            members: mockTeamMembers.filter(m => m.department === "Marketing" && !m.role.includes("Director")),
-            children: [
-              {
-                id: "7",
-                name: "Marketing Digital",
-                members: mockTeamMembers.filter(m => m.department === "Marketing" && m.role.includes("Digital")),
-                children: []
-              }
-            ]
-          },
-          {
-            id: "4",
-            name: "Tecnologia",
-            members: mockTeamMembers.filter(m => m.department === "Tech" || m.department === "IT"),
-            children: [
-              {
-                id: "8",
-                name: "Desenvolvimento",
-                members: mockTeamMembers.filter(m => m.department === "Tech" && m.role.includes("Developer")),
-                children: []
-              },
-              {
-                id: "9",
-                name: "Infraestrutura",
-                members: mockTeamMembers.filter(m => m.department === "IT" && m.role.includes("Infrastructure")),
-                children: []
-              }
-            ]
-          }
-        ]
-      }
-    ];
-  };
+  const handleDeleteMember = useCallback(async (memberId: string) => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ status: 'inactive' })
+        .eq('id', memberId);
 
-  const handleDeleteMember = (id: string) => {
-    setMembers(members.filter(member => member.id !== id));
-    
-    const removeMemberFromDepts = (depts: Department[]): Department[] => {
-      return depts.map(dept => ({
-        ...dept,
-        members: dept.members.filter(m => m.id !== id),
-        children: removeMemberFromDepts(dept.children)
-      }));
-    };
-    
-    setDepartments(removeMemberFromDepts(departments));
-    
-    toast({
-      title: "Usuário removido",
-      description: "O usuário foi removido da sua equipe."
-    });
-  };
+      if (error) throw error;
 
-  const handleUpdateMember = (updatedMember: TeamMember) => {
-    setMembers(
-      members.map(member => 
-        member.id === updatedMember.id ? { ...member, ...updatedMember } : member
-      )
-    );
-    
-    toast({
-      title: "Usuário atualizado",
-      description: "As informações do usuário foram atualizadas."
-    });
-  };
-
-  const handleAddDepartment = (parentId: string | null) => {
-    const newDeptId = `dept-${Date.now()}`;
-    
-    if (!parentId) {
-      const newDepartment: Department = {
-        id: newDeptId,
-        name: "Novo Departamento",
-        members: [],
-        children: []
-      };
-      
-      setDepartments([...departments, newDepartment]);
-    } else {
-      const addChildDept = (depts: Department[], pId: string): Department[] => {
-        return depts.map(dept => {
-          if (dept.id === pId) {
-            return {
-              ...dept,
-              children: [
-                ...dept.children,
-                {
-                  id: newDeptId,
-                  name: "Novo Sub-departamento",
-                  members: [],
-                  children: []
-                }
-              ]
-            };
-          }
-          
-          return {
-            ...dept,
-            children: addChildDept(dept.children, pId)
-          };
-        });
-      };
-      
-      setDepartments(addChildDept(departments, parentId));
+      setMembers(prev => prev.filter(m => m.id !== memberId));
+      toast({
+        title: "Membro removido",
+        description: "O membro foi removido com sucesso"
+      });
+    } catch (error) {
+      logError('Erro ao remover membro', error, { component: 'useTeamManagement' });
+      toast({
+        title: "Erro",
+        description: "Não foi possível remover o membro",
+        variant: "destructive"
+      });
     }
-    
-    toast({
-      title: "Departamento adicionado",
-      description: "Um novo departamento foi criado."
-    });
-  };
+  }, [toast]);
 
-  const handleEditDepartment = (departmentId: string) => {
-    toast({
-      title: "Editar departamento",
-      description: `Editando departamento ID: ${departmentId}`
-    });
-  };
+  const handleUpdateMember = useCallback(async (updatedMember: TeamMember) => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          name: updatedMember.name,
+          role: updatedMember.role,
+          department: updatedMember.department,
+          phone: updatedMember.phone
+        })
+        .eq('id', updatedMember.id);
 
-  const handleDeleteDepartment = (departmentId: string) => {
-    const deleteDept = (depts: Department[]): Department[] => {
-      return depts.filter(dept => {
-        if (dept.id === departmentId) return false;
-        return true;
-      }).map(dept => ({
-        ...dept,
-        children: deleteDept(dept.children)
-      }));
+      if (error) throw error;
+
+      setMembers(prev => prev.map(m => 
+        m.id === updatedMember.id ? updatedMember : m
+      ));
+
+      toast({
+        title: "Membro atualizado",
+        description: "As informações do membro foram atualizadas"
+      });
+    } catch (error) {
+      logError('Erro ao atualizar membro', error, { component: 'useTeamManagement' });
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar o membro",
+        variant: "destructive"
+      });
+    }
+  }, [toast]);
+
+  const handleAddDepartment = useCallback((name: string) => {
+    const newDept: Department = {
+      id: name.toLowerCase().replace(/\s+/g, '-'),
+      name,
+      members: []
     };
-    
-    setDepartments(deleteDept(departments));
-    
-    toast({
-      title: "Departamento removido",
-      description: "O departamento foi removido com sucesso."
-    });
-  };
+    setDepartments(prev => [...prev, newDept]);
+  }, []);
 
-  const handleMoveMember = (memberId: string, toDepartmentId: string) => {
-    toast({
-      title: "Membro movido",
-      description: `Movido membro ${memberId} para departamento ${toDepartmentId}`
-    });
-  };
+  const handleEditDepartment = useCallback((id: string, name: string) => {
+    setDepartments(prev => prev.map(dept => 
+      dept.id === id ? { ...dept, name } : dept
+    ));
+  }, []);
 
-  const filterMembers = (searchQuery: string) => {
-    return members.filter(member => 
-      member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      member.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      member.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (member.department && member.department.toLowerCase().includes(searchQuery.toLowerCase()))
+  const handleDeleteDepartment = useCallback((id: string) => {
+    setDepartments(prev => prev.filter(dept => dept.id !== id));
+  }, []);
+
+  const handleMoveMember = useCallback((memberId: string, newDepartment: string) => {
+    setMembers(prev => prev.map(member => 
+      member.id === memberId ? { ...member, department: newDepartment } : member
+    ));
+  }, []);
+
+  const filterMembers = useCallback((searchQuery: string) => {
+    if (!searchQuery.trim()) return members;
+    
+    const query = searchQuery.toLowerCase();
+    return members.filter(member =>
+      member.name.toLowerCase().includes(query) ||
+      member.email.toLowerCase().includes(query) ||
+      member.role.toLowerCase().includes(query) ||
+      (member.department && member.department.toLowerCase().includes(query))
     );
-  };
+  }, [members]);
+
+  useEffect(() => {
+    loadMembers();
+  }, [loadMembers]);
 
   return {
     members,
@@ -236,6 +207,7 @@ export const useTeamManagement = () => {
     handleEditDepartment,
     handleDeleteDepartment,
     handleMoveMember,
-    filterMembers
+    filterMembers,
+    refetch: loadMembers
   };
 };

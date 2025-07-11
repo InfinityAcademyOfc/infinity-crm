@@ -1,4 +1,5 @@
-import React, { Suspense, useState, startTransition } from 'react';
+
+import React, { Suspense, useState, startTransition, memo } from 'react';
 import { Filter, Users, CheckCircle2, Activity, TrendingUp, AlertTriangle, Download } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -9,9 +10,9 @@ import { FunnelChart, ConversionChart, LeakageChart, FunnelSummary } from './fun
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { useToast } from '@/hooks/use-toast';
 import { ChartSkeleton } from './DashboardSkeletons';
-import { logError } from '@/utils/logger'; // Importar o logger
+import { logError } from '@/utils/logger';
 
-const IntegratedFunnel = () => {
+const IntegratedFunnel = memo(() => {
   const {
     activeTab,
     setActiveTab,
@@ -318,8 +319,8 @@ const IntegratedFunnel = () => {
       </CardContent>
     </Card>
   );
-};
+});
+
+IntegratedFunnel.displayName = 'IntegratedFunnel';
 
 export default IntegratedFunnel;
-
-

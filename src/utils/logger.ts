@@ -1,30 +1,35 @@
-export const logError = (message: string, error: any, context?: Record<string, any>) => {
-  if (process.env.NODE_ENV === 'development') {
-    console.error(message, error, context);
-  } else {
-    // Em produção, você pode integrar com um serviço de monitoramento de erros como Sentry, Bugsnag, etc.
-    // Exemplo com um placeholder para Sentry:
-    // Sentry.captureException(error, { extra: { message, context } });
-    // Ou enviar para um endpoint de API de logs:
-    // fetch('/api/log-error', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify({ message, error: error.message, stack: error.stack, context }),
-    // });
-    console.error(`[PROD ERROR] ${message}`, error, context);
+
+interface LogContext {
+  component?: string;
+  userId?: string;
+  timestamp?: string;
+  [key: string]: any;
+}
+
+export const logError = (message: string, error: any, context?: LogContext) => {
+  const timestamp = new Date().toISOString();
+  const logData = {
+    message,
+    error: error?.message || error,
+    stack: error?.stack,
+    timestamp,
+    ...context
+  };
+  
+  console.error('[ERROR]', logData);
+  
+  // Em produção, aqui enviaria para um serviço de logging
+  if (process.env.NODE_ENV === 'production') {
+    // TODO: Implementar envio para serviço de logging externo
   }
 };
 
-export const logInfo = (message: string, context?: Record<string, any>) => {
-  if (process.env.NODE_ENV === 'development') {
-    console.info(message, context);
-  }
+export const logWarning = (message: string, context?: LogContext) => {
+  const timestamp = new Date().toISOString();
+  console.warn('[WARNING]', message, { timestamp, ...context });
 };
 
-export const logWarn = (message: string, context?: Record<string, any>) => {
-  if (process.env.NODE_ENV === 'development') {
-    console.warn(message, context);
-  }
+export const logInfo = (message: string, context?: LogContext) => {
+  const timestamp = new Date().toISOString();
+  console.info('[INFO]', message, { timestamp, ...context });
 };
-
-

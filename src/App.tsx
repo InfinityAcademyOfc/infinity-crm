@@ -1,3 +1,4 @@
+
 import React, { useEffect, lazy, Suspense, startTransition } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -10,8 +11,8 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import LoadingScreen from '@/components/ui/loading-screen';
 import { useThemeManager } from '@/hooks/useThemeManager';
 import PageTransition from '@/components/ui/page-transition';
-import ErrorBoundary from '@/components/ErrorBoundary'; // Importar o ErrorBoundary
-import { logError } from '@/utils/logger'; // Importar o logger
+import { ErrorBoundary } from '@/components/ui/error-boundary';
+import { logError } from '@/utils/logger';
 
 // Import custom animations
 import "./styles/theme.css";
@@ -27,8 +28,7 @@ import "./styles/whatsapp.css";
 import "./styles/kanban.css";
 import "./styles/dashboard.css";
 
-// Lazy-loaded components with proper error handling and better performance
-// Use a consistent pattern that will return a proper default export
+// Lazy-loaded components com error handling melhorado
 const Dashboard = lazy(() => 
   import('@/pages/Dashboard')
     .then(module => ({ default: module.default }))
@@ -38,7 +38,6 @@ const Dashboard = lazy(() =>
     })
 );
 
-// Aplicar o mesmo padrão a todos os lazy-loaded components
 const SalesFunnel = lazy(() => 
   import('@/pages/SalesFunnel')
     .then(module => ({ default: module.default }))
@@ -376,5 +375,3 @@ function App() {
 }
 
 export default App;
-
-
