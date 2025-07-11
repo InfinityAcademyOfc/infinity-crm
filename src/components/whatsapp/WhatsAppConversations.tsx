@@ -1,10 +1,10 @@
-
 import { useEffect, useState, useRef } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase"; // Importar do index.ts
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, PaperclipIcon, Smile, Mic, Plus } from "lucide-react";
+import { Send, PaperclipIcon, Smile, Mic, Plus, MessageSquare } from "lucide-react";
+import { logError } from "@/utils/logger"; // Importar o logger
 
 interface Message {
   id: string;
@@ -69,7 +69,7 @@ const WhatsAppConversations = ({ sessionId }: WhatsAppConversationsProps) => {
           setSelectedNumber(uniqueNumbers[0]);
         }
       } catch (error) {
-        console.error("Error loading contacts and numbers:", error);
+        logError("Error loading contacts and numbers:", error, { component: "WhatsAppConversations" });
       }
     };
     
@@ -101,7 +101,7 @@ const WhatsAppConversations = ({ sessionId }: WhatsAppConversationsProps) => {
           }
         }, 100);
       } catch (error) {
-        console.error("Error loading messages:", error);
+        logError("Error loading messages:", error, { component: "WhatsAppConversations" });
       }
     };
 
@@ -155,7 +155,7 @@ const WhatsAppConversations = ({ sessionId }: WhatsAppConversationsProps) => {
 
       setInput("");
     } catch (error) {
-      console.error("Error sending message:", error);
+      logError("Error sending message:", error, { component: "WhatsAppConversations" });
     }
   };
 
@@ -242,8 +242,8 @@ const WhatsAppConversations = ({ sessionId }: WhatsAppConversationsProps) => {
                       <p>{msg.message}</p>
                       <div className="text-xs text-right mt-1 opacity-70">
                         {new Date(msg.created_at).toLocaleTimeString([], {
-                          hour: '2-digit',
-                          minute: '2-digit'
+                          hour: "2-digit",
+                          minute: "2-digit"
                         })}
                       </div>
                     </div>
@@ -300,7 +300,6 @@ const WhatsAppConversations = ({ sessionId }: WhatsAppConversationsProps) => {
   );
 };
 
-// Missing import
-import { MessageSquare } from "lucide-react";
-
 export default WhatsAppConversations;
+
+
