@@ -1,10 +1,10 @@
-
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { logError } from "@/utils/logger"; // Importar o logger
 
 interface ChatMessage {
   id: number;
@@ -33,7 +33,7 @@ const ChatContent = ({ initialMessages, className }: ChatContentProps) => {
       try {
         messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
       } catch (error) {
-        console.error("Error scrolling to bottom:", error);
+        logError("Error scrolling to bottom:", error, { component: "ChatContent" });
       }
     }
   }, []);
@@ -143,3 +143,5 @@ const ChatContent = ({ initialMessages, className }: ChatContentProps) => {
 };
 
 export default ChatContent;
+
+
