@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,8 +7,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import PlanCard from '@/components/pricing/PlanCard';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowUpRight, CreditCard } from 'lucide-react';
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase"; // Importar do index.ts
 import { toast } from 'sonner';
+import { logError } from '@/utils/logger'; // Importar o logger
 
 const PlansSettings = () => {
   const { companyProfile, company } = useAuth();
@@ -48,7 +48,7 @@ const PlansSettings = () => {
           }
         }
       } catch (error) {
-        console.error('Error fetching company info:', error);
+        logError('Error fetching company info:', error, { component: "PlansSettings" });
       } finally {
         setIsLoading(false);
       }
@@ -108,7 +108,7 @@ const PlansSettings = () => {
         toast.success(`Plano alterado para ${newPlanData.name} com sucesso!`);
       }
     } catch (error) {
-      console.error('Error changing plan:', error);
+      logError('Error changing plan:', error, { component: "PlansSettings" });
       toast.error('Não foi possível alterar o plano. Tente novamente.');
     }
   };
@@ -305,3 +305,5 @@ const PlansSettings = () => {
 };
 
 export default PlansSettings;
+
+
