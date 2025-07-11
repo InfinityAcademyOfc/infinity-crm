@@ -4,7 +4,7 @@ import { TeamHierarchy, ProductionProject } from "@/types/team";
 
 export const teamService = {
   async getTeamHierarchy(companyId: string): Promise<TeamHierarchy[]> {
-    // Buscar todos os profiles da empresa com manager_id
+    // First check if manager_id column exists, if not return simple hierarchy
     const { data: profiles, error } = await supabase
       .from('profiles')
       .select(`
@@ -12,8 +12,7 @@ export const teamService = {
         name,
         email,
         role,
-        department,
-        manager_id
+        department
       `)
       .eq('company_id', companyId);
 
@@ -22,35 +21,20 @@ export const teamService = {
       throw error;
     }
 
-    // Construir hierarquia manualmente
+    // Build simple hierarchy without manager relationships for now
     const hierarchy: TeamHierarchy[] = [];
-    const profileMap = new Map();
 
-    // Criar mapa de profiles
     profiles?.forEach(profile => {
-      profileMap.set(profile.id, {
+      hierarchy.push({
         ...profile,
-        position: null, // Adicionar position como null por enquanto
+        position: null,
+        manager_id: null,
         manager_name: null,
         level: 0
       });
     });
 
-    // Adicionar nomes dos managers e calcular níveis
-    profiles?.forEach(profile => {
-      if (profile.manager_id && profileMap.has(profile.manager_id)) {
-        const manager = profileMap.get(profile.manager_id);
-        profileMap.get(profile.id).manager_name = manager.name;
-        profileMap.get(profile.id).level = manager.level + 1;
-      }
-    });
-
-    // Converter para array
-    profileMap.forEach(profile => {
-      hierarchy.push(profile);
-    });
-
-    return hierarchy.sort((a, b) => a.level - b.level || a.name.localeCompare(b.name));
+    return hierarchy.sort((a, b) => a.name.localeCompare(b.name));
   },
 
   async updateTeamMember(memberId: string, updates: Partial<any>) {
@@ -70,11 +54,21 @@ export const teamService = {
   },
 
   async getProductionProjects(companyId: string): Promise<ProductionProject[]> {
+    // Use the existing production_projects table structure
     const { data, error } = await supabase
       .from('production_projects')
       .select(`
-        *,
-        project_manager:profiles!project_manager_id(name, email)
+        id,
+        company_id,
+        name,
+        description,
+        status,
+        type,
+        created_at,
+        updated_at,
+        created_by,
+        collaborators,
+        data
       `)
       .eq('company_id', companyId)
       .order('created_at', { ascending: false });
@@ -84,24 +78,38 @@ export const teamService = {
       throw error;
     }
 
-    return data || [];
+    // Transform the data to match ProductionProject interface
+    const projects: ProductionProject[] = (data || []).map(project => ({
+      id: project.id,
+      company_id: project.company_id,
+      name: project.name,
+      description: project.description || '',
+      status: project.status as 'planning' | 'in_progress' | 'on_hold' | 'completed' | 'cancelled',
+      priority: 'medium' as 'low' | 'medium' | 'high' | 'urgent', // Default priority
+      start_date: null,
+      end_date: null,
+      budget: null,
+      progress: 0,
+      project_manager_id: null,
+      team_members: project.collaborators || [],
+      created_by: project.created_by,
+      created_at: project.created_at,
+      updated_at: project.updated_at
+    }));
+
+    return projects;
   },
 
   async createProductionProject(project: Omit<ProductionProject, 'id' | 'created_at' | 'updated_at'>): Promise<ProductionProject> {
-    // Garantir que todos os campos obrigatórios estão presentes
+    // Map ProductionProject to the actual table structure
     const projectData = {
       company_id: project.company_id,
       name: project.name,
       description: project.description || null,
       status: project.status || 'planning',
-      priority: project.priority || 'medium',
-      start_date: project.start_date || null,
-      end_date: project.end_date || null,
-      budget: project.budget || null,
-      progress: project.progress || 0,
-      project_manager_id: project.project_manager_id || null,
-      team_members: project.team_members || [],
-      created_by: project.created_by || null
+      type: 'project', // Required field in the actual table
+      created_by: project.created_by || null,
+      collaborators: project.team_members || []
     };
 
     const { data, error } = await supabase
@@ -115,13 +123,38 @@ export const teamService = {
       throw error;
     }
 
-    return data;
+    // Transform back to ProductionProject interface
+    return {
+      id: data.id,
+      company_id: data.company_id,
+      name: data.name,
+      description: data.description || '',
+      status: data.status as 'planning' | 'in_progress' | 'on_hold' | 'completed' | 'cancelled',
+      priority: 'medium' as 'low' | 'medium' | 'high' | 'urgent',
+      start_date: null,
+      end_date: null,
+      budget: null,
+      progress: 0,
+      project_manager_id: null,
+      team_members: data.collaborators || [],
+      created_by: data.created_by,
+      created_at: data.created_at,
+      updated_at: data.updated_at
+    };
   },
 
   async updateProductionProject(projectId: string, updates: Partial<ProductionProject>): Promise<ProductionProject> {
+    // Map updates to the actual table structure
+    const updateData: any = {};
+    
+    if (updates.name) updateData.name = updates.name;
+    if (updates.description !== undefined) updateData.description = updates.description;
+    if (updates.status) updateData.status = updates.status;
+    if (updates.team_members) updateData.collaborators = updates.team_members;
+
     const { data, error } = await supabase
       .from('production_projects')
-      .update(updates)
+      .update(updateData)
       .eq('id', projectId)
       .select()
       .single();
@@ -131,7 +164,24 @@ export const teamService = {
       throw error;
     }
 
-    return data;
+    // Transform back to ProductionProject interface
+    return {
+      id: data.id,
+      company_id: data.company_id,
+      name: data.name,
+      description: data.description || '',
+      status: data.status as 'planning' | 'in_progress' | 'on_hold' | 'completed' | 'cancelled',
+      priority: 'medium' as 'low' | 'medium' | 'high' | 'urgent',
+      start_date: null,
+      end_date: null,
+      budget: null,
+      progress: 0,
+      project_manager_id: null,
+      team_members: data.collaborators || [],
+      created_by: data.created_by,
+      created_at: data.created_at,
+      updated_at: data.updated_at
+    };
   },
 
   async deleteProductionProject(projectId: string): Promise<void> {

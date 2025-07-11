@@ -46,13 +46,13 @@ export interface ProductionProject {
   description?: string;
   status: 'planning' | 'in_progress' | 'on_hold' | 'completed' | 'cancelled';
   priority: 'low' | 'medium' | 'high' | 'urgent';
-  start_date?: string;
-  end_date?: string;
-  budget?: number;
+  start_date?: string | null;
+  end_date?: string | null;
+  budget?: number | null;
   progress: number;
-  project_manager_id?: string;
+  project_manager_id?: string | null;
   team_members: string[];
-  created_by?: string;
+  created_by?: string | null;
   created_at: string;
   updated_at: string;
 }
