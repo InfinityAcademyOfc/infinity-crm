@@ -10,5 +10,10 @@ export interface Transaction {
   category: string;
   client: string | null;
   status: string;
-  notes: string;
+  notes: string | null;
+  company_id?: string;
+  created_at?: string;
+  updated_at?: string;
+  created_by?: string;
+  reference_id?: string;
 }

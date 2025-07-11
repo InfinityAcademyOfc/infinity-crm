@@ -27,7 +27,15 @@ export const useFinanceTransactions = () => {
         .order('date', { ascending: false });
 
       if (error) throw error;
-      setTransactions(data || []);
+      
+      // Transform data to match Transaction interface
+      const transformedData: Transaction[] = (data || []).map(item => ({
+        ...item,
+        client: null, // Set default value since it's not in the database
+        notes: null   // Set default value since it's not in the database
+      }));
+      
+      setTransactions(transformedData);
     } catch (error) {
       console.error('Erro ao carregar transações:', error);
       toast({
@@ -54,13 +62,20 @@ export const useFinanceTransactions = () => {
 
       if (error) throw error;
       
-      setTransactions(prev => [data, ...prev]);
+      // Transform the returned data to match Transaction interface
+      const transformedData: Transaction = {
+        ...data,
+        client: null,
+        notes: null
+      };
+      
+      setTransactions(prev => [transformedData, ...prev]);
       toast({
         title: `${transactionData.type === "income" ? "Receita" : "Despesa"} adicionada`,
         description: `${transactionData.description} foi adicionada com sucesso`
       });
       
-      return data;
+      return transformedData;
     } catch (error) {
       console.error('Erro ao adicionar transação:', error);
       toast({

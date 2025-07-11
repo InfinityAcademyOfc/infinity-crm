@@ -55,6 +55,17 @@ export const RealtimeSalesFunnelBoard = () => {
     }
   };
 
+  // Wrapper function to match the expected signature for drag end
+  const handleDragEndWrapper = (result: any) => {
+    if (result.destination) {
+      handleDragEnd(
+        result.draggableId,
+        result.source.droppableId,
+        result.destination.droppableId
+      );
+    }
+  };
+
   const funnelStageData = funnelStages.map(stage => ({
     name: stage.name,
     value: salesLeads.filter(lead => lead.stage_id === stage.id).length
@@ -131,7 +142,7 @@ export const RealtimeSalesFunnelBoard = () => {
       {/* Kanban Board */}
       <FunnelBoard
         kanbanColumns={kanbanColumns}
-        onDragEnd={handleDragEnd}
+        onDragEnd={handleDragEndWrapper}
         onAddCard={handleAddCard}
         onEditCard={handleEditCard}
         onDeleteCard={handleDeleteLead}

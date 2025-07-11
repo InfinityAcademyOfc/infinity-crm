@@ -115,6 +115,7 @@ export const useDocumentEditor = (initialContent: string, onContentChange: (cont
     title,
     setTitle,
     isFullscreen,
+    setIsFullscreen,
     editorRef,
     handleSelectionChange,
     handleFormatAction,
