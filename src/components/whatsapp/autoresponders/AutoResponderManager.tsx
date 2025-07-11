@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,7 +24,8 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import AutoResponderFormDialog from "./AutoResponderFormDialog";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase"; // Importar do index.ts
+import { logError } from "@/utils/logger"; // Importar o logger
 
 interface AutoResponder {
   id: string;
@@ -65,7 +65,7 @@ const AutoResponderManager = ({ sessionId }: AutoResponderManagerProps) => {
         if (error) throw error;
         setAutoResponders(data || []);
       } catch (error) {
-        console.error("Erro ao buscar autoresponders:", error);
+        logError("Erro ao buscar autoresponders:", error, { component: "AutoResponderManager" });
         toast({
           title: "Erro ao carregar respostas automáticas",
           description: "Não foi possível carregar as respostas automáticas.",
@@ -126,7 +126,7 @@ const AutoResponderManager = ({ sessionId }: AutoResponderManagerProps) => {
         description: "A resposta automática foi excluída com sucesso."
       });
     } catch (error) {
-      console.error("Error deleting auto responder:", error);
+      logError("Error deleting auto responder:", error, { component: "AutoResponderManager" });
       toast({
         title: "Erro ao excluir",
         description: "Não foi possível excluir a resposta automática.",
@@ -153,7 +153,7 @@ const AutoResponderManager = ({ sessionId }: AutoResponderManagerProps) => {
         description: `A resposta automática foi ${!active ? "ativada" : "desativada"} com sucesso.`
       });
     } catch (error) {
-      console.error("Error toggling auto responder:", error);
+      logError("Error toggling auto responder:", error, { component: "AutoResponderManager" });
       toast({
         title: "Erro ao alterar status",
         description: "Não foi possível alterar o status da resposta automática. Tente novamente.",
@@ -208,7 +208,7 @@ const AutoResponderManager = ({ sessionId }: AutoResponderManagerProps) => {
       
       setFormOpen(false);
     } catch (error) {
-      console.error("Error saving auto responder:", error);
+      logError("Error saving auto responder:", error, { component: "AutoResponderManager" });
       toast({
         title: "Erro ao salvar resposta automática",
         description: "Não foi possível salvar a resposta automática. Tente novamente.",
@@ -274,10 +274,10 @@ const AutoResponderManager = ({ sessionId }: AutoResponderManagerProps) => {
                       <TableCell>
                         <div className="max-w-[250px]">
                           <Badge variant="outline" className="mb-1">
-                            {autoResponder.trigger_type === 'keyword' ? 'Palavra-chave' : 
-                             autoResponder.trigger_type === 'first_message' ? 'Primeira mensagem' :
-                             autoResponder.trigger_type === 'first_daily' ? 'Primeira do dia' :
-                             'Gatilho personalizado'}
+                            {autoResponder.trigger_type === "keyword" ? "Palavra-chave" : 
+                             autoResponder.trigger_type === "first_message" ? "Primeira mensagem" :
+                             autoResponder.trigger_type === "first_daily" ? "Primeira do dia" :
+                             "Gatilho personalizado"}
                           </Badge>
                           <div className="truncate font-medium">
                             {autoResponder.keyword || "Sem palavra-chave"}
@@ -295,7 +295,7 @@ const AutoResponderManager = ({ sessionId }: AutoResponderManagerProps) => {
                       <TableCell>
                         <div className="flex items-center">
                           <Clock size={16} className="mr-2 text-muted-foreground" />
-                          {autoResponder.delay_seconds} segundo{autoResponder.delay_seconds !== 1 ? 's' : ''}
+                          {autoResponder.delay_seconds} segundo{autoResponder.delay_seconds !== 1 ? "s" : ""}
                         </div>
                       </TableCell>
                       <TableCell>
@@ -344,3 +344,5 @@ const AutoResponderManager = ({ sessionId }: AutoResponderManagerProps) => {
 };
 
 export default AutoResponderManager;
+
+
