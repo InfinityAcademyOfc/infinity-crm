@@ -90,10 +90,13 @@ const NotificationSettings = () => {
 
       if (data) {
         // Mapear dados do banco para o formato do componente
-        setPreferences(prev => prev.map(pref => ({
-          ...pref,
-          enabled: data[pref.id as keyof typeof data] ?? pref.enabled
-        })));
+        setPreferences(prev => prev.map(pref => {
+          const dbValue = data[pref.id as keyof typeof data];
+          return {
+            ...pref,
+            enabled: typeof dbValue === 'boolean' ? dbValue : Boolean(dbValue) ?? pref.enabled
+          };
+        }));
       }
     } catch (error) {
       console.error('Erro ao carregar preferências:', error);
