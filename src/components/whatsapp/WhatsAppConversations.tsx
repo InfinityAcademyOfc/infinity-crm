@@ -1,10 +1,10 @@
 import { useEffect, useState, useRef } from "react";
-import { supabase } from "@/integrations/supabase"; // Importar do index.ts
+import { supabase } from "@/integrations/supabase";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, PaperclipIcon, Smile, Mic, Plus, MessageSquare } from "lucide-react";
-import { logError } from "@/utils/logger"; // Importar o logger
+import { logError } from "@/utils/logger";
 
 interface Message {
   id: string;
@@ -301,5 +301,3 @@ const WhatsAppConversations = ({ sessionId }: WhatsAppConversationsProps) => {
 };
 
 export default WhatsAppConversations;
-
-

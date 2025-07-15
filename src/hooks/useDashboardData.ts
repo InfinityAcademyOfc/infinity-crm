@@ -1,8 +1,18 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { mockSalesData, mockTodayActivities } from '@/data/mockData';
+import { mockTodayActivities } from '@/data/mockData';
 import { logError } from '@/utils/logger';
+
+// Mock sales data with correct structure
+const mockSalesData = [
+  { month: 'Jan', value: 12000, period: '30d', collaborator: 'João', product: 'Produto A' },
+  { month: 'Feb', value: 15000, period: '30d', collaborator: 'Maria', product: 'Produto B' },
+  { month: 'Mar', value: 18000, period: '30d', collaborator: 'Pedro', product: 'Produto A' },
+  { month: 'Apr', value: 14000, period: '60d', collaborator: 'Ana', product: 'Produto C' },
+  { month: 'May', value: 22000, period: '60d', collaborator: 'João', product: 'Produto B' },
+  { month: 'Jun', value: 25000, period: '90d', collaborator: 'Maria', product: 'Produto A' }
+];
 
 export const useDashboardData = () => {
   const { user, companyProfile } = useAuth();

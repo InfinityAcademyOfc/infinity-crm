@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,7 +20,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import ListFormDialog from "./ListFormDialog";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase";
 
 interface ContactList {
   id: string;
