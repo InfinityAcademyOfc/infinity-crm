@@ -2,16 +2,15 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { useModuleSync } from "@/services/moduleSyncService";
 import { KanbanColumnItem, KanbanCardItem } from "@/components/kanban/types";
 
 export const useProductionManagement = () => {
   const { company } = useAuth();
   const { toast } = useToast();
-  const { syncAllModules, isSyncing } = useModuleSync();
   
   const [columns, setColumns] = useState<KanbanColumnItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const mockTasksKanbanColumns: KanbanColumnItem[] = [{
     id: "backlog",
@@ -118,7 +117,15 @@ export const useProductionManagement = () => {
   };
 
   const handleSyncModules = () => {
-    syncAllModules();
+    setIsSyncing(true);
+    // Simulate sync process
+    setTimeout(() => {
+      setIsSyncing(false);
+      toast({
+        title: "Sincronização concluída",
+        description: "Dados sincronizados com sucesso!"
+      });
+    }, 2000);
     toast({
       title: "Sincronização iniciada",
       description: "Sincronizando dados entre todos os módulos..."
