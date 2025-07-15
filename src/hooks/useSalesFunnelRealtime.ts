@@ -2,23 +2,20 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { funnelService, FunnelStage, SalesLead } from "@/services/api/funnelService";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { KanbanColumnItem, KanbanCardItem } from "@/components/kanban/types";
 
 export function useSalesFunnelRealtime(companyId: string) {
   const [funnelStages, setFunnelStages] = useState<FunnelStage[]>([]);
   const [salesLeads, setSalesLeads] = useState<SalesLead[]>([]);
   const [kanbanColumns, setKanbanColumns] = useState<KanbanColumnItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
 
-  // Load initial data
+  // Load initial data immediately
   useEffect(() => {
     if (!companyId) return;
 
     const loadData = async () => {
       try {
-        setLoading(true);
         const [stages, leads] = await Promise.all([
           funnelService.getFunnelStages(companyId),
           funnelService.getSalesLeads(companyId)
@@ -40,18 +37,11 @@ export function useSalesFunnelRealtime(companyId: string) {
         setKanbanColumns(columns);
       } catch (error) {
         console.error("Erro ao carregar dados do funil:", error);
-        toast({
-          title: "Erro",
-          description: "Erro ao carregar dados do funil",
-          variant: "destructive"
-        });
-      } finally {
-        setLoading(false);
       }
     };
 
     loadData();
-  }, [companyId, toast]);
+  }, [companyId]);
 
   // Setup real-time subscriptions
   useEffect(() => {
@@ -68,32 +58,13 @@ export function useSalesFunnelRealtime(companyId: string) {
           filter: `company_id=eq.${companyId}`
         },
         (payload) => {
-          console.log('Lead change:', payload);
           handleLeadChange(payload);
-        }
-      )
-      .subscribe();
-
-    const stagesChannel = supabase
-      .channel('funnel_stages_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'funnel_stages',
-          filter: `company_id=eq.${companyId}`
-        },
-        (payload) => {
-          console.log('Stage change:', payload);
-          handleStageChange(payload);
         }
       )
       .subscribe();
 
     return () => {
       supabase.removeChannel(leadsChannel);
-      supabase.removeChannel(stagesChannel);
     };
   }, [companyId]);
 
@@ -115,27 +86,8 @@ export function useSalesFunnelRealtime(companyId: string) {
       }
     });
 
-    // Update kanban columns
-    updateKanbanFromLeads();
-  };
-
-  const handleStageChange = (payload: any) => {
-    const { eventType, new: newRecord, old: oldRecord } = payload;
-    
-    setFunnelStages(current => {
-      switch (eventType) {
-        case 'INSERT':
-          return [...current, newRecord].sort((a, b) => a.order_index - b.order_index);
-        case 'UPDATE':
-          return current.map(stage => 
-            stage.id === newRecord.id ? newRecord : stage
-          ).sort((a, b) => a.order_index - b.order_index);
-        case 'DELETE':
-          return current.filter(stage => stage.id !== oldRecord.id);
-        default:
-          return current;
-      }
-    });
+    // Update kanban columns immediately
+    setTimeout(updateKanbanFromLeads, 0);
   };
 
   const updateKanbanFromLeads = () => {
@@ -189,17 +141,9 @@ export function useSalesFunnelRealtime(companyId: string) {
     const success = await funnelService.updateLeadStage(cardId, targetColumnId, targetStage.name);
     
     if (success) {
-      toast({
-        title: "Lead movido",
-        description: `Lead movido para ${targetStage.name}`,
-        duration: 2000,
-      });
+      toast.success(`Lead movido para ${targetStage.name}`, { duration: 2000 });
     } else {
-      toast({
-        title: "Erro",
-        description: "Erro ao mover lead",
-        variant: "destructive"
-      });
+      toast.error("Erro ao mover lead");
     }
   };
 
@@ -212,17 +156,9 @@ export function useSalesFunnelRealtime(companyId: string) {
     });
 
     if (newLead) {
-      toast({
-        title: "Lead criado",
-        description: `${leadData.name} foi adicionado ao funil`,
-        duration: 2000,
-      });
+      toast.success(`${leadData.name} foi adicionado ao funil`, { duration: 2000 });
     } else {
-      toast({
-        title: "Erro",
-        description: "Erro ao criar lead",
-        variant: "destructive"
-      });
+      toast.error("Erro ao criar lead");
     }
   };
 
@@ -230,17 +166,9 @@ export function useSalesFunnelRealtime(companyId: string) {
     const updatedLead = await funnelService.updateLead(leadId, updates);
     
     if (updatedLead) {
-      toast({
-        title: "Lead atualizado",
-        description: "Lead atualizado com sucesso",
-        duration: 2000,
-      });
+      toast.success("Lead atualizado com sucesso", { duration: 2000 });
     } else {
-      toast({
-        title: "Erro",
-        description: "Erro ao atualizar lead",
-        variant: "destructive"
-      });
+      toast.error("Erro ao atualizar lead");
     }
   };
 
@@ -248,17 +176,9 @@ export function useSalesFunnelRealtime(companyId: string) {
     const success = await funnelService.deleteLead(leadId);
     
     if (success) {
-      toast({
-        title: "Lead removido",
-        description: "Lead removido do funil",
-        duration: 2000,
-      });
+      toast.success("Lead removido do funil", { duration: 2000 });
     } else {
-      toast({
-        title: "Erro",
-        description: "Erro ao remover lead",
-        variant: "destructive"
-      });
+      toast.error("Erro ao remover lead");
     }
   };
 
@@ -266,7 +186,6 @@ export function useSalesFunnelRealtime(companyId: string) {
     funnelStages,
     salesLeads,
     kanbanColumns,
-    loading,
     handleDragEnd,
     handleCreateLead,
     handleUpdateLead,

@@ -7,6 +7,7 @@ interface PageTransitionProps {
 }
 
 const PageTransition = ({ children }: PageTransitionProps) => {
+  // Optimized to 25ms for ultra-fast transitions
   const [isTransitioning, setIsTransitioning] = useState(false);
   const location = useLocation();
 
@@ -14,15 +15,15 @@ const PageTransition = ({ children }: PageTransitionProps) => {
     setIsTransitioning(true);
     const timer = setTimeout(() => {
       setIsTransitioning(false);
-    }, 100); // Reduced to 100ms for faster transitions
+    }, 25); // Ultra-fast transition
     
     return () => clearTimeout(timer);
   }, [location.pathname]);
 
   return (
     <div
-      className={`transition-opacity duration-100 ease-in-out ${
-        isTransitioning ? 'opacity-0' : 'opacity-100'
+      className={`transition-opacity duration-25 ease-in-out ${
+        isTransitioning ? 'opacity-95' : 'opacity-100'
       }`}
     >
       {children}
