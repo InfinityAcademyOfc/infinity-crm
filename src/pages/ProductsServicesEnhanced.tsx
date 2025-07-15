@@ -161,20 +161,7 @@ const ProductsServicesEnhanced = () => {
         </div>
       )}
 
-      <ProductCRUD
-        open={newProductOpen || !!editProduct}
-        onOpenChange={(open) => {
-          if (!open) {
-            setNewProductOpen(false);
-            setEditProduct(null);
-          }
-        }}
-        product={editProduct}
-        onSave={editProduct ? 
-          (updates) => handleUpdateProduct(editProduct.id, updates) : 
-          handleCreateProduct
-        }
-      />
+      <ProductCRUD companyId={companyId} />
     </div>
   );
 };

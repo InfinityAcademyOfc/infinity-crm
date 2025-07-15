@@ -1,9 +1,8 @@
 
-import React, { useEffect } from "react";
-import { DndProvider } from "react-dnd";
-import { HTML5Backend } from "react-dnd-html5-backend";
-import { KanbanBoard } from "@/components/kanban/KanbanBoard";
-import { NewLeadDialog } from "./NewLeadDialog";
+import React, { useEffect, useState } from "react";
+import { DndProvider } from "@/components/ui/dnd-provider";
+import KanbanBoard from "@/components/kanban/KanbanBoard";
+import NewLeadDialog from "./NewLeadDialog";
 import { EditLeadDialog } from "./EditLeadDialog";
 import { FunnelHeader } from "./FunnelHeader";
 import { FunnelStats } from "./FunnelStats";
@@ -23,42 +22,53 @@ const RealtimeSalesFunnelBoard = () => {
     handleCreateLead,
     handleUpdateLead,
     handleDeleteLead,
-    refreshData,
-    newLeadOpen,
-    setNewLeadOpen,
-    editLeadOpen,
-    setEditLeadOpen,
-    selectedLead,
-    setSelectedLead
+    setKanbanColumns
   } = useSalesFunnelRealtime(companyId);
 
-  useEffect(() => {
-    if (companyId) {
-      refreshData();
-    }
-  }, [companyId, refreshData]);
+  const [newLeadOpen, setNewLeadOpen] = useState(false);
+  const [editLeadOpen, setEditLeadOpen] = useState(false);
+  const [selectedLead, setSelectedLead] = useState<any>(null);
+  const [showAnalytics, setShowAnalytics] = useState(false);
+  const [filterMenuOpen, setFilterMenuOpen] = useState(false);
+
+  const refreshData = () => {
+    // Data refreshes automatically via real-time subscriptions
+  };
 
   return (
     <div className="flex flex-col h-full space-y-4">
-      <FunnelHeader onRefresh={refreshData} />
+      <FunnelHeader 
+        showAnalytics={showAnalytics}
+        setShowAnalytics={setShowAnalytics}
+        filterMenuOpen={filterMenuOpen}
+        setFilterMenuOpen={setFilterMenuOpen}
+        onAddNewLead={() => setNewLeadOpen(true)}
+        onFiltersApplied={refreshData}
+      />
       
       <FunnelStats 
-        stages={funnelStages}
-        leads={salesLeads}
+        totalLeads={salesLeads.length}
+        totalValue={salesLeads.reduce((sum, lead) => sum + (lead.value || 0), 0)}
+        conversionRate={0}
+        activeStages={funnelStages.length}
       />
 
       <Card className="flex-1 p-4">
-        <DndProvider backend={HTML5Backend}>
+        <DndProvider 
+          items={kanbanColumns.map(col => col.id)}
+          onDragEnd={(activeId, overId) => {
+            // Handle drag end logic
+          }}
+        >
           <KanbanBoard
             columns={kanbanColumns}
-            onDragEnd={handleDragEnd}
-            onCreateCard={handleCreateLead}
+            setColumns={setKanbanColumns}
+            onAddCard={() => setNewLeadOpen(true)}
             onEditCard={(card) => {
               setSelectedLead(card);
               setEditLeadOpen(true);
             }}
             onDeleteCard={handleDeleteLead}
-            createButtonText="Novo Lead"
           />
         </DndProvider>
       </Card>
@@ -66,16 +76,24 @@ const RealtimeSalesFunnelBoard = () => {
       <NewLeadDialog
         open={newLeadOpen}
         onOpenChange={setNewLeadOpen}
-        onSave={(leadData, stageId) => handleCreateLead(leadData, stageId)}
-        stages={funnelStages}
+        activeColumnId={funnelStages[0]?.id || null}
+        onSave={(leadData) => {
+          handleCreateLead(leadData, funnelStages[0]?.id || '');
+          setNewLeadOpen(false);
+        }}
       />
 
       <EditLeadDialog
         open={editLeadOpen}
         onOpenChange={setEditLeadOpen}
-        lead={selectedLead}
-        onSave={(leadId, updates) => handleUpdateLead(leadId, updates)}
-        stages={funnelStages}
+        activeCard={selectedLead}
+        funnelStages={funnelStages}
+        onUpdate={(updates) => {
+          if (selectedLead) {
+            handleUpdateLead(selectedLead.id, updates);
+            setEditLeadOpen(false);
+          }
+        }}
       />
     </div>
   );
