@@ -1,13 +1,15 @@
+
 import React, { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { Users, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Search, Plus, Download, Users, TrendingUp } from "lucide-react";
 import { ClientList } from "@/components/clients/ClientList";
 import { ClientAnalytics } from "@/components/clients/ClientAnalytics";
 import { ClientCard } from "@/components/clients/ClientCard";
 import { ClientMetricsCards } from "@/components/clients/ClientMetricsCards";
+import { ClientHeader } from "@/components/clients/ClientHeader";
+import { ClientViewControls } from "@/components/clients/ClientViewControls";
 import { ConvertLeadDialog } from "@/components/clients/ConvertLeadDialog";
 import NewClientDialog from "@/components/clients/NewClientDialog";
 import { clientService } from "@/services/api/clientService";
@@ -16,9 +18,7 @@ import { useClientAnalytics } from "@/hooks/useClientAnalytics";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Client } from "@/types/client";
-import { logError } from "@/utils/logger"; // Importar o logger
 
-// Extended client interface for UI components
 interface ClientWithAnalytics extends Client {
   nps: number;
   ltv: number;
@@ -35,17 +35,13 @@ export const ClientManagementEnhanced = () => {
   const [newClientDialogOpen, setNewClientDialogOpen] = useState(false);
   const [convertLeadDialogOpen, setConvertLeadDialogOpen] = useState(false);
   const [selectedLead, setSelectedLead] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
   
   const { toast } = useToast();
   const {
     clientLTV,
     clientNPS,
-    clientSatisfaction,
     metrics,
     convertLeadToClient,
-    addNPS,
-    addSatisfaction
   } = useClientAnalytics(companyId);
 
   useEffect(() => {
@@ -56,23 +52,20 @@ export const ClientManagementEnhanced = () => {
 
   const loadData = async () => {
     try {
-      setLoading(true);
       const [clientsData, leadsData] = await Promise.all([
         clientService.getClients(companyId),
         funnelService.getSalesLeads(companyId)
       ]);
       
       setClients(clientsData);
-      setLeads(leadsData.filter(lead => lead.stage !== 'Ganhos')); // Only non-converted leads
+      setLeads(leadsData.filter(lead => lead.stage !== 'Ganhos'));
     } catch (error) {
-      logError("Erro ao carregar dados:", error, { component: "ClientManagementEnhanced" });
+      console.error("Erro ao carregar dados:", error);
       toast({
         title: "Erro",
         description: "Erro ao carregar dados dos clientes",
         variant: "destructive"
       });
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -104,7 +97,6 @@ export const ClientManagementEnhanced = () => {
     }
   };
 
-  // Transform clients with analytics data for UI components
   const getClientsWithAnalytics = (): ClientWithAnalytics[] => {
     return clients.map(client => {
       const clientLTVData = clientLTV.find(ltv => ltv.client_id === client.id);
@@ -161,73 +153,27 @@ export const ClientManagementEnhanced = () => {
     });
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-2 text-sm text-muted-foreground">Carregando clientes...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold">Gestão de Clientes</h1>
-          <p className="text-muted-foreground">Gerencie seus clientes e analise métricas importantes</p>
-        </div>
-        
-        <div className="flex items-center gap-2">
-          {leads.length > 0 && (
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => {
-                setSelectedLead(leads[0]);
-                setConvertLeadDialogOpen(true);
-              }}
-            >
-              <TrendingUp className="h-4 w-4 mr-2" />
-              Converter Lead
-            </Button>
-          )}
-          
-          <Button size="sm" onClick={() => setNewClientDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Novo Cliente
-          </Button>
-          
-          <Button variant="outline" size="sm" onClick={exportData}>
-            <Download className="h-4 w-4 mr-2" />
-            Exportar
-          </Button>
-        </div>
-      </div>
+      <ClientHeader
+        totalClients={clients.length}
+        leadsCount={leads.length}
+        onNewClient={() => setNewClientDialogOpen(true)}
+        onConvertLead={() => {
+          setSelectedLead(leads[0]);
+          setConvertLeadDialogOpen(true);
+        }}
+        onExport={exportData}
+      />
 
       <ClientMetricsCards metrics={metrics} totalClients={clients.length} />
 
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="relative flex-1 w-full sm:max-w-[400px]">
-          <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input 
-            placeholder="Buscar clientes..." 
-            value={searchQuery} 
-            onChange={e => setSearchQuery(e.target.value)} 
-            className="pl-8" 
-          />
-        </div>
-        
-        <Tabs value={viewType} onValueChange={setViewType} className="w-auto">
-          <TabsList className="grid grid-cols-3 h-8 w-[240px]">
-            <TabsTrigger value="list" className="text-xs">Lista</TabsTrigger>
-            <TabsTrigger value="cards" className="text-xs">Cards</TabsTrigger>
-            <TabsTrigger value="analytics" className="text-xs">Analytics</TabsTrigger>
-          </TabsList>
-        </Tabs>
-      </div>
+      <ClientViewControls
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        viewType={viewType}
+        onViewTypeChange={setViewType}
+      />
 
       <Tabs value={viewType} onValueChange={setViewType} className="w-full">
         <TabsContent value="list" className="p-0 m-0">
@@ -296,5 +242,3 @@ export const ClientManagementEnhanced = () => {
     </div>
   );
 };
-
-

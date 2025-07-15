@@ -26,11 +26,11 @@ const LeadImport = () => {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="leads" className="space-y-4">
+        <TabsContent value="leads">
           <LeadImportTab />
         </TabsContent>
 
-        <TabsContent value="documents" className="space-y-4">
+        <TabsContent value="documents">
           <DocumentsImportTab />
         </TabsContent>
       </Tabs>
