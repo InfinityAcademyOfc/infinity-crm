@@ -1,32 +1,22 @@
 
 import React, { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { productService } from "@/services/api/productService";
+import { ProductCRUD } from "@/components/products/ProductCRUD";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Edit, Trash2 } from "lucide-react";
+import { Search, Plus, Package } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { productService } from "@/services/api/productService";
 import { toast } from "sonner";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const ProductsServicesEnhanced = () => {
   const { user, companyProfile } = useAuth();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<any>(null);
+  const [newProductOpen, setNewProductOpen] = useState(false);
+  const [editProduct, setEditProduct] = useState<any>(null);
 
   const companyId = companyProfile?.company_id || user?.id || "";
 
@@ -42,44 +32,30 @@ const ProductsServicesEnhanced = () => {
     product.description?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const form = e.target as HTMLFormElement;
-    const formData = new FormData(form);
-    
-    const productData = {
-      name: formData.get("name") as string,
-      description: formData.get("description") as string,
-      price: parseFloat(formData.get("price") as string),
-      category: formData.get("category") as string,
-      status: formData.get("status") as string,
-      company_id: companyId
-    };
-
+  const handleCreateProduct = async (productData: any) => {
     try {
-      if (editingProduct) {
-        await productService.updateProduct(editingProduct.id, productData);
-        toast.success("Produto atualizado com sucesso!");
-      } else {
-        await productService.createProduct(productData);
-        toast.success("Produto criado com sucesso!");
-      }
-      
+      await productService.createProduct({
+        ...productData,
+        company_id: companyId
+      });
       queryClient.invalidateQueries({ queryKey: ['products', companyId] });
-      setDialogOpen(false);
-      setEditingProduct(null);
-      form.reset();
+      toast.success("Produto criado com sucesso!");
     } catch (error) {
-      toast.error("Erro ao salvar produto");
+      toast.error("Erro ao criar produto");
     }
   };
 
-  const handleEdit = (product: any) => {
-    setEditingProduct(product);
-    setDialogOpen(true);
+  const handleUpdateProduct = async (productId: string, updates: any) => {
+    try {
+      await productService.updateProduct(productId, updates);
+      queryClient.invalidateQueries({ queryKey: ['products', companyId] });
+      toast.success("Produto atualizado com sucesso!");
+    } catch (error) {
+      toast.error("Erro ao atualizar produto");
+    }
   };
 
-  const handleDelete = async (productId: string) => {
+  const handleDeleteProduct = async (productId: string) => {
     try {
       await productService.deleteProduct(productId);
       queryClient.invalidateQueries({ queryKey: ['products', companyId] });
@@ -87,6 +63,13 @@ const ProductsServicesEnhanced = () => {
     } catch (error) {
       toast.error("Erro ao excluir produto");
     }
+  };
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(price);
   };
 
   return (
@@ -98,8 +81,7 @@ const ProductsServicesEnhanced = () => {
             Gerencie seu catálogo de produtos e serviços
           </p>
         </div>
-        
-        <Button onClick={() => setDialogOpen(true)}>
+        <Button onClick={() => setNewProductOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
           Novo Produto
         </Button>
@@ -118,49 +100,51 @@ const ProductsServicesEnhanced = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredProducts.map((product) => (
           <Card key={product.id} className="hover:shadow-md transition-shadow">
-            <CardHeader>
-              <div className="flex justify-between items-start">
-                <div>
-                  <CardTitle className="text-lg">{product.name}</CardTitle>
-                  <CardDescription className="mt-1">
-                    {product.description}
-                  </CardDescription>
-                </div>
-                <div className="flex gap-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleEdit(product)}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDelete(product.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <Package className="h-5 w-5 text-primary" />
+                <Badge variant="secondary">
+                  {product.category || "Sem categoria"}
+                </Badge>
               </div>
+              <CardTitle className="text-lg">{product.name}</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Preço:</span>
-                  <span className="font-semibold">
-                    R$ {product.price?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                  </span>
+            <CardContent className="space-y-3">
+              {product.description && (
+                <p className="text-sm text-muted-foreground line-clamp-2">
+                  {product.description}
+                </p>
+              )}
+              
+              <div className="flex justify-between items-center">
+                <div className="space-y-1">
+                  {product.price && (
+                    <p className="font-semibold text-primary">
+                      {formatPrice(product.price)}
+                    </p>
+                  )}
+                  {product.stock !== null && product.stock !== undefined && (
+                    <p className="text-sm text-muted-foreground">
+                      Estoque: {product.stock}
+                    </p>
+                  )}
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Categoria:</span>
-                  <Badge variant="secondary">{product.category}</Badge>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Status:</span>
-                  <Badge variant={product.status === 'active' ? 'default' : 'secondary'}>
-                    {product.status === 'active' ? 'Ativo' : 'Inativo'}
-                  </Badge>
+                
+                <div className="flex space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setEditProduct(product)}
+                  >
+                    Editar
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => handleDeleteProduct(product.id)}
+                  >
+                    Excluir
+                  </Button>
                 </div>
               </div>
             </CardContent>
@@ -168,102 +152,29 @@ const ProductsServicesEnhanced = () => {
         ))}
       </div>
 
-      <Dialog open={dialogOpen} onOpenChange={(open) => {
-        setDialogOpen(open);
-        if (!open) {
-          setEditingProduct(null);
+      {filteredProducts.length === 0 && (
+        <div className="text-center py-12">
+          <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <p className="text-muted-foreground">
+            {searchQuery ? "Nenhum produto encontrado" : "Nenhum produto cadastrado"}
+          </p>
+        </div>
+      )}
+
+      <ProductCRUD
+        open={newProductOpen || !!editProduct}
+        onOpenChange={(open) => {
+          if (!open) {
+            setNewProductOpen(false);
+            setEditProduct(null);
+          }
+        }}
+        product={editProduct}
+        onSave={editProduct ? 
+          (updates) => handleUpdateProduct(editProduct.id, updates) : 
+          handleCreateProduct
         }
-      }}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {editingProduct ? 'Editar Produto' : 'Novo Produto'}
-            </DialogTitle>
-            <DialogDescription>
-              Preencha as informações do produto ou serviço.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid gap-2">
-              <Label htmlFor="name">Nome*</Label>
-              <Input
-                id="name"
-                name="name"
-                defaultValue={editingProduct?.name || ""}
-                required
-              />
-            </div>
-            
-            <div className="grid gap-2">
-              <Label htmlFor="description">Descrição</Label>
-              <Textarea
-                id="description"
-                name="description"
-                defaultValue={editingProduct?.description || ""}
-                rows={3}
-              />
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="price">Preço (R$)*</Label>
-                <Input
-                  id="price"
-                  name="price"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  defaultValue={editingProduct?.price || ""}
-                  required
-                />
-              </div>
-              
-              <div className="grid gap-2">
-                <Label htmlFor="category">Categoria*</Label>
-                <Select name="category" defaultValue={editingProduct?.category || ""} required>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="produto">Produto</SelectItem>
-                    <SelectItem value="servico">Serviço</SelectItem>
-                    <SelectItem value="consultoria">Consultoria</SelectItem>
-                    <SelectItem value="software">Software</SelectItem>
-                    <SelectItem value="outros">Outros</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            
-            <div className="grid gap-2">
-              <Label htmlFor="status">Status*</Label>
-              <Select name="status" defaultValue={editingProduct?.status || "active"} required>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">Ativo</SelectItem>
-                  <SelectItem value="inactive">Inativo</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setDialogOpen(false)}
-              >
-                Cancelar
-              </Button>
-              <Button type="submit">
-                {editingProduct ? 'Atualizar' : 'Criar'} Produto
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+      />
     </div>
   );
 };

@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { clientService } from "@/services/api/clientService";
 import { leadService } from "@/services/api/leadService";
 import { ClientList } from "@/components/clients/ClientList";
-import { NewClientDialog } from "@/components/clients/NewClientDialog";
+import NewClientDialog from "@/components/clients/NewClientDialog";
 import { ConvertLeadDialog } from "@/components/clients/ConvertLeadDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -66,10 +66,11 @@ const ClientManagement = () => {
     }
   };
 
-  const handleDeleteClient = async (clientId: string) => {
+  const handleDeleteClient = async (client: any) => {
     try {
-      await clientService.deleteClient(clientId);
+      await clientService.deleteClient(client.id);
       queryClient.invalidateQueries({ queryKey: ['clients', companyId] });
+      toast.success("Cliente excluído com sucesso!");
     } catch (error) {
       toast.error("Erro ao excluir cliente");
     }
