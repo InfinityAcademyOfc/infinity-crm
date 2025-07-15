@@ -25,7 +25,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import BroadcastFormDialog from "./BroadcastFormDialog";
-import { supabase } from "@/integrations/supabase";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Broadcast {
   id: string;
@@ -34,7 +34,7 @@ interface Broadcast {
   media_url?: string;
   scheduled_for?: string;
   status?: string;
-  session_id?: string;
+  profile_id?: string;
 }
 
 interface BroadcastManagerProps {
@@ -57,7 +57,7 @@ const BroadcastManager = ({ sessionId }: BroadcastManagerProps) => {
         const { data, error } = await supabase
           .from("whatsapp_broadcasts")
           .select("*")
-          .eq("session_id", sessionId)
+          .eq("profile_id", sessionId)
           .order("created_at", { ascending: false });
           
         if (error) throw error;
@@ -146,7 +146,7 @@ const BroadcastManager = ({ sessionId }: BroadcastManagerProps) => {
             media_url: broadcast.media_url,
             scheduled_for: broadcast.scheduled_for,
             status: broadcast.status || "scheduled",
-            session_id: sessionId // Add session_id
+            profile_id: sessionId
           })
           .select();
           
