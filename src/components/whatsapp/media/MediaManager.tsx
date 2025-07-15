@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -5,7 +6,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Search, 
-  Plus, 
   Trash2, 
   Image, 
   FileAudio,
@@ -48,7 +48,6 @@ const MediaManager = ({ sessionId }: MediaManagerProps) => {
         let query = supabase
           .from("media")
           .select("*")
-          .eq("session_id", sessionId)
           .order("created_at", { ascending: false });
         
         if (mediaType !== "all") {

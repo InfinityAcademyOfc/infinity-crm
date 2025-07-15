@@ -15,6 +15,11 @@ interface Message {
   created_at: string;
 }
 
+interface Contact {
+  number: string;
+  name?: string;
+}
+
 interface WhatsAppConversationsProps {
   sessionId: string;
 }
@@ -23,7 +28,7 @@ const WhatsAppConversations = ({ sessionId }: WhatsAppConversationsProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [selectedNumber, setSelectedNumber] = useState<string | null>(null);
   const [input, setInput] = useState("");
-  const [contacts, setContacts] = useState<{number: string, name?: string}[]>([]);
+  const [contacts, setContacts] = useState<Contact[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Load contacts and conversation numbers
@@ -45,8 +50,7 @@ const WhatsAppConversations = ({ sessionId }: WhatsAppConversationsProps) => {
         // Fetch contacts to get names
         const { data: contactData, error: contactError } = await supabase
           .from("contacts")
-          .select("name, phone")
-          .eq("session_id", sessionId);
+          .select("name, phone");
           
         if (contactError) throw contactError;
         
@@ -143,7 +147,7 @@ const WhatsAppConversations = ({ sessionId }: WhatsAppConversationsProps) => {
 
     try {
       // Send message to backend API
-      await fetch(`${import.meta.env.VITE_API_URL}/messages/send`, {
+      await fetch(`https://pfzbtienafbyvzspgtlo.supabase.co/functions/v1/messages/send`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

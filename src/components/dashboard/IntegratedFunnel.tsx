@@ -88,26 +88,6 @@ const IntegratedFunnel = memo(() => {
         date: new Date().toISOString()
       };
       
-      if (funnelType === 'sales') {
-        exportData.salesData = {
-          leads: currentData.stages.reduce((acc, stage) => acc + stage.value, 0),
-          salesReps: ['Carlos Silva', 'Ana Oliveira', 'João Santos'],
-          efficiency: `${currentData.conversionRate}%`
-        };
-      } else if (funnelType === 'ltv') {
-        exportData.ltvData = {
-          clients: currentData.stages.reduce((acc, stage) => acc + stage.value, 0),
-          products: ['Marketing Digital', 'Consultoria', 'Desenvolvimento'],
-          averageValue: 'R$ 5.200,00'
-        };
-      } else if (funnelType === 'production') {
-        exportData.productionData = {
-          tasks: currentData.stages.reduce((acc, stage) => acc + stage.value, 0),
-          collaborators: ['Pedro Costa', 'Juliana Lima', 'Roberto Almeida'],
-          efficiency: `${currentData.conversionRate}%`
-        };
-      }
-      
       const jsonString = JSON.stringify(exportData, null, 2);
       const blob = new Blob([jsonString], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
@@ -121,7 +101,7 @@ const IntegratedFunnel = memo(() => {
       
       toast({
         title: `Exportação concluída`,
-        description: `Os dados do funil de ${funnelType === 'sales' ? 'Vendas' : funnelType === 'ltv' ? 'LTV' : 'Produção'} foram exportados com sucesso.`,
+        description: `Os dados do funil foram exportados com sucesso.`,
       });
     } catch (error) {
       logError("Error exporting funnel data:", error, { component: "IntegratedFunnel" });

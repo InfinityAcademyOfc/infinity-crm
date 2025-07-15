@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,7 +52,7 @@ const ScheduleManager = ({ sessionId }: ScheduleManagerProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showForm, setShowForm] = useState(false);
   
-  // Fetch schedules from Supabase with sessionId filter
+  // Fetch schedules from Supabase
   useEffect(() => {
     const fetchSchedules = async () => {
       try {
@@ -64,7 +65,6 @@ const ScheduleManager = ({ sessionId }: ScheduleManagerProps) => {
             contacts:contact_id (name),
             lists:list_id (name)
           `)
-          .eq("session_id", sessionId)
           .order("scheduled_at", { ascending: true });
           
         if (error) throw error;

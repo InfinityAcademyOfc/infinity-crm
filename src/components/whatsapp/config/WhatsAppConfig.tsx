@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -11,6 +12,12 @@ import { supabase } from "@/integrations/supabase";
 
 interface WhatsAppConfigProps {
   sessionId: string;
+}
+
+interface ConfigData {
+  welcome_message?: string;
+  first_msg_daily?: boolean;
+  delay_seconds?: number;
 }
 
 const WhatsAppConfig = ({ sessionId }: WhatsAppConfigProps) => {
@@ -31,18 +38,18 @@ const WhatsAppConfig = ({ sessionId }: WhatsAppConfigProps) => {
         const { data, error } = await supabase
           .from("config")
           .select("*")
-          .eq("session_id", sessionId)
           .single();
           
-        if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+        if (error && error.code !== 'PGRST116') {
           throw error;
         }
         
         if (data) {
-          setWelcomeMessage(data.welcome_message || welcomeMessage);
-          setAutoReplyEnabled(!!data.welcome_message);
-          setFirstMsgDailyEnabled(data.first_msg_daily !== false);
-          setDelaySeconds(data.delay_seconds || 2);
+          const configData = data as ConfigData;
+          setWelcomeMessage(configData.welcome_message || welcomeMessage);
+          setAutoReplyEnabled(!!configData.welcome_message);
+          setFirstMsgDailyEnabled(configData.first_msg_daily !== false);
+          setDelaySeconds(configData.delay_seconds || 2);
         }
       } catch (error) {
         console.error("Error fetching config:", error);
@@ -61,16 +68,13 @@ const WhatsAppConfig = ({ sessionId }: WhatsAppConfigProps) => {
 
   const handleSaveConfig = async () => {
     try {
-      // Check if config exists
       const { data, error: checkError } = await supabase
         .from("config")
-        .select("id")
-        .eq("session_id", sessionId);
+        .select("id");
         
       if (checkError) throw checkError;
       
       if (data && data.length > 0) {
-        // Update existing config
         const { error } = await supabase
           .from("config")
           .update({
@@ -78,15 +82,13 @@ const WhatsAppConfig = ({ sessionId }: WhatsAppConfigProps) => {
             first_msg_daily: firstMsgDailyEnabled,
             delay_seconds: delaySeconds
           })
-          .eq("session_id", sessionId);
+          .eq("id", data[0].id);
           
         if (error) throw error;
       } else {
-        // Create new config
         const { error } = await supabase
           .from("config")
           .insert({
-            session_id: sessionId,
             welcome_message: autoReplyEnabled ? welcomeMessage : null,
             first_msg_daily: firstMsgDailyEnabled,
             delay_seconds: delaySeconds

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,7 +18,6 @@ import {
   Trash2, 
   UsersRound
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import ListFormDialog from "./ListFormDialog";
 import { supabase } from "@/integrations/supabase";
@@ -44,7 +44,7 @@ const ListsManager = ({ sessionId }: ListsManagerProps) => {
   const [formOpen, setFormOpen] = useState(false);
   const [selectedList, setSelectedList] = useState<ContactList | null>(null);
   
-  // Fetch lists from Supabase with sessionId filter
+  // Fetch lists from Supabase
   useEffect(() => {
     const fetchLists = async () => {
       try {
@@ -52,7 +52,6 @@ const ListsManager = ({ sessionId }: ListsManagerProps) => {
         const { data, error } = await supabase
           .from("lists")
           .select("*")
-          .eq("session_id", sessionId)
           .order("created_at", { ascending: false });
           
         if (error) throw error;
@@ -109,7 +108,6 @@ const ListsManager = ({ sessionId }: ListsManagerProps) => {
   const handleSaveList = async (list: Partial<ContactList>) => {
     try {
       if (selectedList) {
-        // Update existing list
         const { error } = await supabase
           .from("lists")
           .update({
@@ -131,15 +129,13 @@ const ListsManager = ({ sessionId }: ListsManagerProps) => {
           description: "A lista foi atualizada com sucesso."
         });
       } else {
-        // Create new list with session_id
         const { data, error } = await supabase
           .from("lists")
           .insert({
             name: list.name,
             description: list.description,
             contact_ids: list.contact_ids || [],
-            filters: list.filters || {},
-            session_id: sessionId // Add session_id for the new list
+            filters: list.filters || {}
           })
           .select();
           
