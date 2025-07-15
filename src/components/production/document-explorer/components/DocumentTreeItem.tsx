@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { TreeItem } from '@/components/ui/tree';
 import { Input } from '@/components/ui/input';
@@ -10,7 +11,7 @@ import { TreeItemIcon } from './tree/TreeItemIcon';
 import { TreeItemActions } from './tree/TreeItemActions';
 import { CustomColorDialog } from './tree/CustomColorDialog';
 import { File } from 'lucide-react';
-import { logError } from '@/utils/logger'; // Importar o logger
+import { logError } from '@/utils/logger';
 
 const folderColors = [
   // Pastel colors
@@ -217,8 +218,6 @@ const DocumentTreeItem: React.FC<DocumentTreeItemProps> = ({
       />
     </>
   );
-});
+};
 
 export default DocumentTreeItem;
-
-
