@@ -1,16 +1,13 @@
 
-import React, { Suspense, lazy } from "react";
-import { ChartSkeleton } from "@/components/dashboard/DashboardSkeletons";
+import React from "react";
 import WelcomeCard from "@/components/dashboard/WelcomeCard";
 import MetricsWidgets from "@/components/dashboard/MetricsWidgets";
+import IntegratedFunnel from "@/components/dashboard/IntegratedFunnel";
+import SalesChart from "@/components/dashboard/SalesChart";
+import DREChart from "@/components/dashboard/DREChart";
+import ActivitiesSection from "@/components/dashboard/ActivitiesSection";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { mockTodayActivities } from "@/data/mockData";
-
-// Lazy load heavy components
-const IntegratedFunnel = lazy(() => import("@/components/dashboard/IntegratedFunnel"));
-const SalesChart = lazy(() => import("@/components/dashboard/SalesChart"));
-const DREChart = lazy(() => import("@/components/dashboard/DREChart"));
-const ActivitiesSection = lazy(() => import("@/components/dashboard/ActivitiesSection"));
 
 const Dashboard = () => {
   const {
@@ -35,34 +32,26 @@ const Dashboard = () => {
       
       {/* First row - Integrated Funnel 100% */}
       <div className="grid grid-cols-1 gap-6">
-        <Suspense fallback={<ChartSkeleton />}>
-          <IntegratedFunnel />
-        </Suspense>
+        <IntegratedFunnel />
       </div>
       
       {/* Second row - Sales Chart 50% + DRE Chart 50% */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Suspense fallback={<ChartSkeleton />}>
-          <SalesChart 
-            data={isLoaded ? filteredSalesData : []} 
-            onPeriodChange={handlePeriodChange}
-            onCollaboratorChange={handleCollaboratorChange}
-            onProductChange={handleProductChange}
-            filterPeriod={filterPeriod}
-            filterCollaborator={filterCollaborator}
-            filterProduct={filterProduct}
-          />
-        </Suspense>
-        <Suspense fallback={<ChartSkeleton />}>
-          <DREChart />
-        </Suspense>
+        <SalesChart 
+          data={isLoaded ? filteredSalesData : []} 
+          onPeriodChange={handlePeriodChange}
+          onCollaboratorChange={handleCollaboratorChange}
+          onProductChange={handleProductChange}
+          filterPeriod={filterPeriod}
+          filterCollaborator={filterCollaborator}
+          filterProduct={filterProduct}
+        />
+        <DREChart />
       </div>
       
       {/* Third row - Activities 100% */}
       <div className="grid grid-cols-1 gap-6">
-        <Suspense fallback={<ChartSkeleton />}>
-          <ActivitiesSection activities={isLoaded ? mockTodayActivities : []} />
-        </Suspense>
+        <ActivitiesSection activities={isLoaded ? mockTodayActivities : []} />
       </div>
     </div>
   );

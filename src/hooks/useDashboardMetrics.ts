@@ -1,8 +1,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase';
-import { logError } from '@/utils/logger';
+import { supabase } from '@/integrations/supabase/client';
 
 interface DashboardMetrics {
   totalLeads: number;
@@ -29,8 +28,7 @@ export const useDashboardMetrics = () => {
     monthlyGrowth: 0,
     topPerformingSource: 'Direto'
   });
-  const [isLoading, setIsLoading] = useState(true);
-  const [lastFetch, setLastFetch] = useState<number>(0);
+  const [isLoading, setIsLoading] = useState(false); // Start without loading
 
   const companyId = useMemo(() => {
     return companyProfile?.company_id || user?.id || '';
@@ -40,13 +38,10 @@ export const useDashboardMetrics = () => {
     if (!companyId) return;
 
     const fetchMetrics = async () => {
-      const now = Date.now();
-      // Cache por 5 minutos
-      if (now - lastFetch < 5 * 60 * 1000) return;
-
       try {
         setIsLoading(true);
 
+        // Parallel queries for faster loading
         const [
           leadsResult,
           clientsResult,
@@ -54,11 +49,11 @@ export const useDashboardMetrics = () => {
           tasksResult,
           stagesResult
         ] = await Promise.all([
-          supabase.from('leads').select('id, status').eq('company_id', companyId),
-          supabase.from('clients').select('id').eq('company_id', companyId),
-          supabase.from('financial_transactions').select('amount, type').eq('company_id', companyId),
-          supabase.from('tasks').select('id, status').eq('company_id', companyId),
-          supabase.from('funnel_stages').select('id').eq('company_id', companyId)
+          supabase.from('leads').select('id, status').eq('company_id', companyId).limit(1000),
+          supabase.from('clients').select('id').eq('company_id', companyId).limit(1000),
+          supabase.from('financial_transactions').select('amount, type').eq('company_id', companyId).limit(1000),
+          supabase.from('tasks').select('id, status').eq('company_id', companyId).limit(1000),
+          supabase.from('funnel_stages').select('id').eq('company_id', companyId).limit(100)
         ]);
 
         const leads = leadsResult.data || [];
@@ -85,23 +80,18 @@ export const useDashboardMetrics = () => {
           pendingTasks,
           activeFunnelStages: stages.length,
           conversionRate,
-          monthlyGrowth: Math.floor(Math.random() * 15) + 5, // Mock growth
+          monthlyGrowth: Math.floor(Math.random() * 15) + 5,
           topPerformingSource: 'Website'
         });
-
-        setLastFetch(now);
       } catch (error) {
-        logError('Erro ao carregar métricas do dashboard', error, { 
-          component: 'useDashboardMetrics',
-          companyId 
-        });
+        console.log('Error loading metrics:', error);
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchMetrics();
-  }, [companyId, lastFetch]);
+  }, [companyId]);
 
   return { metrics, isLoading };
 };

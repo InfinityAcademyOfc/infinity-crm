@@ -1,10 +1,10 @@
+
 import { useEffect, useState, useRef } from "react";
-import { supabase } from "@/integrations/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, PaperclipIcon, Smile, Mic, Plus, MessageSquare } from "lucide-react";
-import { logError } from "@/utils/logger";
 
 interface Message {
   id: string;
@@ -36,24 +36,20 @@ const WhatsAppConversations = ({ sessionId }: WhatsAppConversationsProps) => {
     const loadNumbersAndContacts = async () => {
       try {
         // Fetch messages to get unique numbers
-        const { data: messageData, error: messageError } = await supabase
+        const { data: messageData } = await supabase
           .from("whatsapp_messages")
           .select("number")
           .eq("session_id", sessionId)
           .order("created_at", { ascending: false });
           
-        if (messageError) throw messageError;
-        
         // Extract unique numbers from messages
         const uniqueNumbers = Array.from(new Set((messageData || []).map(m => m.number)));
         
         // Fetch contacts to get names
-        const { data: contactData, error: contactError } = await supabase
+        const { data: contactData } = await supabase
           .from("contacts")
           .select("name, phone");
           
-        if (contactError) throw contactError;
-        
         // Create a map of phone number to contact name
         const contactMap = new Map();
         (contactData || []).forEach(contact => {
@@ -73,7 +69,7 @@ const WhatsAppConversations = ({ sessionId }: WhatsAppConversationsProps) => {
           setSelectedNumber(uniqueNumbers[0]);
         }
       } catch (error) {
-        logError("Error loading contacts and numbers:", error, { component: "WhatsAppConversations" });
+        console.log("Error loading contacts:", error);
       }
     };
     
@@ -88,14 +84,13 @@ const WhatsAppConversations = ({ sessionId }: WhatsAppConversationsProps) => {
 
     const loadMessages = async () => {
       try {
-        const { data, error } = await supabase
+        const { data } = await supabase
           .from("whatsapp_messages")
           .select("*")
           .eq("session_id", sessionId)
           .eq("number", selectedNumber)
           .order("created_at");
 
-        if (error) throw error;
         setMessages(data || []);
         
         // Scroll to bottom
@@ -105,7 +100,7 @@ const WhatsAppConversations = ({ sessionId }: WhatsAppConversationsProps) => {
           }
         }, 100);
       } catch (error) {
-        logError("Error loading messages:", error, { component: "WhatsAppConversations" });
+        console.log("Error loading messages:", error);
       }
     };
 
@@ -159,7 +154,7 @@ const WhatsAppConversations = ({ sessionId }: WhatsAppConversationsProps) => {
 
       setInput("");
     } catch (error) {
-      logError("Error sending message:", error, { component: "WhatsAppConversations" });
+      console.log("Error sending message:", error);
     }
   };
 

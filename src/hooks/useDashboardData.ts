@@ -1,10 +1,8 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { mockTodayActivities } from '@/data/mockData';
-import { logError } from '@/utils/logger';
 
-// Mock sales data with correct structure
+// Optimized mock data
 const mockSalesData = [
   { month: 'Jan', value: 12000, period: '30d', collaborator: 'João', product: 'Produto A' },
   { month: 'Feb', value: 15000, period: '30d', collaborator: 'Maria', product: 'Produto B' },
@@ -16,12 +14,12 @@ const mockSalesData = [
 
 export const useDashboardData = () => {
   const { user, companyProfile } = useAuth();
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(true); // Start as loaded for immediate display
   const [filterPeriod, setFilterPeriod] = useState('30d');
   const [filterCollaborator, setFilterCollaborator] = useState('all');
   const [filterProduct, setFilterProduct] = useState('all');
 
-  // Memoizar o nome do usuário para evitar re-renders desnecessários
+  // Memoized user name
   const userName = useMemo(() => {
     return user?.user_metadata?.name || 
            companyProfile?.name || 
@@ -29,23 +27,18 @@ export const useDashboardData = () => {
            'Usuário';
   }, [user, companyProfile]);
 
-  // Memoizar dados filtrados para evitar recálculos desnecessários
+  // Optimized filtered data
   const filteredSalesData = useMemo(() => {
-    try {
-      return mockSalesData.filter(item => {
-        const periodFilter = filterPeriod === 'all' || item.period === filterPeriod;
-        const collaboratorFilter = filterCollaborator === 'all' || item.collaborator === filterCollaborator;
-        const productFilter = filterProduct === 'all' || item.product === filterProduct;
-        
-        return periodFilter && collaboratorFilter && productFilter;
-      });
-    } catch (error) {
-      logError('Erro ao filtrar dados de vendas', error, { component: 'useDashboardData' });
-      return [];
-    }
+    return mockSalesData.filter(item => {
+      const periodFilter = filterPeriod === 'all' || item.period === filterPeriod;
+      const collaboratorFilter = filterCollaborator === 'all' || item.collaborator === filterCollaborator;
+      const productFilter = filterProduct === 'all' || item.product === filterProduct;
+      
+      return periodFilter && collaboratorFilter && productFilter;
+    });
   }, [filterPeriod, filterCollaborator, filterProduct]);
 
-  // Usar useCallback para evitar re-criação de funções
+  // Optimized callbacks
   const handlePeriodChange = useCallback((period: string) => {
     setFilterPeriod(period);
   }, []);
@@ -58,22 +51,10 @@ export const useDashboardData = () => {
     setFilterProduct(product);
   }, []);
 
-  // Simular carregamento inicial uma única vez
+  // Remove artificial loading delay
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        setIsLoaded(false);
-        // Simular delay de carregamento
-        await new Promise(resolve => setTimeout(resolve, 100));
-        setIsLoaded(true);
-      } catch (error) {
-        logError('Erro ao carregar dados do dashboard', error, { component: 'useDashboardData' });
-        setIsLoaded(true); // Ainda marcar como carregado para evitar loop infinito
-      }
-    };
-
-    loadData();
-  }, []); // Dependency array vazia para executar apenas uma vez
+    setIsLoaded(true);
+  }, []);
 
   return {
     userName,
