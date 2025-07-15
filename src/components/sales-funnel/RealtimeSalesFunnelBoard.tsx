@@ -24,6 +24,7 @@ export const RealtimeSalesFunnelBoard = () => {
     funnelStages,
     salesLeads,
     kanbanColumns,
+    loading,
     handleDragEnd,
     handleCreateLead,
     handleUpdateLead,
@@ -54,6 +55,7 @@ export const RealtimeSalesFunnelBoard = () => {
     }
   };
 
+  // Wrapper function to match the expected signature for drag end
   const handleDragEndWrapper = (result: any) => {
     if (result.destination) {
       handleDragEnd(
@@ -83,8 +85,20 @@ export const RealtimeSalesFunnelBoard = () => {
     : 0;
   const activeStages = funnelStages.length;
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-2 text-muted-foreground">Carregando funil de vendas...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold">Funil de Vendas</h1>
@@ -109,6 +123,7 @@ export const RealtimeSalesFunnelBoard = () => {
         </div>
       </div>
 
+      {/* Analytics */}
       {showAnalytics && (
         <FunnelAnalytics 
           funnelStageData={funnelStageData}
@@ -116,6 +131,7 @@ export const RealtimeSalesFunnelBoard = () => {
         />
       )}
 
+      {/* Statistics Cards */}
       <FunnelStats
         totalLeads={totalLeads}
         totalValue={totalValue}
@@ -123,6 +139,7 @@ export const RealtimeSalesFunnelBoard = () => {
         activeStages={activeStages}
       />
 
+      {/* Kanban Board */}
       <FunnelBoard
         kanbanColumns={kanbanColumns}
         onDragEnd={handleDragEndWrapper}
@@ -131,6 +148,7 @@ export const RealtimeSalesFunnelBoard = () => {
         onDeleteCard={handleDeleteLead}
       />
 
+      {/* Dialogs */}
       <NewLeadFormDialog
         open={newLeadOpen}
         onOpenChange={setNewLeadOpen}

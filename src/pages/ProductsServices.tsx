@@ -1,13 +1,9 @@
 
 import React from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import { ProductCRUD } from "@/components/products/ProductCRUD";
+import ProductsServicesEnhanced from "./ProductsServicesEnhanced";
 
 const ProductsServices = () => {
-  const { user, companyProfile } = useAuth();
-  const companyId = companyProfile?.company_id || user?.id || "";
-
-  return <ProductCRUD companyId={companyId} />;
+  return <ProductsServicesEnhanced />;
 };
 
 export default ProductsServices;

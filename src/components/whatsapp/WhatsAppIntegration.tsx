@@ -12,7 +12,7 @@ import { useSessions } from "@/hooks/useSessions";
 
 const WhatsAppIntegration = () => {
   const { toast } = useToast();
-  const { sessions } = useSessions();
+  const { sessions, loading } = useSessions();
 
   const [sessionId, setSessionId] = useState(() => {
     return localStorage.getItem("wa-session-id") || "sessao-padrao";
