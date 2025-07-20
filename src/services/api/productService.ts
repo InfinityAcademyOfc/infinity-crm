@@ -34,23 +34,13 @@ export const productService = {
       return [];
     }
     
-    return (data || []).map(item => ({
-      ...item,
-      stock_quantity: (item as any).stock || 0,
-      stock_minimum: 0
-    } as Product));
+    return data || [];
   },
 
   async createProduct(product: Omit<Product, 'id' | 'created_at' | 'updated_at'>): Promise<Product | null> {
-    const { stock_quantity, stock_minimum, ...dbData } = product;
-    const productToInsert = {
-      ...dbData,
-      stock: stock_quantity || 0
-    };
-
     const { data, error } = await supabase
       .from('products')
-      .insert(productToInsert)
+      .insert(product)
       .select()
       .single();
     
@@ -59,18 +49,12 @@ export const productService = {
       return null;
     }
     
-    return {
-      ...data,
-      stock_quantity: (data as any).stock || 0,
-      stock_minimum: 0
-    } as Product;
+    return data;
   },
 
   async updateProduct(id: string, updates: Partial<Product>): Promise<Product | null> {
-    const { stock_quantity, stock_minimum, ...dbUpdates } = updates;
     const updateData = {
-      ...dbUpdates,
-      ...(stock_quantity !== undefined && { stock: stock_quantity }),
+      ...updates,
       updated_at: new Date().toISOString()
     };
 
@@ -86,11 +70,7 @@ export const productService = {
       return null;
     }
     
-    return {
-      ...data,
-      stock_quantity: (data as any).stock || 0,
-      stock_minimum: 0
-    } as Product;
+    return data;
   },
 
   async deleteProduct(id: string): Promise<boolean> {
@@ -136,11 +116,7 @@ export const productService = {
       return [];
     }
     
-    return (data || []).map(item => ({
-      ...item,
-      stock_quantity: (item as any).stock || 0,
-      stock_minimum: 0
-    } as Product));
+    return data || [];
   },
 
   async getProductsWithLowStock(companyId: string): Promise<Product[]> {
@@ -149,45 +125,14 @@ export const productService = {
       .select('*')
       .eq('company_id', companyId)
       .eq('is_service', false)
-      .not('stock', 'is', null);
+      .lte('stock_quantity', 5)
+      .not('stock_quantity', 'is', null);
     
     if (error) {
       console.error('Erro ao buscar produtos com estoque baixo:', error);
       return [];
     }
     
-    // Manually transform each item to avoid type recursion
-    const result: Product[] = [];
-    
-    if (data) {
-      for (let i = 0; i < data.length; i++) {
-        const item = data[i];
-        const stockValue = item.stock || 0;
-        
-        if (stockValue <= 5) {
-          result.push({
-            id: item.id,
-            company_id: item.company_id,
-            name: item.name,
-            description: item.description,
-            price: item.price,
-            cost: item.cost,
-            category: item.category,
-            stock_quantity: stockValue,
-            stock_minimum: 0,
-            sku: item.sku,
-            is_service: item.is_service,
-            is_active: item.is_active,
-            tags: item.tags,
-            image_url: item.image_url,
-            created_by: item.created_by,
-            created_at: item.created_at,
-            updated_at: item.updated_at
-          });
-        }
-      }
-    }
-    
-    return result;
+    return data || [];
   }
 };

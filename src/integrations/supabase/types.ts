@@ -1472,34 +1472,58 @@ export type Database = {
         Row: {
           category: string | null
           company_id: string
+          cost: number | null
           created_at: string | null
+          created_by: string | null
           description: string | null
           id: string
+          image_url: string | null
+          is_active: boolean | null
+          is_service: boolean | null
           name: string
           price: number | null
-          stock: number | null
+          sku: string | null
+          stock_minimum: number | null
+          stock_quantity: number | null
+          tags: string[] | null
           updated_at: string | null
         }
         Insert: {
           category?: string | null
           company_id: string
+          cost?: number | null
           created_at?: string | null
+          created_by?: string | null
           description?: string | null
           id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          is_service?: boolean | null
           name: string
           price?: number | null
-          stock?: number | null
+          sku?: string | null
+          stock_minimum?: number | null
+          stock_quantity?: number | null
+          tags?: string[] | null
           updated_at?: string | null
         }
         Update: {
           category?: string | null
           company_id?: string
+          cost?: number | null
           created_at?: string | null
+          created_by?: string | null
           description?: string | null
           id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          is_service?: boolean | null
           name?: string
           price?: number | null
-          stock?: number | null
+          sku?: string | null
+          stock_minimum?: number | null
+          stock_quantity?: number | null
+          tags?: string[] | null
           updated_at?: string | null
         }
         Relationships: [
