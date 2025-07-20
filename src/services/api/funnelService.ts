@@ -48,7 +48,7 @@ export const funnelService = {
   async getSalesLeads(companyId: string): Promise<SalesLead[]> {
     const { data, error } = await supabase
       .from('sales_leads')
-      .select('*, status, priority')
+      .select('*')
       .eq('company_id', companyId)
       .order('created_at', { ascending: false });
     
@@ -59,20 +59,18 @@ export const funnelService = {
     
     return (data || []).map(item => ({
       ...item,
-      status: item.status || 'active',
-      priority: item.priority || 'medium'
-    }));
+      status: 'active',
+      priority: 'medium'
+    } as SalesLead));
   },
 
   async createLead(leadData: Omit<SalesLead, 'id' | 'created_at' | 'updated_at'>): Promise<SalesLead | null> {
+    const { status, priority, ...dbData } = leadData;
+    
     const { data, error } = await supabase
       .from('sales_leads')
-      .insert({
-        ...leadData,
-        status: leadData.status || 'active',
-        priority: leadData.priority || 'medium'
-      })
-      .select('*, status, priority')
+      .insert(dbData)
+      .select()
       .single();
     
     if (error) {
@@ -82,17 +80,19 @@ export const funnelService = {
     
     return {
       ...data,
-      status: data.status || 'active',
-      priority: data.priority || 'medium'
-    };
+      status: 'active',
+      priority: 'medium'
+    } as SalesLead;
   },
 
   async updateLead(leadId: string, updates: Partial<SalesLead>): Promise<SalesLead | null> {
+    const { status, priority, ...dbUpdates } = updates;
+    
     const { data, error } = await supabase
       .from('sales_leads')
-      .update({ ...updates, updated_at: new Date().toISOString() })
+      .update({ ...dbUpdates, updated_at: new Date().toISOString() })
       .eq('id', leadId)
-      .select('*, status, priority')
+      .select()
       .single();
     
     if (error) {
@@ -102,9 +102,9 @@ export const funnelService = {
     
     return {
       ...data,
-      status: data.status || 'active',
-      priority: data.priority || 'medium'
-    };
+      status: 'active',
+      priority: 'medium'
+    } as SalesLead;
   },
 
   async updateLeadStage(leadId: string, stageId: string, stageName: string): Promise<boolean> {

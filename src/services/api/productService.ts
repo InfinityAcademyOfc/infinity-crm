@@ -36,15 +36,21 @@ export const productService = {
     
     return (data || []).map(item => ({
       ...item,
-      stock_quantity: item.stock_quantity || item.stock || 0,
-      stock_minimum: item.stock_minimum || 0
-    }));
+      stock_quantity: (item as any).stock || 0,
+      stock_minimum: 0
+    } as Product));
   },
 
   async createProduct(product: Omit<Product, 'id' | 'created_at' | 'updated_at'>): Promise<Product | null> {
+    const { stock_quantity, stock_minimum, ...dbData } = product;
+    const productToInsert = {
+      ...dbData,
+      stock: stock_quantity || 0
+    };
+
     const { data, error } = await supabase
       .from('products')
-      .insert(product)
+      .insert(productToInsert)
       .select()
       .single();
     
@@ -55,15 +61,22 @@ export const productService = {
     
     return {
       ...data,
-      stock_quantity: data.stock_quantity || data.stock || 0,
-      stock_minimum: data.stock_minimum || 0
-    };
+      stock_quantity: (data as any).stock || 0,
+      stock_minimum: 0
+    } as Product;
   },
 
   async updateProduct(id: string, updates: Partial<Product>): Promise<Product | null> {
+    const { stock_quantity, stock_minimum, ...dbUpdates } = updates;
+    const updateData = {
+      ...dbUpdates,
+      ...(stock_quantity !== undefined && { stock: stock_quantity }),
+      updated_at: new Date().toISOString()
+    };
+
     const { data, error } = await supabase
       .from('products')
-      .update({ ...updates, updated_at: new Date().toISOString() })
+      .update(updateData)
       .eq('id', id)
       .select()
       .single();
@@ -75,9 +88,9 @@ export const productService = {
     
     return {
       ...data,
-      stock_quantity: data.stock_quantity || data.stock || 0,
-      stock_minimum: data.stock_minimum || 0
-    };
+      stock_quantity: (data as any).stock || 0,
+      stock_minimum: 0
+    } as Product;
   },
 
   async deleteProduct(id: string): Promise<boolean> {
@@ -125,9 +138,9 @@ export const productService = {
     
     return (data || []).map(item => ({
       ...item,
-      stock_quantity: item.stock_quantity || item.stock || 0,
-      stock_minimum: item.stock_minimum || 0
-    }));
+      stock_quantity: (item as any).stock || 0,
+      stock_minimum: 0
+    } as Product));
   },
 
   async getProductsWithLowStock(companyId: string): Promise<Product[]> {
@@ -136,8 +149,7 @@ export const productService = {
       .select('*')
       .eq('company_id', companyId)
       .eq('is_service', false)
-      .not('stock_quantity', 'is', null)
-      .not('stock_minimum', 'is', null);
+      .not('stock', 'is', null);
     
     if (error) {
       console.error('Erro ao buscar produtos com estoque baixo:', error);
@@ -147,13 +159,13 @@ export const productService = {
     const lowStockProducts = (data || [])
       .map(item => ({
         ...item,
-        stock_quantity: item.stock_quantity || item.stock || 0,
-        stock_minimum: item.stock_minimum || 0
-      }))
+        stock_quantity: (item as any).stock || 0,
+        stock_minimum: 0
+      } as Product))
       .filter(p => 
         p.stock_quantity !== null && 
-        p.stock_minimum !== null && 
-        p.stock_quantity <= p.stock_minimum
+        p.stock_quantity !== undefined && 
+        p.stock_quantity <= 5 // Simple low stock threshold
       );
     
     return lowStockProducts;

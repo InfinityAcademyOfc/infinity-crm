@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,7 +26,7 @@ import { useToast } from "@/hooks/use-toast";
 import ContactFormDialog from "./ContactFormDialog";
 import { supabase } from "@/integrations/supabase/client";
 
-interface SimpleContact {
+interface Contact {
   id: string;
   name: string;
   phone: string;
@@ -39,11 +40,11 @@ interface ContactsManagerProps {
 
 const ContactsManager = ({ sessionId }: ContactsManagerProps) => {
   const { toast } = useToast();
-  const [contacts, setContacts] = useState<SimpleContact[]>([]);
+  const [contacts, setContacts] = useState<Contact[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [formOpen, setFormOpen] = useState(false);
-  const [selectedContact, setSelectedContact] = useState<SimpleContact | null>(null);
+  const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   
   useEffect(() => {
     const fetchContacts = async () => {
@@ -52,13 +53,11 @@ const ContactsManager = ({ sessionId }: ContactsManagerProps) => {
         const { data, error } = await supabase
           .from("contacts")
           .select("id, name, phone, email, tags")
-          .eq("session_id", sessionId)
           .order("created_at", { ascending: false });
           
         if (error) throw error;
         
-        // Transform data to match SimpleContact interface
-        const transformedData: SimpleContact[] = (data || []).map(item => ({
+        const transformedData: Contact[] = (data || []).map(item => ({
           id: item.id,
           name: item.name,
           phone: item.phone,
@@ -87,7 +86,7 @@ const ContactsManager = ({ sessionId }: ContactsManagerProps) => {
     setFormOpen(true);
   };
   
-  const handleEditContact = (contact: SimpleContact) => {
+  const handleEditContact = (contact: Contact) => {
     setSelectedContact(contact);
     setFormOpen(true);
   };
@@ -116,7 +115,7 @@ const ContactsManager = ({ sessionId }: ContactsManagerProps) => {
     }
   };
   
-  const handleSaveContact = async (contact: SimpleContact) => {
+  const handleSaveContact = async (contact: Contact) => {
     try {
       if (selectedContact) {
         const { error } = await supabase
@@ -146,20 +145,20 @@ const ContactsManager = ({ sessionId }: ContactsManagerProps) => {
             name: contact.name,
             phone: contact.phone,
             email: contact.email,
-            tags: contact.tags,
-            session_id: sessionId
+            tags: contact.tags
           })
-          .select("id, name, phone, email, tags");
+          .select("id, name, phone, email, tags")
+          .single();
           
         if (error) throw error;
         
-        if (data && data[0]) {
-          const newContact: SimpleContact = {
-            id: data[0].id,
-            name: data[0].name,
-            phone: data[0].phone,
-            email: data[0].email || undefined,
-            tags: Array.isArray(data[0].tags) ? data[0].tags : []
+        if (data) {
+          const newContact: Contact = {
+            id: data.id,
+            name: data.name,
+            phone: data.phone,
+            email: data.email || undefined,
+            tags: Array.isArray(data.tags) ? data.tags : []
           };
           
           setContacts([newContact, ...contacts]);
@@ -255,7 +254,7 @@ const ContactsManager = ({ sessionId }: ContactsManagerProps) => {
                           {contact.tags?.map((tag, index) => (
                             <Badge key={index} variant="outline">{tag}</Badge>
                           ))}
-                          {!contact.tags || contact.tags.length === 0 && "-"}
+                          {!contact.tags || contact.tags.length === 0 ? "-" : null}
                         </div>
                       </TableCell>
                       <TableCell>
