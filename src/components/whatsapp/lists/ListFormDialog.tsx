@@ -11,7 +11,7 @@ import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Contact {
   id: string;
@@ -68,14 +68,17 @@ const ListFormDialog = ({
     const fetchContacts = async () => {
       try {
         setIsLoadingContacts(true);
-        const { data, error } = await supabase
+        // Simplified query to avoid complex type inference
+        const response = await supabase
           .from("contacts")
           .select("id, name, phone")
-          .eq("session_id", sessionId)
           .order("name");
           
-        if (error) throw error;
-        setContacts(data || []);
+        if (response.error) throw response.error;
+        
+        // Type the response data explicitly
+        const contactsData: Contact[] = response.data || [];
+        setContacts(contactsData);
       } catch (error) {
         console.error("Error fetching contacts:", error);
         toast({
