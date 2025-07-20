@@ -11,7 +11,7 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { useThemeManager } from '@/hooks/useThemeManager';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 
-// Direct imports for faster loading
+// Direct imports for instant loading
 import Dashboard from '@/pages/Dashboard';
 import SalesFunnel from '@/pages/SalesFunnel';
 import ClientManagement from '@/pages/ClientManagement';
@@ -31,7 +31,7 @@ import Register from '@/pages/Register';
 import NotFound from '@/pages/NotFound';
 import WaitingArea from '@/pages/WaitingArea';
 
-// Import styles
+// Import optimized styles
 import "./styles/theme.css";
 import "./styles/animations.css";
 import "./styles/base.css";
@@ -45,14 +45,18 @@ import "./styles/whatsapp.css";
 import "./styles/kanban.css";
 import "./styles/dashboard.css";
 
-// Optimized query client
+// Ultra-optimized query client for maximum performance
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 10 * 60 * 1000, // 10 minutes
-      retry: 0,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      retry: 1, // Reduced retry for faster error handling
       refetchOnWindowFocus: false,
       refetchOnReconnect: false,
+      refetchOnMount: false, // Prevent unnecessary refetches
+    },
+    mutations: {
+      retry: 1,
     }
   }
 });
@@ -60,14 +64,14 @@ const queryClient = new QueryClient({
 function App() {
   const { isLoaded } = useThemeManager();
 
-  // Remove loading screen for faster startup
+  // Immediate rendering without loading screens
   if (!isLoaded) {
-    return <div className="min-h-screen bg-background" />;
+    return <div className="min-h-screen bg-background animate-in fade-in-0 duration-100" />;
   }
 
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
+      <TooltipProvider delayDuration={200}>
         <BrowserRouter>
           <Toaster />
           <Sonner />

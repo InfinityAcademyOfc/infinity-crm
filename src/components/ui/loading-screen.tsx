@@ -1,9 +1,9 @@
 
 import React from 'react';
 
-const LoadingScreen = ({ minimal = false }: { minimal?: boolean }) => {
-  // Removing loading screens as requested - return children immediately
-  return null;
+// Removed all loading functionality - components now render immediately
+const LoadingScreen = ({ children }: { children?: React.ReactNode }) => {
+  return <>{children}</>;
 };
 
 export default LoadingScreen;

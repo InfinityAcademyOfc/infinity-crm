@@ -1,115 +1,111 @@
-@tailwind utilities;
 
-@layer utilities {
-  .animate-progress-bar {
-    animation: progress 2s linear infinite;
-    background: linear-gradient(
-      90deg,
-      hsl(var(--primary)) 0%,
-      hsl(var(--primary)/0.7) 50%,
-      hsl(var(--primary)) 100%
-    );
-    background-size: 200% 100%;
+@tailwind components;
+
+@layer components {
+  /* Hardware-accelerated ultra-fast animations */
+  
+  /* Instant fade animations */
+  .animate-in {
+    @apply animate-fade-in;
   }
-  .animate-progress-indeterminate {
-    animation: progress-indeterminate 2s infinite linear;
+  
+  .fade-in-0 {
+    animation-duration: 75ms;
   }
-}
-
-@keyframes progress {
-  0% {
-    background-position: 100% 50%;
+  
+  .duration-75 {
+    animation-duration: 75ms;
   }
-  100% {
-    background-position: 0% 50%;
+  
+  .duration-100 {
+    animation-duration: 100ms;
   }
-}
-
-@keyframes progress-indeterminate {
-  0% {
-    transform: translateX(-100%);
-    width: 50%;
+  
+  .duration-150 {
+    animation-duration: 150ms;
   }
-  50% {
-    transform: translateX(0%);
-    width: 50%;
+  
+  .duration-200 {
+    animation-duration: 200ms;
   }
-  100% {
-    transform: translateX(100%);
-    width: 50%;
+
+  /* Ultra-fast keyframes */
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(4px) translateZ(0);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) translateZ(0);
+    }
   }
-}
 
-/* Adding smooth fade animations for elements */
-.fade-in {
-  animation: fadeIn 0.5s ease-out forwards;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
+  @keyframes slide-in {
+    from {
+      opacity: 0;
+      transform: translateX(-8px) translateZ(0);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0) translateZ(0);
+    }
   }
-  to {
-    opacity: 1;
+
+  @keyframes scale-in {
+    from {
+      opacity: 0;
+      transform: scale(0.98) translateZ(0);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1) translateZ(0);
+    }
   }
-}
 
-.slide-up {
-  animation: slideUp 0.4s ease-out forwards;
-}
-
-@keyframes slideUp {
-  from {
-    transform: translateY(20px);
-    opacity: 0;
+  /* Performance-optimized utility classes */
+  .will-change-transform {
+    will-change: transform;
   }
-  to {
-    transform: translateY(0);
-    opacity: 1;
+
+  .will-change-opacity {
+    will-change: opacity;
   }
-}
 
-/* Add drag and drop animation */
-.dragging {
-  opacity: 0.5;
-  transform: scale(1.05);
-  z-index: 999;
-}
+  .hardware-accelerated {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+  }
 
-.drop-target {
-  background-color: rgba(var(--primary-rgb), 0.1);
-  border: 2px dashed hsl(var(--primary));
-}
+  /* Ultra-smooth transitions */
+  .transition-ultra {
+    transition: all 75ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
 
-/* Add collaborator cursor animation */
-@keyframes cursorBlink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
-}
+  .transition-fast {
+    transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
 
-.cursor-blink {
-  animation: cursorBlink 1s infinite;
-}
+  /* Hover effects with hardware acceleration */
+  .hover-lift {
+    @apply transition-transform duration-150 hover:scale-[1.02] will-change-transform;
+  }
 
-/* Add collaboration highlight animation */
-@keyframes highlightFade {
-  0% { background-color: rgba(var(--primary-rgb), 0.3); }
-  100% { background-color: transparent; }
-}
+  .hover-glow {
+    @apply transition-shadow duration-150 hover:shadow-lg will-change-auto;
+  }
 
-.collaboration-highlight {
-  animation: highlightFade 2s ease-out forwards;
-}
+  /* Animation utilities */
+  .animate-fade-in {
+    animation: fade-in 100ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
 
-/* Reduced animation for users who prefer reduced motion */
-@media (prefers-reduced-motion: reduce) {
-  .fade-in,
-  .slide-up,
-  .animate-progress-bar,
-  .animate-progress-indeterminate,
-  .dragging,
-  .cursor-blink,
-  .collaboration-highlight {
-    animation: none;
+  .animate-slide-in {
+    animation: slide-in 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .animate-scale-in {
+    animation: scale-in 100ms cubic-bezier(0.4, 0, 0.2, 1);
   }
 }

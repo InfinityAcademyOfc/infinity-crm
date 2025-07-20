@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { DndProvider } from "@/components/ui/dnd-provider";
 import KanbanBoard from "@/components/kanban/KanbanBoard";
 import NewLeadDialog from "./NewLeadDialog";
@@ -10,7 +10,7 @@ import { useSalesFunnelRealtime } from "@/hooks/useSalesFunnelRealtime";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card } from "@/components/ui/card";
 
-const RealtimeSalesFunnelBoard = () => {
+const RealtimeSalesFunnelBoard = React.memo(() => {
   const { user, companyProfile } = useAuth();
   const companyId = companyProfile?.company_id || user?.id || "";
   
@@ -31,6 +31,14 @@ const RealtimeSalesFunnelBoard = () => {
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [filterMenuOpen, setFilterMenuOpen] = useState(false);
 
+  // Memoized calculations for better performance
+  const totalLeads = useMemo(() => salesLeads.length, [salesLeads.length]);
+  const totalValue = useMemo(() => 
+    salesLeads.reduce((sum, lead) => sum + (lead.value || 0), 0), 
+    [salesLeads]
+  );
+  const activeStages = useMemo(() => funnelStages.length, [funnelStages.length]);
+
   const refreshData = () => {
     // Data refreshes automatically via real-time subscriptions
   };
@@ -47,10 +55,10 @@ const RealtimeSalesFunnelBoard = () => {
       />
       
       <FunnelStats 
-        totalLeads={salesLeads.length}
-        totalValue={salesLeads.reduce((sum, lead) => sum + (lead.value || 0), 0)}
+        totalLeads={totalLeads}
+        totalValue={totalValue}
         conversionRate={0}
-        activeStages={funnelStages.length}
+        activeStages={activeStages}
       />
 
       <Card className="flex-1 p-4">
@@ -97,6 +105,8 @@ const RealtimeSalesFunnelBoard = () => {
       />
     </div>
   );
-};
+});
+
+RealtimeSalesFunnelBoard.displayName = 'RealtimeSalesFunnelBoard';
 
 export default RealtimeSalesFunnelBoard;

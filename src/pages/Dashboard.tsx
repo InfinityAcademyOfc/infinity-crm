@@ -9,7 +9,7 @@ import ActivitiesSection from "@/components/dashboard/ActivitiesSection";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { mockTodayActivities } from "@/data/mockData";
 
-const Dashboard = () => {
+const Dashboard = React.memo(() => {
   const {
     userName,
     isLoaded,
@@ -23,7 +23,7 @@ const Dashboard = () => {
   } = useDashboardData();
 
   return (
-    <div className="space-y-6 animate-fade-in px-[5px]">
+    <div className="space-y-6 animate-in fade-in-0 duration-200 px-[5px]">
       {/* Welcome Message Card */}
       <WelcomeCard userName={userName} />
       
@@ -38,7 +38,7 @@ const Dashboard = () => {
       {/* Second row - Sales Chart 50% + DRE Chart 50% */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <SalesChart 
-          data={isLoaded ? filteredSalesData : []} 
+          data={filteredSalesData} 
           onPeriodChange={handlePeriodChange}
           onCollaboratorChange={handleCollaboratorChange}
           onProductChange={handleProductChange}
@@ -51,10 +51,12 @@ const Dashboard = () => {
       
       {/* Third row - Activities 100% */}
       <div className="grid grid-cols-1 gap-6">
-        <ActivitiesSection activities={isLoaded ? mockTodayActivities : []} />
+        <ActivitiesSection activities={mockTodayActivities} />
       </div>
     </div>
   );
-};
+});
+
+Dashboard.displayName = 'Dashboard';
 
 export default Dashboard;

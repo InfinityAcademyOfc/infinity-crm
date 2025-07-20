@@ -11,7 +11,7 @@ interface FunnelBoardProps {
   onDeleteCard: (cardId: string) => void;
 }
 
-export const FunnelBoard: React.FC<FunnelBoardProps> = ({
+export const FunnelBoard: React.FC<FunnelBoardProps> = React.memo(({
   kanbanColumns,
   onDragEnd,
   onAddCard,
@@ -19,7 +19,7 @@ export const FunnelBoard: React.FC<FunnelBoardProps> = ({
   onDeleteCard
 }) => {
   return (
-    <Card>
+    <Card className="transition-shadow duration-150 hover:shadow-md">
       <CardContent className="p-6">
         <DraggableKanbanBoard
           columns={kanbanColumns}
@@ -31,4 +31,6 @@ export const FunnelBoard: React.FC<FunnelBoardProps> = ({
       </CardContent>
     </Card>
   );
-};
+});
+
+FunnelBoard.displayName = 'FunnelBoard';

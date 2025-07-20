@@ -1,5 +1,5 @@
 
-import React, { Suspense } from 'react';
+import React from 'react';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 
 interface SuspenseErrorBoundaryProps {
@@ -9,21 +9,20 @@ interface SuspenseErrorBoundaryProps {
 }
 
 /**
- * A component that combines Suspense and ErrorBoundary for better error handling
- * in components that might suspend.
+ * Optimized component that renders immediately without Suspense delays
  */
 export const SuspenseErrorBoundary = ({
   children,
-  fallback = <div className="p-4">Loading...</div>,
+  fallback = null, // No fallback for immediate rendering
   errorFallback = (
-    <div className="p-4 text-red-500">
+    <div className="p-4 text-red-500 animate-in fade-in-0 duration-100">
       Something went wrong. Please try again later.
     </div>
   ),
 }: SuspenseErrorBoundaryProps) => {
   return (
     <ErrorBoundary fallback={errorFallback}>
-      <Suspense fallback={fallback}>{children}</Suspense>
+      {children}
     </ErrorBoundary>
   );
 };

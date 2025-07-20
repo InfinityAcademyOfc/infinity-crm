@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Outlet } from "react-router-dom";
 import Sidebar from "@/components/navigation/Sidebar";
 import { TopNav } from "@/components/layout/TopNav";
@@ -11,7 +11,7 @@ import { ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MobileNav } from "@/components/layout/MobileNav";
 
-const MainLayout = () => {
+const MainLayout = React.memo(() => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isMobileView, setIsMobileView] = useState(false);
@@ -32,6 +32,12 @@ const MainLayout = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, [sidebarOpen]);
 
+  // Memoize computed values for better performance
+  const sidebarWidth = useMemo(() => sidebarOpen ? "w-64" : "w-16", [sidebarOpen]);
+  const collapseButtonPosition = useMemo(() => 
+    sidebarOpen ? "left-60" : "left-12", [sidebarOpen]
+  );
+
   return (
     <SidebarProvider>
       <div className="flex h-screen overflow-hidden bg-background">
@@ -39,8 +45,8 @@ const MainLayout = () => {
         {!isMobileView && (
           <div 
             className={cn(
-              "transition-all duration-200 ease-in-out relative flex-shrink-0",
-              sidebarOpen ? "w-64" : "w-16"
+              "transition-all duration-150 ease-out relative flex-shrink-0",
+              sidebarWidth
             )}
           >
             <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} />
@@ -69,16 +75,16 @@ const MainLayout = () => {
         {/* Floating collapse button - desktop only */}
         {!isMobileView && (
           <div className={cn(
-            "fixed z-[51] transition-all duration-200 bottom-28",
-            sidebarOpen ? "left-60" : "left-12"
+            "fixed z-[51] transition-all duration-150 bottom-28",
+            collapseButtonPosition
           )}>
             <Button 
               variant="default" 
               size="icon" 
-              className="rounded-full h-9 w-9 shadow-md bg-primary text-primary-foreground hover:bg-primary/90" 
+              className="rounded-full h-9 w-9 shadow-md bg-primary text-primary-foreground hover:bg-primary/90 transition-transform hover:scale-105" 
               onClick={() => setSidebarOpen(!sidebarOpen)}
             >
-              <ChevronLeft className={cn("h-4 w-4 transition-transform", !sidebarOpen && "rotate-180")} />
+              <ChevronLeft className={cn("h-4 w-4 transition-transform duration-150", !sidebarOpen && "rotate-180")} />
             </Button>
           </div>
         )}
@@ -86,17 +92,17 @@ const MainLayout = () => {
         {/* Mobile sidebar toggle */}
         {isMobileView && (
           <div className={cn(
-            "fixed z-[51] transition-all duration-200 ease-in-out",
+            "fixed z-[51] transition-all duration-150 ease-out",
             mobileOpen ? "left-[calc(80%-1.5rem)]" : "left-4",
             "bottom-28"
           )}>
             <Button 
               variant="default" 
               size="icon" 
-              className="rounded-full h-9 w-9 shadow-md bg-primary text-primary-foreground hover:bg-primary/90" 
+              className="rounded-full h-9 w-9 shadow-md bg-primary text-primary-foreground hover:bg-primary/90 transition-transform hover:scale-105" 
               onClick={() => setMobileOpen(!mobileOpen)}
             >
-              <ChevronLeft className={cn("h-4 w-4 transition-transform", !mobileOpen && "rotate-180")} />
+              <ChevronLeft className={cn("h-4 w-4 transition-transform duration-150", !mobileOpen && "rotate-180")} />
             </Button>
           </div>
         )}
@@ -105,6 +111,8 @@ const MainLayout = () => {
       </div>
     </SidebarProvider>
   );
-};
+});
+
+MainLayout.displayName = 'MainLayout';
 
 export default MainLayout;

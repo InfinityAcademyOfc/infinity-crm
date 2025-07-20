@@ -1,27 +1,29 @@
-import React, { Suspense } from "react";
-import { ChartSkeleton } from "./DashboardSkeletons";
+
+import React from "react";
+
 interface DashboardLayoutProps {
   welcomeSection: React.ReactNode;
-  funnelSection: React.ReactNode; // This is now empty but we'll keep it for compatibility
+  funnelSection: React.ReactNode;
   integratedFunnelSection: React.ReactNode;
   salesAndFinanceSection: React.ReactNode;
   activitiesSection: React.ReactNode;
 }
-const DashboardLayout = ({
+
+// Optimized layout without Suspense for immediate rendering
+const DashboardLayout = React.memo(({
   welcomeSection,
   integratedFunnelSection,
   salesAndFinanceSection,
   activitiesSection
 }: DashboardLayoutProps) => {
-  return <div className="space-y-6 animate-fade-in px-[5px]">
+  return (
+    <div className="space-y-6 animate-in fade-in-0 duration-150 px-[5px]">
       {/* Welcome Message Card */}
       {welcomeSection}
       
       {/* First row - Integrated Funnel 100% */}
       <div className="grid grid-cols-1 gap-6">
-        <Suspense fallback={<ChartSkeleton />}>
-          {integratedFunnelSection}
-        </Suspense>
+        {integratedFunnelSection}
       </div>
       
       {/* Second row - Sales Chart 50% + Finance Chart 50% */}
@@ -31,10 +33,12 @@ const DashboardLayout = ({
       
       {/* Third row - Activities 100% */}
       <div className="grid grid-cols-1 gap-6">
-        <Suspense fallback={<ChartSkeleton />}>
-          {activitiesSection}
-        </Suspense>
+        {activitiesSection}
       </div>
-    </div>;
-};
+    </div>
+  );
+});
+
+DashboardLayout.displayName = 'DashboardLayout';
+
 export default DashboardLayout;

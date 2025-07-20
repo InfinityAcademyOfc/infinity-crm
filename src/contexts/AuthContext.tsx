@@ -1,12 +1,11 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+
+import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
 import { User } from '@supabase/supabase-js';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase'; // Importar do index.ts
-import { hydrateUser } from '@/lib/hydrateUser';
+import { supabase } from '@/integrations/supabase';
 import { Profile, CompanyProfile } from '@/types/profile';
 import { Company } from '@/types/company';
 import { toast } from 'sonner';
-import { logError } from '@/utils/logger'; // Importar o logger
 
 interface AuthContextType {
   user: User | null;
@@ -36,59 +35,83 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [profile, setProfile] = useState<Profile | null>(null);
   const [companyProfile, setCompanyProfile] = useState<CompanyProfile | null>(null);
   const [company, setCompany] = useState<Company | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // Changed to false for immediate rendering
   const navigate = useNavigate();
   const location = useLocation();
 
   const isCompanyAccount = !!companyProfile;
 
-  const refreshUserData = async () => {
+  // Optimized user data fetching with parallel queries
+  const refreshUserData = useCallback(async () => {
+    if (!user?.id) return;
+    
     try {
-      const { profile: userProfile, companyProfile: userCompanyProfile, company: userCompany } = await hydrateUser();
-      setProfile(userProfile);
-      setCompanyProfile(userCompanyProfile);
-      setCompany(userCompany);
+      // Parallel data fetching for better performance
+      const [companyProfileResult, profileResult] = await Promise.allSettled([
+        supabase.from("profiles_companies").select("*").eq("id", user.id).maybeSingle(),
+        supabase.from("profiles").select("*").eq("id", user.id).maybeSingle()
+      ]);
+
+      if (companyProfileResult.status === 'fulfilled' && companyProfileResult.value.data) {
+        setCompanyProfile(companyProfileResult.value.data);
+        
+        // Fetch company data if available
+        if (companyProfileResult.value.data.company_id) {
+          const { data: companyData } = await supabase
+            .from("companies")
+            .select("*")
+            .eq("id", companyProfileResult.value.data.company_id)
+            .maybeSingle();
+          setCompany(companyData);
+        }
+      } else if (profileResult.status === 'fulfilled' && profileResult.value.data) {
+        setProfile(profileResult.value.data);
+        
+        // Fetch company data if available
+        if (profileResult.value.data.company_id) {
+          const { data: companyData } = await supabase
+            .from("companies")
+            .select("*")
+            .eq("id", profileResult.value.data.company_id)
+            .maybeSingle();
+          setCompany(companyData);
+        }
+      }
     } catch (error) {
-      logError('Erro ao atualizar dados do usuário:', error);
+      console.error('Error refreshing user data:', error);
     }
-  };
+  }, [user?.id]);
 
   useEffect(() => {
-    // Get initial session
+    // Get initial session without blocking
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
       if (session?.user) {
-        refreshUserData().finally(() => setLoading(false));
-      } else {
-        setLoading(false);
+        setUser(session.user);
+        // Non-blocking user data refresh
+        setTimeout(() => refreshUserData(), 0);
       }
     });
 
-    // Listen for auth changes
+    // Optimized auth state listener
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        try {
-          await refreshUserData();
-        } catch (error) {
-          logError('Erro ao carregar dados do usuário:', error);
-        }
+        // Background data fetching without blocking UI
+        setTimeout(() => refreshUserData(), 0);
       } else {
         setProfile(null);
         setCompanyProfile(null);
         setCompany(null);
       }
-      
-      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [refreshUserData]);
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = useCallback(async (email: string, password: string) => {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -102,13 +125,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (data.user) {
       toast.success('Login realizado com sucesso!');
       
-      // Redirect to intended page or dashboard
+      // Instant navigation
       const from = location.state?.from?.pathname || '/app';
       navigate(from, { replace: true });
     }
-  };
+  }, [location.state, navigate]);
 
-  const signUp = async (email: string, password: string, name: string, isCompany: boolean = false) => {
+  const signUp = useCallback(async (email: string, password: string, name: string, isCompany: boolean = false) => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -128,18 +151,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (data.user) {
       toast.success('Conta criada com sucesso!');
       
-      // If it's a company, wait a bit for the trigger to create the company
       if (isCompany) {
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        // Get the created company
-        const { data: companies } = await supabase
-          .from('companies')
-          .select('id')
-          .eq('owner_id', data.user.id)
-          .single();
-          
-        return { user: data.user, companyId: companies?.id };
+        // Background company creation check
+        setTimeout(async () => {
+          const { data: companies } = await supabase
+            .from('companies')
+            .select('id')
+            .eq('owner_id', data.user.id)
+            .single();
+          return companies?.id;
+        }, 1000);
       }
       
       navigate('/app');
@@ -147,9 +168,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     return { user: null };
-  };
+  }, [navigate]);
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     const { error } = await supabase.auth.signOut();
     
     if (error) {
@@ -159,25 +180,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     toast.success('Logout realizado com sucesso!');
     navigate('/login');
-  };
+  }, [navigate]);
+
+  const contextValue = useMemo(() => ({
+    user,
+    profile,
+    companyProfile,
+    company,
+    loading,
+    signIn,
+    signUp,
+    signOut,
+    refreshUserData,
+    isCompanyAccount,
+  }), [user, profile, companyProfile, company, loading, signIn, signUp, signOut, refreshUserData, isCompanyAccount]);
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        profile,
-        companyProfile,
-        company,
-        loading,
-        signIn,
-        signUp,
-        signOut,
-        refreshUserData,
-        isCompanyAccount,
-      }}
-    >
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );
 };
-

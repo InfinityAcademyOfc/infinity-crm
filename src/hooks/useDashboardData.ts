@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 
-// Optimized mock data
+// Optimized mock data for immediate rendering
 const mockSalesData = [
   { month: 'Jan', value: 12000, period: '30d', collaborator: 'João', product: 'Produto A' },
   { month: 'Feb', value: 15000, period: '30d', collaborator: 'Maria', product: 'Produto B' },
@@ -14,12 +14,14 @@ const mockSalesData = [
 
 export const useDashboardData = () => {
   const { user, companyProfile } = useAuth();
-  const [isLoaded, setIsLoaded] = useState(true); // Start as loaded for immediate display
   const [filterPeriod, setFilterPeriod] = useState('30d');
   const [filterCollaborator, setFilterCollaborator] = useState('all');
   const [filterProduct, setFilterProduct] = useState('all');
 
-  // Memoized user name
+  // Always loaded for immediate rendering
+  const isLoaded = true;
+
+  // Memoized user name for performance
   const userName = useMemo(() => {
     return user?.user_metadata?.name || 
            companyProfile?.name || 
@@ -27,7 +29,7 @@ export const useDashboardData = () => {
            'Usuário';
   }, [user, companyProfile]);
 
-  // Optimized filtered data
+  // Optimized filtered data with memoization
   const filteredSalesData = useMemo(() => {
     return mockSalesData.filter(item => {
       const periodFilter = filterPeriod === 'all' || item.period === filterPeriod;
@@ -38,7 +40,7 @@ export const useDashboardData = () => {
     });
   }, [filterPeriod, filterCollaborator, filterProduct]);
 
-  // Optimized callbacks
+  // Memoized callbacks to prevent re-renders
   const handlePeriodChange = useCallback((period: string) => {
     setFilterPeriod(period);
   }, []);
@@ -49,11 +51,6 @@ export const useDashboardData = () => {
 
   const handleProductChange = useCallback((product: string) => {
     setFilterProduct(product);
-  }, []);
-
-  // Remove artificial loading delay
-  useEffect(() => {
-    setIsLoaded(true);
   }, []);
 
   return {
