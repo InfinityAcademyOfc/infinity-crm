@@ -48,7 +48,7 @@ export const funnelService = {
   async getSalesLeads(companyId: string): Promise<SalesLead[]> {
     const { data, error } = await supabase
       .from('sales_leads')
-      .select('*')
+      .select('*, status, priority')
       .eq('company_id', companyId)
       .order('created_at', { ascending: false });
     
@@ -72,7 +72,7 @@ export const funnelService = {
         status: leadData.status || 'active',
         priority: leadData.priority || 'medium'
       })
-      .select()
+      .select('*, status, priority')
       .single();
     
     if (error) {
@@ -92,7 +92,7 @@ export const funnelService = {
       .from('sales_leads')
       .update({ ...updates, updated_at: new Date().toISOString() })
       .eq('id', leadId)
-      .select()
+      .select('*, status, priority')
       .single();
     
     if (error) {

@@ -34,7 +34,11 @@ export const productService = {
       return [];
     }
     
-    return data || [];
+    return (data || []).map(item => ({
+      ...item,
+      stock_quantity: item.stock_quantity || item.stock || 0,
+      stock_minimum: item.stock_minimum || 0
+    }));
   },
 
   async createProduct(product: Omit<Product, 'id' | 'created_at' | 'updated_at'>): Promise<Product | null> {
@@ -49,7 +53,11 @@ export const productService = {
       return null;
     }
     
-    return data;
+    return {
+      ...data,
+      stock_quantity: data.stock_quantity || data.stock || 0,
+      stock_minimum: data.stock_minimum || 0
+    };
   },
 
   async updateProduct(id: string, updates: Partial<Product>): Promise<Product | null> {
@@ -65,7 +73,11 @@ export const productService = {
       return null;
     }
     
-    return data;
+    return {
+      ...data,
+      stock_quantity: data.stock_quantity || data.stock || 0,
+      stock_minimum: data.stock_minimum || 0
+    };
   },
 
   async deleteProduct(id: string): Promise<boolean> {
@@ -111,7 +123,11 @@ export const productService = {
       return [];
     }
     
-    return data || [];
+    return (data || []).map(item => ({
+      ...item,
+      stock_quantity: item.stock_quantity || item.stock || 0,
+      stock_minimum: item.stock_minimum || 0
+    }));
   },
 
   async getProductsWithLowStock(companyId: string): Promise<Product[]> {
@@ -128,11 +144,17 @@ export const productService = {
       return [];
     }
     
-    const lowStockProducts = data?.filter(p => 
-      p.stock_quantity !== null && 
-      p.stock_minimum !== null && 
-      p.stock_quantity <= p.stock_minimum
-    ) || [];
+    const lowStockProducts = (data || [])
+      .map(item => ({
+        ...item,
+        stock_quantity: item.stock_quantity || item.stock || 0,
+        stock_minimum: item.stock_minimum || 0
+      }))
+      .filter(p => 
+        p.stock_quantity !== null && 
+        p.stock_minimum !== null && 
+        p.stock_quantity <= p.stock_minimum
+      );
     
     return lowStockProducts;
   }

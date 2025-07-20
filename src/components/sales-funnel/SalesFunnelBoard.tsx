@@ -17,13 +17,20 @@ export const SalesFunnelBoard = ({
   onEditCard,
   onDeleteCard
 }: SalesFunnelBoardProps) => {
+  // Wrap the onEditCard to match KanbanBoard expectations
+  const handleEditCard = (card: any) => {
+    if (onEditCard) {
+      onEditCard(card.id);
+    }
+  };
+
   return (
     <div className="pb-6">
       <KanbanBoard 
         columns={columns}
         setColumns={setColumns}
         onAddCard={onAddCard}
-        onEditCard={onEditCard}
+        onEditCard={handleEditCard}
         onDeleteCard={onDeleteCard}
       />
     </div>

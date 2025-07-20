@@ -51,12 +51,22 @@ const ContactsManager = ({ sessionId }: ContactsManagerProps) => {
         setIsLoading(true);
         const { data, error } = await supabase
           .from("contacts")
-          .select("*")
+          .select("id, name, phone, email, tags")
           .eq("session_id", sessionId)
           .order("created_at", { ascending: false });
           
         if (error) throw error;
-        setContacts(data || []);
+        
+        // Transform data to match SimpleContact interface
+        const transformedData: SimpleContact[] = (data || []).map(item => ({
+          id: item.id,
+          name: item.name,
+          phone: item.phone,
+          email: item.email || undefined,
+          tags: Array.isArray(item.tags) ? item.tags : []
+        }));
+        
+        setContacts(transformedData);
       } catch (error) {
         console.error("Error fetching contacts:", error);
         toast({
@@ -139,11 +149,21 @@ const ContactsManager = ({ sessionId }: ContactsManagerProps) => {
             tags: contact.tags,
             session_id: sessionId
           })
-          .select();
+          .select("id, name, phone, email, tags");
           
         if (error) throw error;
         
-        setContacts([data[0], ...contacts]);
+        if (data && data[0]) {
+          const newContact: SimpleContact = {
+            id: data[0].id,
+            name: data[0].name,
+            phone: data[0].phone,
+            email: data[0].email || undefined,
+            tags: Array.isArray(data[0].tags) ? data[0].tags : []
+          };
+          
+          setContacts([newContact, ...contacts]);
+        }
         
         toast({
           title: "Contato adicionado",

@@ -34,7 +34,7 @@ const SalesFunnel = () => {
     setNewLeadOpen(true);
   };
 
-  const handleEditCard = (cardId: string, columnId: string) => {
+  const handleEditCard = (cardId: string) => {
     const lead = salesLeads.find(l => l.id === cardId);
     if (lead) {
       setSelectedCard(lead);
@@ -51,6 +51,11 @@ const SalesFunnel = () => {
       handleUpdateLead(selectedCard.id, updatedData);
       setSelectedCard(null);
     }
+  };
+
+  // Wrap handleDeleteLead to match expected signature
+  const handleDeleteCardWrapper = (cardId: string) => {
+    handleDeleteLead(cardId);
   };
 
   const totalLeads = salesLeads.length;
@@ -88,7 +93,7 @@ const SalesFunnel = () => {
         setColumns={() => {}}
         onAddCard={handleAddCard}
         onEditCard={handleEditCard}
-        onDeleteCard={handleDeleteLead}
+        onDeleteCard={handleDeleteCardWrapper}
       />
 
       <NewLeadFormDialog
