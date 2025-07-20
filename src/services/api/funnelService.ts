@@ -1,6 +1,5 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 
 export interface FunnelStage {
   id: string;
@@ -21,162 +20,147 @@ export interface SalesLead {
   value?: number;
   source?: string;
   assigned_to?: string;
-  priority: string;
-  stage?: string;
   stage_id?: string;
+  stage?: string;
+  priority: string;
+  status: string;
+  due_date?: string;
   created_at: string;
   updated_at: string;
 }
 
-export interface LeadActivity {
-  id: string;
-  lead_id: string;
-  created_by?: string;
-  type: string;
-  description: string;
-  created_at: string;
-}
-
 export const funnelService = {
   async getFunnelStages(companyId: string): Promise<FunnelStage[]> {
-    try {
-      const { data, error } = await supabase
-        .from('funnel_stages')
-        .select('*')
-        .eq('company_id', companyId)
-        .order('order_index', { ascending: true });
-
-      if (error) throw error;
-      return data || [];
-    } catch (error) {
-      console.error("Erro ao buscar etapas do funil:", error);
+    const { data, error } = await supabase
+      .from('funnel_stages')
+      .select('*')
+      .eq('company_id', companyId)
+      .order('order_index');
+    
+    if (error) {
+      console.error('Erro ao buscar stages do funil:', error);
       return [];
     }
+    
+    return data || [];
   },
 
   async getSalesLeads(companyId: string): Promise<SalesLead[]> {
-    try {
-      const { data, error } = await supabase
-        .from('sales_leads')
-        .select('*')
-        .eq('company_id', companyId)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      return data || [];
-    } catch (error) {
-      console.error("Erro ao buscar leads:", error);
+    const { data, error } = await supabase
+      .from('sales_leads')
+      .select('*')
+      .eq('company_id', companyId)
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      console.error('Erro ao buscar leads:', error);
       return [];
     }
+    
+    return data || [];
   },
 
-  async createLead(lead: Omit<SalesLead, 'id' | 'created_at' | 'updated_at'>): Promise<SalesLead | null> {
-    try {
-      const { data, error } = await supabase
-        .from('sales_leads')
-        .insert(lead)
-        .select()
-        .single();
-
-      if (error) throw error;
-      
-      // Log activity
-      if (data) {
-        await this.createLeadActivity(data.id, 'created', `Lead ${lead.name} foi criado`);
-      }
-      
-      return data;
-    } catch (error) {
-      console.error("Erro ao criar lead:", error);
+  async createLead(leadData: Partial<SalesLead>): Promise<SalesLead | null> {
+    const { data, error } = await supabase
+      .from('sales_leads')
+      .insert(leadData)
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Erro ao criar lead:', error);
       return null;
     }
+    
+    return data;
   },
 
-  async updateLead(id: string, updates: Partial<SalesLead>): Promise<SalesLead | null> {
-    try {
-      const { data, error } = await supabase
-        .from('sales_leads')
-        .update({ ...updates, updated_at: new Date().toISOString() })
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    } catch (error) {
-      console.error("Erro ao atualizar lead:", error);
+  async updateLead(leadId: string, updates: Partial<SalesLead>): Promise<SalesLead | null> {
+    const { data, error } = await supabase
+      .from('sales_leads')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', leadId)
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Erro ao atualizar lead:', error);
       return null;
     }
+    
+    return data;
   },
 
   async updateLeadStage(leadId: string, stageId: string, stageName: string): Promise<boolean> {
-    try {
-      const { error } = await supabase
-        .from('sales_leads')
-        .update({ 
-          stage_id: stageId,
-          stage: stageName,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', leadId);
-
-      if (error) throw error;
-
-      // Log activity
-      await this.createLeadActivity(leadId, 'stage_changed', `Lead movido para ${stageName}`);
-      
-      return true;
-    } catch (error) {
-      console.error("Erro ao atualizar etapa do lead:", error);
+    const { error } = await supabase
+      .from('sales_leads')
+      .update({ 
+        stage_id: stageId, 
+        stage: stageName,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', leadId);
+    
+    if (error) {
+      console.error('Erro ao atualizar stage do lead:', error);
       return false;
     }
+    
+    return true;
   },
 
-  async deleteLead(id: string): Promise<boolean> {
-    try {
-      const { error } = await supabase
-        .from('sales_leads')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-      return true;
-    } catch (error) {
-      console.error("Erro ao excluir lead:", error);
+  async deleteLead(leadId: string): Promise<boolean> {
+    const { error } = await supabase
+      .from('sales_leads')
+      .delete()
+      .eq('id', leadId);
+    
+    if (error) {
+      console.error('Erro ao deletar lead:', error);
       return false;
     }
+    
+    return true;
   },
 
-  async createLeadActivity(leadId: string, type: string, description: string): Promise<void> {
-    try {
-      const { error } = await supabase
-        .from('lead_activities')
-        .insert({
-          lead_id: leadId,
-          type,
-          description,
-          created_by: (await supabase.auth.getUser()).data.user?.id
-        });
-
-      if (error) throw error;
-    } catch (error) {
-      console.error("Erro ao criar atividade do lead:", error);
+  async createFunnelStage(companyId: string, name: string, color: string, orderIndex: number): Promise<FunnelStage | null> {
+    const { data, error } = await supabase
+      .from('funnel_stages')
+      .insert({
+        company_id: companyId,
+        name,
+        color,
+        order_index: orderIndex
+      })
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Erro ao criar stage do funil:', error);
+      return null;
     }
+    
+    return data;
   },
 
-  async getLeadActivities(leadId: string): Promise<LeadActivity[]> {
-    try {
-      const { data, error } = await supabase
-        .from('lead_activities')
-        .select('*')
-        .eq('lead_id', leadId)
-        .order('created_at', { ascending: false });
+  async initializeDefaultStages(companyId: string): Promise<void> {
+    const defaultStages = [
+      { name: 'Prospecção', color: '#ef4444', order_index: 0 },
+      { name: 'Qualificação', color: '#f97316', order_index: 1 },
+      { name: 'Proposta', color: '#eab308', order_index: 2 },
+      { name: 'Negociação', color: '#3b82f6', order_index: 3 },
+      { name: 'Ganhos', color: '#22c55e', order_index: 4 }
+    ];
 
-      if (error) throw error;
-      return data || [];
-    } catch (error) {
-      console.error("Erro ao buscar atividades do lead:", error);
-      return [];
+    const { error } = await supabase
+      .from('funnel_stages')
+      .insert(defaultStages.map(stage => ({
+        ...stage,
+        company_id: companyId
+      })));
+
+    if (error) {
+      console.error('Erro ao inicializar stages padrão:', error);
     }
   }
 };

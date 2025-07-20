@@ -16,16 +16,30 @@ export function useSalesFunnelRealtime(companyId: string) {
 
     const loadData = async () => {
       try {
+        console.log('Loading funnel data for company:', companyId);
+        
         const [stages, leads] = await Promise.all([
           funnelService.getFunnelStages(companyId),
           funnelService.getSalesLeads(companyId)
         ]);
         
-        setFunnelStages(stages);
+        console.log('Loaded stages:', stages);
+        console.log('Loaded leads:', leads);
+        
+        // Initialize default stages if none exist
+        if (stages.length === 0) {
+          await funnelService.initializeDefaultStages(companyId);
+          const newStages = await funnelService.getFunnelStages(companyId);
+          setFunnelStages(newStages);
+        } else {
+          setFunnelStages(stages);
+        }
+        
         setSalesLeads(leads);
         
         // Convert to Kanban format
-        const columns = stages.map(stage => ({
+        const stagesToUse = stages.length > 0 ? stages : await funnelService.getFunnelStages(companyId);
+        const columns = stagesToUse.map(stage => ({
           id: stage.id,
           title: stage.name,
           color: stage.color,
@@ -37,6 +51,7 @@ export function useSalesFunnelRealtime(companyId: string) {
         setKanbanColumns(columns);
       } catch (error) {
         console.error("Erro ao carregar dados do funil:", error);
+        toast.error("Erro ao carregar dados do funil");
       }
     };
 
@@ -58,13 +73,32 @@ export function useSalesFunnelRealtime(companyId: string) {
           filter: `company_id=eq.${companyId}`
         },
         (payload) => {
+          console.log('Real-time lead change:', payload);
           handleLeadChange(payload);
+        }
+      )
+      .subscribe();
+
+    const stagesChannel = supabase
+      .channel('funnel_stages_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'funnel_stages',
+          filter: `company_id=eq.${companyId}`
+        },
+        (payload) => {
+          console.log('Real-time stage change:', payload);
+          handleStageChange(payload);
         }
       )
       .subscribe();
 
     return () => {
       supabase.removeChannel(leadsChannel);
+      supabase.removeChannel(stagesChannel);
     };
   }, [companyId]);
 
@@ -72,29 +106,54 @@ export function useSalesFunnelRealtime(companyId: string) {
     const { eventType, new: newRecord, old: oldRecord } = payload;
     
     setSalesLeads(current => {
+      let updated = [...current];
+      
       switch (eventType) {
         case 'INSERT':
-          return [...current, newRecord];
+          updated = [...current, newRecord];
+          break;
         case 'UPDATE':
-          return current.map(lead => 
+          updated = current.map(lead => 
             lead.id === newRecord.id ? newRecord : lead
           );
+          break;
         case 'DELETE':
-          return current.filter(lead => lead.id !== oldRecord.id);
+          updated = current.filter(lead => lead.id !== oldRecord.id);
+          break;
+        default:
+          return current;
+      }
+      
+      // Update kanban columns immediately
+      setTimeout(() => updateKanbanFromLeads(updated), 0);
+      return updated;
+    });
+  };
+
+  const handleStageChange = (payload: any) => {
+    const { eventType, new: newRecord, old: oldRecord } = payload;
+    
+    setFunnelStages(current => {
+      switch (eventType) {
+        case 'INSERT':
+          return [...current, newRecord].sort((a, b) => a.order_index - b.order_index);
+        case 'UPDATE':
+          return current.map(stage => 
+            stage.id === newRecord.id ? newRecord : stage
+          );
+        case 'DELETE':
+          return current.filter(stage => stage.id !== oldRecord.id);
         default:
           return current;
       }
     });
-
-    // Update kanban columns immediately
-    setTimeout(updateKanbanFromLeads, 0);
   };
 
-  const updateKanbanFromLeads = () => {
+  const updateKanbanFromLeads = (leads: SalesLead[]) => {
     setKanbanColumns(current => {
       return current.map(column => ({
         ...column,
-        cards: salesLeads
+        cards: leads
           .filter(lead => lead.stage_id === column.id)
           .map(lead => convertLeadToCard(lead))
       }));
@@ -148,11 +207,12 @@ export function useSalesFunnelRealtime(companyId: string) {
   };
 
   const handleCreateLead = async (leadData: any, stageId: string) => {
+    const stage = funnelStages.find(s => s.id === stageId);
     const newLead = await funnelService.createLead({
       ...leadData,
       company_id: companyId,
       stage_id: stageId,
-      stage: funnelStages.find(s => s.id === stageId)?.name || 'Prospecção'
+      stage: stage?.name || 'Prospecção'
     });
 
     if (newLead) {
