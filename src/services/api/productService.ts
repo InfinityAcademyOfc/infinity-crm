@@ -156,17 +156,21 @@ export const productService = {
       return [];
     }
     
-    const lowStockProducts = (data || [])
-      .map(item => ({
-        ...item,
-        stock_quantity: (item as any).stock || 0,
-        stock_minimum: 0
-      } as Product))
-      .filter(p => 
-        p.stock_quantity !== null && 
-        p.stock_quantity !== undefined && 
-        p.stock_quantity <= 5 // Simple low stock threshold
-      );
+    // Transform the data first, then filter to avoid deep type instantiation
+    const transformedProducts: Product[] = (data || []).map(item => ({
+      ...item,
+      stock_quantity: (item as any).stock || 0,
+      stock_minimum: 0
+    } as Product));
+    
+    // Simple filter with explicit types to avoid infinite recursion
+    const lowStockProducts: Product[] = [];
+    for (const product of transformedProducts) {
+      const stockQty = product.stock_quantity;
+      if (typeof stockQty === 'number' && stockQty <= 5) {
+        lowStockProducts.push(product);
+      }
+    }
     
     return lowStockProducts;
   }
