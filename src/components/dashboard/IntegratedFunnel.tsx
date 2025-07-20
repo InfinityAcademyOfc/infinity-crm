@@ -1,4 +1,3 @@
-
 import React, { useMemo, memo } from 'react';
 import { Filter, Users, CheckCircle2, Activity, TrendingUp, AlertTriangle, Download } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -10,7 +9,7 @@ import { FunnelChart, ConversionChart, LeakageChart, FunnelSummary } from './fun
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { useToast } from '@/hooks/use-toast';
 
-// Default funnel data for immediate rendering
+// Default funnel data for immediate rendering with status property
 const defaultFunnelData = {
   sales: {
     stages: [
@@ -19,7 +18,8 @@ const defaultFunnelData = {
       { name: 'Propostas', value: 50, efficiency: 67, leakage: 33 },
       { name: 'Fechados', value: 25, efficiency: 50, leakage: 50 }
     ],
-    conversionRate: 25
+    conversionRate: 25,
+    status: 'improving' as const
   },
   ltv: {
     stages: [
@@ -28,7 +28,8 @@ const defaultFunnelData = {
       { name: 'Fiéis', value: 40, efficiency: 67, leakage: 33 },
       { name: 'Embaixadores', value: 20, efficiency: 50, leakage: 50 }
     ],
-    conversionRate: 25
+    conversionRate: 25,
+    status: 'stable' as const
   },
   production: {
     stages: [
@@ -37,7 +38,8 @@ const defaultFunnelData = {
       { name: 'Revisão', value: 60, efficiency: 86, leakage: 14 },
       { name: 'Entrega', value: 55, efficiency: 92, leakage: 8 }
     ],
-    conversionRate: 61
+    conversionRate: 61,
+    status: 'declining' as const
   }
 };
 
