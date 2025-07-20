@@ -128,7 +128,6 @@ export const productService = {
       return [];
     }
     
-    // Filter products where stock_quantity <= stock_minimum
     const lowStockProducts = data?.filter(p => 
       p.stock_quantity !== null && 
       p.stock_minimum !== null && 

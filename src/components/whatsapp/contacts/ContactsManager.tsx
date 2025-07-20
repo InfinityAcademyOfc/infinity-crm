@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,9 +23,9 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import ContactFormDialog from "./ContactFormDialog";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 
-interface Contact {
+interface SimpleContact {
   id: string;
   name: string;
   phone: string;
@@ -40,13 +39,12 @@ interface ContactsManagerProps {
 
 const ContactsManager = ({ sessionId }: ContactsManagerProps) => {
   const { toast } = useToast();
-  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [contacts, setContacts] = useState<SimpleContact[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [formOpen, setFormOpen] = useState(false);
-  const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
+  const [selectedContact, setSelectedContact] = useState<SimpleContact | null>(null);
   
-  // Fetch contacts from Supabase filtering by sessionId
   useEffect(() => {
     const fetchContacts = async () => {
       try {
@@ -79,7 +77,7 @@ const ContactsManager = ({ sessionId }: ContactsManagerProps) => {
     setFormOpen(true);
   };
   
-  const handleEditContact = (contact: Contact) => {
+  const handleEditContact = (contact: SimpleContact) => {
     setSelectedContact(contact);
     setFormOpen(true);
   };
@@ -108,10 +106,9 @@ const ContactsManager = ({ sessionId }: ContactsManagerProps) => {
     }
   };
   
-  const handleSaveContact = async (contact: Contact) => {
+  const handleSaveContact = async (contact: SimpleContact) => {
     try {
       if (selectedContact) {
-        // Update existing contact
         const { error } = await supabase
           .from("contacts")
           .update({
@@ -133,7 +130,6 @@ const ContactsManager = ({ sessionId }: ContactsManagerProps) => {
           description: "O contato foi atualizado com sucesso."
         });
       } else {
-        // Create new contact with sessionId
         const { data, error } = await supabase
           .from("contacts")
           .insert({
@@ -141,7 +137,7 @@ const ContactsManager = ({ sessionId }: ContactsManagerProps) => {
             phone: contact.phone,
             email: contact.email,
             tags: contact.tags,
-            session_id: sessionId // Associate with current session
+            session_id: sessionId
           })
           .select();
           
@@ -166,7 +162,6 @@ const ContactsManager = ({ sessionId }: ContactsManagerProps) => {
     }
   };
   
-  // Filter contacts based on search term
   const filteredContacts = contacts.filter(contact => 
     contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     contact.phone.includes(searchTerm) ||

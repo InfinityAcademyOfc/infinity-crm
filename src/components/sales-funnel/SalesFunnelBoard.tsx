@@ -6,8 +6,8 @@ interface SalesFunnelBoardProps {
   columns: KanbanColumnItem[];
   setColumns: (columns: KanbanColumnItem[]) => void;
   onAddCard?: (columnId: string) => void;
-  onEditCard?: (cardId: string, columnId: string) => void;
-  onDeleteCard?: (cardId: string, columnId: string) => void;
+  onEditCard?: (cardId: string) => void;
+  onDeleteCard?: (cardId: string) => void;
 }
 
 export const SalesFunnelBoard = ({

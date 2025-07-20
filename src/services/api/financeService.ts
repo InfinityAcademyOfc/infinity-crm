@@ -38,7 +38,10 @@ export const financeService = {
       return [];
     }
     
-    return data || [];
+    return (data || []).map(item => ({
+      ...item,
+      type: item.type as 'income' | 'expense'
+    }));
   },
 
   async createTransaction(transaction: Omit<FinancialTransaction, 'id' | 'created_at' | 'updated_at'>): Promise<FinancialTransaction | null> {
@@ -53,7 +56,10 @@ export const financeService = {
       return null;
     }
     
-    return data;
+    return {
+      ...data,
+      type: data.type as 'income' | 'expense'
+    };
   },
 
   async updateTransaction(id: string, updates: Partial<FinancialTransaction>): Promise<FinancialTransaction | null> {
@@ -69,7 +75,10 @@ export const financeService = {
       return null;
     }
     
-    return data;
+    return {
+      ...data,
+      type: data.type as 'income' | 'expense'
+    };
   },
 
   async deleteTransaction(id: string): Promise<boolean> {
@@ -98,7 +107,10 @@ export const financeService = {
       return [];
     }
     
-    return data || [];
+    return (data || []).map(item => ({
+      ...item,
+      type: item.type as 'income' | 'expense'
+    }));
   },
 
   async createCategory(category: Omit<FinancialCategory, 'id' | 'created_at' | 'updated_at'>): Promise<FinancialCategory | null> {
@@ -113,7 +125,10 @@ export const financeService = {
       return null;
     }
     
-    return data;
+    return {
+      ...data,
+      type: data.type as 'income' | 'expense'
+    };
   },
 
   async getFinancialSummary(companyId: string, period?: { start: string; end: string }) {

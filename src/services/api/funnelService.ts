@@ -57,13 +57,21 @@ export const funnelService = {
       return [];
     }
     
-    return data || [];
+    return (data || []).map(item => ({
+      ...item,
+      status: item.status || 'active',
+      priority: item.priority || 'medium'
+    }));
   },
 
-  async createLead(leadData: Partial<SalesLead>): Promise<SalesLead | null> {
+  async createLead(leadData: Omit<SalesLead, 'id' | 'created_at' | 'updated_at'>): Promise<SalesLead | null> {
     const { data, error } = await supabase
       .from('sales_leads')
-      .insert(leadData)
+      .insert({
+        ...leadData,
+        status: leadData.status || 'active',
+        priority: leadData.priority || 'medium'
+      })
       .select()
       .single();
     
@@ -72,7 +80,11 @@ export const funnelService = {
       return null;
     }
     
-    return data;
+    return {
+      ...data,
+      status: data.status || 'active',
+      priority: data.priority || 'medium'
+    };
   },
 
   async updateLead(leadId: string, updates: Partial<SalesLead>): Promise<SalesLead | null> {
@@ -88,7 +100,11 @@ export const funnelService = {
       return null;
     }
     
-    return data;
+    return {
+      ...data,
+      status: data.status || 'active',
+      priority: data.priority || 'medium'
+    };
   },
 
   async updateLeadStage(leadId: string, stageId: string, stageName: string): Promise<boolean> {
